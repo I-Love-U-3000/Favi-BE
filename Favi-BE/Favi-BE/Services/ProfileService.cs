@@ -23,11 +23,11 @@ namespace Favi_BE.Services
 
             return new ProfileResponse(
                 profile.Id,
-                Guid.Empty, // nếu có map SupabaseUserId thì bổ sung ở đây
                 profile.Username,
                 profile.DisplayName,
                 profile.Bio,
                 profile.AvatarUrl,
+                profile.CoverUrl,
                 profile.CreatedAt,
                 profile.LastActiveAt ?? DateTime.MinValue,
                 followers,
@@ -46,7 +46,10 @@ namespace Favi_BE.Services
                 profile.Bio = dto.Bio;
             if (!string.IsNullOrWhiteSpace(dto.AvatarUrl))
                 profile.AvatarUrl = dto.AvatarUrl;
-
+            if (!string.IsNullOrWhiteSpace(dto.CoverUrl))
+                profile.CoverUrl = dto.CoverUrl;
+            if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != profile.Username)
+                profile.Username = dto.Username;
             profile.LastActiveAt = DateTime.UtcNow;
             _uow.Profiles.Update(profile);
 
@@ -85,12 +88,22 @@ namespace Favi_BE.Services
             return result.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt));
         }
 
+        public async Task<IEnumerable<FollowResponse>> GetFollowersAsync(Guid profileId, int skip, int take)
+        {
+            var result = await _uow.Follows.GetFollowersAsync(profileId, skip, take);
+            return result.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt));
+        }
+
+        public async Task<IEnumerable<FollowResponse>> GetFollowingsAsync(Guid profileId, int skip, int take)
+        {
+            var result = await _uow.Follows.GetFollowingAsync(profileId, skip, take);
+            return result.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt));
+        }
         public async Task<IEnumerable<FollowResponse>> GetFollowingsAsync(Guid profileId)
         {
             var result = await _uow.Follows.GetFollowingAsync(profileId, 0, 1000);
             return result.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt));
         }
-
         public async Task<IEnumerable<SocialLinkDto>> GetSocialLinksAsync(Guid profileId)
         {
             var links = await _uow.SocialLinks.GetByProfileIdAsync(profileId);

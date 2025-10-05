@@ -11,6 +11,8 @@ namespace Favi_BE.Interfaces
         Task<bool> UnfollowAsync(Guid followerId, Guid followeeId);
         Task<IEnumerable<FollowResponse>> GetFollowersAsync(Guid profileId);
         Task<IEnumerable<FollowResponse>> GetFollowingsAsync(Guid profileId);
+        Task<IEnumerable<FollowResponse>> GetFollowersAsync(Guid profileId, int skip, int take);
+        Task<IEnumerable<FollowResponse>> GetFollowingsAsync(Guid profileId, int skip, int take);
         Task<IEnumerable<SocialLinkDto>> GetSocialLinksAsync(Guid profileId);
         Task<SocialLinkDto> AddSocialLinkAsync(Guid profileId, SocialLinkDto dto);
         Task<bool> RemoveSocialLinkAsync(Guid profileId, Guid linkId);

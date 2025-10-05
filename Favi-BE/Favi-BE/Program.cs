@@ -19,13 +19,31 @@ var jwtOpt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = builder.Configuration["Supabase:Url"]; // https://<project>.supabase.co
+        //options.Authority = builder.Configuration["Supabase:Url"]; // https://<project>.supabase.co
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = false, // Supabase tokens không có issuer chuẩn
             ValidateAudience = false,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = false, // Supabase cung cấp JWKS để ASP.NET tự fetch
+            ValidateIssuerSigningKey = true, // Supabase cung cấp JWKS để ASP.NET tự fetch
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["SupabaseSecret"]!)),
+            NameClaimType = "sub",
+            RoleClaimType = "account_role"
+        }; 
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine("JWT auth failed: " + context.Exception.Message);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var claims = context.Principal?.Claims.Select(c => $"{c.Type}:{c.Value}");
+                Console.WriteLine("Token validated: " + string.Join(", ", claims ?? []));
+                return Task.CompletedTask;
+            }
         };
     });
 builder.Services.AddAuthorization(options =>

@@ -4,11 +4,11 @@ namespace Favi_BE.Models.Dtos
 {
     public record ProfileResponse(
         Guid Id,
-        Guid UserId,      // Id từ Supabase
         string Username,
         string? DisplayName,
         string? Bio,
         string? AvatarUrl,
+        string? CoverUrl,
         DateTime CreatedAt,
         DateTime LastActiveAt,
         int FollowersCount,
@@ -16,13 +16,15 @@ namespace Favi_BE.Models.Dtos
     );
 
     public record ProfileUpdateRequest(
+        string? Username,
         string? DisplayName,
         string? Bio,
-        string? AvatarUrl
+        string? AvatarUrl,
+        string? CoverUrl
     );
 
     public record SocialLinkDto(
-        Guid Id,
+        Guid? Id,
         SocialKind SocialKind,
         string Url
     );

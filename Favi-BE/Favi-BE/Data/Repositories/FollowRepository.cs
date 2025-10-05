@@ -34,7 +34,7 @@ namespace Favi_BE.Data.Repositories
         {
             return await _dbSet
                 .Where(f => f.FollowerId == profileId)
-                .Include(f => f.FolloweeId)
+                .Include(f => f.Followee)
                 .OrderByDescending(f => f.CreatedAt)
                 .Skip(skip)
                 .Take(take)
