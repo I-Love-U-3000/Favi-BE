@@ -1,0 +1,118 @@
+﻿using Favi_BE.Interfaces;
+using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Entities;
+using System.Linq;
+
+namespace Favi_BE.Services
+{
+    public class CollectionService : ICollectionService
+    {
+        private readonly IUnitOfWork _uow;
+
+        public CollectionService(IUnitOfWork uow)
+        {
+            _uow = uow;
+        }
+
+        public async Task<CollectionResponse> CreateAsync(Guid ownerId, CreateCollectionRequest dto)
+        {
+            var collection = new Collection
+            {
+                Id = Guid.NewGuid(),
+                ProfileId = ownerId,
+                Title = dto.Title,
+                Description = dto.Description,
+                CoverImageUrl = dto.CoverImageUrl,
+                PrivacyLevel = dto.PrivacyLevel,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            await _uow.Collections.AddAsync(collection);
+            await _uow.CompleteAsync();
+
+            return new CollectionResponse(collection.Id, collection.ProfileId, collection.Title, collection.Description, collection.CoverImageUrl?? string.Empty, collection.PrivacyLevel, collection.CreatedAt, collection.UpdatedAt, new List<Guid>(), 0);
+        }
+
+        public async Task<CollectionResponse?> UpdateAsync(Guid collectionId, Guid requesterId, UpdateCollectionRequest dto)
+        {
+            var collection = await _uow.Collections.GetByIdAsync(collectionId);
+            if (collection is null || collection.ProfileId != requesterId) return null;
+
+            if (!string.IsNullOrWhiteSpace(dto.Title)) collection.Title = dto.Title;
+            if (!string.IsNullOrWhiteSpace(dto.Description)) collection.Description = dto.Description;
+            if (!string.IsNullOrWhiteSpace(dto.CoverImageUrl)) collection.CoverImageUrl = dto.CoverImageUrl;
+            collection.PrivacyLevel = dto.PrivacyLevel ?? collection.PrivacyLevel;
+            collection.UpdatedAt = DateTime.UtcNow;
+
+            _uow.Collections.Update(collection);
+            await _uow.CompleteAsync();
+
+            return new CollectionResponse(collection.Id, collection.ProfileId, collection.Title, collection.Description, collection.CoverImageUrl, collection.PrivacyLevel, collection.CreatedAt, collection.UpdatedAt, new List<Guid>(), 0);
+        }
+
+        public async Task<bool> DeleteAsync(Guid collectionId, Guid requesterId)
+        {
+            var collection = await _uow.Collections.GetByIdAsync(collectionId);
+            if (collection is null || collection.ProfileId != requesterId) return false;
+
+            _uow.Collections.Remove(collection);
+            await _uow.CompleteAsync();
+            return true;
+        }
+
+        public async Task<PagedResult<CollectionResponse>> GetByOwnerAsync(Guid ownerId, int page, int pageSize)
+        {
+            var collections = await _uow.Collections.GetCollectionsByProfileIdAsync(ownerId);
+            var paged = collections.Skip((page - 1) * pageSize).Take(pageSize);
+
+            var dtos = paged.Select(c => new CollectionResponse(c.Id, c.ProfileId, c.Title, c.Description, c.CoverImageUrl, c.PrivacyLevel, c.CreatedAt, c.UpdatedAt, new List<Guid>(), 0));
+
+            return new PagedResult<CollectionResponse>(dtos, page, pageSize, collections.Count());
+        }
+
+        public async Task<CollectionResponse?> GetByIdAsync(Guid collectionId)
+        {
+            var collection = await _uow.Collections.GetCollectionWithPostsAsync(collectionId);
+            if (collection is null) return null;
+
+            var postIds = collection.PostCollections?.Select(pc => pc.PostId) ?? new List<Guid>();
+            return new CollectionResponse(collection.Id, collection.ProfileId, collection.Title, collection.Description, collection.CoverImageUrl, collection.PrivacyLevel, collection.CreatedAt, collection.UpdatedAt, postIds, postIds.Count());
+        }
+
+        public async Task<bool> AddPostAsync(Guid collectionId, Guid postId, Guid requesterId)
+        {
+            var collection = await _uow.Collections.GetByIdAsync(collectionId);
+            if (collection is null || collection.ProfileId != requesterId) return false;
+
+            if (!await _uow.PostCollections.ExistsInCollectionAsync(postId, collectionId))
+            {
+                await _uow.PostCollections.AddAsync(new Models.Entities.JoinTables.PostCollection
+                {
+                    CollectionId = collectionId,
+                    PostId = postId
+                });
+                await _uow.CompleteAsync();
+            }
+
+            return true;
+        }
+
+        public async Task<bool> RemovePostAsync(Guid collectionId, Guid postId, Guid requesterId)
+        {
+            var collection = await _uow.Collections.GetByIdAsync(collectionId);
+            if (collection is null || collection.ProfileId != requesterId) return false;
+
+            await _uow.PostCollections.RemoveFromCollectionAsync(postId, collectionId);
+            await _uow.CompleteAsync();
+            return true;
+        }
+
+        public async Task<PagedResult<PostResponse>> GetPostsAsync(Guid collectionId, int page, int pageSize)
+        {
+            var posts = await _uow.Posts.GetPostsByCollectionIdAsync(collectionId, (page - 1) * pageSize, pageSize);
+            var dtos = posts.Select(p => new PostResponse(p.Id, p.ProfileId, p.Caption, p.CreatedAt, p.UpdatedAt, p.Privacy, new List<PostMediaResponse>(), new List<TagDto>(), new ReactionSummaryDto(0, new(), null)));
+
+            return new PagedResult<PostResponse>(dtos, page, pageSize, -1);
+        }
+    }
+}

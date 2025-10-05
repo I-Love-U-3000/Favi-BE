@@ -1,4 +1,4 @@
-﻿namespace Favi_BE.Options
+﻿namespace Favi_BE.Common
 {
     public class JwtOptions
     {

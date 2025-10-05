@@ -3,9 +3,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Favi_BE.Options;
+using Favi_BE.Common;
 
-namespace Favi_BE.Auth
+namespace Favi_BE.Services
 {
     public interface IJwtService
     {

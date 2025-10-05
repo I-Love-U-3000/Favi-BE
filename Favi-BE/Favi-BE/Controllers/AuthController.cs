@@ -1,56 +1,47 @@
-﻿using Favi_BE.Auth;
-using Microsoft.AspNetCore.Http;
+﻿using Favi_BE.Interfaces;
+using Favi_BE.Models.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Favi_BE.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IJwtService _jwt;
+        private readonly ISupabaseAuthService _supabase;
 
-        public record LoginDto(string Username, string Password);
-        public record LoginResponse(string AccessToken, string RefreshToken, string Message);
-        public record RefreshDto(string RefreshToken);
-        public record RefreshResult(string AccessToken);
+        public AuthController(ISupabaseAuthService supabase)
+        {
+            _supabase = supabase;
+        }
 
-        public AuthController(IJwtService jwt) => _jwt = jwt;
+        public record LoginDto(string Email, string Password);
+        public record RegisterDto(string Email, string Password, string Username);
 
         [HttpPost("login")]
-        public ActionResult<LoginResponse> Login([FromBody] LoginDto dto)
+        public async Task<ActionResult<SupabaseAuthResponse>> Login(LoginDto dto)
         {
-            // TODO: thay bằng check DB + hash password
-            var user = FakeValidate(dto.Username, dto.Password);
-            if (user is null) return BadRequest("Invalid credential");
+            var result = await _supabase.LoginAsync(dto.Email, dto.Password);
+            if (result is null) return Unauthorized("Invalid credentials");
+            return Ok(result); // trả thẳng access_token + refresh_token Supabase
+        }
 
-            if (user.HasValue)
-            {
-                var access = _jwt.CreateAccessToken(user.Value.Id, user.Value.Role);
-                var refresh = _jwt.CreateRefreshToken(user.Value.Id, user.Value.Role);
-                return Ok(new LoginResponse(access, refresh, "Access granted successfully"));
-            }
-            else
-            {
-                return BadRequest("Invalid credential");
-            }
+        [HttpPost("register")]
+        public async Task<ActionResult<SupabaseAuthResponse>> Register(RegisterDto dto)
+        {
+            var result = await _supabase.RegisterAsync(dto.Email, dto.Password, dto.Username);
+            if (result is null) return BadRequest("Registration failed");
+            return Ok(result);
         }
 
         [HttpPost("refresh")]
-        public ActionResult<RefreshResult> Refresh([FromBody] RefreshDto dto)
+        public async Task<ActionResult<SupabaseAuthResponse>> Refresh([FromBody] string refreshToken)
         {
-            var principal = _jwt.ValidateRefresh(dto.RefreshToken);
-            if (principal is null) return BadRequest("Invalid refresh token");
-
-            var sub = principal.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
-            var role = principal.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "USER";
-            if (sub is null) return BadRequest("Invalid token");
-
-            var access = _jwt.CreateAccessToken(int.Parse(sub), role);
-            return Ok(new RefreshResult(access));
+            var result = await _supabase.RefreshAsync(refreshToken);
+            if (result is null) return Unauthorized("Invalid refresh token");
+            return Ok(result);
         }
-
-        private static (int Id, string Role)? FakeValidate(string u, string p)
-            => u == "admin" && p == "admin" ? (1, "ADMIN") : null;
     }
 }

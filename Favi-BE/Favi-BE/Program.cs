@@ -1,7 +1,14 @@
-﻿using Favi_BE.Auth;
-using Favi_BE.Options;
+﻿using Favi_BE.Common;
+using Favi_BE.Data;
+using Favi_BE.Data.Repositories;
+using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Repositories;
+using Favi_BE.Models.Dtos;
+using Favi_BE.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Scalar.AspNetCore;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,35 +17,66 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 var jwtOpt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(o =>
+    .AddJwtBearer(options =>
     {
-        o.TokenValidationParameters = new()
+        options.Authority = builder.Configuration["Supabase:Url"]; // https://<project>.supabase.co
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidIssuer = jwtOpt.Issuer,
-            ValidateAudience = true,
-            ValidAudience = jwtOpt.Audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOpt.Key)),
+            ValidateIssuer = false, // Supabase tokens không có issuer chuẩn
+            ValidateAudience = false,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromSeconds(30),
-            RoleClaimType = System.Security.Claims.ClaimTypes.Role
+            ValidateIssuerSigningKey = false, // Supabase cung cấp JWKS để ASP.NET tự fetch
         };
     });
-
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireUser", policy => policy.RequireClaim("account_role", "user"));
+    options.AddPolicy("RequireAdmin", policy => policy.RequireClaim("account_role", "admin"));
+});
 builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(p => p
         .WithOrigins("http://localhost:3000", "http://localhost:*")
         .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 });
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<IFollowRepository, FollowRepository>();
+builder.Services.AddScoped<IPostCollectionRepository, PostCollectionRepository>();
+builder.Services.AddScoped<IPostMediaRepository, PostMediaRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IPostTagRepository, PostTagRepository>();
+builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
+builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<ISocialLinkRepository, SocialLinkRepository>();
+builder.Services.AddScoped<ITagRepository, TagRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Supabase:Url"]);
+    client.DefaultRequestHeaders.Add("apikey", builder.Configuration["Supabase:ApiKey"]);
+});
+builder.Services.AddScoped<ICollectionService, CollectionService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -65,6 +103,9 @@ builder.Services.AddEndpointsApiExplorer();
 //    });
 //});
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var app = builder.Build();
 
 //app.UseSwagger(); 
@@ -76,6 +117,7 @@ app.UseCors();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
