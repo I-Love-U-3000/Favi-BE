@@ -1,0 +1,3024 @@
+{
+	"info": {
+		"_postman_id": "44172356-8e6ecdc6-dac1-4b08-a3f5-bffd8df0375c",
+		"name": "Favi-BE.API | v1",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "api",
+			"item": [
+				{
+					"name": "Auth",
+					"item": [
+						{
+							"name": "login",
+							"item": [
+								{
+									"name": "/api/Auth/login",
+									"id": "44172356-82c50cab-7a20-4989-9b78-a23d0378823d",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Auth/login",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Auth",
+												"login"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-762bf559-9a23-4ffd-8908-ebe4353ef5a9",
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Auth/login",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Auth",
+														"login"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"access_token\": \"string\",\n  \"token_type\": \"string\",\n  \"expires_in\": 8862,\n  \"expires_at\": 5884,\n  \"refresh_token\": \"string\",\n  \"user\": {\n    \"id\": \"string\",\n    \"aud\": \"string\",\n    \"role\": \"string\",\n    \"email\": \"string\",\n    \"email_confirmed_at\": \"2017-09-18T05:39:37.596Z\",\n    \"phone\": \"string\",\n    \"confirmed_at\": \"1994-03-22T23:21:24.895Z\",\n    \"last_sign_in_at\": \"1978-05-24T12:22:33.251Z\",\n    \"app_metadata\": {},\n    \"user_metadata\": {},\n    \"identities\": [\n      {\n        \"identity_id\": \"string\",\n        \"id\": \"string\",\n        \"user_id\": \"string\",\n        \"identity_data\": {},\n        \"provider\": \"string\",\n        \"last_sign_in_at\": \"1980-11-02T13:31:33.674Z\",\n        \"created_at\": \"2024-07-26T22:30:32.485Z\",\n        \"updated_at\": \"1950-09-21T20:09:36.253Z\",\n        \"email\": \"string\"\n      },\n      {\n        \"identity_id\": \"string\",\n        \"id\": \"string\",\n        \"user_id\": \"string\",\n        \"identity_data\": {},\n        \"provider\": \"string\",\n        \"last_sign_in_at\": \"1982-02-27T04:43:06.769Z\",\n        \"created_at\": \"1994-01-26T13:04:10.496Z\",\n        \"updated_at\": \"1996-06-05T19:52:21.890Z\",\n        \"email\": \"string\"\n      }\n    ],\n    \"created_at\": \"1959-07-19T13:45:16.050Z\",\n    \"updated_at\": \"1946-01-09T21:39:39.930Z\",\n    \"is_anonymous\": true\n  },\n  \"weak_password\": \"string\"\n}"
+										}
+									]
+								}
+							],
+							"id": "44172356-fc499325-11b4-47d6-a115-6f7a74fa8dd9"
+						},
+						{
+							"name": "register",
+							"item": [
+								{
+									"name": "/api/Auth/register",
+									"id": "44172356-f531118e-23c9-4060-9015-eef4457274d9",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"username\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Auth/register",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Auth",
+												"register"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-419f27ca-4236-46a7-b8c3-186f3f296647",
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\",\n  \"username\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Auth/register",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Auth",
+														"register"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"access_token\": \"string\",\n  \"token_type\": \"string\",\n  \"expires_in\": 8862,\n  \"expires_at\": 5884,\n  \"refresh_token\": \"string\",\n  \"user\": {\n    \"id\": \"string\",\n    \"aud\": \"string\",\n    \"role\": \"string\",\n    \"email\": \"string\",\n    \"email_confirmed_at\": \"2017-09-18T05:39:37.596Z\",\n    \"phone\": \"string\",\n    \"confirmed_at\": \"1994-03-22T23:21:24.895Z\",\n    \"last_sign_in_at\": \"1978-05-24T12:22:33.251Z\",\n    \"app_metadata\": {},\n    \"user_metadata\": {},\n    \"identities\": [\n      {\n        \"identity_id\": \"string\",\n        \"id\": \"string\",\n        \"user_id\": \"string\",\n        \"identity_data\": {},\n        \"provider\": \"string\",\n        \"last_sign_in_at\": \"1980-11-02T13:31:33.674Z\",\n        \"created_at\": \"2024-07-26T22:30:32.485Z\",\n        \"updated_at\": \"1950-09-21T20:09:36.253Z\",\n        \"email\": \"string\"\n      },\n      {\n        \"identity_id\": \"string\",\n        \"id\": \"string\",\n        \"user_id\": \"string\",\n        \"identity_data\": {},\n        \"provider\": \"string\",\n        \"last_sign_in_at\": \"1982-02-27T04:43:06.769Z\",\n        \"created_at\": \"1994-01-26T13:04:10.496Z\",\n        \"updated_at\": \"1996-06-05T19:52:21.890Z\",\n        \"email\": \"string\"\n      }\n    ],\n    \"created_at\": \"1959-07-19T13:45:16.050Z\",\n    \"updated_at\": \"1946-01-09T21:39:39.930Z\",\n    \"is_anonymous\": true\n  },\n  \"weak_password\": \"string\"\n}"
+										}
+									]
+								}
+							],
+							"id": "44172356-cd93b8ae-87bc-460d-b71d-89b82a5ce0b3"
+						},
+						{
+							"name": "refresh",
+							"item": [
+								{
+									"name": "/api/Auth/refresh",
+									"id": "44172356-99942a0c-3092-432e-b4b2-f07c4d26bbc2",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "string",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Auth/refresh",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Auth",
+												"refresh"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-525ace86-ce5c-4261-a06f-ba69d8a8fc75",
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "string",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Auth/refresh",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Auth",
+														"refresh"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"access_token\": \"string\",\n  \"token_type\": \"string\",\n  \"expires_in\": 8862,\n  \"expires_at\": 5884,\n  \"refresh_token\": \"string\",\n  \"user\": {\n    \"id\": \"string\",\n    \"aud\": \"string\",\n    \"role\": \"string\",\n    \"email\": \"string\",\n    \"email_confirmed_at\": \"2017-09-18T05:39:37.596Z\",\n    \"phone\": \"string\",\n    \"confirmed_at\": \"1994-03-22T23:21:24.895Z\",\n    \"last_sign_in_at\": \"1978-05-24T12:22:33.251Z\",\n    \"app_metadata\": {},\n    \"user_metadata\": {},\n    \"identities\": [\n      {\n        \"identity_id\": \"string\",\n        \"id\": \"string\",\n        \"user_id\": \"string\",\n        \"identity_data\": {},\n        \"provider\": \"string\",\n        \"last_sign_in_at\": \"1980-11-02T13:31:33.674Z\",\n        \"created_at\": \"2024-07-26T22:30:32.485Z\",\n        \"updated_at\": \"1950-09-21T20:09:36.253Z\",\n        \"email\": \"string\"\n      },\n      {\n        \"identity_id\": \"string\",\n        \"id\": \"string\",\n        \"user_id\": \"string\",\n        \"identity_data\": {},\n        \"provider\": \"string\",\n        \"last_sign_in_at\": \"1982-02-27T04:43:06.769Z\",\n        \"created_at\": \"1994-01-26T13:04:10.496Z\",\n        \"updated_at\": \"1996-06-05T19:52:21.890Z\",\n        \"email\": \"string\"\n      }\n    ],\n    \"created_at\": \"1959-07-19T13:45:16.050Z\",\n    \"updated_at\": \"1946-01-09T21:39:39.930Z\",\n    \"is_anonymous\": true\n  },\n  \"weak_password\": \"string\"\n}"
+										}
+									]
+								}
+							],
+							"id": "44172356-da9f1e0d-fef2-4c36-ba39-3b8bf266d1fd"
+						}
+					],
+					"id": "44172356-5273c849-e8e5-4f6a-9993-3b2f48238656"
+				},
+				{
+					"name": "Collections",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "posts",
+									"item": [
+										{
+											"name": "{postId}",
+											"item": [
+												{
+													"name": "/api/Collections/:id/posts/:postId",
+													"id": "44172356-35330369-973d-48c9-b2a5-4bb662360281",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"method": "POST",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Collections/:id/posts/:postId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Collections",
+																":id",
+																"posts",
+																":postId"
+															],
+															"variable": [
+																{
+																	"id": "3a28bc91-9e32-4260-ab05-8f1c0da2f6fd",
+																	"key": "id",
+																	"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+																},
+																{
+																	"id": "5e1f7127-0306-4d65-8e40-56e26afbe7e5",
+																	"key": "postId",
+																	"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+																}
+															]
+														}
+													},
+													"response": [
+														{
+															"id": "44172356-df1b17c6-7b98-41e6-a055-d780ee643249",
+															"name": "OK",
+															"originalRequest": {
+																"method": "POST",
+																"header": [],
+																"url": {
+																	"raw": "{{baseUrl}}/api/Collections/:id/posts/:postId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"Collections",
+																		":id",
+																		"posts",
+																		":postId"
+																	],
+																	"variable": [
+																		{
+																			"key": "id"
+																		},
+																		{
+																			"key": "postId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"responseTime": null,
+															"body": ""
+														}
+													]
+												},
+												{
+													"name": "/api/Collections/:id/posts/:postId",
+													"id": "44172356-f29f37c2-16e6-4d88-8fde-9ac95e3fc089",
+													"protocolProfileBehavior": {
+														"disableBodyPruning": true
+													},
+													"request": {
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Collections/:id/posts/:postId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Collections",
+																":id",
+																"posts",
+																":postId"
+															],
+															"variable": [
+																{
+																	"id": "773f36e8-4b67-4d6b-b5d3-e42fdc3e23e4",
+																	"key": "id",
+																	"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+																},
+																{
+																	"id": "a8db3764-5342-46f3-b0ab-41d092dc15d3",
+																	"key": "postId",
+																	"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+																}
+															]
+														}
+													},
+													"response": [
+														{
+															"id": "44172356-3bb25b23-2894-4da8-b947-c1bd3c7c8a0c",
+															"name": "OK",
+															"originalRequest": {
+																"method": "DELETE",
+																"header": [],
+																"url": {
+																	"raw": "{{baseUrl}}/api/Collections/:id/posts/:postId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"Collections",
+																		":id",
+																		"posts",
+																		":postId"
+																	],
+																	"variable": [
+																		{
+																			"key": "id"
+																		},
+																		{
+																			"key": "postId"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [],
+															"cookie": [],
+															"responseTime": null,
+															"body": ""
+														}
+													]
+												}
+											],
+											"id": "44172356-1e0c8f43-e957-4ca4-89c0-0f0f07acd26f"
+										},
+										{
+											"name": "/api/Collections/:id/posts",
+											"id": "44172356-7a86e775-9e8f-403b-811a-bbcf1ed52e00",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Collections/:id/posts?page=1&pageSize=20",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Collections",
+														":id",
+														"posts"
+													],
+													"query": [
+														{
+															"key": "page",
+															"value": "1"
+														},
+														{
+															"key": "pageSize",
+															"value": "20"
+														}
+													],
+													"variable": [
+														{
+															"id": "487a464b-70bd-4830-ade8-6a8bfe7c4e65",
+															"key": "id",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-6cd9458b-0efe-4655-9423-0b05acced2b6",
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "text/plain"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Collections/:id/posts?page=1&pageSize=20",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Collections",
+																":id",
+																"posts"
+															],
+															"query": [
+																{
+																	"key": "page",
+																	"value": "1"
+																},
+																{
+																	"key": "pageSize",
+																	"value": "20"
+																}
+															],
+															"variable": [
+																{
+																	"key": "id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"responseTime": null,
+													"body": "{\n  \"items\": [\n    {\n      \"id\": \"8e215a08-43e2-f048-0563-ded1cb003c06\",\n      \"authorProfileId\": \"ec74a444-2a68-903a-01a0-2507b9bbb122\",\n      \"caption\": \"string\",\n      \"createdAt\": \"1962-11-21T10:44:00.320Z\",\n      \"updatedAt\": \"2013-08-18T18:02:59.988Z\",\n      \"privacyLevel\": 2391,\n      \"medias\": [\n        {\n          \"id\": \"f151e891-c548-a819-8f71-200404862eb2\",\n          \"postId\": \"b03fe9ce-7bc2-4755-7019-24b628c03184\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 9161,\n          \"height\": 662,\n          \"format\": \"string\",\n          \"position\": 6659,\n          \"thumbnailUrl\": \"string\"\n        },\n        {\n          \"id\": \"df73f51b-cc01-a4df-1563-47bdc2329fc6\",\n          \"postId\": \"1220e246-4991-18fd-b267-4869985194ed\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 3049,\n          \"height\": 3180,\n          \"format\": \"string\",\n          \"position\": 2935,\n          \"thumbnailUrl\": \"string\"\n        }\n      ],\n      \"tags\": [\n        {\n          \"id\": \"19192fad-432f-5356-3572-455dc4bdbd6e\",\n          \"name\": \"string\"\n        },\n        {\n          \"id\": \"79119f34-fefb-87ec-1315-63031a4ad058\",\n          \"name\": \"string\"\n        }\n      ],\n      \"reactions\": {\n        \"total\": 7987,\n        \"byType\": {\n          \"key_0\": 6475\n        },\n        \"currentUserReaction\": 4681\n      }\n    },\n    {\n      \"id\": \"9eb12a26-fcd6-041c-ac69-f2d30cfb5ad9\",\n      \"authorProfileId\": \"50ddcbd2-e4e5-2723-820e-6457ef0a9e30\",\n      \"caption\": \"string\",\n      \"createdAt\": \"1975-04-20T00:07:58.427Z\",\n      \"updatedAt\": \"1995-11-29T02:57:08.961Z\",\n      \"privacyLevel\": 4218,\n      \"medias\": [\n        {\n          \"id\": \"d8ba6f26-eb67-5d9e-e8c0-c820befe7a86\",\n          \"postId\": \"45e60431-879a-0aef-bafc-1da783ecf6ca\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 7346,\n          \"height\": 1396,\n          \"format\": \"string\",\n          \"position\": 5693,\n          \"thumbnailUrl\": \"string\"\n        },\n        {\n          \"id\": \"93a7edac-0a95-469b-ddf2-3c8c077932f2\",\n          \"postId\": \"694584f8-1920-4883-e210-b41f96b7d817\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 3096,\n          \"height\": 2945,\n          \"format\": \"string\",\n          \"position\": 9307,\n          \"thumbnailUrl\": \"string\"\n        }\n      ],\n      \"tags\": [\n        {\n          \"id\": \"d0f89c01-683b-b842-be69-7cb448fdaa7d\",\n          \"name\": \"string\"\n        },\n        {\n          \"id\": \"3c75270e-444d-bba8-ce41-d5822320d61b\",\n          \"name\": \"string\"\n        }\n      ],\n      \"reactions\": {\n        \"total\": 9962,\n        \"byType\": {\n          \"key_0\": 4846,\n          \"key_1\": 3519\n        },\n        \"currentUserReaction\": 5342\n      }\n    }\n  ],\n  \"page\": 548,\n  \"pageSize\": 7421,\n  \"totalCount\": 429\n}"
+												}
+											]
+										}
+									],
+									"id": "44172356-c83d1a4f-c37d-4b72-a644-6f055bda7c7a"
+								},
+								{
+									"name": "/api/Collections/:id",
+									"id": "44172356-ea593123-204d-4459-b515-6ec8787c6117",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"privacyLevel\": 4563,\n  \"coverImageUrl\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Collections/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Collections",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "0f159561-5855-4cf2-8b72-d42ed7b1015e",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-a6bac22b-17d2-4fb3-b924-36e3337462fc",
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"privacyLevel\": 4563,\n  \"coverImageUrl\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Collections/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Collections",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"id\": \"b0d24bf9-22f1-a931-5baf-bb5655cca011\",\n  \"ownerProfileId\": \"321cb9b7-c782-f7d6-c856-f4b0350d870d\",\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"coverImageUrl\": \"string\",\n  \"privacyLevel\": 8578,\n  \"createdAt\": \"1984-06-09T02:49:11.728Z\",\n  \"updatedAt\": \"1997-03-25T13:30:35.773Z\",\n  \"postIds\": [\n    \"981643ae-0667-8a70-887b-c48804a9f169\",\n    \"74ca087a-f4ab-1f80-7542-da73727e3f44\"\n  ],\n  \"postCount\": 5664\n}"
+										}
+									]
+								},
+								{
+									"name": "/api/Collections/:id",
+									"id": "44172356-dddd542c-3a23-4049-803c-211333e6147b",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Collections/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Collections",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "1eaafaa6-ece5-4e0f-980a-61d0094af620",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-fc6c761e-7a4a-4152-8209-fc4be56e46e1",
+											"name": "OK",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Collections/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Collections",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								},
+								{
+									"name": "/api/Collections/:id",
+									"id": "44172356-8e3af99f-317c-4477-a776-1845d604600c",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Collections/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Collections",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "baf3e841-8b66-4916-86e5-4f7b2cdb51b6",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-c562178a-bf8e-47f7-8172-546bf52feeea",
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Collections/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Collections",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"id\": \"b0d24bf9-22f1-a931-5baf-bb5655cca011\",\n  \"ownerProfileId\": \"321cb9b7-c782-f7d6-c856-f4b0350d870d\",\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"coverImageUrl\": \"string\",\n  \"privacyLevel\": 8578,\n  \"createdAt\": \"1984-06-09T02:49:11.728Z\",\n  \"updatedAt\": \"1997-03-25T13:30:35.773Z\",\n  \"postIds\": [\n    \"981643ae-0667-8a70-887b-c48804a9f169\",\n    \"74ca087a-f4ab-1f80-7542-da73727e3f44\"\n  ],\n  \"postCount\": 5664\n}"
+										}
+									]
+								}
+							],
+							"id": "44172356-c473b413-8e2d-4bd7-8fc8-15c0990bd8b4"
+						},
+						{
+							"name": "owner",
+							"item": [
+								{
+									"name": "{ownerId}",
+									"item": [
+										{
+											"name": "/api/Collections/owner/:ownerId",
+											"id": "44172356-f1e088d2-f64d-4026-9b7b-6c0324cc6878",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Collections/owner/:ownerId?page=1&pageSize=20",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Collections",
+														"owner",
+														":ownerId"
+													],
+													"query": [
+														{
+															"key": "page",
+															"value": "1"
+														},
+														{
+															"key": "pageSize",
+															"value": "20"
+														}
+													],
+													"variable": [
+														{
+															"id": "ce5103c7-adfb-4e7d-abdd-e91fa5f61127",
+															"key": "ownerId",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-8de17529-63b1-4335-a84f-1419748a3bb5",
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "text/plain"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Collections/owner/:ownerId?page=1&pageSize=20",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Collections",
+																"owner",
+																":ownerId"
+															],
+															"query": [
+																{
+																	"key": "page",
+																	"value": "1"
+																},
+																{
+																	"key": "pageSize",
+																	"value": "20"
+																}
+															],
+															"variable": [
+																{
+																	"key": "ownerId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"responseTime": null,
+													"body": "{\n  \"items\": [\n    {\n      \"id\": \"0b8437a7-f631-17c6-da09-66f3d53bda1c\",\n      \"ownerProfileId\": \"6aa93585-e0fd-07b6-3ef5-15ab2cfc93ee\",\n      \"title\": \"string\",\n      \"description\": \"string\",\n      \"coverImageUrl\": \"string\",\n      \"privacyLevel\": 8488,\n      \"createdAt\": \"1994-10-04T21:12:25.908Z\",\n      \"updatedAt\": \"1978-08-03T00:43:16.077Z\",\n      \"postIds\": [\n        \"b199d269-37e2-28ae-bd0c-348dce5de9ce\",\n        \"83d2e700-dcd5-3c74-6452-46eb5436cfdc\"\n      ],\n      \"postCount\": 6361\n    },\n    {\n      \"id\": \"9de72349-4e8d-6796-5912-80db9b4f1463\",\n      \"ownerProfileId\": \"60a655bf-c3a2-15e8-9b2b-181dd42f2152\",\n      \"title\": \"string\",\n      \"description\": \"string\",\n      \"coverImageUrl\": \"string\",\n      \"privacyLevel\": 3976,\n      \"createdAt\": \"1972-01-21T12:23:04.501Z\",\n      \"updatedAt\": \"1988-10-06T10:42:20.206Z\",\n      \"postIds\": [\n        \"d1652fee-2c03-ee7a-bbd7-0c09bf1c98ce\",\n        \"afd5b433-e947-eb7c-0e08-afbb99749359\"\n      ],\n      \"postCount\": 2205\n    }\n  ],\n  \"page\": 7175,\n  \"pageSize\": 3688,\n  \"totalCount\": 5653\n}"
+												}
+											]
+										}
+									],
+									"id": "44172356-2c30c7f1-aae9-4fc7-bae7-568d73fd524b"
+								}
+							],
+							"id": "44172356-59f90974-3329-41d6-a550-9039e6743b82"
+						},
+						{
+							"name": "/api/Collections",
+							"id": "44172356-dd9c5df7-4ad2-4035-97f7-fd3e97cd4eb8",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"ownerProfileId\": \"e4b6511a-e599-2d8c-c15e-e036420e4654\",\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"privacyLevel\": 9360,\n  \"coverImageUrl\": \"string\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/Collections",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Collections"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-635fafe8-5687-496b-8bf5-0aac1f38b5e2",
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"ownerProfileId\": \"e4b6511a-e599-2d8c-c15e-e036420e4654\",\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"privacyLevel\": 9360,\n  \"coverImageUrl\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Collections",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Collections"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"id\": \"b0d24bf9-22f1-a931-5baf-bb5655cca011\",\n  \"ownerProfileId\": \"321cb9b7-c782-f7d6-c856-f4b0350d870d\",\n  \"title\": \"string\",\n  \"description\": \"string\",\n  \"coverImageUrl\": \"string\",\n  \"privacyLevel\": 8578,\n  \"createdAt\": \"1984-06-09T02:49:11.728Z\",\n  \"updatedAt\": \"1997-03-25T13:30:35.773Z\",\n  \"postIds\": [\n    \"981643ae-0667-8a70-887b-c48804a9f169\",\n    \"74ca087a-f4ab-1f80-7542-da73727e3f44\"\n  ],\n  \"postCount\": 5664\n}"
+								}
+							]
+						}
+					],
+					"id": "44172356-d9f126fe-c5f0-4001-8808-a5e475684406"
+				},
+				{
+					"name": "Comments",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "/api/Comments/:id",
+									"id": "44172356-3706c780-e5e6-4f73-8d74-ff7ba3ac4702",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"content\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Comments/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Comments",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "8bffb5d2-a5a4-4d10-a288-18845c7f160c",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-5f11b8f3-2b38-4299-8e1b-ea5dd6ff6e3f",
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"content\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Comments/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Comments",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								},
+								{
+									"name": "/api/Comments/:id",
+									"id": "44172356-90b589a2-7e30-4b16-9fed-0b739ed8af53",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Comments/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Comments",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "f219105b-f555-4f3d-9198-fa7eabba0731",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-abce426e-b16c-4070-aeae-6a6e9d8cdc77",
+											"name": "OK",
+											"originalRequest": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Comments/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Comments",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								}
+							],
+							"id": "44172356-8d1f2aee-8ce7-4bcc-84ce-548d66696d13"
+						},
+						{
+							"name": "post",
+							"item": [
+								{
+									"name": "{postId}",
+									"item": [
+										{
+											"name": "/api/Comments/post/:postId",
+											"id": "44172356-4be39c73-885b-4744-a9b6-f8bba562fe4b",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Comments/post/:postId?page=1&pageSize=20",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Comments",
+														"post",
+														":postId"
+													],
+													"query": [
+														{
+															"key": "page",
+															"value": "1"
+														},
+														{
+															"key": "pageSize",
+															"value": "20"
+														}
+													],
+													"variable": [
+														{
+															"id": "8a3c5d44-0363-42d0-af03-b838e780b563",
+															"key": "postId",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-2a168d41-961d-44a4-9072-273fd52f60b0",
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "text/plain"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Comments/post/:postId?page=1&pageSize=20",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Comments",
+																"post",
+																":postId"
+															],
+															"query": [
+																{
+																	"key": "page",
+																	"value": "1"
+																},
+																{
+																	"key": "pageSize",
+																	"value": "20"
+																}
+															],
+															"variable": [
+																{
+																	"key": "postId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"responseTime": null,
+													"body": "{\n  \"items\": [\n    {\n      \"id\": \"754776f0-503c-f523-4a85-c8b74e27c11b\",\n      \"postId\": \"150b201b-e857-ff83-a760-0ef5165807fd\",\n      \"authorProfileId\": \"b0b6d61b-9d7f-4936-4788-c4ce8b44899c\",\n      \"content\": \"string\",\n      \"createdAt\": \"1946-03-27T18:57:16.350Z\",\n      \"updatedAt\": \"1978-02-14T06:19:38.172Z\",\n      \"parentCommentId\": \"550eaada-dbb0-9af5-43cd-bd4e32f7aeaf\"\n    },\n    {\n      \"id\": \"57ef6edf-9aca-a9ac-2ccf-23cc996a2a4c\",\n      \"postId\": \"f7669189-c369-5b21-4e0f-a95dd48117ed\",\n      \"authorProfileId\": \"ce719595-f535-72d4-278b-6772d08e3f20\",\n      \"content\": \"string\",\n      \"createdAt\": \"2006-04-16T16:24:54.920Z\",\n      \"updatedAt\": \"1954-07-22T23:46:41.845Z\",\n      \"parentCommentId\": \"7ae7527b-6ff2-62e3-32de-04074ef42048\"\n    }\n  ],\n  \"page\": 5291,\n  \"pageSize\": 5116,\n  \"totalCount\": 8825\n}"
+												}
+											]
+										}
+									],
+									"id": "44172356-4aa3168c-f902-4e96-ab85-c9ab0eb6446f"
+								}
+							],
+							"id": "44172356-705f6d73-1fba-44ec-81be-810e9dd01be9"
+						},
+						{
+							"name": "/api/Comments",
+							"id": "44172356-e3e22ded-745e-4c39-a18c-bebfb2a4170c",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"postId\": \"20ad736b-a33b-0720-e265-be7534860b9e\",\n  \"authorProfileId\": \"9f645891-4ff2-d5cc-0b6b-ce08a2254765\",\n  \"content\": \"string\",\n  \"parentCommentId\": \"2f7f53b4-c6f1-aecb-3f42-18ae96244de9\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/Comments",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Comments"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-f0106ec1-6120-4c71-8fd8-8e3071a521d3",
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"postId\": \"20ad736b-a33b-0720-e265-be7534860b9e\",\n  \"authorProfileId\": \"9f645891-4ff2-d5cc-0b6b-ce08a2254765\",\n  \"content\": \"string\",\n  \"parentCommentId\": \"2f7f53b4-c6f1-aecb-3f42-18ae96244de9\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Comments",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Comments"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"id\": \"9cd2cce5-36b2-241f-3b5a-3c8c4d380d27\",\n  \"postId\": \"372359d2-7a63-a0c9-8e9e-8efe9185c0c4\",\n  \"authorProfileId\": \"b2471edc-f0f0-b9cc-df97-3b2dfe590e98\",\n  \"content\": \"string\",\n  \"createdAt\": \"2013-06-01T16:25:48.380Z\",\n  \"updatedAt\": \"1951-05-02T03:23:29.139Z\",\n  \"parentCommentId\": \"8d501a1e-3260-87cb-8b2b-ad9f19810eb7\"\n}"
+								}
+							]
+						}
+					],
+					"id": "44172356-d20bb2b5-a4c7-4bd1-bbc5-3bfb1e2a02f5"
+				},
+				{
+					"name": "Profiles",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "followers",
+									"item": [
+										{
+											"name": "/api/Profiles/:id/followers",
+											"id": "44172356-be6a3f6d-ce84-492c-90cd-93875fbc098d",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/:id/followers?skip=5733&take=5733",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														":id",
+														"followers"
+													],
+													"query": [
+														{
+															"key": "skip",
+															"value": "5733"
+														},
+														{
+															"key": "take",
+															"value": "5733"
+														}
+													],
+													"variable": [
+														{
+															"id": "b72e5b88-7636-40a9-b5fb-197df3e2cab1",
+															"key": "id",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-6b80cbe1-3d04-4aff-a912-45c1c93afd96",
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Profiles/:id/followers?skip=5733&take=5733",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Profiles",
+																":id",
+																"followers"
+															],
+															"query": [
+																{
+																	"key": "skip",
+																	"value": "5733"
+																},
+																{
+																	"key": "take",
+																	"value": "5733"
+																}
+															],
+															"variable": [
+																{
+																	"key": "id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"responseTime": null,
+													"body": ""
+												}
+											]
+										}
+									],
+									"id": "44172356-f96a7f8d-6caa-493e-8aa5-58c7732a0ff0"
+								},
+								{
+									"name": "followings",
+									"item": [
+										{
+											"name": "/api/Profiles/:id/followings",
+											"id": "44172356-53b44f49-01c2-4e0b-bb45-74e914c12a2c",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/:id/followings?skip=5733&take=5733",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														":id",
+														"followings"
+													],
+													"query": [
+														{
+															"key": "skip",
+															"value": "5733"
+														},
+														{
+															"key": "take",
+															"value": "5733"
+														}
+													],
+													"variable": [
+														{
+															"id": "9b27cfe8-fef6-47fe-b4ad-670d6e3e8478",
+															"key": "id",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-615b0929-f151-42dc-b752-264c3d14320a",
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Profiles/:id/followings?skip=5733&take=5733",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Profiles",
+																":id",
+																"followings"
+															],
+															"query": [
+																{
+																	"key": "skip",
+																	"value": "5733"
+																},
+																{
+																	"key": "take",
+																	"value": "5733"
+																}
+															],
+															"variable": [
+																{
+																	"key": "id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"responseTime": null,
+													"body": ""
+												}
+											]
+										}
+									],
+									"id": "44172356-d62e8bed-7451-405a-8b5c-83162631d0fc"
+								},
+								{
+									"name": "/api/Profiles/:id",
+									"id": "44172356-5332540d-fd88-46d7-b316-ad35301285d2",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Profiles/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Profiles",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "ba6875ee-4760-4b22-b7d1-dbb12220d4b1",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-701e26c0-8faf-4213-8e3c-383bab0bd5aa",
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"id\": \"98868995-9924-3093-64ae-7014e2ff5727\",\n  \"username\": \"string\",\n  \"displayName\": \"string\",\n  \"bio\": \"string\",\n  \"avatarUrl\": \"string\",\n  \"coverUrl\": \"string\",\n  \"createdAt\": \"1981-09-16T09:01:36.332Z\",\n  \"lastActiveAt\": \"1960-12-11T14:56:00.958Z\",\n  \"followersCount\": 8206,\n  \"followingCount\": 4952\n}"
+										}
+									]
+								}
+							],
+							"id": "44172356-bbb459e0-1816-4ac3-bb8e-08663c69ad8f"
+						},
+						{
+							"name": "follow",
+							"item": [
+								{
+									"name": "{targetId}",
+									"item": [
+										{
+											"name": "/api/Profiles/follow/:targetId",
+											"id": "44172356-005a2eb2-dd97-4117-ab84-aeabc56ed5fa",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "POST",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/follow/:targetId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														"follow",
+														":targetId"
+													],
+													"variable": [
+														{
+															"id": "a934281c-ba13-43cb-a9f2-c6eaa9ef1059",
+															"key": "targetId",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-60c9c925-23b7-482a-8088-f7bf3391aa08",
+													"name": "OK",
+													"originalRequest": {
+														"method": "POST",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Profiles/follow/:targetId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Profiles",
+																"follow",
+																":targetId"
+															],
+															"variable": [
+																{
+																	"key": "targetId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"responseTime": null,
+													"body": ""
+												}
+											]
+										},
+										{
+											"name": "/api/Profiles/follow/:targetId",
+											"id": "44172356-9807b532-bd6c-499e-b4b5-77fe927658e0",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/follow/:targetId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														"follow",
+														":targetId"
+													],
+													"variable": [
+														{
+															"id": "b9fef3f8-779b-43de-8c80-099d96c20564",
+															"key": "targetId",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-73030514-1c7f-4068-bfee-ac3835507d5a",
+													"name": "OK",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Profiles/follow/:targetId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Profiles",
+																"follow",
+																":targetId"
+															],
+															"variable": [
+																{
+																	"key": "targetId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"responseTime": null,
+													"body": ""
+												}
+											]
+										}
+									],
+									"id": "44172356-66f448b7-ed56-4c7f-8adc-01214e9cac80"
+								}
+							],
+							"id": "44172356-65b56ca0-9101-474a-aa94-b955aa248631"
+						},
+						{
+							"name": "links",
+							"item": [
+								{
+									"name": "{linkId}",
+									"item": [
+										{
+											"name": "/api/Profiles/links/:linkId",
+											"id": "44172356-fd049185-9739-4e83-a7dd-6dfdb494642f",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "DELETE",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/links/:linkId",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														"links",
+														":linkId"
+													],
+													"variable": [
+														{
+															"id": "e9d9d0a4-8b87-4960-9a38-237ea64e3248",
+															"key": "linkId",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-6e7726d3-8204-43db-94b4-f74ff7913474",
+													"name": "OK",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [],
+														"url": {
+															"raw": "{{baseUrl}}/api/Profiles/links/:linkId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Profiles",
+																"links",
+																":linkId"
+															],
+															"variable": [
+																{
+																	"key": "linkId"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [],
+													"cookie": [],
+													"responseTime": null,
+													"body": ""
+												}
+											]
+										}
+									],
+									"id": "44172356-8d01458b-1bd0-4dea-b886-ff94e944b6e0"
+								},
+								{
+									"name": "/api/Profiles/links",
+									"id": "44172356-d104f038-34f4-485a-b10e-4c50bae70d3b",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Profiles/links",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Profiles",
+												"links"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-a1a49701-1535-4c55-a0f8-5f815ab11118",
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [],
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/links",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														"links"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								},
+								{
+									"name": "/api/Profiles/links",
+									"id": "44172356-457dd7d2-7d8b-42c2-b114-352ec1296a6d",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"id\": \"e074e3ed-0801-6a25-e75c-f630966e8b3b\",\n  \"socialKind\": 3401,\n  \"url\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Profiles/links",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Profiles",
+												"links"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-5d44d0c8-f843-4626-a1bc-c3c219456f79",
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"id\": \"e074e3ed-0801-6a25-e75c-f630966e8b3b\",\n  \"socialKind\": 3401,\n  \"url\": \"string\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Profiles/links",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Profiles",
+														"links"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								}
+							],
+							"id": "44172356-6d36c8c9-9148-468e-9047-9bce22ef046d"
+						},
+						{
+							"name": "/api/Profiles",
+							"id": "44172356-9a050bff-00ed-43f4-aee8-adcfeaa7a778",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"username\": \"string\",\n  \"displayName\": \"string\",\n  \"bio\": \"string\",\n  \"avatarUrl\": \"string\",\n  \"coverUrl\": \"string\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/Profiles",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Profiles"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-57d81539-04b1-475f-be4d-a698780dbdba",
+									"name": "OK",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"username\": \"string\",\n  \"displayName\": \"string\",\n  \"bio\": \"string\",\n  \"avatarUrl\": \"string\",\n  \"coverUrl\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Profiles",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Profiles"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"id\": \"98868995-9924-3093-64ae-7014e2ff5727\",\n  \"username\": \"string\",\n  \"displayName\": \"string\",\n  \"bio\": \"string\",\n  \"avatarUrl\": \"string\",\n  \"coverUrl\": \"string\",\n  \"createdAt\": \"1981-09-16T09:01:36.332Z\",\n  \"lastActiveAt\": \"1960-12-11T14:56:00.958Z\",\n  \"followersCount\": 8206,\n  \"followingCount\": 4952\n}"
+								}
+							]
+						},
+						{
+							"name": "/api/Profiles",
+							"id": "44172356-adce6ebb-8635-4078-bb38-3d005a1e1e4a",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/Profiles",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Profiles"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-d83237f9-9ee0-4e04-837c-6b3ee494095e",
+									"name": "OK",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"url": {
+											"raw": "{{baseUrl}}/api/Profiles",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Profiles"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "text",
+									"header": [],
+									"cookie": [],
+									"responseTime": null,
+									"body": ""
+								}
+							]
+						}
+					],
+					"id": "44172356-319d48d7-923f-40e3-89cc-5a3447e222ee",
+					"auth": {
+						"type": "bearer",
+						"bearer": [
+							{
+								"key": "token",
+								"value": "eyJhbGciOiJIUzI1NiIsImtpZCI6IjhkVjBVTkQzdm9tSzNUY1ciLCJ0eXAiOiJKV1QifQ.eyJhYWwiOiJhYWwxIiwiYWNjb3VudF9yb2xlIjoidXNlciIsImFtciI6W3sibWV0aG9kIjoicGFzc3dvcmQiLCJ0aW1lc3RhbXAiOjE3NTk2ODc3MDF9XSwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZW1haWwiLCJwcm92aWRlcnMiOlsiZW1haWwiXX0sImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJlbWFpbCI6InRvcGh1cXV5MjcxMkBnbWFpbC5jb20iLCJleHAiOjE3NTk2OTEzMDEsImlhdCI6MTc1OTY4NzcwMSwiaXNfYW5vbnltb3VzIjpmYWxzZSwiaXNzIjoiaHR0cHM6Ly9qZ291bnlsbWdqY21sd3l6enpodi5zdXBhYmFzZS5jby9hdXRoL3YxIiwicGhvbmUiOiIiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsInNlc3Npb25faWQiOiI1NzAxZTM2Ni0wMGI4LTQ1YjYtYTMwMC02N2FjMmRkOTFkZjMiLCJzdWIiOiJmM2NlYWM2NC1hNGYyLTQxYzAtYjFmZS03MjBmMjhmZTJlYzEiLCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsIjoidG9waHVxdXkyNzEyQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmdWxsX25hbWUiOiJjYyBjaGFtIGNvbSIsInBob25lX3ZlcmlmaWVkIjpmYWxzZSwic3ViIjoiZjNjZWFjNjQtYTRmMi00MWMwLWIxZmUtNzIwZjI4ZmUyZWMxIiwidXNlcm5hbWUiOiJjYyJ9fQ.FQVDGIFPwPTFd97ypy78GEiHkpFzulkKPKKrObTVZ44",
+								"type": "string"
+							}
+						]
+					},
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9f4825fb-7366-4ae3-a2fe-b60dd8eeb122",
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {},
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"id": "7a34c071-db64-4893-9902-bbd9e3aa8ace",
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {},
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "ProfilesSync",
+					"item": [
+						{
+							"name": "sync",
+							"item": [
+								{
+									"name": "/api/ProfilesSync/sync",
+									"id": "44172356-afc15a08-b6e1-458f-9a88-bfabb9d42199",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"user_id\": \"cc99d7d3-2e1b-554e-9ed0-3a9c134f89ee\",\n  \"email\": \"string\",\n  \"role\": \"string\",\n  \"raw_user_meta_data\": {}\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/ProfilesSync/sync",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"ProfilesSync",
+												"sync"
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-eee313ec-24d3-4107-b737-21c4287acfbd",
+											"name": "OK",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"user_id\": \"cc99d7d3-2e1b-554e-9ed0-3a9c134f89ee\",\n  \"email\": \"string\",\n  \"role\": \"string\",\n  \"raw_user_meta_data\": {}\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/ProfilesSync/sync",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"ProfilesSync",
+														"sync"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								}
+							],
+							"id": "44172356-6dcef18b-92d7-468a-a0ba-b6b934a398fe"
+						}
+					],
+					"id": "44172356-575fbbe4-72dc-4d6c-a06c-dfae83d8a68d"
+				},
+				{
+					"name": "Reports",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "/api/Reports/:id",
+									"id": "44172356-e0707e9b-368d-441e-8895-51ba142f84b1",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "PUT",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"newStatus\": 6840\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Reports/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Reports",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "2c0d9b1d-d7ad-49ba-be79-ade913b933f6",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-3b1b1142-019b-4e7f-9c2b-0dc2d092e52b",
+											"name": "OK",
+											"originalRequest": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"newStatus\": 6840\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/Reports/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Reports",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [],
+											"cookie": [],
+											"responseTime": null,
+											"body": ""
+										}
+									]
+								}
+							],
+							"id": "44172356-4df15141-481e-4f99-b6af-5e035cdf35a1"
+						},
+						{
+							"name": "/api/Reports",
+							"id": "44172356-cf3c31ce-73d1-4a28-bc56-a08f8212493a",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"reporterProfileId\": \"4763335a-42cc-f1c4-2b0c-2148b6052f07\",\n  \"targetType\": 7714,\n  \"targetId\": \"fd3e579a-c9e8-5cad-70de-05642ad096a5\",\n  \"reason\": \"string\"\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/Reports",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Reports"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-eae0a773-d4ef-471d-9215-c534f6689d04",
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"reporterProfileId\": \"4763335a-42cc-f1c4-2b0c-2148b6052f07\",\n  \"targetType\": 7714,\n  \"targetId\": \"fd3e579a-c9e8-5cad-70de-05642ad096a5\",\n  \"reason\": \"string\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Reports",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Reports"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"id\": \"97e16379-3943-cb4c-d2a8-55fe79bd7930\",\n  \"reporterProfileId\": \"cecd811a-eb61-d791-e776-0d4d239063b8\",\n  \"targetType\": 6634,\n  \"targetId\": \"75ce5f08-d8d7-d923-a78a-2ffc2e4be803\",\n  \"reason\": \"string\",\n  \"status\": 9569,\n  \"createdAt\": \"1987-06-23T02:52:04.517Z\",\n  \"actedAt\": \"1976-03-15T21:17:28.221Z\",\n  \"data\": \"string\"\n}"
+								}
+							]
+						},
+						{
+							"name": "/api/Reports",
+							"id": "44172356-233de713-685c-4287-9646-a283bd36711c",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/Reports?page=1&pageSize=20",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Reports"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "20"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-b7c1ea75-dcfc-4524-bf49-bf78fd3fb8d9",
+									"name": "OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Reports?page=1&pageSize=20",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Reports"
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "pageSize",
+													"value": "20"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"items\": [\n    {\n      \"id\": \"cdde984e-b8f7-b1ed-d56e-b507008b323f\",\n      \"reporterProfileId\": \"36402493-5e58-8457-8d0a-6a81a3f05071\",\n      \"targetType\": 2828,\n      \"targetId\": \"b959afdf-d89d-d800-557c-52cab91d7e55\",\n      \"reason\": \"string\",\n      \"status\": 8093,\n      \"createdAt\": \"2003-09-29T23:19:08.129Z\",\n      \"actedAt\": \"2018-11-30T14:11:13.402Z\",\n      \"data\": \"string\"\n    },\n    {\n      \"id\": \"39fe30b4-6ed5-f345-4804-84c3b0d46126\",\n      \"reporterProfileId\": \"b181b192-0311-ccdc-f2fe-e2b79c7ea376\",\n      \"targetType\": 8401,\n      \"targetId\": \"32af4eaa-91f9-4e9b-d3f0-a044641d1467\",\n      \"reason\": \"string\",\n      \"status\": 5875,\n      \"createdAt\": \"1987-07-12T11:47:08.903Z\",\n      \"actedAt\": \"1998-10-28T00:04:34.715Z\",\n      \"data\": \"string\"\n    }\n  ],\n  \"page\": 3808,\n  \"pageSize\": 1660,\n  \"totalCount\": 6306\n}"
+								}
+							]
+						}
+					],
+					"id": "44172356-a2702601-bf9c-4a8b-8d10-2d3fab1f4388"
+				},
+				{
+					"name": "Search",
+					"item": [
+						{
+							"name": "/api/Search",
+							"id": "44172356-9764d761-f542-4969-8c85-772d215c56fc",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"query\": \"string\",\n  \"page\": 8274,\n  \"pageSize\": 5783\n}",
+									"options": {
+										"raw": {
+											"headerFamily": "json",
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/Search",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Search"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-7078e855-a6a3-434c-88db-11f19d963e8e",
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"query\": \"string\",\n  \"page\": 8274,\n  \"pageSize\": 5783\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/Search",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Search"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"posts\": [\n    {\n      \"id\": \"7d7f9f33-15f9-c849-63eb-5ab45c820639\",\n      \"caption\": \"string\",\n      \"thumbnailUrl\": \"string\"\n    },\n    {\n      \"id\": \"ac13d0ee-4d4b-cc28-9e8c-9c7c27acd63d\",\n      \"caption\": \"string\",\n      \"thumbnailUrl\": \"string\"\n    }\n  ],\n  \"tags\": [\n    {\n      \"id\": \"78b5ec44-0296-065e-9615-511713bffcd4\",\n      \"name\": \"string\",\n      \"postCount\": 1000\n    },\n    {\n      \"id\": \"57751759-d3bb-2a72-86d6-fda42b8f26fb\",\n      \"name\": \"string\",\n      \"postCount\": 5805\n    }\n  ]\n}"
+								}
+							]
+						}
+					],
+					"id": "44172356-77adf714-bf69-4c03-b22b-678824ae88ce"
+				},
+				{
+					"name": "Tags",
+					"item": [
+						{
+							"name": "{id}",
+							"item": [
+								{
+									"name": "posts",
+									"item": [
+										{
+											"name": "/api/Tags/:id/posts",
+											"id": "44172356-ecd11834-b51e-41a7-b2ff-db33ac82fb36",
+											"protocolProfileBehavior": {
+												"disableBodyPruning": true
+											},
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Tags/:id/posts?page=1&pageSize=20",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Tags",
+														":id",
+														"posts"
+													],
+													"query": [
+														{
+															"key": "page",
+															"value": "1"
+														},
+														{
+															"key": "pageSize",
+															"value": "20"
+														}
+													],
+													"variable": [
+														{
+															"id": "5d2c9fde-9905-488f-8039-7ae299f0633d",
+															"key": "id",
+															"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+														}
+													]
+												}
+											},
+											"response": [
+												{
+													"id": "44172356-193ba51a-733f-4aae-98ab-cbce945a5273",
+													"name": "OK",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "text/plain"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/Tags/:id/posts?page=1&pageSize=20",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"Tags",
+																":id",
+																"posts"
+															],
+															"query": [
+																{
+																	"key": "page",
+																	"value": "1"
+																},
+																{
+																	"key": "pageSize",
+																	"value": "20"
+																}
+															],
+															"variable": [
+																{
+																	"key": "id"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "json",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "application/json"
+														}
+													],
+													"cookie": [],
+													"responseTime": null,
+													"body": "{\n  \"items\": [\n    {\n      \"id\": \"8e215a08-43e2-f048-0563-ded1cb003c06\",\n      \"authorProfileId\": \"ec74a444-2a68-903a-01a0-2507b9bbb122\",\n      \"caption\": \"string\",\n      \"createdAt\": \"1962-11-21T10:44:00.320Z\",\n      \"updatedAt\": \"2013-08-18T18:02:59.988Z\",\n      \"privacyLevel\": 2391,\n      \"medias\": [\n        {\n          \"id\": \"f151e891-c548-a819-8f71-200404862eb2\",\n          \"postId\": \"b03fe9ce-7bc2-4755-7019-24b628c03184\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 9161,\n          \"height\": 662,\n          \"format\": \"string\",\n          \"position\": 6659,\n          \"thumbnailUrl\": \"string\"\n        },\n        {\n          \"id\": \"df73f51b-cc01-a4df-1563-47bdc2329fc6\",\n          \"postId\": \"1220e246-4991-18fd-b267-4869985194ed\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 3049,\n          \"height\": 3180,\n          \"format\": \"string\",\n          \"position\": 2935,\n          \"thumbnailUrl\": \"string\"\n        }\n      ],\n      \"tags\": [\n        {\n          \"id\": \"19192fad-432f-5356-3572-455dc4bdbd6e\",\n          \"name\": \"string\"\n        },\n        {\n          \"id\": \"79119f34-fefb-87ec-1315-63031a4ad058\",\n          \"name\": \"string\"\n        }\n      ],\n      \"reactions\": {\n        \"total\": 7987,\n        \"byType\": {\n          \"key_0\": 6475\n        },\n        \"currentUserReaction\": 4681\n      }\n    },\n    {\n      \"id\": \"9eb12a26-fcd6-041c-ac69-f2d30cfb5ad9\",\n      \"authorProfileId\": \"50ddcbd2-e4e5-2723-820e-6457ef0a9e30\",\n      \"caption\": \"string\",\n      \"createdAt\": \"1975-04-20T00:07:58.427Z\",\n      \"updatedAt\": \"1995-11-29T02:57:08.961Z\",\n      \"privacyLevel\": 4218,\n      \"medias\": [\n        {\n          \"id\": \"d8ba6f26-eb67-5d9e-e8c0-c820befe7a86\",\n          \"postId\": \"45e60431-879a-0aef-bafc-1da783ecf6ca\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 7346,\n          \"height\": 1396,\n          \"format\": \"string\",\n          \"position\": 5693,\n          \"thumbnailUrl\": \"string\"\n        },\n        {\n          \"id\": \"93a7edac-0a95-469b-ddf2-3c8c077932f2\",\n          \"postId\": \"694584f8-1920-4883-e210-b41f96b7d817\",\n          \"url\": \"string\",\n          \"publicId\": \"string\",\n          \"width\": 3096,\n          \"height\": 2945,\n          \"format\": \"string\",\n          \"position\": 9307,\n          \"thumbnailUrl\": \"string\"\n        }\n      ],\n      \"tags\": [\n        {\n          \"id\": \"d0f89c01-683b-b842-be69-7cb448fdaa7d\",\n          \"name\": \"string\"\n        },\n        {\n          \"id\": \"3c75270e-444d-bba8-ce41-d5822320d61b\",\n          \"name\": \"string\"\n        }\n      ],\n      \"reactions\": {\n        \"total\": 9962,\n        \"byType\": {\n          \"key_0\": 4846,\n          \"key_1\": 3519\n        },\n        \"currentUserReaction\": 5342\n      }\n    }\n  ],\n  \"page\": 548,\n  \"pageSize\": 7421,\n  \"totalCount\": 429\n}"
+												}
+											]
+										}
+									],
+									"id": "44172356-2dc79514-37b5-4e85-96d1-d6d1f8519420"
+								},
+								{
+									"name": "/api/Tags/:id",
+									"id": "44172356-5cf93e60-5092-4507-ba2d-0b21fccd7ae2",
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Tags/:id",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Tags",
+												":id"
+											],
+											"variable": [
+												{
+													"id": "28e0179e-cc0d-4c47-9799-80f4a76ddb26",
+													"key": "id",
+													"value": "57e7bc5b-cbe8-6dce-856f-60b3dd3de49f"
+												}
+											]
+										}
+									},
+									"response": [
+										{
+											"id": "44172356-85a92563-8535-4199-bde7-b99e53a1495f",
+											"name": "OK",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "text/plain"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/Tags/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"Tags",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "json",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "application/json"
+												}
+											],
+											"cookie": [],
+											"responseTime": null,
+											"body": "{\n  \"id\": \"68254c2c-a37f-6009-3e0d-30b9bc521da3\",\n  \"name\": \"string\",\n  \"postCount\": 9416\n}"
+										}
+									]
+								}
+							],
+							"id": "44172356-c40bb554-c881-43bd-b1a7-2764ef37ba99"
+						},
+						{
+							"name": "/api/Tags",
+							"id": "44172356-a6c074b9-8492-4d31-88be-d055a5942718",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/Tags",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Tags"
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-4c49253e-6439-4837-a918-f62f980609bd",
+									"name": "OK",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Tags",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Tags"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "[\n  {\n    \"id\": \"a96a34de-4fdc-32b4-4f9f-54496016a29d\",\n    \"name\": \"string\",\n    \"postCount\": 100\n  },\n  {\n    \"id\": \"5f9b2cdd-586f-ab7b-e3e3-ea6443883085\",\n    \"name\": \"string\",\n    \"postCount\": 3464\n  }\n]"
+								}
+							]
+						},
+						{
+							"name": "/api/Tags",
+							"id": "44172356-b3b2b104-a572-45d3-9212-79cf60a0c551",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "text/plain"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/Tags?name=string",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"Tags"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "string"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"id": "44172356-1a077ce3-c531-4d5d-ae35-9c172cfd30a6",
+									"name": "OK",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "text/plain"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/Tags?name=string",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"Tags"
+											],
+											"query": [
+												{
+													"key": "name",
+													"value": "string"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"responseTime": null,
+									"body": "{\n  \"id\": \"68254c2c-a37f-6009-3e0d-30b9bc521da3\",\n  \"name\": \"string\",\n  \"postCount\": 9416\n}"
+								}
+							]
+						}
+					],
+					"id": "44172356-3fa1432b-94bf-4b30-b9d5-b13347b479a3"
+				}
+			],
+			"id": "44172356-53a82a15-74d6-40fe-a3b0-b13afaa4f630"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "6e552764-e51a-4851-a8f1-994e8ff02e69",
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "f9401c39-1133-458a-be52-8d925fc1295c",
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://localhost:7138/"
+		}
+	]
+}
