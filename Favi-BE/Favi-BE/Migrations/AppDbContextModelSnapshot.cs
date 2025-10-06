@@ -54,7 +54,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("Collections");
+                    b.ToTable("Collections", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Comment", b =>
@@ -90,7 +90,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.Follow", b =>
@@ -108,7 +108,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("FolloweeId");
 
-                    b.ToTable("Follows");
+                    b.ToTable("Follows", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.PostCollection", b =>
@@ -123,7 +123,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("CollectionId");
 
-                    b.ToTable("PostCollections");
+                    b.ToTable("PostCollections", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.PostTag", b =>
@@ -138,7 +138,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("PostTags");
+                    b.ToTable("PostTags", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.Reaction", b =>
@@ -159,7 +159,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("Reactions");
+                    b.ToTable("Reactions", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Post", b =>
@@ -187,7 +187,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.PostMedia", b =>
@@ -227,7 +227,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("PostMedias");
+                    b.ToTable("PostMedias", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Profile", b =>
@@ -263,7 +263,7 @@ namespace Favi_BE.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Profiles");
+                    b.ToTable("Profiles", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Report", b =>
@@ -300,7 +300,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ReporterId");
 
-                    b.ToTable("Reports");
+                    b.ToTable("Reports", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.SocialLink", b =>
@@ -326,7 +326,7 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ProfileId");
 
-                    b.ToTable("SocialLinks");
+                    b.ToTable("SocialLinks", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Tag", b =>
@@ -341,7 +341,7 @@ namespace Favi_BE.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Collection", b =>

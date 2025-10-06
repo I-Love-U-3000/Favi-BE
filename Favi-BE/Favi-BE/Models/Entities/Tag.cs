@@ -6,7 +6,6 @@ namespace Favi_BE.Models.Entities
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
-
         public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();
     }
 }
