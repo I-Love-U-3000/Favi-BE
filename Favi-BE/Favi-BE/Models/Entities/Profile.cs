@@ -16,7 +16,8 @@ namespace Favi_BE.Models.Entities
         public UserRole Role { get; set; } = UserRole.User;
         public DateTime CreatedAt { get; set; }
         public DateTime? LastActiveAt { get; set; }
-
+        public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
+        public PrivacyLevel FollowPrivacyLevel { get; set; } = PrivacyLevel.Public;
         // Navigation
         public ICollection<SocialLink> SocialLinks { get; set; } = new List<SocialLink>();
         public ICollection<Collection> Collections { get; set; } = new List<Collection>();

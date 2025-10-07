@@ -11,8 +11,10 @@ namespace Favi_BE.Models.Dtos
         string? CoverUrl,
         DateTime CreatedAt,
         DateTime LastActiveAt,
-        int FollowersCount,
-        int FollowingCount
+        PrivacyLevel PrivacyLevel,
+        PrivacyLevel FollowPrivacyLevel,
+        int? FollowersCount,
+        int? FollowingCount
     );
 
     public record ProfileUpdateRequest(
@@ -20,7 +22,9 @@ namespace Favi_BE.Models.Dtos
         string? DisplayName,
         string? Bio,
         string? AvatarUrl,
-        string? CoverUrl
+        string? CoverUrl,
+        PrivacyLevel? PrivacyLevel,
+        PrivacyLevel? FollowPrivacyLevel
     );
 
     public record SocialLinkDto(

@@ -1,6 +1,6 @@
 ﻿using Favi_BE.Models.Dtos;
 
-namespace Favi_BE.Interfaces
+namespace Favi_BE.Interfaces.Services
 {
     public interface ICommentService
     {

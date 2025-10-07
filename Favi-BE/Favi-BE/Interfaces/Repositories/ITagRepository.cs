@@ -10,5 +10,6 @@ namespace Favi_BE.Interfaces.Repositories
         Task<Tag> GetByNameAsync(string name);
         Task<IEnumerable<Tag>> GetTagsByPostIdAsync(Guid postId);
         Task<IEnumerable<Tag>> GetOrCreateTagsAsync(IEnumerable<string> tagNames);
+        Task<(IEnumerable<Tag> Tags, int TotalCount)> GetAllPagedAsync(int skip, int take);
     }
 }

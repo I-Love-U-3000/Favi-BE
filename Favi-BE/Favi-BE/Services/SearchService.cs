@@ -1,4 +1,5 @@
 ﻿using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 
 namespace Favi_BE.Services

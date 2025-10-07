@@ -1,4 +1,5 @@
 ﻿using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 
@@ -31,6 +32,14 @@ namespace Favi_BE.Services
         {
             var tags = await _uow.Tags.GetAllAsync();
             return tags.Select(t => new TagResponse(t.Id, t.Name, 0));
+        }
+
+        public async Task<PagedResult<TagResponse>> GetAllPagedAsync(int page, int pageSize)
+        {
+            var skip = (page - 1) * pageSize;
+            var (tags, totalCount) = await _uow.Tags.GetAllPagedAsync(skip, pageSize);
+            var dtos = tags.Select(t => new TagResponse(t.Id, t.Name, 0));
+            return new PagedResult<TagResponse>(dtos, page, pageSize, totalCount);
         }
 
         public async Task<TagResponse?> GetByIdAsync(Guid id)

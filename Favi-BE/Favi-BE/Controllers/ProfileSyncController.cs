@@ -1,4 +1,4 @@
-﻿using Favi_BE.Interfaces;
+﻿using Favi_BE.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,9 +34,7 @@ namespace Favi_BE.Controllers
                     ? meta["username"]?.ToString() ?? dto.email.Split('@')[0]
                     : dto.email.Split('@')[0];
 
-                string displayName = meta.ContainsKey("full_name")
-                    ? meta["full_name"]?.ToString() ?? username
-                    : username;
+                string displayName = string.Empty;
 
                 await _profiles.CreateProfileAsync(dto.user_id, username, displayName);
 
@@ -50,3 +48,4 @@ namespace Favi_BE.Controllers
 
     }
 }
+    

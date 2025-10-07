@@ -50,5 +50,16 @@ namespace Favi_BE.Data.Repositories
             
             return result;
         }
+
+        public async Task<(IEnumerable<Tag> Tags, int TotalCount)> GetAllPagedAsync(int skip, int take)
+        {
+            var totalCount = await _dbSet.CountAsync();
+            var tags = await _dbSet
+                .OrderBy(t => t.Name)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+            return (tags, totalCount);
+        }
     }
 }

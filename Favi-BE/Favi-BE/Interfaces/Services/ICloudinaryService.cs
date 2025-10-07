@@ -1,4 +1,4 @@
-﻿namespace Favi_BE.Interfaces
+﻿namespace Favi_BE.Interfaces.Services
 {
     public interface ICloudinaryService
     {

@@ -1,5 +1,6 @@
 using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Models.Entities;
+using Favi_BE.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -25,10 +26,30 @@ namespace Favi_BE.Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Report>> GetReportsByContentTypeAsync(string contentType, int skip, int take)
+        public async Task<IEnumerable<Report>> GetReportsByTargetTypeAsync(ReportTarget targetType, int skip, int take)
         {
             return await _dbSet
-                .Where(r => r.TargetType.ToString() == contentType)
+                .Where(r => r.TargetType == targetType)
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Include(r => r.Reporter)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Report>> GetReportsByTargetIdAsync(Guid targetId, int skip, int take)
+        {
+            return await _dbSet
+                .Where(r => r.TargetId == targetId)
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Include(r => r.Reporter)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Report>> GetReportsByReporterIdAsync(Guid reporterId, int skip, int take)
+        {
+            return await _dbSet
+                .Where(r => r.ReporterId == reporterId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip(skip)
                 .Take(take)

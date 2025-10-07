@@ -1,5 +1,5 @@
 ﻿using Favi_BE.Common;
-using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,10 +67,17 @@ namespace Favi_BE.Controllers
             var result = await _profiles.GetFollowingsAsync(id, s, t);
             return Ok(result);
         }
+        
+        [HttpGet("{id}/links")]
+        public async Task<IActionResult> GetLinks(Guid id)
+        {
+            var links = await _profiles.GetSocialLinksAsync(id);
+            return Ok(links);
+        }
 
         // Lấy social links của chính mình
         [Authorize]
-        [HttpGet("links")]
+        [HttpGet("me/links")]
         public async Task<IActionResult> GetLinks()
         {
             var userId = User.GetUserIdFromMetadata();

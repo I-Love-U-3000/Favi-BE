@@ -1,6 +1,6 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace Favi_BE.Services

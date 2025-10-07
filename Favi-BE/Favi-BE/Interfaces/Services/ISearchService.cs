@@ -1,7 +1,7 @@
 ﻿using Favi_BE.Models.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Favi_BE.Interfaces
+namespace Favi_BE.Interfaces.Services
 {
     public interface ISearchService
     {

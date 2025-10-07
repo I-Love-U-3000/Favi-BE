@@ -1,4 +1,5 @@
-using Favi_BE.Interfaces;
+using Favi_BE.Common;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +13,15 @@ namespace Favi_BE.Controllers
         private readonly ICollectionService _collections;
         public CollectionsController(ICollectionService collections) => _collections = collections;
 
-        //[Authorize]
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<CollectionResponse>> Create(CreateCollectionRequest dto)
         {
-            //var userId = Guid.Parse(User.FindFirst("sub")!.Value);
-            var userId = Guid.Parse("9fcb20b5-37ff-43f4-bfae-5c0eda94afff"); 
+            var userId = User.GetUserIdFromMetadata();
             return Ok(await _collections.CreateAsync(userId, dto));
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<ActionResult<CollectionResponse>> Update(Guid id, UpdateCollectionRequest dto)
         {
@@ -29,7 +29,7 @@ namespace Favi_BE.Controllers
             return Ok(await _collections.UpdateAsync(id, userId, dto));
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -48,7 +48,7 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<CollectionResponse>> GetById(Guid id) =>
             Ok(await _collections.GetByIdAsync(id));
 
-        //[Authorize]
+        [Authorize]
         [HttpPost("{id}/posts/{postId}")]
         public async Task<IActionResult> AddPost(Guid id, Guid postId)
         {
@@ -57,7 +57,7 @@ namespace Favi_BE.Controllers
             return ok ? Ok() : Forbid();
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpDelete("{id}/posts/{postId}")]
         public async Task<IActionResult> RemovePost(Guid id, Guid postId)
         {

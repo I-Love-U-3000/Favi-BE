@@ -1,4 +1,5 @@
 ﻿using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 
@@ -30,6 +31,8 @@ namespace Favi_BE.Services
                 profile.CoverUrl,
                 profile.CreatedAt,
                 profile.LastActiveAt ?? DateTime.MinValue,
+                profile.PrivacyLevel,
+                profile.FollowPrivacyLevel,
                 followers,
                 followings
             );
@@ -50,6 +53,10 @@ namespace Favi_BE.Services
                 profile.CoverUrl = dto.CoverUrl;
             if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != profile.Username)
                 profile.Username = dto.Username;
+            if (dto.PrivacyLevel.HasValue)
+                profile.PrivacyLevel = dto.PrivacyLevel.Value;
+            if (dto.FollowPrivacyLevel.HasValue)
+                profile.FollowPrivacyLevel = dto.FollowPrivacyLevel.Value;
             profile.LastActiveAt = DateTime.UtcNow;
             _uow.Profiles.Update(profile);
 
