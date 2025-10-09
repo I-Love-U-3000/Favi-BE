@@ -28,7 +28,24 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<CollectionResponse>> Update(Guid id, UpdateCollectionRequest dto)
         {
             var userId = User.GetUserIdFromMetadata();
-            return Ok(await _collections.UpdateAsync(id, userId, dto));
+            var updated = await _collections.UpdateAsync(id, userId, dto);
+            return updated is null
+                ? NotFound(new { code = "COLLECTION_NOT_FOUND_OR_FORBIDDEN", message = "Không tìm thấy hoặc bạn không có quyền sửa bộ sưu tập này." })
+                : Ok(updated);
+        }
+
+        [HttpGet("{id}/posts")]
+        public async Task<ActionResult<PagedResult<PostResponse>>> GetPosts(Guid id, int page = 1, int pageSize = 20)
+        {
+            var collection = await _collections.GetEntityByIdAsync(id);
+            if (collection is null)
+                return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
+
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
+                return StatusCode(403, new { code = "COLLECTION_FORBIDDEN", message = "Bạn không có quyền xem bộ sưu tập này." });
+
+            return Ok(await _collections.GetPostsAsync(id, page, pageSize));
         }
 
         [Authorize]
@@ -81,18 +98,6 @@ namespace Favi_BE.Controllers
             return ok
                 ? NoContent()
                 : StatusCode(403, new { code = "NOT_OWNER_OR_INVALID", message = "Không thể xoá khỏi bộ sưu tập." });
-        }
-
-        [HttpGet("{id}/posts")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetPosts(Guid id, int page = 1, int pageSize = 20)
-        {
-            var collection = await _collections.GetEntityByIdAsync(id);
-            if (collection is null)
-                return NotFound();
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
-            if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
-                return Forbid();
-            return Ok(await _collections.GetPostsAsync(id, page, pageSize));
         }
     }
 }

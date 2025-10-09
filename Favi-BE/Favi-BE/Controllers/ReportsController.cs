@@ -64,9 +64,8 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserIdFromMetadata();
             if (userId != targetId && !User.IsInRole("admin"))
-            {
-                return Forbid();
-            }
+                return StatusCode(403, new { code = "REPORT_LIST_FORBIDDEN", message = "Bạn không có quyền xem báo cáo cho mục tiêu này." });
+
             return Ok(await _reports.GetReportsByTargetIdAsync(targetId, page, pageSize));
         }
 
@@ -75,10 +74,11 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<PagedResult<ReportResponse>>> GetReportsByTargetType([FromQuery] string targetType, int page = 1, int pageSize = 20)
         {
             if (!User.IsInRole("admin"))
-            {
-                return Forbid();
-            }
-            var parsed = Enum.TryParse<ReportTarget>(targetType, true, out var reportTarget);
+                return StatusCode(403, new { code = "REPORT_LIST_FORBIDDEN", message = "Chỉ admin mới được xem danh sách báo cáo theo loại." });
+
+            if (!Enum.TryParse<ReportTarget>(targetType, true, out var reportTarget))
+                return BadRequest(new { code = "INVALID_REPORT_TARGET", message = $"Giá trị targetType '{targetType}' không hợp lệ." });
+
             return Ok(await _reports.GetReportsByTargetTypeAsync(reportTarget, page, pageSize));
         }
     }

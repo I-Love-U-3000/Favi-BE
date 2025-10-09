@@ -23,28 +23,25 @@ namespace Favi_BE.Controllers
         {
             try
             {
-                // Check if profile already exists
                 var existing = await _profiles.GetByIdAsync(dto.user_id);
-                if (existing != null) return Ok("Profile already exists");
+                if (existing != null) return Ok(new { message = "Profile already exists" });
 
-                // Ưu tiên lấy từ raw_user_meta_data nếu có
                 var meta = dto.raw_user_meta_data ?? new Dictionary<string, object>();
-
                 string username = meta.ContainsKey("username")
                     ? meta["username"]?.ToString() ?? dto.email.Split('@')[0]
                     : dto.email.Split('@')[0];
 
                 string displayName = string.Empty;
-
                 await _profiles.CreateProfileAsync(dto.user_id, username, displayName);
 
                 return Ok(new { message = "Profile created successfully", username, displayName });
             }
             catch (Exception ex)
             {
-                return BadRequest($"Sync failed: {ex.Message}");
+                return BadRequest(new { code = "PROFILE_SYNC_FAILED", message = $"Sync failed: {ex.Message}" });
             }
         }
+
 
     }
 }

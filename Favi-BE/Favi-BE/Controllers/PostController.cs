@@ -61,23 +61,20 @@ namespace Favi_BE.Controllers
             var viewerId = TryGetUserId();
             var profile = await _profileService.GetEntityByIdAsync(profileId);
             if (profile == null)
-                return NotFound("Profile không tồn tại.");
-            // ✅ Check xem có quyền xem profile không
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
             if (!await _privacy.CanViewProfileAsync(profile, viewerId))
-                return Forbid();
+                return StatusCode(403, new { code = "PROFILE_FORBIDDEN", message = "Bạn không có quyền xem bài viết của hồ sơ này." });
 
-            // Lấy danh sách post của profile
             var result = await _posts.GetByProfileAsync(profileId, viewerId, page, pageSize);
-
-            // ✅ Lọc những bài mà viewer không có quyền xem
             var visiblePosts = new List<PostResponse>();
             foreach (var p in result.Items)
             {
                 var entity = await _posts.GetEntityAsync(p.Id);
+                if (entity == null) continue;
                 if (await _privacy.CanViewPostAsync(entity, viewerId))
                     visiblePosts.Add(p);
             }
-
             return Ok(new PagedResult<PostResponse>(visiblePosts, page, pageSize, result.TotalCount));
         }
 
@@ -154,7 +151,7 @@ namespace Favi_BE.Controllers
         {
             var authorId = User.GetUserIdFromMetadata();
             if (string.IsNullOrWhiteSpace(dto.Caption) && (dto.Tags == null || !dto.Tags.Any()))
-                return BadRequest("Bài viết trống.");
+                return BadRequest(new { code = "EMPTY_POST", message = "Bài viết trống. Cần có caption hoặc ít nhất 1 tag." });
 
             var created = await _posts.CreateAsync(authorId, dto.Caption, dto.Tags);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
@@ -169,7 +166,9 @@ namespace Favi_BE.Controllers
         {
             var requesterId = User.GetUserIdFromMetadata();
             var ok = await _posts.UpdateAsync(id, requesterId, dto.Caption);
-            return ok ? Ok() : Forbid("Không thể chỉnh sửa bài viết.");
+            return ok
+                ? Ok(new { message = "Đã cập nhật bài viết." })
+                : StatusCode(403, new { code = "POST_FORBIDDEN_OR_NOT_FOUND", message = "Không thể chỉnh sửa bài viết (không tồn tại hoặc bạn không phải chủ sở hữu)." });
         }
 
         // ======================
@@ -181,7 +180,9 @@ namespace Favi_BE.Controllers
         {
             var requesterId = User.GetUserIdFromMetadata();
             var ok = await _posts.DeleteAsync(id, requesterId);
-            return ok ? NoContent() : Forbid("Không thể xoá bài viết.");
+            return ok
+                ? NoContent()
+                : StatusCode(403, new { code = "POST_FORBIDDEN_OR_NOT_FOUND", message = "Không thể xoá bài viết (không tồn tại hoặc bạn không phải chủ sở hữu)." });
         }
 
         // ======================

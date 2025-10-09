@@ -23,8 +23,14 @@ namespace Favi_BE.Controllers
             Ok(await _tags.GetAllAsync());*/
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TagResponse>> GetById(Guid id) =>    
-            Ok(await _tags.GetByIdAsync(id));
+        public async Task<ActionResult<TagResponse>> GetById(Guid id)
+        {
+            var tag = await _tags.GetByIdAsync(id);
+            return tag is null
+                ? NotFound(new { code = "TAG_NOT_FOUND", message = "Tag không tồn tại." })
+                : Ok(tag);
+        }
+
 
         // Không cần thiết vì tag sẽ được tạo tự động khi tạo bài viết, ngoài ra các quan hệ như post- tag đang chưa được tạo
         /*[Authorize]
