@@ -60,22 +60,22 @@ namespace Favi_BE.Services
 
         public async Task<PagedResult<ReportResponse>> GetReportsByReporterIdAsync(Guid reporterId, int page, int pageSize)
         {
-            var reports = await _uow.Reports.GetReportsByReporterIdAsync(reporterId, (page - 1) * pageSize, pageSize);
-            var total = reports.Count();
+            var skip = (page - 1) * pageSize;
+            var (reports, total) = await _uow.Reports.GetReportsByReporterIdPagedAsync(reporterId, skip, pageSize);
             var dtos = reports.Select(r => new ReportResponse(r.Id, r.ReporterId, r.TargetType, r.TargetId, r.Reason ?? string.Empty, r.Status, r.CreatedAt, r.ActedAt, r.Data));
             return new PagedResult<ReportResponse>(dtos, page, pageSize, total);
         }
         public async Task<PagedResult<ReportResponse>> GetReportsByTargetTypeAsync(ReportTarget reportTarget, int page, int pageSize)
         {
-            var reports = await _uow.Reports.GetReportsByTargetTypeAsync(reportTarget, (page - 1) * pageSize, pageSize);
-            var total = reports.Count();
+            var skip = (page - 1) * pageSize;
+            var (reports, total) = await _uow.Reports.GetReportsByTargetTypePagedAsync(reportTarget, skip, pageSize);
             var dtos = reports.Select(r => new ReportResponse(r.Id, r.ReporterId, r.TargetType, r.TargetId, r.Reason ?? string.Empty, r.Status, r.CreatedAt, r.ActedAt, r.Data));
             return new PagedResult<ReportResponse>(dtos, page, pageSize, total);
         }
         public async Task<PagedResult<ReportResponse>> GetReportsByTargetIdAsync(Guid targetId, int page, int pageSize)
         {
-            var reports = await _uow.Reports.GetReportsByTargetIdAsync(targetId, (page - 1) * pageSize, pageSize);
-            var total = reports.Count();
+            var skip = (page - 1) * pageSize;
+            var (reports, total) = await _uow.Reports.GetReportsByTargetIdPagedAsync(targetId, skip, pageSize);
             var dtos = reports.Select(r => new ReportResponse(r.Id, r.ReporterId, r.TargetType, r.TargetId, r.Reason ?? string.Empty, r.Status, r.CreatedAt, r.ActedAt, r.Data));
             return new PagedResult<ReportResponse>(dtos, page, pageSize, total);
         }

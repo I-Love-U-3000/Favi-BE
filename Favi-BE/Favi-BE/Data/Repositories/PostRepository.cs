@@ -1,4 +1,4 @@
-using Favi_BE.Interfaces.Repositories;
+﻿using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -108,6 +108,64 @@ namespace Favi_BE.Data.Repositories
                 .Include(p => p.Reactions).ThenInclude(r => r.Profile)
                 .FirstOrDefaultAsync();
         }
+        public async Task<(IEnumerable<Post> Items, int Total)> GetFeedPagedAsync(Guid profileId, int skip, int take)
+        {
+            var query = _dbSet
+                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId))
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .OrderByDescending(p => p.CreatedAt);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip(skip).Take(take).ToListAsync();
+            return (items, total);
+        }
+
+        public async Task<(IEnumerable<Post> Items, int Total)> GetPostsByTagPagedAsync(Guid tagId, int skip, int take)
+        {
+            var query = _dbSet
+                .Where(p => p.PostTags.Any(pt => pt.TagId == tagId))
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.Tag)
+                // 👇 Thêm include Reaction (và Comment nếu cần)
+                .Include(p => p.Reactions)
+                .OrderByDescending(p => p.CreatedAt);
+
+            var total = await query.CountAsync();
+            var items = await query
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+
+            return (items, total);
+        }
+
+
+        public async Task<(IEnumerable<Post> Items, int Total)> GetPostsByCollectionPagedAsync(Guid collectionId, int skip, int take)
+        {
+            var query = _dbSet
+                .Where(p => p.PostCollections.Any(pc => pc.CollectionId == collectionId))
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.Tag)
+                // 👇 Thêm Reactions để service map ReactionSummaryDto đầy đủ
+                .Include(p => p.Reactions)
+                .OrderByDescending(p => p.CreatedAt);
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+
+            return (items, total);
+        }
+
 
     }
 }

@@ -25,7 +25,7 @@ namespace Favi_BE.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<CollectionResponse>> Update(Guid id, UpdateCollectionRequest dto)
         {
-            var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+            var userId = User.GetUserIdFromMetadata();
             return Ok(await _collections.UpdateAsync(id, userId, dto));
         }
 
@@ -33,7 +33,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+            var userId = User.GetUserIdFromMetadata();
             var ok = await _collections.DeleteAsync(id, userId);
             return ok ? NoContent() : Forbid();
         }
@@ -52,7 +52,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id}/posts/{postId}")]
         public async Task<IActionResult> AddPost(Guid id, Guid postId)
         {
-            var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+            var userId = User.GetUserIdFromMetadata();
             var ok = await _collections.AddPostAsync(id, postId, userId);
             return ok ? Ok() : Forbid();
         }
@@ -61,7 +61,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id}/posts/{postId}")]
         public async Task<IActionResult> RemovePost(Guid id, Guid postId)
         {
-            var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+            var userId = User.GetUserIdFromMetadata();
             var ok = await _collections.RemovePostAsync(id, postId, userId);
             return ok ? NoContent() : Forbid();
         }

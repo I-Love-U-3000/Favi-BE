@@ -65,18 +65,15 @@ namespace Favi_BE.Services
         {
             var skip = Math.Max(0, (page - 1) * pageSize);
 
-            // Feed theo followings (đã chuẩn hoá IPostRepository)
-            var posts = await _uow.Posts.GetFeedByFollowingsAsync(currentUserId, skip, pageSize);
+            var (posts, total) = await _uow.Posts.GetFeedPagedAsync(currentUserId, skip, pageSize);
 
             // Map
-            var items = new List<PostResponse>(posts.Count());
+            var items = new List<PostResponse>(total);
             foreach (var p in posts)
             {
                 items.Add(await MapPostToResponseAsync(p, currentUserId));
             }
-
-            // TODO: nếu muốn có TotalCount thật, thêm IPostRepository.CountFeedByFollowingsAsync
-            var total = -1;
+            
             return new PagedResult<PostResponse>(items, page, pageSize, total);
         }
 

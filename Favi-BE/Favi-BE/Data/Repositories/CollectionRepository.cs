@@ -31,5 +31,17 @@ namespace Favi_BE.Data.Repositories
                 .ThenInclude(p => p.PostMedias)
                 .FirstOrDefaultAsync();
         }
+        public async Task<(IEnumerable<Collection> Items, int Total)> GetAllByOwnerPagedAsync(Guid ownerId, int skip, int take)
+        {
+            var query = _dbSet
+                .Where(c => c.ProfileId == ownerId)
+                .Include(c => c.PostCollections)
+                .OrderByDescending(c => c.CreatedAt);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip(skip).Take(take).ToListAsync();
+            return (items, total);
+        }
+
     }
 }

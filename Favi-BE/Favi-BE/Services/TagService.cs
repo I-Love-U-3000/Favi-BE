@@ -2,6 +2,7 @@
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
+using System.Linq;
 
 namespace Favi_BE.Services
 {
@@ -49,24 +50,76 @@ namespace Favi_BE.Services
             return new TagResponse(tag.Id, tag.Name, 0);
         }
 
+        public Task<IEnumerable<TagResponse>> GetOrCreateTagsAsync(IEnumerable<string> names)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<PagedResult<PostResponse>> GetPostsByTagAsync(Guid tagId, int page, int pageSize)
         {
             var skip = (page - 1) * pageSize;
-            var posts = await _uow.Posts.GetPostsByTagIdAsync(tagId, skip, pageSize);
 
-            var dtos = posts.Select(p => new PostResponse(
-                p.Id,
-                p.ProfileId,
-                p.Caption,
-                p.CreatedAt,
-                p.UpdatedAt,
-                p.Privacy,
-                new List<PostMediaResponse>(),
-                new List<TagDto>(),
-                new ReactionSummaryDto(0, new(), null)
-            ));
+            // Lấy danh sách bài viết và tổng số bài
+            var (posts, total) = await _uow.Posts.GetPostsByTagPagedAsync(tagId, skip, pageSize);
 
-            return new PagedResult<PostResponse>(dtos, page, pageSize, -1);
+            var dtos = posts.Select(p =>
+            {
+                // ✅ Map media
+                var medias = p.PostMedias?.Select(m =>
+                    new PostMediaResponse(
+                        m.Id,
+                        m.PostId,
+                        m.Url,
+                        m.PublicId,
+                        m.Width,
+                        m.Height,
+                        m.Format,
+                        m.Position,
+                        m.ThumbnailUrl
+                    )
+                ).ToList() ?? new List<PostMediaResponse>();
+
+                // ✅ Map tags
+                var tags = p.PostTags?.Select(pt =>
+                    new TagDto(
+                        pt.Tag.Id,
+                        pt.Tag.Name
+                    )
+                ).ToList() ?? new List<TagDto>();
+
+                // ✅ Map reactions
+                int totalReactions = p.Reactions?.Count ?? 0;
+                var reactionCounts = p.Reactions?
+                    .GroupBy(r => r.Type)
+                    .ToDictionary(g => g.Key, g => g.Count())
+                    ?? new Dictionary<Favi_BE.Models.Enums.ReactionType, int>();
+
+                // Nếu bạn chưa có context người dùng hiện tại, để null
+                Favi_BE.Models.Enums.ReactionType? userReaction = null;
+
+                var reactionSummary = new ReactionSummaryDto(
+                    totalReactions,
+                    reactionCounts,
+                    userReaction
+                );
+
+                // ✅ Map sang PostResponse đầy đủ
+                return new PostResponse(
+                    p.Id,
+                    p.ProfileId,
+                    p.Caption,
+                    p.CreatedAt,
+                    p.UpdatedAt,
+                    p.Privacy,
+                    medias,
+                    tags,
+                    reactionSummary
+                );
+            });
+
+            return new PagedResult<PostResponse>(dtos, page, pageSize, total);
         }
+
+
     }
 }
