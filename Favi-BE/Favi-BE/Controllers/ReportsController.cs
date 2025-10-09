@@ -27,15 +27,12 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<ReportResponse>> Create(CreateReportRequest dto)
         {
             var reporterId = User.GetUserIdFromMetadata();
-
-            // Privacy check thống nhất
             if (!await _privacy.CanReportAsync(dto.TargetType, dto.TargetId, reporterId))
-                return Forbid("Bạn không thể báo cáo nội dung này.");
+                return StatusCode(403, new { code = "REPORT_FORBIDDEN", message = "Bạn không thể báo cáo nội dung này." });
 
             var report = await _reports.CreateAsync(dto);
             return Ok(report);
         }
-
 
         [Authorize(Roles = "admin")]
         [HttpGet]
@@ -47,7 +44,9 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> UpdateStatus(Guid id, UpdateReportStatusRequest dto)
         {
             var ok = await _reports.UpdateStatusAsync(id, dto);
-            return ok ? Ok() : NotFound();
+            return ok
+                ? Ok(new { message = "Đã cập nhật trạng thái báo cáo." })
+                : NotFound(new { code = "REPORT_NOT_FOUND", message = "Không tìm thấy báo cáo." });
         }
 
         [Authorize]

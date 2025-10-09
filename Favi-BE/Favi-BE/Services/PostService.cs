@@ -163,8 +163,8 @@ namespace Favi_BE.Services
         public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(Guid postId, IEnumerable<IFormFile> files, Guid requesterId)
         {
             var post = await _uow.Posts.GetByIdAsync(postId);
-            if (post is null) throw new InvalidOperationException("Post not found");
-            if (post.ProfileId != requesterId) throw new UnauthorizedAccessException("Not owner");
+            if (post is null) return Enumerable.Empty<PostMediaResponse>();
+            if (post.ProfileId != requesterId) return Enumerable.Empty<PostMediaResponse>();
 
             var existing = await _uow.PostMedia.GetByPostIdAsync(postId);
             var nextPos = existing.Any() ? existing.Max(m => m.Position) + 1 : 0;
@@ -172,8 +172,8 @@ namespace Favi_BE.Services
             var outputs = new List<PostMediaResponse>();
             foreach (var f in files)
             {
-                var up = await _cloudinary.UploadAsync(f);
-
+                var up = await _cloudinary.TryUploadAsync(f);
+                if (up is null) continue;
                 var media = new PostMedia
                 {
                     Id = Guid.NewGuid(),
@@ -187,16 +187,15 @@ namespace Favi_BE.Services
 
                 // Map DTO (đầy đủ thông tin Cloudinary ra ngoài)
                 outputs.Add(new PostMediaResponse(
-                    Id: media.Id,
-                    PostId: media.PostId,
-                    Url: media.Url,
-                    PublicId: up.PublicId,
-                    Width: up.Width,
-                    Height: up.Height,
-                    Format: up.Format,
-                    Position: media.Position,
-                    ThumbnailUrl: media.ThumbnailUrl
-                ));
+                Id: media.Id,
+                PostId: media.PostId,
+                Url: up.Url,
+                PublicId: up.PublicId,
+                Width: up.Width,
+                Height: up.Height,
+                Format: up.Format,
+                Position: media.Position,
+                ThumbnailUrl: up.ThumbnailUrl));
             }
 
             await _uow.CompleteAsync();
@@ -237,8 +236,8 @@ namespace Favi_BE.Services
         public async Task<IEnumerable<TagDto>> AddTagsAsync(Guid postId, IEnumerable<string> tags, Guid requesterId)
         {
             var post = await _uow.Posts.GetByIdAsync(postId);
-            if (post is null) throw new InvalidOperationException("Post not found");
-            if (post.ProfileId != requesterId) throw new UnauthorizedAccessException("Not owner");
+            if (post is null) return Enumerable.Empty<TagDto>();  
+            if (post.ProfileId != requesterId) return Enumerable.Empty<TagDto>(); 
 
             var created = await _uow.Tags.GetOrCreateTagsAsync(tags);
             foreach (var t in created)
@@ -272,7 +271,7 @@ namespace Favi_BE.Services
         public async Task<ReactionType?> ToggleReactionAsync(Guid postId, Guid userId, ReactionType type)
         {
             var post = await _uow.Posts.GetByIdAsync(postId);
-            if (post is null) throw new InvalidOperationException("Post not found");
+            if (post is null) return null;
 
             var existing = await _uow.Reactions.GetProfileReactionOnPostAsync(userId, postId);
 

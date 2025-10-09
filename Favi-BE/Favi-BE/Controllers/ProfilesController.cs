@@ -21,13 +21,15 @@ namespace Favi_BE.Controllers
         {
             var profile = await _profiles.GetEntityByIdAsync(id);
             if (profile is null)
-                return NotFound();
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
             if (!await _privacy.CanViewProfileAsync(profile, viewerId))
-                return Forbid();
+                return StatusCode(403, new { code = "PROFILE_FORBIDDEN", message = "Bạn không có quyền xem hồ sơ này." });
 
             return Ok(await _profiles.GetByIdAsync(id));
         }
+
 
         // Cập nhật profile chính mình
         [Authorize]
@@ -36,7 +38,9 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserIdFromMetadata();
             var updated = await _profiles.UpdateAsync(userId, dto);
-            return updated is null ? NotFound() : Ok(updated);
+            return updated is null
+                ? NotFound(new { code = "PROFILE_NOT_FOUND", message = "Không tìm thấy hồ sơ để cập nhật." })
+                : Ok(updated);
         }
 
         // Follow người khác
@@ -47,11 +51,13 @@ namespace Favi_BE.Controllers
             var userId = User.GetUserIdFromMetadata();
             var profile = await _profiles.GetEntityByIdAsync(targetId);
             if (profile is null)
-                return NotFound();
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ mục tiêu không tồn tại." });
+
             if (!await _privacy.CanFollowAsync(profile, userId))
-                return Forbid();
+                return StatusCode(403, new { code = "FOLLOW_FORBIDDEN", message = "Bạn không thể theo dõi hồ sơ này." });
+
             var ok = await _profiles.FollowAsync(userId, targetId);
-            return ok ? Ok() : BadRequest();
+            return ok ? Ok(new { message = "Đã theo dõi." }) : BadRequest(new { code = "FOLLOW_FAILED", message = "Theo dõi thất bại." });
         }
 
         // Unfollow người khác
@@ -61,7 +67,7 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserIdFromMetadata();
             var ok = await _profiles.UnfollowAsync(userId, targetId);
-            return ok ? Ok() : BadRequest();
+            return ok ? Ok(new { message = "Đã bỏ theo dõi." }) : BadRequest(new { code = "UNFOLLOW_FAILED", message = "Bỏ theo dõi thất bại." });
         }
 
         // Xem followers của người khác

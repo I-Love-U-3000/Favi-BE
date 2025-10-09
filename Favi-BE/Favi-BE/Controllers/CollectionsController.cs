@@ -1,4 +1,4 @@
-using Favi_BE.Common;
+﻿using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Services;
@@ -13,7 +13,7 @@ namespace Favi_BE.Controllers
     {
         private readonly ICollectionService _collections;
         private readonly IPrivacyGuard _privacy;
-        public CollectionsController(ICollectionService collections, IPrivacyGuard privacyGuard) { _collections = collections; _privacy = privacyGuard}
+        public CollectionsController(ICollectionService collections, IPrivacyGuard privacyGuard) { _collections = collections; _privacy = privacyGuard; }
 
         [Authorize]
         [HttpPost]
@@ -37,7 +37,9 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserIdFromMetadata();
             var ok = await _collections.DeleteAsync(id, userId);
-            return ok ? NoContent() : Forbid();
+            return ok
+                ? NoContent()
+                : StatusCode(403, new { code = "NOT_OWNER", message = "Chỉ chủ sở hữu mới được xoá bộ sưu tập." });
         }
 
         [HttpGet("owner/{ownerId}")]
@@ -51,10 +53,12 @@ namespace Favi_BE.Controllers
         {
             var collection = await _collections.GetEntityByIdAsync(id);
             if (collection is null)
-                return NotFound();
+                return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
+
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
             if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
-                return Forbid();
+                return StatusCode(403, new { code = "COLLECTION_FORBIDDEN", message = "Bạn không có quyền xem bộ sưu tập này." });
+
             return Ok(await _collections.GetByIdAsync(id));
         }
         [Authorize]
@@ -63,7 +67,9 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserIdFromMetadata();
             var ok = await _collections.AddPostAsync(id, postId, userId);
-            return ok ? Ok() : Forbid();
+            return ok
+                ? Ok(new { message = "Đã thêm bài viết vào bộ sưu tập." })
+                : StatusCode(403, new { code = "NOT_OWNER_OR_INVALID", message = "Không thể thêm: bạn không sở hữu hoặc dữ liệu không hợp lệ." });
         }
 
         [Authorize]
@@ -72,7 +78,9 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserIdFromMetadata();
             var ok = await _collections.RemovePostAsync(id, postId, userId);
-            return ok ? NoContent() : Forbid();
+            return ok
+                ? NoContent()
+                : StatusCode(403, new { code = "NOT_OWNER_OR_INVALID", message = "Không thể xoá khỏi bộ sưu tập." });
         }
 
         [HttpGet("{id}/posts")]

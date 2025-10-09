@@ -1,6 +1,7 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Favi_BE.Interfaces.Services;
+using Favi_BE.Models.Dtos;
 using Microsoft.AspNetCore.Http;
 
 namespace Favi_BE.Services
@@ -20,41 +21,67 @@ namespace Favi_BE.Services
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<(string Url, string? ThumbnailUrl, string PublicId, int Width, int Height, string Format)>
-            UploadAsync(IFormFile file, CancellationToken ct = default)
+        public async Task<PostMediaResponse?> TryUploadAsync(IFormFile file, CancellationToken ct = default)
+        {
+            try
+            {
+                await using var stream = file.OpenReadStream();
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = "favi_posts",
+                    Transformation = new Transformation().Quality("auto").FetchFormat("auto")
+                };
+
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams, ct);
+                if (uploadResult.StatusCode != System.Net.HttpStatusCode.OK)
+                    return null; // ✅ bỏ throw
+
+                // Trả về PostMediaResponse; Id/PostId/Position chưa có ở bước upload → set mặc định
+                return new PostMediaResponse(
+                    Id: Guid.Empty,
+                    PostId: Guid.Empty,
+                    Url: uploadResult.SecureUrl.ToString(),
+                    PublicId: uploadResult.PublicId,
+                    Width: uploadResult.Width,
+                    Height: uploadResult.Height,
+                    Format: uploadResult.Format,
+                    Position: 0,
+                    ThumbnailUrl: uploadResult?.Eager?.FirstOrDefault()?.SecureUrl?.ToString()
+                );
+            }
+            catch
+            {
+                return null; // ✅ an toàn
+            }
+        }
+
+        // (Optional) Bản strict nếu bạn vẫn muốn dùng ở chỗ khác
+        public async Task<PostMediaResponse> UploadAsyncOrThrow(IFormFile file, CancellationToken ct = default)
         {
             await using var stream = file.OpenReadStream();
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
-                Folder = "favi_posts", // optional: để phân loại
+                Folder = "favi_posts",
                 Transformation = new Transformation().Quality("auto").FetchFormat("auto")
             };
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams, ct);
-
             if (uploadResult.StatusCode != System.Net.HttpStatusCode.OK)
-                throw new Exception("Cloudinary upload failed");
+                throw new Exception("Cloudinary upload failed"); // ⚠️ chỉ dùng khi bạn thật sự muốn throw
 
-            return (
+            return new PostMediaResponse(
+                Id: Guid.Empty,
+                PostId: Guid.Empty,
                 Url: uploadResult.SecureUrl.ToString(),
-                ThumbnailUrl: uploadResult?.Eager?.FirstOrDefault()?.SecureUrl?.ToString(),
                 PublicId: uploadResult.PublicId,
-                Width: uploadResult.Width, // Removed HasValue check as Width is an int, not nullable
-                Height: uploadResult.Height, // Removed HasValue check as Height is an int, not nullable
-                Format: uploadResult.Format
+                Width: uploadResult.Width,
+                Height: uploadResult.Height,
+                Format: uploadResult.Format,
+                Position: 0,
+                ThumbnailUrl: uploadResult?.Eager?.FirstOrDefault()?.SecureUrl?.ToString()
             );
-        }
-
-        public async Task DeleteAsync(string publicId, CancellationToken ct = default)
-        {
-            var deletionParams = new DeletionParams(publicId)
-            {
-                ResourceType = ResourceType.Image
-            };
-
-            // Fix: Use the correct overload of DestroyAsync that accepts only one argument
-            await _cloudinary.DestroyAsync(deletionParams);
         }
     }
 }

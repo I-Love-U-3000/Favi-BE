@@ -1,11 +1,16 @@
-﻿namespace Favi_BE.Interfaces.Services
+﻿using Favi_BE.Models.Dtos;
+
+namespace Favi_BE.Interfaces.Services
 {
+    // Interfaces/Services/ICloudinaryService.cs
     public interface ICloudinaryService
     {
-        Task<(string Url, string? ThumbnailUrl, string PublicId, int Width, int Height, string Format)>
-            UploadAsync(IFormFile file, CancellationToken ct = default);
+        // Bản an toàn: không throw; null nếu upload fail
+        Task<PostMediaResponse?> TryUploadAsync(IFormFile file, CancellationToken ct = default);
 
-        Task DeleteAsync(string publicId, CancellationToken ct = default);
+        // (Optional) Bản strict: throw nếu cần, giữ cho test nội bộ
+        Task<PostMediaResponse> UploadAsyncOrThrow(IFormFile file, CancellationToken ct = default);
     }
+
 
 }

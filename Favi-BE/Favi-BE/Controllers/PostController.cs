@@ -14,7 +14,7 @@ namespace Favi_BE.Controllers
         private readonly IPostService _posts;
         private readonly ITagService _tags;
         private readonly IPrivacyGuard _privacy;
-        private readonly IProfileService _profileService; 
+        private readonly IProfileService _profileService;
         public PostsController(IPostService posts, ITagService tags, IPrivacyGuard privacy, IProfileService profileService)
         {
             _posts = posts;
@@ -40,20 +40,17 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<PostResponse>> GetById(Guid id)
         {
             var viewerId = TryGetUserId();
-
-            // Lấy entity gốc để guard privacy
             var postEntity = await _posts.GetEntityAsync(id);
             if (postEntity == null)
-                return NotFound("Post không tồn tại.");
+                return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại hoặc đã bị xoá." }); // 👈 rõ ràng
 
-            // ✅ Check privacy
             if (!await _privacy.CanViewPostAsync(postEntity, viewerId))
-                return Forbid();
+                return StatusCode(403, new { code = "POST_FORBIDDEN", message = "Bạn không có quyền xem bài viết này." }); // 👈 có body
 
-            // Map sang response (service đã có)
             var post = await _posts.GetByIdAsync(id, viewerId);
             return Ok(post);
         }
+
 
         // ======================
         // 🔹 GET: Bài viết theo Profile (Public wall)
@@ -63,7 +60,7 @@ namespace Favi_BE.Controllers
         {
             var viewerId = TryGetUserId();
             var profile = await _profileService.GetEntityByIdAsync(profileId);
-            if(profile == null)
+            if (profile == null)
                 return NotFound("Profile không tồn tại.");
             // ✅ Check xem có quyền xem profile không
             if (!await _privacy.CanViewProfileAsync(profile, viewerId))
@@ -195,12 +192,26 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<IEnumerable<PostMediaResponse>>> UploadMedia(Guid id, [FromForm] List<IFormFile> files)
         {
             if (files == null || files.Count == 0)
-                return BadRequest("Không có file nào được gửi.");
+                return BadRequest(new { code = "NO_FILE", message = "Không có file nào được gửi." });
 
             var requesterId = User.GetUserIdFromMetadata();
+
+            // Vì service trả empty cho 'không phải owner' hoặc 'không có post',
+            // controller nên phân biệt trước để trả message rõ ràng.
+            var postEntity = await _posts.GetEntityAsync(id);
+            if (postEntity is null)
+                return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại." });
+
+            if (postEntity.ProfileId != requesterId)
+                return StatusCode(403, new { code = "NOT_OWNER", message = "Chỉ chủ bài viết mới được upload media." });
+
             var result = await _posts.UploadMediaAsync(id, files, requesterId);
+            if (!result.Any())
+                return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload thất bại hoặc tất cả file bị bỏ qua." });
+
             return Ok(result);
         }
+
 
         // ======================
         // 🔹 POST: Toggle Reaction
@@ -210,9 +221,21 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
         {
             var userId = User.GetUserIdFromMetadata();
-            var parsed = Enum.TryParse<ReactionType>(type, true, out var reactionType);
-            var ok = await _posts.ToggleReactionAsync(id, userId, reactionType);
-            return ok != null ? Ok() : BadRequest("Không thể thay đổi reaction.");
+
+            if (!Enum.TryParse<ReactionType>(type, true, out var reactionType))
+                return BadRequest(new { code = "INVALID_REACTION_TYPE", message = $"Giá trị reaction '{type}' không hợp lệ." });
+
+            var postEntity = await _posts.GetEntityAsync(id);
+            if (postEntity is null)
+                return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại." });
+
+            var newState = await _posts.ToggleReactionAsync(id, userId, reactionType);
+
+            // Service trả null khi: 1) post không có (đã check ở trên) hoặc 2) reaction bị gỡ
+            if (newState is null)
+                return Ok(new { removed = true, message = "Reaction đã được gỡ." });
+
+            return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
         }
     }
 }
