@@ -110,6 +110,32 @@ namespace Favi_BE.Services
                 _ => false
             };
         }
+        public async Task<bool> CanReportAsync(ReportTarget targetType, Guid targetId, Guid reporterId)
+        {
+            var targetProfile = await _uow.Profiles.GetByIdAsync(targetId);
+            var collection = await _uow.Collections.GetByIdAsync(targetId);
+            switch (targetType)
+            {
+                case ReportTarget.Post:
+                    var post = await _uow.Posts.GetByIdAsync(targetId);
+                    return post != null && await CanViewPostAsync(post, reporterId);
+
+                case ReportTarget.User:
+                    return await CanViewProfileAsync(targetProfile, reporterId);
+
+                case ReportTarget.Comment:
+                    var comment = await _uow.Comments.GetByIdAsync(targetId);
+                    if (comment == null) return false;
+                    var parentPost = await _uow.Posts.GetByIdAsync(comment.PostId);
+                    return parentPost != null && await CanViewPostAsync(parentPost, reporterId);
+
+                case ReportTarget.Collection:
+                    return await CanViewCollectionAsync(collection, reporterId);
+
+                default:
+                    return false;
+            }
+        }
 
     }
 }

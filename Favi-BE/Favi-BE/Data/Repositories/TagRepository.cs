@@ -61,5 +61,12 @@ namespace Favi_BE.Data.Repositories
                 .ToListAsync();
             return (tags, totalCount);
         }
+        public async Task<IEnumerable<Tag>> GetTagsWithNoPostsAsync()
+        {
+            return await _context.Tags
+                .Where(t => !t.PostTags.Any())
+                .ToListAsync();
+        }
+
     }
 }

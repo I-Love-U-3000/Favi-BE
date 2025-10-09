@@ -11,12 +11,23 @@ namespace Favi_BE.Controllers
     public class ProfilesController : ControllerBase
     {
         private readonly IProfileService _profiles;
+        private readonly IPrivacyGuard _privacy;
+
         public ProfilesController(IProfileService profiles) => _profiles = profiles;
 
         // Ai cũng xem được profile người khác
         [HttpGet("{id}")]
         public async Task<ActionResult<ProfileResponse>> GetById(Guid id)
-            => Ok(await _profiles.GetByIdAsync(id));
+        {
+            var profile = await _profiles.GetEntityByIdAsync(id);
+            if (profile is null)
+                return NotFound();
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            if (!await _privacy.CanViewProfileAsync(profile, viewerId))
+                return Forbid();
+
+            return Ok(await _profiles.GetByIdAsync(id));
+        }
 
         // Cập nhật profile chính mình
         [Authorize]
@@ -34,6 +45,11 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Follow(Guid targetId)
         {
             var userId = User.GetUserIdFromMetadata();
+            var profile = await _profiles.GetEntityByIdAsync(targetId);
+            if (profile is null)
+                return NotFound();
+            if (!await _privacy.CanFollowAsync(profile, userId))
+                return Forbid();
             var ok = await _profiles.FollowAsync(userId, targetId);
             return ok ? Ok() : BadRequest();
         }
@@ -52,6 +68,13 @@ namespace Favi_BE.Controllers
         [HttpGet("{id}/followers")]
         public async Task<IActionResult> Followers(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
         {
+            var profile = await _profiles.GetEntityByIdAsync(id);
+            if (profile is null)
+                return NotFound();
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
+                return Forbid();
+
             int s = skip ?? 0;
             int t = take ?? 1000;
             var result = await _profiles.GetFollowersAsync(id, s, t);
@@ -62,6 +85,13 @@ namespace Favi_BE.Controllers
         [HttpGet("{id}/followings")]
         public async Task<IActionResult> Followings(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
         {
+            var profile = await _profiles.GetEntityByIdAsync(id);
+            if (profile is null)
+                return NotFound();
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
+                return Forbid();
+
             int s = skip ?? 0;
             int t = take ?? 1000;
             var result = await _profiles.GetFollowingsAsync(id, s, t);

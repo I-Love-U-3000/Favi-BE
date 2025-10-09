@@ -1,6 +1,7 @@
 using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,8 @@ namespace Favi_BE.Controllers
     public class CollectionsController : ControllerBase
     {
         private readonly ICollectionService _collections;
-        public CollectionsController(ICollectionService collections) => _collections = collections;
+        private readonly IPrivacyGuard _privacy;
+        public CollectionsController(ICollectionService collections, IPrivacyGuard privacyGuard) { _collections = collections; _privacy = privacyGuard}
 
         [Authorize]
         [HttpPost]
@@ -45,9 +47,16 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CollectionResponse>> GetById(Guid id) =>
-            Ok(await _collections.GetByIdAsync(id));
-
+        public async Task<ActionResult<CollectionResponse>> GetById(Guid id)
+        {
+            var collection = await _collections.GetEntityByIdAsync(id);
+            if (collection is null)
+                return NotFound();
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
+                return Forbid();
+            return Ok(await _collections.GetByIdAsync(id));
+        }
         [Authorize]
         [HttpPost("{id}/posts/{postId}")]
         public async Task<IActionResult> AddPost(Guid id, Guid postId)
@@ -69,6 +78,12 @@ namespace Favi_BE.Controllers
         [HttpGet("{id}/posts")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetPosts(Guid id, int page = 1, int pageSize = 20)
         {
+            var collection = await _collections.GetEntityByIdAsync(id);
+            if (collection is null)
+                return NotFound();
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
+                return Forbid();
             return Ok(await _collections.GetPostsAsync(id, page, pageSize));
         }
     }

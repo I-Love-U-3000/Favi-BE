@@ -11,12 +11,15 @@ namespace Favi_BE.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
-
-        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary)
+        private readonly IPrivacyGuard _privacy;
+        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, PrivacyGuard privacy)
         {
             _uow = uow;
             _cloudinary = cloudinary;
+            _privacy = privacy;
         }
+
+        public Task<Post?> GetEntityAsync(Guid id) => _uow.Posts.GetByIdAsync(id);
 
         // --------------------------------------------------------------------
         // Queries
@@ -140,7 +143,17 @@ namespace Favi_BE.Services
 
             // Xoá post (các join như PostTags, Reactions, Comments nên cascade trong DbContext)
             _uow.Posts.Remove(post);
+            /*            await _uow.CompleteAsync();*/
+
             await _uow.CompleteAsync();
+
+            var orphanTags = await _uow.Tags.GetTagsWithNoPostsAsync();
+            foreach (var tag in orphanTags)
+            {
+                _uow.Tags.Remove(tag);
+            }
+            await _uow.CompleteAsync();
+
             return true;
         }
 
@@ -351,6 +364,33 @@ namespace Favi_BE.Services
             }
 
             return new ReactionSummaryDto(total, byType, mine);
+        }
+
+        public async Task<PagedResult<PostResponse>> GetByProfileAsync(Guid profileId, Guid? viewerId, int page, int pageSize)
+        {
+            var skip = (page - 1) * pageSize;
+            var posts = await _uow.Posts.GetPostsByProfileIdAsync(profileId, skip, pageSize);
+            var total = await _uow.Posts.CountAsync(p => p.ProfileId == profileId);
+
+            var result = new List<PostResponse>();
+            foreach (var post in posts)
+            {
+                if (await _privacy.CanViewPostAsync(post, viewerId))
+                    result.Add(await MapPostToResponseAsync(post, viewerId));
+            }
+
+            return new PagedResult<PostResponse>(result, page, pageSize, total);
+        }
+
+        // TODO: Implement these methods
+        public Task<PagedResult<PostResponse>> GetExploreAsync(Guid userId, int page, int pageSize)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<PagedResult<PostResponse>> GetLatestAsync(int page, int pageSize)
+        {
+            throw new NotImplementedException();
         }
     }
 }

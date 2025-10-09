@@ -14,7 +14,7 @@ namespace Favi_BE.Controllers
         public TagsController(ITagService tags) => _tags = tags;
 
         [HttpGet]
-        public async Task<ActionResult<PagedResult<TagResponse>> > GetAllPaged(int page = 1, int pageSize = 20) =>
+        public async Task<ActionResult<PagedResult<TagResponse>>> GetAllPaged(int page = 1, int pageSize = 20) =>
             Ok(await _tags.GetAllPagedAsync(page, pageSize));
 
         // Không thể load hết 1 lần vì có thể có rất nhiều tag
@@ -23,7 +23,7 @@ namespace Favi_BE.Controllers
             Ok(await _tags.GetAllAsync());*/
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TagResponse>> GetById(Guid id) =>
+        public async Task<ActionResult<TagResponse>> GetById(Guid id) =>    
             Ok(await _tags.GetByIdAsync(id));
 
         // Không cần thiết vì tag sẽ được tạo tự động khi tạo bài viết, ngoài ra các quan hệ như post- tag đang chưa được tạo

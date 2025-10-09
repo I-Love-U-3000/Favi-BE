@@ -166,6 +166,10 @@ namespace Favi_BE.Services
             return new PagedResult<PostResponse>(dtos, page, pageSize, total);
         }
 
+        public async Task<Collection?> GetEntityByIdAsync(Guid id)
+        {
+            return await _uow.Collections.GetByIdAsync(id);
+        }
 
     }
 }

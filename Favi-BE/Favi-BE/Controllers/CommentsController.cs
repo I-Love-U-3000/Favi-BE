@@ -11,7 +11,15 @@ namespace Favi_BE.Controllers
     public class CommentsController : ControllerBase
     {
         private readonly ICommentService _comments;
-        public CommentsController(ICommentService comments) => _comments = comments;
+        private readonly IPostService _posts;
+        private readonly IPrivacyGuard _privacy;
+
+        public CommentsController(ICommentService comments, IPostService posts, IPrivacyGuard privacy)
+        {
+            _comments = comments;
+            _posts = posts;
+            _privacy = privacy;
+        }
 
         [Authorize]
         [HttpPost]
@@ -42,7 +50,15 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("post/{postId}")]
-        public async Task<ActionResult<PagedResult<CommentResponse>>> GetByPost(Guid postId, int page = 1, int pageSize = 20) =>
-            Ok(await _comments.GetByPostAsync(postId, page, pageSize));
+        public async Task<ActionResult<PagedResult<CommentResponse>>> GetByPost(Guid postId, int page = 1, int pageSize = 20)
+        {
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var post = await _posts.GetEntityAsync(postId);
+
+            if (post == null || !await _privacy.CanViewPostAsync(post, viewerId))
+                return Forbid();
+
+            return Ok(await _comments.GetByPostAsync(postId, page, pageSize));
+        }
     }
 }

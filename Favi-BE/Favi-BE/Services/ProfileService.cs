@@ -165,5 +165,9 @@ namespace Favi_BE.Services
             await _uow.CompleteAsync();
             return true;
         }
+        public async Task<Profile?> GetEntityByIdAsync(Guid profileId)
+        {
+            return await _uow.Profiles.GetByIdAsync(profileId);
+        }
     }
 }

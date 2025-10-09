@@ -1,4 +1,5 @@
 ﻿using Favi_BE.Models.Entities;
+using Favi_BE.Models.Enums;
 
 namespace Favi_BE.Interfaces.Services
 {
@@ -10,5 +11,6 @@ namespace Favi_BE.Interfaces.Services
         Task<bool> CanViewCommentAsync(Post parentPost, Guid? viewerId, bool isAdmin = false);
         Task<bool> CanFollowAsync(Profile targetProfile, Guid? viewerId, bool isAdmin = false);
         Task<bool> CanViewFollowListAsync(Profile profile, Guid? viewerId, bool isAdmin = false);
+        Task<bool> CanReportAsync(ReportTarget targetType, Guid targetId, Guid reporterId);
     }
 }

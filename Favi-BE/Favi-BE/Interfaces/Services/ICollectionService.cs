@@ -1,4 +1,5 @@
 ﻿using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Entities;
 
 namespace Favi_BE.Interfaces.Services
 {
@@ -15,6 +16,7 @@ namespace Favi_BE.Interfaces.Services
         Task<bool> RemovePostAsync(Guid collectionId, Guid postId, Guid requesterId);
 
         Task<PagedResult<PostResponse>> GetPostsAsync(Guid collectionId, int page, int pageSize);
+        Task<Collection?> GetEntityByIdAsync(Guid collectionId);
     }
 
 }

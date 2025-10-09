@@ -1,4 +1,4 @@
-using Favi_BE.Common;
+﻿using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
@@ -12,12 +12,30 @@ namespace Favi_BE.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly IReportService _reports;
-        public ReportsController(IReportService reports) => _reports = reports;
+        private readonly IPrivacyGuard _privacy;
+        public ReportsController(
+            IReportService reports ,
+            IPrivacyGuard privacy
+            )
+        {
+            _reports = reports;
+            _privacy = privacy;
+        }
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<ReportResponse>> Create(CreateReportRequest dto) =>
-            Ok(await _reports.CreateAsync(dto));
+        public async Task<ActionResult<ReportResponse>> Create(CreateReportRequest dto)
+        {
+            var reporterId = User.GetUserIdFromMetadata();
+
+            // Privacy check thống nhất
+            if (!await _privacy.CanReportAsync(dto.TargetType, dto.TargetId, reporterId))
+                return Forbid("Bạn không thể báo cáo nội dung này.");
+
+            var report = await _reports.CreateAsync(dto);
+            return Ok(report);
+        }
+
 
         [Authorize(Roles = "admin")]
         [HttpGet]
@@ -40,6 +58,7 @@ namespace Favi_BE.Controllers
             return Ok(await _reports.GetReportsByReporterIdAsync(userId, page, pageSize));
         }
 
+        // dung policy thay vi check role
         [Authorize]
         [HttpGet("target/{targetId}")]
         public async Task<ActionResult<PagedResult<ReportResponse>>> GetReportsByTarget(Guid targetId, int page = 1, int pageSize = 20)
@@ -53,28 +72,14 @@ namespace Favi_BE.Controllers
         }
 
         [Authorize]
-        [HttpGet("target-type/{targetType}")]
-        public async Task<ActionResult<PagedResult<ReportResponse>>> GetReportsByTargetType(string targetType, int page = 1, int pageSize = 20)
+        [HttpGet("target-type")]
+        public async Task<ActionResult<PagedResult<ReportResponse>>> GetReportsByTargetType([FromQuery] string targetType, int page = 1, int pageSize = 20)
         {
             if (!User.IsInRole("admin"))
             {
                 return Forbid();
             }
-            ReportTarget reportTarget; 
-            switch (targetType.ToLower())
-            {
-                case "post":
-                    reportTarget = ReportTarget.Post;
-                    break;
-                case "comment":
-                    reportTarget = ReportTarget.Comment;
-                    break;
-                case "user":
-                    reportTarget = ReportTarget.User;
-                    break;
-                default:
-                    return BadRequest("Invalid target type. Must be 'post', 'comment', or 'profile'.");
-            }
+            var parsed = Enum.TryParse<ReportTarget>(targetType, true, out var reportTarget);
             return Ok(await _reports.GetReportsByTargetTypeAsync(reportTarget, page, pageSize));
         }
     }
