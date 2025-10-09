@@ -86,6 +86,7 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<IPrivacyGuard, PrivacyGuard>();
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Add services to the container.

@@ -12,7 +12,7 @@ namespace Favi_BE.Services
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
-        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, PrivacyGuard privacy)
+        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy)
         {
             _uow = uow;
             _cloudinary = cloudinary;
