@@ -19,6 +19,6 @@ namespace Favi_BE.Interfaces.Services
         Task<Profile> CreateProfileAsync(Guid id, string username, string? displayName);
         Task<bool> DeleteAsync(Guid profileId);
         Task<Profile?> GetEntityByIdAsync(Guid profileId);
+        Task<bool> CheckValidUsername(string username);
     }
-
 }
