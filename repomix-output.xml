@@ -184,6 +184,26 @@ services:
       ConnectionStrings__Default: >
         Host=favi-postgres;Port=5432;Database=favi;
         Username=favi;Password=favi;Include Error Detail=true
+      # JWT (khớp appsettings: Jwt:Key/Issuer/Audience)
+      Jwt__Key: uqw9n0eu129nucouno132n21nu39c012uci2903u129ncu293ue32oru32nu3294u290c4u3294cnu39rcuwsidcbjewoibruewiu2398rnuewcnyewiugfnyw8rny398rcu39tu349ony3o8tfyaewo8wayorway8ocrawycruwayruiawbyowuybcraeworcbyawurbhyawuifywao8ryworhyaewuorawurwy8
+      Jwt__Issuer: favi.local
+      Jwt__Audience: favi.web
+      Jwt_AccessMinutes: 60
+      Jwt_RefreshDays: 7
+
+      # Supabase (để HttpClient hoạt động)
+      Supabase__Url: https://jgounylmgjcmlwyzzzhv.supabase.co
+      Supabase__ApiKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnb3VueWxtZ2pjbWx3eXp6emh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzQ2NjAsImV4cCI6MjA3Mzc1MDY2MH0.5cjyGppqNqndilyIjEVnnlhpVPZLQ089Ens0Rur-G_w
+
+      # Nếu vẫn muốn fallback theo code trên:
+      SupabaseSecret: VhFfo0qXjH4NmPgASomHxX2RWN+7zUFCV0vgUOi9dXqJ0ETm6Tlh5uu1n9o2gqEH3+yvi1xMdaE0FRX+4b8HvA==
+
+      # Cloudinary (đúng section trong appsettings)
+      CloudinarySettings__CloudName: dumyugxhm
+      CloudinarySettings__ApiKey: 751624888575967
+      CloudinarySettings__ApiSecret: cMkSP_iSpIxqXhWCKhVhWhsoLq8
+
+      #Vector Index Api
       VectorIndex__BaseUrl: http://vector-index-api:8080
       VectorIndex__Enabled: "true"
     depends_on:
@@ -6576,6 +6596,29 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // (Khuyến nghị) chờ Postgres sẵn sàng + retry vài lần
+    var retries = 0;
+    const int maxRetries = 10;
+    while (true)
+    {
+        try
+        {
+            db.Database.Migrate(); // <- áp dụng tất cả migrations đang có
+            break;
+        }
+        catch (Exception ex) when (retries < maxRetries)
+        {
+            retries++;
+            Console.WriteLine($"[Migrate] retry {retries}/{maxRetries}: {ex.Message}");
+            await Task.Delay(2000);
+        }
+    }
+}
+
 //app.UseSwagger(); 
 //app.UseSwaggerUI();
 
@@ -8112,6 +8155,35 @@ EXPOSE 8080
 ENTRYPOINT ["dotnet", "Favi-BE.API.dll"]
 </file>
 
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2025 I-Love-U-3000
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="README.md">
+# Favi-BE
+Backend Application For Favi
+</file>
+
 <file path="Vector-index-api/main.py">
 import uuid, time, os, io
 from collections import defaultdict, deque
@@ -8329,17 +8401,23 @@ async def search(user_id: Optional[str] = None, q: str = "", k: int = 10):
     friends: List[str] = await get_friends(user_id) if user_id else []
 
     should = []
+
+    # 1) Ai cũng thấy bài Public
     should.append(FieldCondition(key="privacy", match=MatchValue(value="Public")))
+
+    # 2) Chủ bài luôn thấy bài của CHÍNH MÌNH (bất kể privacy)
     if user_id:
-        should.append(Filter(must=[
-            FieldCondition(key="privacy", match=MatchValue(value="Private")),
-            FieldCondition(key="owner_id", match=MatchValue(value=user_id)),
-        ]))
-    if user_id and friends:
-        should.append(Filter(must=[
-            FieldCondition(key="privacy", match=MatchValue(value="Followers")),
-            FieldCondition(key="owner_id", match=MatchAny(any=friends + [user_id])),
-        ]))
+        should.append(FieldCondition(key="owner_id", match=MatchValue(value=user_id)))
+
+    # 3) Followers: owner ∈ (friends(user) ∪ {user})  — KHÔNG yêu cầu friends phải khác rỗng
+    if user_id:
+        owners_ok = (friends or []) + [user_id]
+        should.append(
+            Filter(must=[
+                FieldCondition(key="privacy", match=MatchValue(value="Followers")),
+                FieldCondition(key="owner_id", match=MatchAny(any=owners_ok)),
+            ])
+        )
 
     query_filter = Filter(should=should) if should else None
 
@@ -8455,35 +8533,6 @@ tok = open_clip.get_tokenizer('ViT-B-32')(['warmup'])
 with torch.no_grad():
     _ = model.encode_text(tok)
 print('Warmup done')
-</file>
-
-<file path="LICENSE">
-MIT License
-
-Copyright (c) 2025 I-Love-U-3000
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-</file>
-
-<file path="README.md">
-# Favi-BE
-Backend Application For Favi
 </file>
 
 <file path=".gitignore">
