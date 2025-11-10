@@ -52,12 +52,25 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireUser", policy => policy.RequireClaim("account_role", "user"));
     options.AddPolicy("RequireAdmin", policy => policy.RequireClaim("account_role", "admin"));
 });
-builder.Services.AddCors(opt =>
+
+// Add CORS
+builder.Services.AddCors(options =>
 {
-    opt.AddDefaultPolicy(p => p
-        .WithOrigins("http://localhost:3000", "http://localhost:*")
-        .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "https://localhost:3000",   
+                "https://127.0.0.1:3000"
+            )
+            .AllowAnyHeader()                // cần cho Authorization, Content-Type
+            .AllowAnyMethod();
+        // .AllowCredentials();         // chỉ bật nếu dùng cookie
+    });
 });
+
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
@@ -154,14 +167,14 @@ using (var scope = app.Services.CreateScope())
 //app.UseSwagger(); 
 //app.UseSwaggerUI();
 
-app.UseCors();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseCors("Frontend");
 
 app.UseHttpsRedirection();
 
