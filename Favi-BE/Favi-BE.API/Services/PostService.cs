@@ -161,34 +161,53 @@ namespace Favi_BE.Services
         // Media
         // --------------------------------------------------------------------
         // Services/PostService.cs
-        public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(Guid postId, List<IFormFile> files, Guid requesterId)
+        public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(
+            Guid postId,
+            IEnumerable<IFormFile> files,
+            Guid requesterId)
         {
+            // 0) Kiểm tra post & quyền
             var post = await _uow.Posts.GetByIdAsync(postId);
             if (post is null || post.ProfileId != requesterId)
                 return Enumerable.Empty<PostMediaResponse>();
 
-            var existing = await _uow.PostMedia.GetByPostIdAsync(postId); 
-            var startIndex = existing.Count();
+            // 1) Chốt danh sách file & lọc ảnh
+            var fileList = (files ?? Enumerable.Empty<IFormFile>()).ToList();
+            if (fileList.Count == 0) return Enumerable.Empty<PostMediaResponse>();
+
+            // Chỉ nhận image/*, có dữ liệu
+            var allowed = fileList
+                .Where(f => f?.Length > 0
+                         && !string.IsNullOrWhiteSpace(f.ContentType)
+                         && f.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (allowed.Count == 0) return Enumerable.Empty<PostMediaResponse>();
+
+            // 2) Tính position bắt đầu = max(position) hiện có + 1
+            var existing = await _uow.PostMedia.GetByPostIdAsync(postId);
+            var maxPos = existing.Any() ? existing.Max(m => m.Position) : -1;
+            var startPos = maxPos + 1;
 
             var createdMedias = new List<PostMedia>();
             var responses = new List<PostMediaResponse>();
 
-            var imageFiles = files.Where(f => f.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
-
-            var i = 0;
-            foreach (var file in imageFiles)
+            // 3) Upload tuần tự (đơn giản, ổn định). Có thể tối ưu song song sau.
+            for (int i = 0; i < allowed.Count; i++)
             {
+                var file = allowed[i];
+
+                // Upload Cloudinary (trả null nếu fail)
                 var uploaded = await _cloudinary.TryUploadAsync(file);
-                if (uploaded is null) continue;
+                if (uploaded is null) continue; // bỏ qua file hỏng
 
                 var media = new PostMedia
                 {
                     Id = Guid.NewGuid(),
                     PostId = postId,
-                    Url = uploaded.Url,                          
-                    ThumbnailUrl = uploaded.ThumbnailUrl,       
-                    Position = startIndex + i,                 
-                    PublicId = uploaded.PublicId,              
+                    Url = uploaded.Url,
+                    ThumbnailUrl = uploaded.ThumbnailUrl,
+                    Position = startPos + i,   // luôn tăng liên tục
+                    PublicId = uploaded.PublicId,
                     Width = uploaded.Width,
                     Height = uploaded.Height,
                     Format = uploaded.Format
@@ -201,18 +220,19 @@ namespace Favi_BE.Services
                     media.PublicId, media.Width, media.Height,
                     media.Format, media.Position, media.ThumbnailUrl
                 ));
-
-                i++;
             }
 
+            // 4) Không có file nào hợp lệ/đăng thành công → thôi
             if (createdMedias.Count == 0)
                 return Enumerable.Empty<PostMediaResponse>();
 
+            // 5) Lưu DB một lần
             await _uow.PostMedia.AddRangeAsync(createdMedias);
             post.UpdatedAt = DateTime.UtcNow;
             _uow.Posts.Update(post);
             await _uow.CompleteAsync();
 
+            // 6) Trả về theo Position tăng dần
             return responses.OrderBy(r => r.Position);
         }
 
