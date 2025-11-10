@@ -160,46 +160,60 @@ namespace Favi_BE.Services
         // --------------------------------------------------------------------
         // Media
         // --------------------------------------------------------------------
-        public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(Guid postId, IEnumerable<IFormFile> files, Guid requesterId)
+        // Services/PostService.cs
+        public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(Guid postId, List<IFormFile> files, Guid requesterId)
         {
             var post = await _uow.Posts.GetByIdAsync(postId);
-            if (post is null) return Enumerable.Empty<PostMediaResponse>();
-            if (post.ProfileId != requesterId) return Enumerable.Empty<PostMediaResponse>();
+            if (post is null || post.ProfileId != requesterId)
+                return Enumerable.Empty<PostMediaResponse>();
 
-            var existing = await _uow.PostMedia.GetByPostIdAsync(postId);
-            var nextPos = existing.Any() ? existing.Max(m => m.Position) + 1 : 0;
+            var existing = await _uow.PostMedia.GetByPostIdAsync(postId); 
+            var startIndex = existing.Count();
 
-            var outputs = new List<PostMediaResponse>();
-            foreach (var f in files)
+            var createdMedias = new List<PostMedia>();
+            var responses = new List<PostMediaResponse>();
+
+            var imageFiles = files.Where(f => f.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
+
+            var i = 0;
+            foreach (var file in imageFiles)
             {
-                var up = await _cloudinary.TryUploadAsync(f);
-                if (up is null) continue;
+                var uploaded = await _cloudinary.TryUploadAsync(file);
+                if (uploaded is null) continue;
+
                 var media = new PostMedia
                 {
                     Id = Guid.NewGuid(),
                     PostId = postId,
-                    Url = up.Url,
-                    ThumbnailUrl = up.ThumbnailUrl,
-                    Position = nextPos++
+                    Url = uploaded.Url,                          
+                    ThumbnailUrl = uploaded.ThumbnailUrl,       
+                    Position = startIndex + i,                 
+                    PublicId = uploaded.PublicId,              
+                    Width = uploaded.Width,
+                    Height = uploaded.Height,
+                    Format = uploaded.Format
                 };
 
-                await _uow.PostMedia.AddAsync(media);
+                createdMedias.Add(media);
 
-                // Map DTO (đầy đủ thông tin Cloudinary ra ngoài)
-                outputs.Add(new PostMediaResponse(
-                Id: media.Id,
-                PostId: media.PostId,
-                Url: up.Url,
-                PublicId: up.PublicId,
-                Width: up.Width,
-                Height: up.Height,
-                Format: up.Format,
-                Position: media.Position,
-                ThumbnailUrl: up.ThumbnailUrl));
+                responses.Add(new PostMediaResponse(
+                    media.Id, media.PostId, media.Url,
+                    media.PublicId, media.Width, media.Height,
+                    media.Format, media.Position, media.ThumbnailUrl
+                ));
+
+                i++;
             }
 
+            if (createdMedias.Count == 0)
+                return Enumerable.Empty<PostMediaResponse>();
+
+            await _uow.PostMedia.AddRangeAsync(createdMedias);
+            post.UpdatedAt = DateTime.UtcNow;
+            _uow.Posts.Update(post);
             await _uow.CompleteAsync();
-            return outputs;
+
+            return responses.OrderBy(r => r.Position);
         }
 
         public async Task<bool> RemoveMediaAsync(Guid postId, Guid mediaId, Guid requesterId)
