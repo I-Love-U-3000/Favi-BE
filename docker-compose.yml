@@ -1,0 +1,93 @@
+services:
+  # ===== Favi Backend (.NET) =====
+  favi-api:
+    build:
+      context: ./Favi-BE
+      dockerfile: ./FaviBE.Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: >
+        Host=favi-postgres;Port=5432;Database=favi;
+        Username=favi;Password=favi;Include Error Detail=true
+      # JWT (khớp appsettings: Jwt:Key/Issuer/Audience)
+      Jwt__Key: uqw9n0eu129nucouno132n21nu39c012uci2903u129ncu293ue32oru32nu3294u290c4u3294cnu39rcuwsidcbjewoibruewiu2398rnuewcnyewiugfnyw8rny398rcu39tu349ony3o8tfyaewo8wayorway8ocrawycruwayruiawbyowuybcraeworcbyawurbhyawuifywao8ryworhyaewuorawurwy8
+      Jwt__Issuer: favi.local
+      Jwt__Audience: favi.web
+      Jwt_AccessMinutes: 60
+      Jwt_RefreshDays: 7
+
+      # Supabase (để HttpClient hoạt động)
+      Supabase__Url: https://jgounylmgjcmlwyzzzhv.supabase.co
+      Supabase__ApiKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnb3VueWxtZ2pjbWx3eXp6emh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzQ2NjAsImV4cCI6MjA3Mzc1MDY2MH0.5cjyGppqNqndilyIjEVnnlhpVPZLQ089Ens0Rur-G_w
+
+      # Nếu vẫn muốn fallback theo code trên:
+      SupabaseSecret: VhFfo0qXjH4NmPgASomHxX2RWN+7zUFCV0vgUOi9dXqJ0ETm6Tlh5uu1n9o2gqEH3+yvi1xMdaE0FRX+4b8HvA==
+
+      # Cloudinary (đúng section trong appsettings)
+      CloudinarySettings__CloudName: dumyugxhm
+      CloudinarySettings__ApiKey: 751624888575967
+      CloudinarySettings__ApiSecret: cMkSP_iSpIxqXhWCKhVhWhsoLq8
+
+      #Vector Index Api
+      VectorIndex__BaseUrl: http://vector-index-api:8080
+      VectorIndex__Enabled: "true"
+    depends_on:
+      - favi-postgres
+    ports:
+      - "5000:8080"                  # http://localhost:5000
+
+  # ===== Postgres cho Favi =====
+  favi-postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: favi
+      POSTGRES_USER: favi
+      POSTGRES_PASSWORD: favi
+    ports:
+      - "5432:5432"
+    volumes:
+      - favi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U favi -d favi"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ===== Vector Index Monolith (FastAPI + OpenCLIP) =====
+  vector-index-api:
+    build:
+      context: ./Vector-index-api
+      dockerfile: ./VectorIndexApi.Dockerfile   # <— dùng đúng file bạn nêu
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      FRIENDS_URL: http://favi-api:8080         # <— gọi trực tiếp Favi để lấy friends
+      REDIS_URL: redis://redis:6379/0           # nếu bạn đã thêm Redis RL
+      COLLECTION_NAME: posts_demo
+      MODEL_NAME: ViT-B-32
+      PRETRAINED: openai
+      RL_SEARCH_PER_MIN: "60"
+      RL_POST_PER_MIN: "200"
+      RL_BULK_PER_MIN: "20"
+      BULK_EMBED_BATCH: "64"
+    depends_on:
+      - qdrant
+      - redis
+      - favi-api
+    ports:
+      - "18080:8080"                # http://localhost:18080 (dev)
+
+  # ===== Qdrant + Redis (cho vector) =====
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server","--save","","--appendonly","no"]
+
+volumes:
+  favi_pgdata:
+  qdrant_storage:

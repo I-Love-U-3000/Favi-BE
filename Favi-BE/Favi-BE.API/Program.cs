@@ -124,9 +124,32 @@ builder.Services.AddEndpointsApiExplorer();
 //});
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // (Khuyến nghị) chờ Postgres sẵn sàng + retry vài lần
+    var retries = 0;
+    const int maxRetries = 10;
+    while (true)
+    {
+        try
+        {
+            db.Database.Migrate(); // <- áp dụng tất cả migrations đang có
+            break;
+        }
+        catch (Exception ex) when (retries < maxRetries)
+        {
+            retries++;
+            Console.WriteLine($"[Migrate] retry {retries}/{maxRetries}: {ex.Message}");
+            await Task.Delay(2000);
+        }
+    }
+}
 
 //app.UseSwagger(); 
 //app.UseSwaggerUI();
