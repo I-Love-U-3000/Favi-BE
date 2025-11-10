@@ -12,6 +12,10 @@ RUN python /app/warmup.py
 
 COPY main.py /app/main.py
 COPY seed.py /app/seed.py
+COPY test_multi_images.py /app/test_multi_images.py
+
+EXPOSE 8080
+
 
 ENV QDRANT_URL=http://qdrant:6333
 ENV FRIENDS_URL=http://mock_friends:8002
