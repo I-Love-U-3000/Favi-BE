@@ -19,5 +19,8 @@
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         Guid? ParentCommentId // nếu hỗ trợ reply nhiều cấp
-    );
+    )
+    {
+        public List<CommentResponse> Replies { get; init; } = new();
+    }
 }
