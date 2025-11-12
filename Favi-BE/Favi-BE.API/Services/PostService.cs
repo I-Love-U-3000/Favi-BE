@@ -160,46 +160,80 @@ namespace Favi_BE.Services
         // --------------------------------------------------------------------
         // Media
         // --------------------------------------------------------------------
-        public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(Guid postId, IEnumerable<IFormFile> files, Guid requesterId)
+        // Services/PostService.cs
+        public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(
+            Guid postId,
+            IEnumerable<IFormFile> files,
+            Guid requesterId)
         {
+            // 0) Kiểm tra post & quyền
             var post = await _uow.Posts.GetByIdAsync(postId);
-            if (post is null) return Enumerable.Empty<PostMediaResponse>();
-            if (post.ProfileId != requesterId) return Enumerable.Empty<PostMediaResponse>();
+            if (post is null || post.ProfileId != requesterId)
+                return Enumerable.Empty<PostMediaResponse>();
 
+            // 1) Chốt danh sách file & lọc ảnh
+            var fileList = (files ?? Enumerable.Empty<IFormFile>()).ToList();
+            if (fileList.Count == 0) return Enumerable.Empty<PostMediaResponse>();
+
+            // Chỉ nhận image/*, có dữ liệu
+            var allowed = fileList
+                .Where(f => f?.Length > 0
+                         && !string.IsNullOrWhiteSpace(f.ContentType)
+                         && f.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (allowed.Count == 0) return Enumerable.Empty<PostMediaResponse>();
+
+            // 2) Tính position bắt đầu = max(position) hiện có + 1
             var existing = await _uow.PostMedia.GetByPostIdAsync(postId);
-            var nextPos = existing.Any() ? existing.Max(m => m.Position) + 1 : 0;
+            var maxPos = existing.Any() ? existing.Max(m => m.Position) : -1;
+            var startPos = maxPos + 1;
 
-            var outputs = new List<PostMediaResponse>();
-            foreach (var f in files)
+            var createdMedias = new List<PostMedia>();
+            var responses = new List<PostMediaResponse>();
+
+            // 3) Upload tuần tự (đơn giản, ổn định). Có thể tối ưu song song sau.
+            for (int i = 0; i < allowed.Count; i++)
             {
-                var up = await _cloudinary.TryUploadAsync(f);
-                if (up is null) continue;
+                var file = allowed[i];
+
+                // Upload Cloudinary (trả null nếu fail)
+                var uploaded = await _cloudinary.TryUploadAsync(file);
+                if (uploaded is null) continue; // bỏ qua file hỏng
+
                 var media = new PostMedia
                 {
                     Id = Guid.NewGuid(),
                     PostId = postId,
-                    Url = up.Url,
-                    ThumbnailUrl = up.ThumbnailUrl,
-                    Position = nextPos++
+                    Url = uploaded.Url,
+                    ThumbnailUrl = uploaded.ThumbnailUrl,
+                    Position = startPos + i,   // luôn tăng liên tục
+                    PublicId = uploaded.PublicId,
+                    Width = uploaded.Width,
+                    Height = uploaded.Height,
+                    Format = uploaded.Format
                 };
 
-                await _uow.PostMedia.AddAsync(media);
+                createdMedias.Add(media);
 
-                // Map DTO (đầy đủ thông tin Cloudinary ra ngoài)
-                outputs.Add(new PostMediaResponse(
-                Id: media.Id,
-                PostId: media.PostId,
-                Url: up.Url,
-                PublicId: up.PublicId,
-                Width: up.Width,
-                Height: up.Height,
-                Format: up.Format,
-                Position: media.Position,
-                ThumbnailUrl: up.ThumbnailUrl));
+                responses.Add(new PostMediaResponse(
+                    media.Id, media.PostId, media.Url,
+                    media.PublicId, media.Width, media.Height,
+                    media.Format, media.Position, media.ThumbnailUrl
+                ));
             }
 
+            // 4) Không có file nào hợp lệ/đăng thành công → thôi
+            if (createdMedias.Count == 0)
+                return Enumerable.Empty<PostMediaResponse>();
+
+            // 5) Lưu DB một lần
+            await _uow.PostMedia.AddRangeAsync(createdMedias);
+            post.UpdatedAt = DateTime.UtcNow;
+            _uow.Posts.Update(post);
             await _uow.CompleteAsync();
-            return outputs;
+
+            // 6) Trả về theo Position tăng dần
+            return responses.OrderBy(r => r.Position);
         }
 
         public async Task<bool> RemoveMediaAsync(Guid postId, Guid mediaId, Guid requesterId)

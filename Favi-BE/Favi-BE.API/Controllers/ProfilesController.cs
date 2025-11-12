@@ -155,21 +155,5 @@ namespace Favi_BE.Controllers
                 ? Ok(new { message = "Đã xoá tài khoản." })
                 : BadRequest(new { code = "DELETE_PROFILE_FAILED", message = "Không thể xoá tài khoản." });
         }
-
-        [HttpGet("check-username")]
-        [AllowAnonymous]
-        public async Task<IActionResult> CheckUsername([FromQuery] string username)
-        {
-            var result=await _profiles.CheckValidUsername(Normalize(username));
-            if (result) return Ok(new { message = "Username hợp lệ và chưa được sử dụng." });
-            return BadRequest(new { code = "USERNAME_INVALID_OR_TAKEN", message = "Username đã được sử dụng." });
-        }
-
-        private static string Normalize(string s)
-        {
-            s = s.Trim().ToLowerInvariant();
-            s = Regex.Replace(s, @"[^a-z0-9_.]", "");
-            return s;
-        }
     }
 }

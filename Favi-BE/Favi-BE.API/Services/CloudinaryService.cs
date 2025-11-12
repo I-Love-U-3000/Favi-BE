@@ -12,7 +12,7 @@ namespace Favi_BE.Services
 
         public CloudinaryService(IConfiguration config)
         {
-            var section = config.GetSection("Cloudinary");
+            var section = config.GetSection("CloudinarySettings");
             var account = new Account(
                 section["CloudName"],
                 section["ApiKey"],
