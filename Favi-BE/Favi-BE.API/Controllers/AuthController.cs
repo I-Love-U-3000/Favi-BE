@@ -11,10 +11,12 @@ namespace Favi_BE.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ISupabaseAuthService _supabase;
+        private readonly IProfileService _profiles;
 
-        public AuthController(ISupabaseAuthService supabase)
+        public AuthController(ISupabaseAuthService supabase, IProfileService profiles)
         {
             _supabase = supabase;
+            _profiles = profiles;
         }
 
         public record LoginDto(string Email, string Password);
@@ -33,6 +35,9 @@ namespace Favi_BE.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<SupabaseAuthResponse>> Register(RegisterDto dto)
         {
+            var validate_result = await _profiles.CheckValidUsername(dto.Username);
+            if (!validate_result)
+                return Conflict(new { code = "USERNAME_EXISTS", message = "Username đã được sử dụng." });
             var result = await _supabase.RegisterAsync(dto.Email, dto.Password, dto.Username);
             if (result is null)
                 return BadRequest(new { code = "REGISTRATION_FAILED", message = "Không thể tạo tài khoản. Vui lòng thử lại." });
@@ -47,6 +52,5 @@ namespace Favi_BE.Controllers
                 return Unauthorized(new { code = "INVALID_REFRESH_TOKEN", message = "Refresh token không hợp lệ hoặc đã hết hạn." });
             return Ok(result);
         }
-
     }
 }

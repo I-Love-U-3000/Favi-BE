@@ -114,27 +114,6 @@ builder.Services.AddControllers()
 builder.Services.AddOpenApi();
 
 builder.Services.AddEndpointsApiExplorer();
-//Swagger is not used for this project as of now
-//builder.Services.AddSwaggerGen(c =>
-//{
-//    c.SwaggerDoc("v1", new() { Title = "Favi API", Version = "v1" });
-//    c.AddSecurityDefinition("Bearer", new()
-//    {
-//        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-//        Description = "Enter: Bearer {token}",
-//        Name = "Authorization",
-//        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-//        Scheme = "bearer",
-//        BearerFormat = "JWT"
-//    });
-//    c.AddSecurityRequirement(new()
-//    {
-//        {
-//            new() { Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" } },
-//            Array.Empty<string>()
-//        }
-//    });
-//});
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -163,9 +142,6 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
-
-//app.UseSwagger(); 
-//app.UseSwaggerUI();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
