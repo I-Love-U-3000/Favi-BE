@@ -108,17 +108,22 @@ namespace Favi_BE.Data.Repositories
                 .Include(p => p.Reactions).ThenInclude(r => r.Profile)
                 .FirstOrDefaultAsync();
         }
+
         public async Task<(IEnumerable<Post> Items, int Total)> GetFeedPagedAsync(Guid profileId, int skip, int take)
         {
-            var query = _dbSet
-                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId))
+            var baseQuery = _dbSet
+                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId) || p.ProfileId == profileId) 
+                .OrderByDescending(p => p.CreatedAt);
+
+            var total = await baseQuery.CountAsync();
+
+            var items = await baseQuery
                 .Include(p => p.Profile)
                 .Include(p => p.PostMedias)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                .OrderByDescending(p => p.CreatedAt);
+                .Skip(skip).Take(take)
+                .ToListAsync();
 
-            var total = await query.CountAsync();
-            var items = await query.Skip(skip).Take(take).ToListAsync();
             return (items, total);
         }
 
