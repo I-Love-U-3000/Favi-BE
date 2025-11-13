@@ -60,12 +60,29 @@ namespace Favi_BE.Services
 
         public async Task<PagedResult<CommentResponse>> GetByPostAsync(Guid postId, int page, int pageSize)
         {
-            var comments = await _uow.Comments.GetCommentsByPostIdAsync(postId);
-            var paged = comments.Skip((page - 1) * pageSize).Take(pageSize);
+            // 1) roots (paged)
+            var (roots, totalRoots) = await _uow.Comments.GetRootCommentsPagedAsync(postId, page, pageSize);
+            var rootIds = roots.Select(r => r.Id).ToArray();
 
-            var dtos = paged.Select(c => new CommentResponse(c.Id, c.PostId, c.ProfileId, c.Content, c.CreatedAt, c.UpdatedAt, c.ParentCommentId));
+            // 2) replies của các root trong trang (1 query)
+            var replies = await _uow.Comments.GetDirectRepliesForParentsAsync(rootIds);
 
-            return new PagedResult<CommentResponse>(dtos, page, pageSize, comments.Count());
+            // 3) map
+            var repliesByParent = replies.GroupBy(r => r.ParentCommentId!.Value)
+                                         .ToDictionary(g => g.Key, g => g.Select(c =>
+                                             new CommentResponse(c.Id, c.PostId, c.ProfileId, c.Content, c.CreatedAt, c.UpdatedAt, c.ParentCommentId)
+                                         ).ToList());
+
+            var dtos = roots.Select(c =>
+            {
+                var dto = new CommentResponse(c.Id, c.PostId, c.ProfileId, c.Content, c.CreatedAt, c.UpdatedAt, c.ParentCommentId);
+                // Nếu bạn đã thêm List<CommentResponse> Replies { get; init; } = new();
+                if (repliesByParent.TryGetValue(c.Id, out var children))
+                    dto.Replies.AddRange(children);
+                return dto;
+            }).ToList();
+
+            return new PagedResult<CommentResponse>(dtos, page, pageSize, totalRoots);
         }
     }
 }
