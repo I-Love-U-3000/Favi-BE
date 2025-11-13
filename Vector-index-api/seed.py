@@ -11,9 +11,8 @@ posts = [
         "privacy": "Public",
         "image_urls": [
             "https://picsum.photos/id/1011/800/600",  # River/water landscape
-            "https://picsum.photos/id/1018/800/600",  # Mountain path
         ],
-        "caption": "Chuyến đi biển cuối tuần - sóng biển, bầu trời xanh và không khí trong lành",
+        "caption": "Chuyến đi chơi cuối tuần, mặt nước trong xanh",
         "alpha": 0.5
     },
     
@@ -35,9 +34,10 @@ posts = [
     {
         "post_id": "p3",
         "owner_id": "user_cara",
-        "privacy": "Private",
+        "privacy": "Public",
         "image_urls": [
             "https://picsum.photos/id/1025/800/600",  # Dog/pet
+            "https://picsum.photos/id/1062/800/600"
         ],
         "caption": "Cún cưng của mình - đáng yêu, ngoan ngoãn và rất thích chơi đùa",
         "alpha": 0.5
@@ -47,13 +47,13 @@ posts = [
     {
         "post_id": "p4",
         "owner_id": "user_deno",
-        "privacy": "Followers",
+        "privacy": "Public",
         "image_urls": [
-            "https://picsum.photos/id/1031/800/600",  # Sunset/dawn scene
-            "https://picsum.photos/id/1033/800/600",  # Sky view
-            "https://picsum.photos/id/1036/800/600",  # Landscape
+            "https://picsum.photos/id/1031/800/600",  
+            "https://picsum.photos/id/1033/800/600",  
+            "https://picsum.photos/id/1081/800/600"
         ],
-        "caption": "Hoàng hôn tuyệt đẹp trên núi - bầu trời đỏ cam, mây lững lờ và ánh nắng vàng",
+        "caption": "Kiến trúc đô thị hiện đại",
         "alpha": 0.5
     },
     
@@ -63,10 +63,9 @@ posts = [
         "owner_id": "user_eve",
         "privacy": "Public",
         "image_urls": [
-            "https://picsum.photos/id/1034/800/600",  # Urban scene
-            "https://picsum.photos/id/1037/800/600",  # City view
+            "https://picsum.photos/id/1037/800/600",  
         ],
-        "caption": "Thành phố về đêm - đèn neon lung linh, đường phố nhộn nhịp và cuộc sống sôi động",
+        "caption": "Bình minh ở rừng cây",
         "alpha": 0.6
     },
     
@@ -77,10 +76,8 @@ posts = [
         "privacy": "Public",
         "image_urls": [
             "https://picsum.photos/id/1060/800/600",  # Coffee/food
-            "https://picsum.photos/id/1061/800/600",  # Cafe setting
-            "https://picsum.photos/id/1062/800/600",  # Breakfast
         ],
-        "caption": "Bữa sáng thư giãn - cà phê đậm đà, bánh mì giòn tan và không gian quán cafe ấm cúng",
+        "caption": "Bữa sáng thư giãn - cà phê đậm đà",
         "alpha": 0.4
     },
     
@@ -88,12 +85,11 @@ posts = [
     {
         "post_id": "p7",
         "owner_id": "user_alice",
-        "privacy": "Followers",
+        "privacy": "Public",
         "image_urls": [
-            "https://picsum.photos/id/1068/800/600",  # Flowers/garden
             "https://picsum.photos/id/1069/800/600",  # Nature close-up
         ],
-        "caption": "Vườn hoa mùa xuân - hoa đủ màu sắc, hương thơm ngát và ong bướm bay lượn",
+        "caption": "orange jellyfish",
         "alpha": 0.55
     },
     
@@ -105,7 +101,7 @@ posts = [
         "image_urls": [
             "https://picsum.photos/id/1073/800/600",  # Activity/sport
         ],
-        "caption": "Đạp xe quanh công viên - tập thể dục buổi sáng, không khí trong lành và cảm giác sảng khoái",
+        "caption": "books matrix",
         "alpha": 0.5
     },
     
@@ -115,10 +111,9 @@ posts = [
         "owner_id": "user_cara",
         "privacy": "Public",
         "image_urls": [
-            "https://picsum.photos/id/1080/800/600",  # Food/street
-            "https://picsum.photos/id/1081/800/600",  # Cuisine
+            "https://picsum.photos/id/1080/800/600",  
         ],
-        "caption": "Ăn vặt đường phố - món ngon, giá rẻ và không gian ẩm thực địa phương",
+        "caption": "dâu ngon chín mọng",
         "alpha": 0.5
     },
     
@@ -133,17 +128,16 @@ posts = [
         "caption": "Làm việc từ xa tại quán cafe - laptop, wifi nhanh và không gian yên tĩnh",
         "alpha": 0.5
     },
-    
+
     # ===== KIẾN TRÚC CỔ =====
     {
         "post_id": "p11",
         "owner_id": "user_frank",
-        "privacy": "Followers",
+        "privacy": "Public",
         "image_urls": [
-            "https://picsum.photos/id/10/800/600",     # Architecture/building
             "https://picsum.photos/id/15/800/600",     # Historic structure
         ],
-        "caption": "Khám phá kiến trúc cổ - tòa nhà lịch sử, chi tiết tinh xảo và vẻ đẹp thời gian",
+        "caption": "Đi dạo ở thác nước suối vào cuối tuần ",
         "alpha": 0.6
     },
     
@@ -153,11 +147,9 @@ posts = [
         "owner_id": "user_alice",
         "privacy": "Public",
         "image_urls": [
-            "https://picsum.photos/id/20/800/600",     # Park/outdoor
-            "https://picsum.photos/id/21/800/600",     # Nature setting
-            "https://picsum.photos/id/22/800/600",     # Leisure
+            "https://picsum.photos/id/21/800/600",
         ],
-        "caption": "Dã ngoại cuối tuần - bạn bè, đồ ăn ngon và trò chơi vui nhộn trên bãi cỏ xanh",
+        "caption": "Tôi mới mua đôi này",
         "alpha": 0.5
     },
     
