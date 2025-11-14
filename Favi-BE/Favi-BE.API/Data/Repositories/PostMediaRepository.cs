@@ -21,5 +21,17 @@ namespace Favi_BE.Data.Repositories
                 .OrderBy(pm => pm.Position)
                 .ToListAsync();
         }
+
+        public async Task<PostMedia?> GetProfileAvatar(Guid profileId)
+        {
+            return await _dbSet
+                .FirstOrDefaultAsync(pm => pm.ProfileId == profileId && pm.IsAvatar);
+        }
+
+        public async Task<PostMedia?> GetProfilePoster(Guid profileId)
+        {
+            return await _dbSet
+                .FirstOrDefaultAsync(pm => pm.ProfileId == profileId && pm.IsPoster);
+        }
     }
 }

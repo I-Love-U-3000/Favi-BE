@@ -68,7 +68,7 @@ namespace Favi_BE.Services
                 var medias = p.PostMedias?.Select(m =>
                     new PostMediaResponse(
                         m.Id,
-                        m.PostId,
+                        m.PostId ?? Guid.Empty,
                         m.Url,
                         m.PublicId,
                         m.Width,

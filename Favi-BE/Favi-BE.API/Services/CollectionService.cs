@@ -133,7 +133,7 @@ namespace Favi_BE.Services
             var dtos = posts.Select(p =>
             {
                 var medias = p.PostMedias?.Select(m =>
-                    new PostMediaResponse(m.Id, m.PostId, m.Url, m.PublicId, m.Width, m.Height, m.Format, m.Position, m.ThumbnailUrl)
+                    new PostMediaResponse(m.Id, m.PostId ?? Guid.Empty, m.Url, m.PublicId, m.Width, m.Height, m.Format, m.Position, m.ThumbnailUrl)
                 ).ToList() ?? new List<PostMediaResponse>();
 
                 var tags = p.PostTags?.Select(pt =>

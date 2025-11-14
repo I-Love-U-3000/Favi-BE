@@ -20,5 +20,9 @@ namespace Favi_BE.Interfaces.Services
         Task<bool> DeleteAsync(Guid profileId);
         Task<Profile?> GetEntityByIdAsync(Guid profileId);
         Task<bool> CheckValidUsername(string username);
+        Task<PostMedia?> GetAvatar(Guid profileId);
+        Task<PostMedia?> GetPoster(Guid profileId);
+        Task<PostMediaResponse?> UploadAvatarAsync(Guid profileId, IFormFile file);
+        Task<PostMediaResponse?> UploadPosterAsync(Guid profileId, IFormFile file);
     }
 }

@@ -3,6 +3,7 @@ using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
 
 namespace Favi_BE.Controllers
@@ -154,6 +155,70 @@ namespace Favi_BE.Controllers
             return await _profiles.DeleteAsync(userId)
                 ? Ok(new { message = "Đã xoá tài khoản." })
                 : BadRequest(new { code = "DELETE_PROFILE_FAILED", message = "Không thể xoá tài khoản." });
+        }
+
+        //I dont think we need this endpoint, but I will keep it for now
+        [HttpGet("avatar/{profileId}")]
+        public async Task<IActionResult> GetAvatar(Guid profileId)
+        {
+            var avatar = await _profiles.GetAvatar(profileId);
+            if (avatar is null)
+                return NotFound(new { code = "AVATAR_NOT_FOUND", message = "Không tìm thấy ảnh đại diện." });
+            return Ok(avatar.Url);
+        }
+
+        //I dont think we need this endpoint, but I will keep it for now
+        [HttpGet("poster/{profileId}")]
+        public async Task<IActionResult> GetPoster(Guid profileId)
+        {
+            var poster = await _profiles.GetPoster(profileId);
+            if (poster is null)
+                return NotFound(new { code = "POSTER_NOT_FOUND", message = "Không tìm thấy ảnh bìa." });
+            return Ok(poster.Url);
+        }
+
+
+        [Authorize]
+        [HttpPost("avatar")]
+        public async Task<ActionResult<PostMediaResponse>> UploadAvatar([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { code = "NO_FILE", message = "Không có file nào được gửi." });
+
+            var userId = User.GetUserIdFromMetadata();
+
+            // Đảm bảo profile tồn tại
+            var profile = await _profiles.GetEntityByIdAsync(userId);
+            if (profile is null)
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
+            var media = await _profiles.UploadAvatarAsync(userId, file);
+
+            if (media is null)
+                return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload avatar thất bại hoặc file không hợp lệ." });
+
+            return Ok(media);
+        }
+
+        [Authorize]
+        [HttpPost("poster")]
+        public async Task<ActionResult<PostMediaResponse>> UploadPoster([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { code = "NO_FILE", message = "Không có file nào được gửi." });
+
+            var userId = User.GetUserIdFromMetadata();
+
+            var profile = await _profiles.GetEntityByIdAsync(userId);
+            if (profile is null)
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
+            var media = await _profiles.UploadPosterAsync(userId, file);
+
+            if (media is null)
+                return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload poster thất bại hoặc file không hợp lệ." });
+
+            return Ok(media);
         }
     }
 }

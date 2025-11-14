@@ -38,7 +38,7 @@ namespace Favi_BE.Services
                 .OrderBy(m => m.Position)
                 .Select(m => new PostMediaResponse(
                     m.Id,
-                    m.PostId,
+                    m.PostId ?? Guid.Empty,
                     m.Url,
                     PublicId: string.Empty,     // entity hiện không có, để rỗng
                     Width: 0,
@@ -216,7 +216,7 @@ namespace Favi_BE.Services
                 createdMedias.Add(media);
 
                 responses.Add(new PostMediaResponse(
-                    media.Id, media.PostId, media.Url,
+                    media.Id, media.PostId ?? Guid.Empty, media.Url,
                     media.PublicId, media.Width, media.Height,
                     media.Format, media.Position, media.ThumbnailUrl
                 ));
@@ -351,7 +351,7 @@ namespace Favi_BE.Services
                 .OrderBy(m => m.Position)
                 .Select(m => new PostMediaResponse(
                     m.Id,
-                    m.PostId,
+                    m.PostId ?? Guid.Empty,
                     m.Url,
                     PublicId: string.Empty, // entity không có
                     Width: 0,

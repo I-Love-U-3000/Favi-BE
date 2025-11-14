@@ -8,10 +8,12 @@ namespace Favi_BE.Services
     public class ProfileService : IProfileService
     {
         private readonly IUnitOfWork _uow;
+        private readonly ICloudinaryService _cloudinary;
 
-        public ProfileService(IUnitOfWork uow)
+        public ProfileService(IUnitOfWork uow, ICloudinaryService cloudinary)
         {
             _uow = uow;
+            _cloudinary = cloudinary;
         }
 
         public async Task<ProfileResponse?> GetByIdAsync(Guid profileId)
@@ -174,6 +176,148 @@ namespace Favi_BE.Services
         public async Task<bool> CheckValidUsername(string username)
         {
             return await _uow.Profiles.IsUsernameUniqueAsync(username);
+        }
+
+        public async Task<PostMedia?> GetAvatar(Guid profileId)
+        {
+            var result = await _uow.PostMedia.GetProfileAvatar(profileId);
+            return result;
+        }
+
+        public async Task<PostMedia?> GetPoster(Guid profileId)
+        {
+            var result = await _uow.PostMedia.GetProfilePoster(profileId);
+            return result;
+        }
+
+        public async Task<PostMediaResponse?> UploadAvatarAsync(Guid profileId, IFormFile file)
+        {
+            // 1. Kiểm tra profile tồn tại
+            var profile = await _uow.Profiles.GetByIdAsync(profileId);
+            if (profile is null) return null;
+
+            // 2. Validate file giống PostService
+            if (file == null || file.Length == 0) return null;
+            if (string.IsNullOrWhiteSpace(file.ContentType) ||
+                !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            // 3. Upload Cloudinary
+            var uploaded = await _cloudinary.TryUploadAsync(file);
+            if (uploaded is null) return null;
+
+            // 4. Xoá avatar cũ (nếu có)
+            var oldAvatar = await _uow.PostMedia.GetProfileAvatar(profileId);
+            if (oldAvatar is not null)
+            {
+                // TODO: nếu muốn xoá trên Cloudinary, dùng oldAvatar.PublicId ở đây
+                _uow.PostMedia.Remove(oldAvatar);
+            }
+
+            // 5. Tạo PostMedia mới
+            var media = new PostMedia
+            {
+                Id = Guid.NewGuid(),
+                ProfileId = profileId,
+                PostId = null,
+                Url = uploaded.Url,
+                ThumbnailUrl = uploaded.ThumbnailUrl,
+                PublicId = uploaded.PublicId,
+                Width = uploaded.Width,
+                Height = uploaded.Height,
+                Format = uploaded.Format,
+                Position = 0,
+                IsAvatar = true,
+                IsPoster = false
+            };
+
+            await _uow.PostMedia.AddAsync(media);
+
+            // 6. Cập nhật AvatarUrl trong bảng Profile (nếu còn dùng)
+            profile.AvatarUrl = media.Url;
+            profile.LastActiveAt = DateTime.UtcNow;
+            _uow.Profiles.Update(profile);
+
+            // 7. Lưu
+            await _uow.CompleteAsync();
+
+            // 8. Map đúng constructor PostMediaResponse (giống PostService)
+            return new PostMediaResponse(
+                media.Id,
+                media.PostId ?? Guid.Empty,
+                media.Url,
+                media.PublicId,
+                media.Width,
+                media.Height,
+                media.Format,
+                media.Position,
+                media.ThumbnailUrl
+            );
+        }
+
+        public async Task<PostMediaResponse?> UploadPosterAsync(Guid profileId, IFormFile file)
+        {
+            // 1. Kiểm tra profile tồn tại
+            var profile = await _uow.Profiles.GetByIdAsync(profileId);
+            if (profile is null) return null;
+
+            // 2. Validate file giống PostService
+            if (file == null || file.Length == 0) return null;
+            if (string.IsNullOrWhiteSpace(file.ContentType) ||
+                !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            // 3. Upload Cloudinary
+            var uploaded = await _cloudinary.TryUploadAsync(file);
+            if (uploaded is null) return null;
+
+            // 4. Xoá poster cũ (nếu có)
+            var oldPoster = await _uow.PostMedia.GetProfilePoster(profileId);
+            if (oldPoster is not null)
+            {
+                // TODO: nếu muốn xoá trên Cloudinary, dùng oldPoster.PublicId ở đây
+                _uow.PostMedia.Remove(oldPoster);
+            }
+
+            // 5. Tạo PostMedia mới
+            var media = new PostMedia
+            {
+                Id = Guid.NewGuid(),
+                ProfileId = profileId,
+                PostId = null,
+                Url = uploaded.Url,
+                ThumbnailUrl = uploaded.ThumbnailUrl,
+                PublicId = uploaded.PublicId,
+                Width = uploaded.Width,
+                Height = uploaded.Height,
+                Format = uploaded.Format,
+                Position = 0,
+                IsAvatar = false,
+                IsPoster = true
+            };
+
+            await _uow.PostMedia.AddAsync(media);
+
+            // 6. Cập nhật CoverUrl trong Profile
+            profile.CoverUrl = media.Url;
+            profile.LastActiveAt = DateTime.UtcNow;
+            _uow.Profiles.Update(profile);
+
+            // 7. Lưu
+            await _uow.CompleteAsync();
+
+            // 8. Map đúng constructor PostMediaResponse
+            return new PostMediaResponse(
+                media.Id,
+                media.PostId ?? Guid.Empty,
+                media.Url,
+                media.PublicId,
+                media.Width,
+                media.Height,
+                media.Format,
+                media.Position,
+                media.ThumbnailUrl
+            );
         }
     }
 }
