@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Remove Post from Collection Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CollectionsController" as CollectionController
+  participant "ICollectionService" as CollectionService
+end box
+
+User -> CollectionController: DELETE /api/collections/{id}/posts/{postId}
+activate CollectionController
+
+CollectionController -> CollectionService: RemovePostAsync(id, postId, userId)
+activate CollectionService
+CollectionService --> CollectionController: bool wasSuccessful
+deactivate CollectionService
+
+alt Remove successful
+    CollectionController --> User: 204 No Content
+else Forbidden or Invalid
+    CollectionController --> User: 403 Forbidden
+end
+
+deactivate CollectionController
+@enduml

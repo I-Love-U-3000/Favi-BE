@@ -1,0 +1,23 @@
+@startuml
+!theme vibrant
+title View All Reports Sequence
+
+actor Admin
+
+box "Favi-BE Backend" #LightBlue
+  participant "ReportsController" as ReportController
+  participant "IReportService" as ReportService
+end box
+
+Admin -> ReportController: GET /api/reports
+activate ReportController
+
+ReportController -> ReportService: GetAllAsync(page, pageSize)
+activate ReportService
+ReportService --> ReportController: PagedResult<ReportResponse>
+deactivate ReportService
+
+ReportController --> Admin: 200 OK (Paged Reports)
+deactivate ReportController
+
+@enduml

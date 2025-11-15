@@ -1,0 +1,23 @@
+@startuml
+!theme vibrant
+title View All Users Sequence
+
+actor Admin
+
+box "Favi-BE Backend" #LightBlue
+  participant "AdminController" as AdminController
+  participant "IUserService" as UserService
+end box
+
+Admin -> AdminController: GET /api/admin/users
+activate AdminController
+
+AdminController -> UserService: GetAllUsers(page, pageSize)
+activate UserService
+UserService --> AdminController: PagedResult<UserResponse>
+deactivate UserService
+
+AdminController --> Admin: 200 OK (Paged Users)
+deactivate AdminController
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+!theme vibrant
+title User Login Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "AuthController" as AuthController
+  participant "ISupabaseAuthService" as SupabaseAuthService
+end box
+
+group User Login
+    User -> AuthController: POST /api/auth/login\n(Email, Password)
+    activate AuthController
+    AuthController -> SupabaseAuthService: LoginAsync(Email, Password)
+    activate SupabaseAuthService
+    SupabaseAuthService --> AuthController: SupabaseAuthResponse (or null)
+    deactivate SupabaseAuthService
+    alt Login successful
+        AuthController --> User: 200 OK (AuthResponse)
+    else Invalid credentials
+        AuthController --> User: 401 Unauthorized
+    end
+    deactivate AuthController
+end
+@enduml

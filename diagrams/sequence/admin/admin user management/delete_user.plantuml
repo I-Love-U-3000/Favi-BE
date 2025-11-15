@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Delete User Sequence
+
+actor Admin
+
+box "Favi-BE Backend" #LightBlue
+  participant "AdminController" as AdminController
+  participant "IUserService" as UserService
+end box
+
+Admin -> AdminController: DELETE /api/admin/users/{id}
+activate AdminController
+
+AdminController -> UserService: DeleteUser(id)
+activate UserService
+UserService --> AdminController: bool wasSuccessful
+deactivate UserService
+
+alt Delete successful
+    AdminController --> Admin: 204 No Content
+else User not found
+    AdminController --> Admin: 404 Not Found
+end
+
+deactivate AdminController
+@enduml

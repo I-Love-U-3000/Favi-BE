@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Explore Page Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+end box
+
+User -> PostController: GET /api/posts/explore
+activate PostController
+
+PostController -> PostService: GetExploreAsync(userId, page, pageSize)
+activate PostService
+PostService --> PostController: PagedResult<PostResponse>
+deactivate PostService
+
+PostController --> User: 200 OK (Paged Posts)
+deactivate PostController
+@enduml

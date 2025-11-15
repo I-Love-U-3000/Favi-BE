@@ -1,0 +1,38 @@
+@startuml
+!theme vibrant
+title AI Content Moderation Sequence (Internal Process)
+
+actor User
+participant "PostsController" as PostController
+participant "PostService" as PostService
+participant "MessageQueue" as MessageQueue
+participant "ContentModerationWorker" as Worker
+participant "VectorIndexAPI" as VectorIndexAPI
+participant "IReportService" as ReportService
+
+User -> PostController: Create/Update Post
+activate PostController
+PostController -> PostService: CreateAsync/UpdateAsync
+activate PostService
+PostService -> MessageQueue: Enqueue(PostForModeration)
+deactivate PostService
+PostController --> User: 200 OK
+
+deactivate PostController
+
+MessageQueue -> Worker: Dequeue(PostForModeration)
+activate Worker
+Worker -> VectorIndexAPI: POST /moderate\n(text, image_urls)
+activate VectorIndexAPI
+VectorIndexAPI --> Worker: ModerationResult (is_harmful, reason)
+deactivate VectorIndexAPI
+
+alt is_harmful
+    Worker -> ReportService: CreateSystemReport(postId, reason)
+    activate ReportService
+    ReportService --> Worker: Report
+    deactivate ReportService
+end
+deactivate Worker
+
+@enduml

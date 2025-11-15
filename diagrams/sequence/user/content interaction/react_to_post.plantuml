@@ -1,0 +1,32 @@
+@startuml
+!theme vibrant
+title React to Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+end box
+
+User -> PostController: POST /api/posts/{id}/reactions?type={reactionType}
+activate PostController
+
+PostController -> PostService: GetEntityAsync(id)
+activate PostService
+PostService --> PostController: Post (or null)
+deactivate PostService
+
+alt Post exists
+    PostController -> PostService: ToggleReactionAsync(id, userId, reactionType)
+    activate PostService
+    PostService --> PostController: ReactionType? (or null)
+    deactivate PostService
+
+    PostController --> User: 200 OK (Reaction state)
+else Post does not exist
+    PostController --> User: 404 Not Found
+end
+
+deactivate PostController
+@enduml

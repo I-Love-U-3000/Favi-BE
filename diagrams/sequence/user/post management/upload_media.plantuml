@@ -1,0 +1,32 @@
+@startuml
+!theme vibrant
+title Upload Media Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+end box
+
+User -> PostController: POST /api/posts/{id}/media\n(List<IFormFile>)
+activate PostController
+
+PostController -> PostService: GetEntityAsync(id)
+activate PostService
+PostService --> PostController: Post (or null)
+deactivate PostService
+
+alt Post exists and user is owner
+    PostController -> PostService: UploadMediaAsync(id, files, requesterId)
+    activate PostService
+    PostService --> PostController: IEnumerable<PostMediaResponse>
+    deactivate PostService
+
+    PostController --> User: 200 OK (Media List)
+else Post not found or user not owner
+    PostController --> User: 404 Not Found or 403 Forbidden
+end
+
+deactivate PostController
+@enduml
