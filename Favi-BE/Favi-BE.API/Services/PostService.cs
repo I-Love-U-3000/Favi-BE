@@ -60,7 +60,8 @@ namespace Favi_BE.Services
                 PrivacyLevel: post.Privacy,
                 Medias: medias,
                 Tags: tags,
-                Reactions: summary
+                Reactions: summary,
+                post.Comments.Count
             );
         }
 
@@ -375,7 +376,8 @@ namespace Favi_BE.Services
                 PrivacyLevel: post.Privacy,
                 Medias: medias,
                 Tags: tags,
-                Reactions: summary
+                Reactions: summary,
+                post.Comments.Count
             );
         }
 

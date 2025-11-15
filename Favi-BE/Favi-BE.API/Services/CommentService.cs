@@ -2,6 +2,8 @@
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
+using Favi_BE.Models.Entities.JoinTables;
+using Favi_BE.Models.Enums;
 using System.Linq;
 
 namespace Favi_BE.Services
@@ -83,6 +85,84 @@ namespace Favi_BE.Services
             }).ToList();
 
             return new PagedResult<CommentResponse>(dtos, page, pageSize, totalRoots);
+        }
+
+        public async Task<ReactionSummaryDto> GetReactionsAsync(Guid commentId, Guid? currentUserId)
+        {
+            var reactions = await _uow.Reactions.GetReactionsByCommentIdAsync(commentId);
+
+            // Đếm tổng số reaction
+            var total = reactions.Count();
+
+            // Đếm theo từng ReactionType
+            var byType = reactions
+                .GroupBy(r => r.Type)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Reaction hiện tại của user (nếu có)
+            ReactionType? currentUserReaction = null;
+            if (currentUserId.HasValue)
+            {
+                currentUserReaction = reactions
+                    .Where(r => r.ProfileId == currentUserId.Value)
+                    .Select(r => (ReactionType?)r.Type)
+                    .FirstOrDefault();
+            }
+
+            return new ReactionSummaryDto(
+                total,
+                byType,
+                currentUserReaction
+            );
+        }
+
+        public async Task<CommentResponse?> GetByIdAsync(Guid commentId, Guid? currentUserId)
+        {
+            var comment = await _uow.Comments.GetByIdAsync(commentId);
+            if (comment is null) return null;
+            return new CommentResponse(comment.Id, 
+                comment.PostId, 
+                comment.ProfileId, 
+                comment.Content, 
+                comment.CreatedAt, 
+                comment.UpdatedAt, 
+                comment.ParentCommentId);
+        }
+
+        public async Task<ReactionType?> ToggleReactionAsync(Guid commentId, Guid userId, ReactionType type)
+        {
+            var comment = await _uow.Comments.GetByIdAsync(commentId);
+            if (comment is null) return null;
+
+            var existing = await _uow.Reactions.GetProfileReactionOnCommentAysnc(commentId, userId);
+
+            // Chưa có → thêm
+            if (existing is null)
+            {
+                await _uow.Reactions.AddAsync(new Reaction
+                {
+                    CommentId = commentId,
+                    ProfileId = userId,
+                    Type = type,
+                    CreatedAt = DateTime.UtcNow
+                });
+                await _uow.CompleteAsync();
+                return type;
+            }
+
+            // Cùng loại → gỡ
+            if (existing.Type == type)
+            {
+                _uow.Reactions.Remove(existing);
+                await _uow.CompleteAsync();
+                return null;
+            }
+
+            // Khác loại → đổi
+            existing.Type = type;
+            _uow.Reactions.Update(existing);
+            await _uow.CompleteAsync();
+            return type;
         }
     }
 }

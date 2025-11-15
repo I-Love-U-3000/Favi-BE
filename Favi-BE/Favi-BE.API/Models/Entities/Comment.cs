@@ -1,4 +1,6 @@
-﻿namespace Favi_BE.Models.Entities
+﻿using Favi_BE.Models.Entities.JoinTables;
+
+namespace Favi_BE.Models.Entities
 {
     public class Comment
     {
@@ -14,5 +16,6 @@
         public Profile Profile { get; set; } = null!;
         public Comment? ParentComment { get; set; }
         public ICollection<Comment> Replies { get; set; } = new List<Comment>();
+        public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
     }
 }

@@ -22,7 +22,8 @@ namespace Favi_BE.Models.Dtos
         PrivacyLevel PrivacyLevel,
         IEnumerable<PostMediaResponse> Medias,
         IEnumerable<TagDto> Tags,
-        ReactionSummaryDto Reactions
+        ReactionSummaryDto Reactions,
+        int CommentsCount
     );
 
     public record PostMediaResponse(

@@ -23,10 +23,24 @@ namespace Favi_BE.Data.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Reaction>> GetReactionsByCommentIdAsync(Guid commentId)
+        {
+            return await _dbSet
+                .Where(r => r.CommentId == commentId)
+                .Include(r => r.Profile)
+                .ToListAsync();
+        }
+
         public async Task<Reaction> GetProfileReactionOnPostAsync(Guid profileId, Guid postId)
         {
             return await _dbSet
                 .FirstOrDefaultAsync(r => r.ProfileId == profileId && r.PostId == postId);
+        }
+
+        public async Task<Reaction> GetProfileReactionOnCommentAysnc(Guid profileId, Guid commentId)
+        {
+            return await _dbSet
+                .FirstOrDefaultAsync(r => r.ProfileId == profileId && r.CommentId == commentId);
         }
     }
 }
