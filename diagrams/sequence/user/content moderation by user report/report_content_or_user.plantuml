@@ -1,0 +1,33 @@
+@startuml
+!theme vibrant
+title Report Content/User Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ReportsController" as ReportController
+  participant "IReportService" as ReportService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> ReportController: POST /api/reports\n(CreateReportRequest)
+activate ReportController
+
+ReportController -> PrivacyGuard: CanReportAsync(targetType, targetId, reporterId)
+activate PrivacyGuard
+PrivacyGuard --> ReportController: bool canReport
+deactivate PrivacyGuard
+
+alt User can report
+    ReportController -> ReportService: CreateAsync(dto)
+    activate ReportService
+    ReportService --> ReportController: ReportResponse
+    deactivate ReportService
+
+    ReportController --> User: 200 OK (ReportResponse)
+else User cannot report
+    ReportController --> User: 403 Forbidden
+end
+
+deactivate ReportController
+@enduml

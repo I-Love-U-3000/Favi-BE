@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Add Social Link Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+end box
+
+User -> ProfileController: POST /api/profiles/links\n(SocialLinkDto)
+activate ProfileController
+
+ProfileController -> ProfileService: AddSocialLinkAsync(userId, dto)
+activate ProfileService
+ProfileService --> ProfileController: SocialLink
+deactivate ProfileService
+
+ProfileController --> User: 200 OK (SocialLink)
+deactivate ProfileController
+@enduml

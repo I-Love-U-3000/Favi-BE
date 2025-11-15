@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Update Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+end box
+
+User -> PostController: PUT /api/posts/{id}\n(UpdatePostRequest)
+activate PostController
+
+PostController -> PostService: UpdateAsync(id, requesterId, caption)
+activate PostService
+PostService --> PostController: bool wasSuccessful
+deactivate PostService
+
+alt Update successful
+    PostController --> User: 200 OK
+else Forbidden or Not Found
+    PostController --> User: 403 Forbidden
+end
+
+deactivate PostController
+@enduml

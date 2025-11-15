@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Update Profile Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+end box
+
+User -> ProfileController: PUT /api/profiles\n(ProfileUpdateRequest)
+activate ProfileController
+
+ProfileController -> ProfileService: UpdateAsync(userId, dto)
+activate ProfileService
+ProfileService --> ProfileController: ProfileResponse (or null)
+deactivate ProfileService
+
+alt Update successful
+    ProfileController --> User: 200 OK (ProfileResponse)
+else Profile not found
+    ProfileController --> User: 404 Not Found
+end
+
+deactivate ProfileController
+@enduml

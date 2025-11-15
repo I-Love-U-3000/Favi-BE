@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Delete Comment Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CommentsController" as CommentController
+  participant "ICommentService" as CommentService
+end box
+
+User -> CommentController: DELETE /api/comments/{id}
+activate CommentController
+
+CommentController -> CommentService: DeleteAsync(id, userId)
+activate CommentService
+CommentService --> CommentController: bool wasSuccessful
+deactivate CommentService
+
+alt Delete successful
+    CommentController --> User: 200 OK
+else Not Found or Forbidden
+    CommentController --> User: 404 Not Found
+end
+
+deactivate CommentController
+@enduml

@@ -1,0 +1,32 @@
+@startuml
+!theme vibrant
+title Semantic Search Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "SearchController" as SearchController
+  participant "ISearchService" as SearchService
+  participant "VectorIndexAPI" as VectorIndexAPI
+end box
+
+User -> SearchController: POST /api/search/semantic\n(SemanticSearchRequest)
+activate SearchController
+
+SearchController -> SearchService: SemanticSearchAsync(dto)
+activate SearchService
+
+SearchService -> VectorIndexAPI: POST /search\n(text_embedding)
+activate VectorIndexAPI
+VectorIndexAPI --> SearchService: List<PostId>
+deactivate VectorIndexAPI
+
+SearchService -> SearchService: GetPostsFromIds(postIds)
+
+SearchService --> SearchController: SearchResult
+deactivate SearchService
+
+SearchController --> User: 200 OK (SearchResult)
+deactivate SearchController
+
+@enduml

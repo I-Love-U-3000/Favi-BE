@@ -1,0 +1,56 @@
+@startuml
+!theme vibrant
+title View Posts by Profile Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IProfileService" as ProfileService
+  participant "IPostService" as PostService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> PostController: GET /api/posts/profile/{profileId}
+activate PostController
+
+PostController -> ProfileService: GetEntityByIdAsync(profileId)
+activate ProfileService
+ProfileService --> PostController: Profile (or null)
+deactivate ProfileService
+
+alt Profile exists
+    PostController -> PrivacyGuard: CanViewProfileAsync(profile, viewerId)
+    activate PrivacyGuard
+    PrivacyGuard --> PostController: bool canView
+    deactivate PrivacyGuard
+
+    alt User can view profile
+        PostController -> PostService: GetByProfileAsync(profileId, viewerId, page, pageSize)
+        activate PostService
+        PostService --> PostController: PagedResult<PostResponse>
+        deactivate PostService
+
+        loop for each post in result
+            PostController -> PostService: GetEntityAsync(post.Id)
+            activate PostService
+            PostService --> PostController: Post entity
+            deactivate PostService
+
+            PostController -> PrivacyGuard: CanViewPostAsync(entity, viewerId)
+            activate PrivacyGuard
+            PrivacyGuard --> PostController: bool canView
+            deactivate PrivacyGuard
+        end
+
+        PostController --> User: 200 OK (Filtered Paged Posts)
+    else User cannot view profile
+        PostController --> User: 403 Forbidden
+    end
+
+else Profile does not exist
+    PostController --> User: 404 Not Found
+end
+
+deactivate PostController
+@enduml

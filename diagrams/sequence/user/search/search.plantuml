@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Keyword Search Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "SearchController" as SearchController
+  participant "ISearchService" as SearchService
+end box
+
+User -> SearchController: POST /api/search\n(SearchRequest)
+activate SearchController
+
+SearchController -> SearchService: SearchAsync(dto)
+activate SearchService
+SearchService --> SearchController: SearchResult
+deactivate SearchService
+
+SearchController --> User: 200 OK (SearchResult)
+deactivate SearchController
+@enduml

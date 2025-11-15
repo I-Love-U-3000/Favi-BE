@@ -1,0 +1,35 @@
+@startuml
+!theme vibrant
+title User Registration Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "AuthController" as AuthController
+  participant "IProfileService" as ProfileService
+  participant "ISupabaseAuthService" as SupabaseAuthService
+end box
+
+group User Registration
+    User -> AuthController: POST /api/auth/register\n(Email, Password, Username)
+    activate AuthController
+    AuthController -> ProfileService: CheckValidUsername(Username)
+    activate ProfileService
+    ProfileService --> AuthController: bool isValid
+    deactivate ProfileService
+    alt Username is valid
+        AuthController -> SupabaseAuthService: RegisterAsync(Email, Password, Username)
+        activate SupabaseAuthService
+        SupabaseAuthService --> AuthController: SupabaseAuthResponse (or null)
+        deactivate SupabaseAuthService
+        alt Registration successful
+            AuthController --> User: 200 OK (AuthResponse)
+        else Registration failed
+            AuthController --> User: 400 Bad Request
+        end
+    else Username is taken
+        AuthController --> User: 409 Conflict
+    end
+    deactivate AuthController
+end
+@enduml

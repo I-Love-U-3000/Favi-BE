@@ -1,0 +1,23 @@
+@startuml
+!theme vibrant
+title View Content Trends Sequence
+
+actor Admin
+
+box "Favi-BE Backend" #LightBlue
+  participant "AnalyticsController" as AnalyticsController
+  participant "IAnalyticsService" as AnalyticsService
+end box
+
+Admin -> AnalyticsController: GET /api/admin/analytics/trends
+activate AnalyticsController
+
+AnalyticsController -> AnalyticsService: GetContentTrends()
+activate AnalyticsService
+AnalyticsService --> AnalyticsController: ContentTrends
+deactivate AnalyticsService
+
+AnalyticsController --> Admin: 200 OK (ContentTrends)
+deactivate AnalyticsController
+
+@enduml

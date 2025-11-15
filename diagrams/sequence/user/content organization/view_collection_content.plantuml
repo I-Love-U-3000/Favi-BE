@@ -1,0 +1,43 @@
+@startuml
+!theme vibrant
+title View Collection Content Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CollectionsController" as CollectionController
+  participant "ICollectionService" as CollectionService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> CollectionController: GET /api/collections/{id}/posts
+activate CollectionController
+
+CollectionController -> CollectionService: GetEntityByIdAsync(id)
+activate CollectionService
+CollectionService --> CollectionController: Collection (or null)
+deactivate CollectionService
+
+alt Collection exists
+    CollectionController -> PrivacyGuard: CanViewCollectionAsync(collection, viewerId)
+    activate PrivacyGuard
+    PrivacyGuard --> CollectionController: bool canView
+    deactivate PrivacyGuard
+
+    alt User can view collection
+        CollectionController -> CollectionService: GetPostsAsync(id, page, pageSize)
+        activate CollectionService
+        CollectionService --> CollectionController: PagedResult<PostResponse>
+        deactivate CollectionService
+
+        CollectionController --> User: 200 OK (Paged Posts)
+    else User cannot view
+        CollectionController --> User: 403 Forbidden
+    end
+
+else Collection does not exist
+    CollectionController --> User: 404 Not Found
+end
+
+deactivate CollectionController
+@enduml

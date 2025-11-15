@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Filter Reports by Target Sequence
+
+actor Admin
+
+box "Favi-BE Backend" #LightBlue
+  participant "ReportsController" as ReportController
+  participant "IReportService" as ReportService
+end box
+
+Admin -> ReportController: GET /api/reports/target/{targetId}
+activate ReportController
+
+ReportController -> ReportService: GetReportsByTargetIdAsync(targetId, page, pageSize)
+activate ReportService
+ReportService --> ReportController: PagedResult<ReportResponse>
+deactivate ReportService
+
+ReportController --> Admin: 200 OK (Paged Reports)
+deactivate ReportController
+@enduml

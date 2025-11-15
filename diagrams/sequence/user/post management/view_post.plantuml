@@ -1,0 +1,43 @@
+@startuml
+!theme vibrant
+title View Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> PostController: GET /api/posts/{id}
+activate PostController
+
+PostController -> PostService: GetEntityAsync(id)
+activate PostService
+PostService --> PostController: Post (or null)
+deactivate PostService
+
+alt Post exists
+    PostController -> PrivacyGuard: CanViewPostAsync(post, viewerId)
+    activate PrivacyGuard
+    PrivacyGuard --> PostController: bool canView
+    deactivate PrivacyGuard
+
+    alt User can view post
+        PostController -> PostService: GetByIdAsync(id, viewerId)
+        activate PostService
+        PostService --> PostController: PostResponse
+        deactivate PostService
+
+        PostController --> User: 200 OK (PostResponse)
+    else User cannot view post
+        PostController --> User: 403 Forbidden
+    end
+
+else Post does not exist
+    PostController --> User: 404 Not Found
+end
+
+deactivate PostController
+@enduml

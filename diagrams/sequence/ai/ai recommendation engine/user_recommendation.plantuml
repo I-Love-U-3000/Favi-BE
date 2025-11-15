@@ -1,0 +1,32 @@
+@startuml
+!theme vibrant
+title User Recommendations Sequence (Who to Follow)
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IRecommendationService" as RecoService
+  participant "VectorIndexAPI" as VectorIndexAPI
+end box
+
+User -> ProfileController: GET /api/profiles/recommendations
+activate ProfileController
+
+ProfileController -> RecoService: GetUserRecommendations(userId)
+activate RecoService
+
+RecoService -> VectorIndexAPI: POST /recommend_users\n(user_profile)
+activate VectorIndexAPI
+VectorIndexAPI --> RecoService: List<ProfileId>
+deactivate VectorIndexAPI
+
+RecoService -> RecoService: GetProfilesFromIds(profileIds)
+
+RecoService --> ProfileController: List<ProfileResponse>
+deactivate RecoService
+
+ProfileController --> User: 200 OK (List of Profiles)
+deactivate ProfileController
+
+@enduml

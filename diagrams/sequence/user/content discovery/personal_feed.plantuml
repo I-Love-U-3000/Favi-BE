@@ -1,0 +1,35 @@
+@startuml
+!theme vibrant
+title Personal Feed Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> PostController: GET /api/posts/feed
+activate PostController
+
+PostController -> PostService: GetFeedAsync(userId, page, pageSize)
+activate PostService
+PostService --> PostController: PagedResult<PostResponse>
+deactivate PostService
+
+loop for each post in result
+    PostController -> PostService: GetEntityAsync(post.Id)
+    activate PostService
+    PostService --> PostController: Post entity
+    deactivate PostService
+
+    PostController -> PrivacyGuard: CanViewPostAsync(entity, userId)
+    activate PrivacyGuard
+    PrivacyGuard --> PostController: bool canView
+    deactivate PrivacyGuard
+end
+
+PostController --> User: 200 OK (Filtered Paged Posts)
+deactivate PostController
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Delete Profile Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+end box
+
+User -> ProfileController: DELETE /api/profiles
+activate ProfileController
+
+ProfileController -> ProfileService: DeleteAsync(userId)
+activate ProfileService
+ProfileService --> ProfileController: bool wasDeleted
+deactivate ProfileService
+
+alt Delete successful
+    ProfileController --> User: 200 OK
+else Delete failed
+    ProfileController --> User: 400 Bad Request
+end
+
+deactivate ProfileController
+@enduml
