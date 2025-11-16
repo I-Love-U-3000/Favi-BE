@@ -159,7 +159,8 @@ namespace Favi_BE.Services
                     p.Privacy,
                     medias,
                     tags,
-                    reactionSummary
+                    reactionSummary,
+                    p.Comments.Count
                 );
             });
 

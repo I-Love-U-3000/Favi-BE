@@ -29,7 +29,6 @@ namespace Favi_BE.Data
             modelBuilder.Entity<PostTag>().HasKey(pt => new { pt.PostId, pt.TagId });
             modelBuilder.Entity<PostCollection>().HasKey(pc => new { pc.PostId, pc.CollectionId });
             modelBuilder.Entity<Follow>().HasKey(f => new { f.FollowerId, f.FolloweeId });
-            modelBuilder.Entity<Reaction>().HasKey(r => new { r.PostId, r.ProfileId });
 
             // ===== Post =====
             modelBuilder.Entity<Post>()
@@ -99,17 +98,34 @@ namespace Favi_BE.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             // ===== Reaction =====
-            modelBuilder.Entity<Reaction>()
-                .HasOne(r => r.Post)
-                .WithMany(p => p.Reactions)
-                .HasForeignKey(r => r.PostId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Reaction>(entity =>
+            {
+                // Reaction -> Post (optional)
+                entity.HasOne(r => r.Post)
+                    .WithMany(p => p.Reactions)
+                    .HasForeignKey(r => r.PostId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Reaction>()
-                .HasOne(r => r.Profile)
-                .WithMany(pf => pf.Reactions)
-                .HasForeignKey(r => r.ProfileId)
-                .OnDelete(DeleteBehavior.Cascade);
+                // Reaction -> Comment (optional)
+                entity.HasOne(r => r.Comment)
+                    .WithMany(c => c.Reactions)
+                    .HasForeignKey(r => r.CommentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Reaction -> Profile (required)
+                entity.HasOne(r => r.Profile)
+                    .WithMany(pf => pf.Reactions)
+                    .HasForeignKey(r => r.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Mỗi profile chỉ được react 1 lần trên 1 post
+                entity.HasIndex(r => new { r.PostId, r.ProfileId })
+                    .IsUnique();
+
+                // Mỗi profile chỉ được react 1 lần trên 1 comment
+                entity.HasIndex(r => new { r.CommentId, r.ProfileId })
+                    .IsUnique();
+            });
 
             // ===== Follow (self-ref Profile) =====
             modelBuilder.Entity<Follow>()

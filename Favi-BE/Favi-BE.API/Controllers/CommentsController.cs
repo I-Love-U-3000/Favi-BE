@@ -1,6 +1,7 @@
 ﻿using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -62,7 +63,29 @@ namespace Favi_BE.Controllers
             if (!await _privacy.CanViewPostAsync(post, viewerId))
                 return StatusCode(403, new { code = "POST_FORBIDDEN", message = "Bạn không có quyền xem bình luận của bài viết này." });
 
-            return Ok(await _comments.GetByPostAsync(postId, page, pageSize));
+            return Ok(await _comments.GetByPostAsync(viewerId??Guid.Empty, postId, page, pageSize));
+        }
+
+        [Authorize]
+        [HttpPost("{id:guid}/reactions")]
+        public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
+        {
+            var userId = User.GetUserIdFromMetadata();
+
+            if (!Enum.TryParse<ReactionType>(type, true, out var reactionType))
+                return BadRequest(new { code = "INVALID_REACTION_TYPE", message = $"Giá trị reaction '{type}' không hợp lệ." });
+
+            var commentEntity = await _comments.GetByIdAsync(id, userId);
+            if (commentEntity is null)
+                return NotFound(new { code = "COMMENT_NOT_FOUND", message = "Bình luận không tồn tại." });
+
+            var newState = await _comments.ToggleReactionAsync(id, userId, reactionType);
+
+            // Service trả null khi: 1) post không có (đã check ở trên) hoặc 2) reaction bị gỡ
+            if (newState is null)
+                return Ok(new { removed = true, message = "Reaction đã được gỡ." });
+
+            return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
         }
     }
 }
