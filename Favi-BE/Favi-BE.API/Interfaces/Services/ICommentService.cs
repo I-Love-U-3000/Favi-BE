@@ -10,7 +10,7 @@ namespace Favi_BE.Interfaces.Services
         Task<CommentResponse?> UpdateAsync(Guid commentId, Guid requesterId, string content);
         Task<bool> DeleteAsync(Guid commentId, Guid requesterId);
         Task<ReactionSummaryDto> GetReactionsAsync(Guid commentId, Guid? currentUserId);
-        Task<PagedResult<CommentResponse>> GetByPostAsync(Guid postId, int page, int pageSize);
+        Task<PagedResult<CommentResponse>> GetByPostAsync(Guid currentUserId, Guid postId, int page, int pageSize);
         Task<ReactionType?> ToggleReactionAsync(Guid commentId, Guid userId, ReactionType type);
     }
 }

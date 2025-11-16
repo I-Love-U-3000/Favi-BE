@@ -63,7 +63,7 @@ namespace Favi_BE.Controllers
             if (!await _privacy.CanViewPostAsync(post, viewerId))
                 return StatusCode(403, new { code = "POST_FORBIDDEN", message = "Bạn không có quyền xem bình luận của bài viết này." });
 
-            return Ok(await _comments.GetByPostAsync(postId, page, pageSize));
+            return Ok(await _comments.GetByPostAsync(viewerId??Guid.Empty, postId, page, pageSize));
         }
 
         [Authorize]
