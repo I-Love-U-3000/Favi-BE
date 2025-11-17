@@ -319,5 +319,44 @@ namespace Favi_BE.Services
                 media.ThumbnailUrl
             );
         }
+
+        public async Task<IEnumerable<ProfileResponse>> GetRecommendedAsync(Guid viewerId, int skip = 0, int take = 20)
+        {
+            // fuck this repo since it does not have a paging get function
+            var profiles = await _uow.Profiles.GetAllAsync();
+
+            var list = new List<ProfileResponse>();
+
+            foreach (var profile in profiles)
+            {
+                // Không recommend chính mình
+                if (profile.Id == viewerId) continue;
+
+                // Nếu đã follow rồi thì bỏ qua
+                if (await _uow.Follows.IsFollowingAsync(viewerId, profile.Id))
+                    continue;
+
+                // Lấy số follower / following giống như GetByIdAsync
+                var followers = await _uow.Follows.GetFollowersCountAsync(profile.Id);
+                var followings = await _uow.Follows.GetFollowingCountAsync(profile.Id);
+
+                list.Add(new ProfileResponse(
+                    profile.Id,
+                    profile.Username,
+                    profile.DisplayName,
+                    profile.Bio,
+                    profile.AvatarUrl,
+                    profile.CoverUrl,
+                    profile.CreatedAt,
+                    profile.LastActiveAt ?? DateTime.MinValue,
+                    profile.PrivacyLevel,
+                    profile.FollowPrivacyLevel,
+                    followers,
+                    followings
+                ));
+            }
+
+            return list;
+        }
     }
 }
