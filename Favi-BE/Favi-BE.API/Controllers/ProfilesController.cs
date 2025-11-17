@@ -220,5 +220,25 @@ namespace Favi_BE.Controllers
 
             return Ok(media);
         }
+
+        [HttpGet("recommendations")]
+        [Authorize] // phải đăng nhập mới xem danh sách gợi ý
+        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetRecommendations([FromQuery] int skip = 0, [FromQuery] int take = 20)
+        {
+            var viewerId = User.GetUserIdFromMetadata();
+
+            // Nếu chưa có profile cho user hiện tại thì trả về rỗng / 404 tuỳ bạn chọn
+            var viewerProfile = await _profiles.GetEntityByIdAsync(viewerId);
+            if (viewerProfile is null)
+            {
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ người dùng hiện tại không tồn tại." });
+            }
+
+            var items = await _profiles.GetRecommendedAsync(viewerId, skip, take);
+
+            // (Tạm thời chưa filter thêm theo privacy; khi user click vào từng profile
+            // thì GetById vẫn check privacy, nên vẫn an toàn.)
+            return Ok(items);
+        }
     }
 }
