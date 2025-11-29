@@ -1,4 +1,5 @@
-﻿using Favi_BE.Interfaces.Repositories;
+﻿using Favi_BE.API.Interfaces.Repositories;
+using Favi_BE.Interfaces.Repositories;
 using System;
 using System.Threading.Tasks;
 
@@ -15,12 +16,15 @@ namespace Favi_BE.Interfaces
         ITagRepository Tags { get; }
         IReportRepository Reports { get; }
         ISocialLinkRepository SocialLinks { get; }
+        IConversationRepository Conversations { get; }
+        IMessageRepository Messages { get; }
 
         // Join tables and relationships
         IPostTagRepository PostTags { get; }
         IPostCollectionRepository PostCollections { get; }
         IFollowRepository Follows { get; }
         IReactionRepository Reactions { get; }
+        IUserConversationRepository UserConversations { get; }
 
         // Transaction management
         int Complete();

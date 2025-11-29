@@ -4,6 +4,11 @@ using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Favi_BE.Services
 {
@@ -12,6 +17,19 @@ namespace Favi_BE.Services
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
+
+        // ------- Trending Score constants -------
+        private const double W_Like = 1.0;    // Wl
+        private const double W_Comment = 3.0; // Wc
+        private const double W_Share = 5.0;   // Ws (tạm 0 ở hiện tại)
+        private const double W_View = 0.2;    // Wv (tạm 0 ở hiện tại)
+
+        private const double Lambda = 0.1;            // e^{-λ * Δt}, Δt tính theo giờ
+        private const double Beta = 0.5;              // hệ số khuếch đại velocity
+        private const double MaxAgeHours = 72;        // chỉ xét bài trong ~3 ngày
+        private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
+        private const int TrendingCandidateLimit = 500; // tối đa ứng viên để tính trending
+
         public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy)
         {
             _uow = uow;
@@ -29,62 +47,133 @@ namespace Favi_BE.Services
             var post = await _uow.Posts.GetPostWithAllAsync(id);
             if (post is null) return null;
 
-            // Lấy tags từ repo Tags (hoặc post.PostTags)
-            var tags = post.PostTags?.Select(pt => new TagDto(pt.Tag.Id, pt.Tag.Name))
-                       ?? Enumerable.Empty<TagDto>();
-
-            // Medias
-            var medias = (post.PostMedias ?? new List<PostMedia>())
-                .OrderBy(m => m.Position)
-                .Select(m => new PostMediaResponse(
-                    m.Id,
-                    m.PostId ?? Guid.Empty,
-                    m.Url,
-                    PublicId: string.Empty,     // entity hiện không có, để rỗng
-                    Width: 0,
-                    Height: 0,
-                    Format: string.Empty,
-                    Position: m.Position,
-                    ThumbnailUrl: m.ThumbnailUrl
-                )).ToList();
-
-            // Reaction summary
-            var summary = await BuildReactionSummaryAsync(post.Id, currentUserId);
-
-            return new PostResponse(
-                Id: post.Id,
-                AuthorProfileId: post.ProfileId,
-                Caption: post.Caption,
-                CreatedAt: post.CreatedAt,
-                UpdatedAt: post.UpdatedAt,
-                PrivacyLevel: post.Privacy,
-                Medias: medias,
-                Tags: tags,
-                Reactions: summary,
-                post.Comments.Count
-            );
+            return await MapPostToResponseAsync(post, currentUserId);
         }
 
+        /// <summary>
+        /// Feed cho user đã đăng nhập:
+        /// - Lấy pool bài viết từ bản thân + followees (repo GetFeedPagedAsync).
+        /// - Áp dụng TrendingScore(p, t) = (W.L + Wc.C + Ws.S + Wv.V) * e^{-λΔt} * (1 + β * ΔE/Δt).
+        /// - Chỉ xét bài trong 72h, có quyền xem, sort theo score, rồi phân trang.
+        /// </summary>
         public async Task<PagedResult<PostResponse>> GetFeedAsync(Guid currentUserId, int page, int pageSize)
         {
-            var skip = Math.Max(0, (page - 1) * pageSize);
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
 
-            var (posts, total) = await _uow.Posts.GetFeedPagedAsync(currentUserId, skip, pageSize);
+            var skip = (page - 1) * pageSize;
 
-            // Map
-            var items = new List<PostResponse>(total);
-            foreach (var p in posts)
+            // Lấy candidate từ repo: bài của chính user + người user follow,
+            // giới hạn tối đa TrendingCandidateLimit mới nhất.
+            var (candidates, _) = await _uow.Posts.GetFeedPagedAsync(
+                currentUserId,
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            var now = DateTime.UtcNow;
+            var scored = new List<(Post Post, double Score)>();
+
+            foreach (var post in candidates)
             {
-                items.Add(await MapPostToResponseAsync(p, currentUserId));
+                // Check quyền xem theo privacy
+                if (!await _privacy.CanViewPostAsync(post, currentUserId))
+                    continue;
+
+                // Chỉ xét bài trong khoảng thời gian cho phép
+                var ageHours = (now - post.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                var score = await ComputeTrendingScoreAsync(post);
+
+                // Nhẹ nhàng boost nếu là bài của chính user
+                if (post.ProfileId == currentUserId)
+                    score *= 1.1;
+
+                scored.Add((post, score));
             }
-            
-            return new PagedResult<PostResponse>(items, page, pageSize, total);
+
+            var ordered = scored
+                .OrderByDescending(x => x.Score)
+                .ToList();
+
+            var total = ordered.Count;
+
+            var pageItems = ordered
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(x => x.Post)
+                .ToList();
+
+            var responses = new List<PostResponse>();
+            foreach (var p in pageItems)
+                responses.Add(await MapPostToResponseAsync(p, currentUserId));
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, total);
+        }
+
+        /// <summary>
+        /// Feed cho guest (chưa đăng nhập):
+        /// - Lấy các bài mới nhất toàn hệ thống (pool max 500).
+        /// - Chỉ lấy bài mà guest có quyền xem (thường là Public).
+        /// - Áp dụng TrendingScore và sort giảm dần.
+        /// </summary>
+        public async Task<PagedResult<PostResponse>> GetGuestFeedAsync(int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            var latestCandidates = await _uow.Posts.GetLatestPostsAsync(
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            var now = DateTime.UtcNow;
+            var scored = new List<(Post Post, double Score)>();
+
+            foreach (var post in latestCandidates)
+            {
+                if (!await _privacy.CanViewPostAsync(post, null))
+                    continue;
+
+                var ageHours = (now - post.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                var score = await ComputeTrendingScoreAsync(post);
+
+                scored.Add((post, score));
+            }
+
+            var ordered = scored
+                .OrderByDescending(x => x.Score)
+                .ToList();
+
+            var total = ordered.Count;
+
+            var pageItems = ordered
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(x => x.Post)
+                .ToList();
+
+            var responses = new List<PostResponse>();
+            foreach (var p in pageItems)
+                responses.Add(await MapPostToResponseAsync(p, null));
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, total);
         }
 
         // --------------------------------------------------------------------
         // Commands: Create/Update/Delete
         // --------------------------------------------------------------------
-        public async Task<PostResponse> CreateAsync(Guid authorId, string? caption, IEnumerable<string>? tags)
+        public async Task<PostResponse> CreateAsync(
+            Guid authorId,
+            string? caption,
+            IEnumerable<string>? tags,
+            PrivacyLevel privacyLevel,
+            LocationDto? location)
         {
             var now = DateTime.UtcNow;
             var post = new Post
@@ -92,14 +181,17 @@ namespace Favi_BE.Services
                 Id = Guid.NewGuid(),
                 ProfileId = authorId,
                 Caption = caption?.Trim(),
-                Privacy = PrivacyLevel.Public, // mặc định, có thể đổi theo nhu cầu
+                Privacy = privacyLevel,
                 CreatedAt = now,
-                UpdatedAt = now
+                UpdatedAt = now,
+                LocationName = location?.Name,
+                LocationFullAddress = location?.FullAddress,
+                LocationLatitude = location?.Latitude,
+                LocationLongitude = location?.Longitude
             };
 
             await _uow.Posts.AddAsync(post);
 
-            // Tags: normalize + tạo liên kết
             if (tags != null && tags.Any())
             {
                 var createdTags = await _uow.Tags.GetOrCreateTagsAsync(tags);
@@ -110,7 +202,7 @@ namespace Favi_BE.Services
             }
 
             await _uow.CompleteAsync();
-            // Trả về bản đầy đủ
+
             var full = await _uow.Posts.GetPostWithAllAsync(post.Id);
             return await MapPostToResponseAsync(full ?? post, authorId);
         }
@@ -133,19 +225,14 @@ namespace Favi_BE.Services
 
         public async Task<bool> DeleteAsync(Guid postId, Guid requesterId)
         {
-            // Lấy post + kiểm tra quyền
             var post = await _uow.Posts.GetByIdAsync(postId);
             if (post is null) return false;
             if (post.ProfileId != requesterId) return false;
 
-            // Xoá media trong Cloudinary nếu có (entity không lưu PublicId => bỏ qua cloud delete)
             var medias = await _uow.PostMedia.GetByPostIdAsync(postId);
             _uow.PostMedia.RemoveRange(medias);
 
-            // Xoá post (các join như PostTags, Reactions, Comments nên cascade trong DbContext)
             _uow.Posts.Remove(post);
-            /*            await _uow.CompleteAsync();*/
-
             await _uow.CompleteAsync();
 
             var orphanTags = await _uow.Tags.GetTagsWithNoPostsAsync();
@@ -161,22 +248,18 @@ namespace Favi_BE.Services
         // --------------------------------------------------------------------
         // Media
         // --------------------------------------------------------------------
-        // Services/PostService.cs
         public async Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(
             Guid postId,
             IEnumerable<IFormFile> files,
             Guid requesterId)
         {
-            // 0) Kiểm tra post & quyền
             var post = await _uow.Posts.GetByIdAsync(postId);
             if (post is null || post.ProfileId != requesterId)
                 return Enumerable.Empty<PostMediaResponse>();
 
-            // 1) Chốt danh sách file & lọc ảnh
             var fileList = (files ?? Enumerable.Empty<IFormFile>()).ToList();
             if (fileList.Count == 0) return Enumerable.Empty<PostMediaResponse>();
 
-            // Chỉ nhận image/*, có dữ liệu
             var allowed = fileList
                 .Where(f => f?.Length > 0
                          && !string.IsNullOrWhiteSpace(f.ContentType)
@@ -184,7 +267,6 @@ namespace Favi_BE.Services
                 .ToList();
             if (allowed.Count == 0) return Enumerable.Empty<PostMediaResponse>();
 
-            // 2) Tính position bắt đầu = max(position) hiện có + 1
             var existing = await _uow.PostMedia.GetByPostIdAsync(postId);
             var maxPos = existing.Any() ? existing.Max(m => m.Position) : -1;
             var startPos = maxPos + 1;
@@ -192,14 +274,12 @@ namespace Favi_BE.Services
             var createdMedias = new List<PostMedia>();
             var responses = new List<PostMediaResponse>();
 
-            // 3) Upload tuần tự (đơn giản, ổn định). Có thể tối ưu song song sau.
             for (int i = 0; i < allowed.Count; i++)
             {
                 var file = allowed[i];
 
-                // Upload Cloudinary (trả null nếu fail)
                 var uploaded = await _cloudinary.TryUploadAsync(file);
-                if (uploaded is null) continue; // bỏ qua file hỏng
+                if (uploaded is null) continue;
 
                 var media = new PostMedia
                 {
@@ -207,7 +287,7 @@ namespace Favi_BE.Services
                     PostId = postId,
                     Url = uploaded.Url,
                     ThumbnailUrl = uploaded.ThumbnailUrl,
-                    Position = startPos + i,   // luôn tăng liên tục
+                    Position = startPos + i,
                     PublicId = uploaded.PublicId,
                     Width = uploaded.Width,
                     Height = uploaded.Height,
@@ -223,17 +303,14 @@ namespace Favi_BE.Services
                 ));
             }
 
-            // 4) Không có file nào hợp lệ/đăng thành công → thôi
             if (createdMedias.Count == 0)
                 return Enumerable.Empty<PostMediaResponse>();
 
-            // 5) Lưu DB một lần
             await _uow.PostMedia.AddRangeAsync(createdMedias);
             post.UpdatedAt = DateTime.UtcNow;
             _uow.Posts.Update(post);
             await _uow.CompleteAsync();
 
-            // 6) Trả về theo Position tăng dần
             return responses.OrderBy(r => r.Position);
         }
 
@@ -247,10 +324,8 @@ namespace Favi_BE.Services
             var media = medias.FirstOrDefault(m => m.Id == mediaId);
             if (media is null) return false;
 
-            // Nếu bạn lưu PublicId ở nơi khác, có thể gọi _cloudinary.DeleteAsync(publicId) tại đây.
             _uow.PostMedia.Remove(media);
 
-            // Re-order position (giữ thứ tự đẹp)
             var remain = medias.Where(m => m.Id != mediaId).OrderBy(m => m.Position).ToList();
             for (int i = 0; i < remain.Count; i++)
             {
@@ -271,8 +346,8 @@ namespace Favi_BE.Services
         public async Task<IEnumerable<TagDto>> AddTagsAsync(Guid postId, IEnumerable<string> tags, Guid requesterId)
         {
             var post = await _uow.Posts.GetByIdAsync(postId);
-            if (post is null) return Enumerable.Empty<TagDto>();  
-            if (post.ProfileId != requesterId) return Enumerable.Empty<TagDto>(); 
+            if (post is null) return Enumerable.Empty<TagDto>();
+            if (post.ProfileId != requesterId) return Enumerable.Empty<TagDto>();
 
             var created = await _uow.Tags.GetOrCreateTagsAsync(tags);
             foreach (var t in created)
@@ -310,7 +385,6 @@ namespace Favi_BE.Services
 
             var existing = await _uow.Reactions.GetProfileReactionOnPostAsync(userId, postId);
 
-            // Chưa có → thêm
             if (existing is null)
             {
                 await _uow.Reactions.AddAsync(new Reaction
@@ -324,7 +398,6 @@ namespace Favi_BE.Services
                 return type;
             }
 
-            // Cùng loại → gỡ
             if (existing.Type == type)
             {
                 _uow.Reactions.Remove(existing);
@@ -332,7 +405,6 @@ namespace Favi_BE.Services
                 return null;
             }
 
-            // Khác loại → đổi
             existing.Type = type;
             _uow.Reactions.Update(existing);
             await _uow.CompleteAsync();
@@ -344,8 +416,7 @@ namespace Favi_BE.Services
         // --------------------------------------------------------------------
         private async Task<PostResponse> MapPostToResponseAsync(Post post, Guid? currentUserId)
         {
-            // Bảo đảm include đủ (nếu repo trả chưa đủ)
-            if (post.PostMedias is null)
+            if (post.PostMedias is null || post.PostTags is null || post.Comments is null || post.Reactions is null)
                 post = await _uow.Posts.GetPostWithAllAsync(post.Id) ?? post;
 
             var medias = (post.PostMedias ?? new List<PostMedia>())
@@ -354,7 +425,7 @@ namespace Favi_BE.Services
                     m.Id,
                     m.PostId ?? Guid.Empty,
                     m.Url,
-                    PublicId: string.Empty, // entity không có
+                    PublicId: string.Empty,   // nếu muốn có PublicId thật thì map từ entity
                     Width: 0,
                     Height: 0,
                     Format: string.Empty,
@@ -367,6 +438,18 @@ namespace Favi_BE.Services
 
             var summary = await BuildReactionSummaryAsync(post.Id, currentUserId);
 
+            var location = (post.LocationName != null ||
+                            post.LocationFullAddress != null ||
+                            post.LocationLatitude != null ||
+                            post.LocationLongitude != null)
+                ? new LocationDto(
+                    post.LocationName,
+                    post.LocationFullAddress,
+                    post.LocationLatitude,
+                    post.LocationLongitude
+                  )
+                : null;
+
             return new PostResponse(
                 Id: post.Id,
                 AuthorProfileId: post.ProfileId,
@@ -377,7 +460,8 @@ namespace Favi_BE.Services
                 Medias: medias,
                 Tags: tags,
                 Reactions: summary,
-                post.Comments.Count
+                CommentsCount: post.Comments?.Count ?? 0,
+                Location: location
             );
         }
 
@@ -417,15 +501,146 @@ namespace Favi_BE.Services
             return new PagedResult<PostResponse>(result, page, pageSize, total);
         }
 
-        // TODO: Implement these methods
-        public Task<PagedResult<PostResponse>> GetExploreAsync(Guid userId, int page, int pageSize)
+        /// <summary>
+        /// Tính TrendingScore(p, t) theo công thức trong hình.
+        /// </summary>
+        private async Task<double> ComputeTrendingScoreAsync(Post post)
         {
-            throw new NotImplementedException();
+            var now = DateTime.UtcNow;
+
+            var ageHours = Math.Max((now - post.CreatedAt).TotalHours, 0);
+            if (ageHours > MaxAgeHours)
+                return 0;
+
+            var reactions = await _uow.Reactions.GetReactionsByPostIdAsync(post.Id);
+            var likeCount = reactions.Count();
+
+            var commentCount = post.Comments?.Count ?? 0;
+
+            // Chưa track share/view thực → tạm 0
+            var shareCount = 0;
+            var viewCount = 0;
+
+            // ✅ Base = 1 để post mới, chưa có interaction vẫn có điểm
+            var engagement =
+                1.0 +
+                W_Like * likeCount +
+                W_Comment * commentCount +
+                W_Share * shareCount +
+                W_View * viewCount;
+
+            var decay = Math.Exp(-Lambda * ageHours);
+
+            var from = now - VelocityWindow;
+            var recentReactions = reactions.Count(r => r.CreatedAt >= from);
+            var recentComments = (post.Comments ?? new List<Comment>())
+                .Count(c => c.CreatedAt >= from);
+
+            var deltaE = recentReactions + recentComments;
+            var velocity = VelocityWindow.TotalHours > 0
+                ? deltaE / VelocityWindow.TotalHours
+                : 0;
+
+            var score = engagement * decay * (1 + Beta * velocity);
+            return score;
         }
 
-        public Task<PagedResult<PostResponse>> GetLatestAsync(int page, int pageSize)
+        // --------------------------------------------------------------------
+        // Explore & Latest (TODOs)
+        // --------------------------------------------------------------------
+
+        /// <summary>
+        /// Explore: global trending cho user đã đăng nhập.
+        /// - Lấy pool bài mới nhất toàn hệ thống.
+        /// - Lọc theo quyền xem của user.
+        /// - Tính TrendingScore và sort giảm dần.
+        /// </summary>
+        public async Task<PagedResult<PostResponse>> GetExploreAsync(Guid userId, int page, int pageSize)
         {
-            throw new NotImplementedException();
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            var latestCandidates = await _uow.Posts.GetLatestPostsAsync(
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            var now = DateTime.UtcNow;
+            var scored = new List<(Post Post, double Score)>();
+
+            foreach (var post in latestCandidates)
+            {
+                if (!await _privacy.CanViewPostAsync(post, userId))
+                    continue;
+
+                var ageHours = (now - post.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                var score = await ComputeTrendingScoreAsync(post);
+
+                scored.Add((post, score));
+            }
+
+            var ordered = scored
+                .OrderByDescending(x => x.Score)
+                .ToList();
+
+            var total = ordered.Count;
+
+            var pageItems = ordered
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(x => x.Post)
+                .ToList();
+
+            var responses = new List<PostResponse>();
+            foreach (var p in pageItems)
+                responses.Add(await MapPostToResponseAsync(p, userId));
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, total);
+        }
+
+        /// <summary>
+        /// Latest: bài mới nhất toàn hệ thống (ưu tiên an toàn → chỉ bài Public).
+        /// </summary>
+        public async Task<PagedResult<PostResponse>> GetLatestAsync(int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            // Lấy pool mới nhất, sau đó lọc quyền xem như guest (viewerId = null).
+            var candidates = await _uow.Posts.GetLatestPostsAsync(
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            var visible = new List<Post>();
+            foreach (var post in candidates)
+            {
+                if (await _privacy.CanViewPostAsync(post, null))
+                    visible.Add(post);
+            }
+
+            var ordered = visible
+                .OrderByDescending(p => p.CreatedAt)
+                .ToList();
+
+            var total = ordered.Count;
+
+            var pageItems = ordered
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
+            var responses = new List<PostResponse>();
+            foreach (var p in pageItems)
+                responses.Add(await MapPostToResponseAsync(p, null));
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, total);
         }
     }
 }

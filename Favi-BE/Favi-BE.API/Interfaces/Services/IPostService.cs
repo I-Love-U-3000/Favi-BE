@@ -7,7 +7,8 @@ namespace Favi_BE.Interfaces.Services
     public interface IPostService
     {
         Task<PostResponse?> GetByIdAsync(Guid id, Guid? currentUserId);
-        Task<PostResponse> CreateAsync(Guid authorId, string? caption, IEnumerable<string>? tags);
+        Task<PostResponse> CreateAsync(Guid authorId, string? caption, IEnumerable<string>? tags, PrivacyLevel privacyLevel,
+            LocationDto? location);
         Task<bool> UpdateAsync(Guid postId, Guid requesterId, string? caption);
         Task<bool> DeleteAsync(Guid postId, Guid requesterId);
 
@@ -24,6 +25,7 @@ namespace Favi_BE.Interfaces.Services
         Task<ReactionType?> ToggleReactionAsync(Guid postId, Guid userId, ReactionType type);
         Task<PagedResult<PostResponse>> GetByProfileAsync(Guid profileId, Guid? viewerId, int page, int pageSize);
         Task<PagedResult<PostResponse>> GetFeedAsync(Guid currentUserId, int page, int pageSize);
+        Task<PagedResult<PostResponse>> GetGuestFeedAsync(int page, int pageSize);
         Task<PagedResult<PostResponse>> GetExploreAsync(Guid userId, int page, int pageSize);
         Task<PagedResult<PostResponse>> GetLatestAsync(int page, int pageSize);
         Task<Post?> GetEntityAsync(Guid id);

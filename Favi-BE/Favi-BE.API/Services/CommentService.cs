@@ -78,44 +78,17 @@ namespace Favi_BE.Services
             return true;
         }
 
-        public async Task<PagedResult<CommentResponse>> GetByPostAsync(Guid currentUserId, Guid postId, int page, int pageSize)
+        public async Task<PagedResult<CommentResponse>> GetByPostAsync(
+            Guid currentUserId,
+            Guid postId,
+            int page,
+            int pageSize)
         {
-            var (roots, totalRoots) = await _uow.Comments.GetRootCommentsPagedAsync(postId, page, pageSize);
-            var rootIds = roots.Select(r => r.Id).ToArray();
+            var (comments, total) = await _uow.Comments.GetCommentsByPostIdAsync(postId, page, pageSize);
 
-            // 2) lấy replies cho các root (1 query)
-            var replies = await _uow.Comments.GetDirectRepliesForParentsAsync(rootIds);
+            var dtos = new List<CommentResponse>(comments.Count);
 
-            // 3) build dto cho replies + reaction summary
-            var repliesByParent = new Dictionary<Guid, List<CommentResponse>>();
-
-            foreach (var r in replies)
-            {
-                var summary = await BuildReactionSummaryAsync(r.Id, currentUserId);
-
-                var replyDto = new CommentResponse(
-                    r.Id,
-                    r.PostId,
-                    r.ProfileId,
-                    r.Content,
-                    r.CreatedAt,
-                    r.UpdatedAt,
-                    r.ParentCommentId,
-                    Reactions: summary
-                );
-
-                var parentId = r.ParentCommentId!.Value;
-                if (!repliesByParent.TryGetValue(parentId, out var list))
-                {
-                    list = new List<CommentResponse>();
-                    repliesByParent[parentId] = list;
-                }
-                list.Add(replyDto);
-            }
-
-            // 4) build dto cho roots + gắn replies tương ứng
-            var dtos = new List<CommentResponse>();
-            foreach (var c in roots)
+            foreach (var c in comments)
             {
                 var summary = await BuildReactionSummaryAsync(c.Id, currentUserId);
 
@@ -130,15 +103,10 @@ namespace Favi_BE.Services
                     Reactions: summary
                 );
 
-                if (repliesByParent.TryGetValue(c.Id, out var children))
-                {
-                    dto.Replies.AddRange(children);
-                }
-
                 dtos.Add(dto);
             }
 
-            return new PagedResult<CommentResponse>(dtos, page, pageSize, totalRoots);
+            return new PagedResult<CommentResponse>(dtos, page, pageSize, total);
         }
 
         public async Task<ReactionSummaryDto> GetReactionsAsync(Guid commentId, Guid? currentUserId)

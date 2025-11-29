@@ -1,4 +1,6 @@
-﻿using Favi_BE.Models.Entities;
+﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.API.Models.Entities.JoinTables;
+using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +22,9 @@ namespace Favi_BE.Data
         public DbSet<PostCollection> PostCollections { get; set; }
         public DbSet<PostTag> PostTags { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
+        public DbSet<Conversation> Conversations { get; set; } = default!;
+        public DbSet<Message> Messages { get; set; } = default!;
+        public DbSet<UserConversation> UserConversations { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -153,7 +158,65 @@ namespace Favi_BE.Data
                 .WithMany(pf => pf.Reports)
                 .HasForeignKey(r => r.ReporterId)
                 .OnDelete(DeleteBehavior.Cascade);
-        }
 
+            // Conversation
+            modelBuilder.Entity<Conversation>(b =>
+            {
+                b.HasKey(c => c.Id);
+                b.Property(c => c.Type)
+                    .HasColumnType("integer");
+                b.Property(c => c.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                b.Property(c => c.MutedUntil)
+                    .HasColumnType("timestamp with time zone");
+                b.Property(c => c.LastMessageAt)
+                    .HasColumnType("timestamp with time zone");
+            });
+
+            // Message
+            modelBuilder.Entity<Message>(b =>
+            {
+                b.HasKey(m => m.Id);
+
+                b.Property(m => m.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                b.Property(m => m.UpdatedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.HasOne(m => m.Conversation)
+                    .WithMany(c => c.Messages)
+                    .HasForeignKey(m => m.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(m => m.Sender)
+                    .WithMany(p => p.Messages) // cần thêm ICollection<Message> vào Profile
+                    .HasForeignKey(m => m.SenderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // UserConversation (join)
+            modelBuilder.Entity<UserConversation>(b =>
+            {
+                b.HasKey(uc => new { uc.ConversationId, uc.ProfileId });
+
+                b.Property(uc => uc.JoinedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.HasOne(uc => uc.Conversation)
+                    .WithMany(c => c.UserConversations)
+                    .HasForeignKey(uc => uc.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(uc => uc.Profile)
+                    .WithMany(p => p.UserConversations) // cần thêm ICollection<UserConversation> vào Profile
+                    .HasForeignKey(uc => uc.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(uc => uc.LastReadMessage)
+                    .WithMany() // không cần navigation ngược
+                    .HasForeignKey(uc => uc.LastReadMessageId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+        }
     }
 }
