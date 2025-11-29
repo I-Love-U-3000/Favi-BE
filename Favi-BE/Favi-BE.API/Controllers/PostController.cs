@@ -113,23 +113,21 @@ namespace Favi_BE.Controllers
 
 
         // ======================
-        // 🔹 GET: Explore (TODO - thuật toán đề xuất)
+        // 🔹 GET: Explore 
         // ======================
         [Authorize]
         [HttpGet("explore")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetExplore([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            // TODO: Thuật toán explore (gợi ý theo tag, độ tương tác, profile tương đồng, v.v.)
             return Ok(await _posts.GetExploreAsync(User.GetUserIdFromMetadata(), page, pageSize));
         }
 
         // ======================
-        // 🔹 GET: Latest posts (TODO - thuật toán sort toàn hệ thống)
+        // 🔹 GET: Latest posts 
         // ======================
         [HttpGet("latest")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetLatest([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            // TODO: Lấy danh sách bài mới nhất toàn hệ thống
             return Ok(await _posts.GetLatestAsync(page, pageSize));
         }
 
@@ -165,7 +163,7 @@ namespace Favi_BE.Controllers
             if (string.IsNullOrWhiteSpace(dto.Caption) && (dto.Tags == null || !dto.Tags.Any()))
                 return BadRequest(new { code = "EMPTY_POST", message = "Bài viết trống. Cần có caption hoặc ít nhất 1 tag." });
 
-            var created = await _posts.CreateAsync(authorId, dto.Caption, dto.Tags);
+            var created = await _posts.CreateAsync(authorId, dto.Caption, dto.Tags, dto.PrivacyLevel, dto.Location);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
