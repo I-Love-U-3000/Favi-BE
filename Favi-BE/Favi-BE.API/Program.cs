@@ -1,4 +1,8 @@
-﻿using Favi_BE.Common;
+﻿using Favi_BE.API.Data.Repositories;
+using Favi_BE.API.Interfaces.Repositories;
+using Favi_BE.API.Interfaces.Services;
+using Favi_BE.API.Services;
+using Favi_BE.Common;
 using Favi_BE.Data;
 using Favi_BE.Data.Repositories;
 using Favi_BE.Interfaces;
@@ -84,6 +88,9 @@ builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISocialLinkRepository, SocialLinkRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IUserConversationRepository, UserConversationRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -100,6 +107,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPrivacyGuard, PrivacyGuard>();
+builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Add services to the container.
