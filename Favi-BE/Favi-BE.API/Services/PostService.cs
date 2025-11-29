@@ -12,6 +12,18 @@ namespace Favi_BE.Services
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
+
+        private const double W_Like = 1.0;   // Wl
+        private const double W_Comment = 3.0; // Wc
+        private const double W_Share = 5.0;   // Ws
+        private const double W_View = 0.2;    // Wv
+
+        private const double Lambda = 0.1;            // e^{-λ * Δt}, Δt tính theo giờ
+        private const double Beta = 0.5;              // hệ số khuếch đại velocity
+        private const double MaxAgeHours = 72;        // chỉ xét bài trong ~3 ngày
+        private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1); // Δt của velocity
+        private const int TrendingCandidateLimit = 500; // pool ứng viên
+
         public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy)
         {
             _uow = uow;
@@ -79,6 +91,61 @@ namespace Favi_BE.Services
             }
             
             return new PagedResult<PostResponse>(items, page, pageSize, total);
+        }
+
+        public async Task<PagedResult<PostResponse>> GetGuestFeedAsync(int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            // Lấy pool ứng viên mới nhất (tối đa TrendingCandidateLimit bài)
+            var latestCandidates = await _uow.Posts.GetLatestPostsAsync(
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            var now = DateTime.UtcNow;
+            var scored = new List<(Post Post, double Score)>();
+
+            foreach (var post in latestCandidates)
+            {
+                // Guest => viewerId = null, check privacy qua PrivacyGuard
+                if (!await _privacy.CanViewPostAsync(post, null))
+                    continue;
+
+                // Chỉ xét bài trong khoảng MaxAgeHours
+                var ageHours = (now - post.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                var score = await ComputeTrendingScoreAsync(post);
+                if (score <= 0) continue;
+
+                scored.Add((post, score));
+            }
+
+            // Sắp xếp theo TrendingScore giảm dần
+            var ordered = scored
+                .OrderByDescending(x => x.Score)
+                .ToList();
+
+            var total = ordered.Count;
+
+            var pageItems = ordered
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(x => x.Post)
+                .ToList();
+
+            // Map sang PostResponse (viewerId = null)
+            var responses = new List<PostResponse>();
+            foreach (var p in pageItems)
+            {
+                responses.Add(await MapPostToResponseAsync(p, null));
+            }
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, total);
         }
 
         // --------------------------------------------------------------------
@@ -415,6 +482,54 @@ namespace Favi_BE.Services
             }
 
             return new PagedResult<PostResponse>(result, page, pageSize, total);
+        }
+
+        private async Task<double> ComputeTrendingScoreAsync(Post post)
+        {
+            var now = DateTime.UtcNow;
+
+            // ---- Age: Δt (giờ) ----
+            var ageHours = Math.Max((now - post.CreatedAt).TotalHours, 0);
+
+            // Nếu post quá cũ thì coi như điểm rất thấp
+            if (ageHours > MaxAgeHours)
+                return 0;
+
+            // ---- Engagement hiện tại ----
+            // Reactions
+            var reactions = await _uow.Reactions.GetReactionsByPostIdAsync(post.Id);
+            // Nếu muốn chỉ tính LIKE: filter theo ReactionType ở đây.
+            var likeCount = reactions.Count();
+
+            // Comments
+            var commentCount = post.Comments?.Count ?? 0;
+
+            // TODO: Khi có share/view thật thì thay thế 2 biến này
+            var shareCount = 0;
+            var viewCount = 0;
+
+            var engagement =
+                W_Like * likeCount +
+                W_Comment * commentCount +
+                W_Share * shareCount +
+                W_View * viewCount;
+
+            // ---- Decay theo thời gian: e^{-λ * Δt} ----
+            var decay = Math.Exp(-Lambda * ageHours);
+
+            // ---- Velocity: ΔE / Δt ----
+            var from = now - VelocityWindow;
+            var recentReactions = reactions.Count(r => r.CreatedAt >= from);
+            var recentComments = (post.Comments ?? new List<Comment>())
+                .Count(c => c.CreatedAt >= from);
+
+            var deltaE = recentReactions + recentComments; // (cộng thêm share/view nếu có)
+            var velocity = VelocityWindow.TotalHours > 0
+                ? deltaE / VelocityWindow.TotalHours
+                : 0;
+
+            var score = engagement * decay * (1 + Beta * velocity);
+            return score;
         }
 
         // TODO: Implement these methods

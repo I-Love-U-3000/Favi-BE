@@ -101,6 +101,18 @@ namespace Favi_BE.Controllers
         }
 
         // ======================
+        // 🔹 GET: Feed cá nhân (cho Guest)
+        // ======================
+        [HttpGet("guest-feed")]
+        [AllowAnonymous] // tùy config auth; nếu không có global Authorize thì có thể bỏ
+        public async Task<ActionResult<PagedResult<PostResponse>>> GetGuestFeed([FromQuery] int page = 1,[FromQuery] int pageSize = 20)
+        {
+            var result = await _posts.GetGuestFeedAsync(page, pageSize);
+            return Ok(result);
+        }
+
+
+        // ======================
         // 🔹 GET: Explore (TODO - thuật toán đề xuất)
         // ======================
         [Authorize]
