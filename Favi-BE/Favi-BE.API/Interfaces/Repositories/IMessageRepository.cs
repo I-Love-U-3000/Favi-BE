@@ -8,5 +8,7 @@ namespace Favi_BE.API.Interfaces.Repositories
         Task<(IEnumerable<Message> Items, int Total)> GetMessagesForConversationAsync(Guid conversationId, int skip, int take);
 
         Task<Message?> GetLastMessageAsync(Guid conversationId);
+
+        Task<int> GetUnreadCountAsync(Guid conversationId, DateTime afterTime);
     }
 }

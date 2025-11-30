@@ -36,6 +36,7 @@ namespace Favi_BE.Data
             PostCollections = new PostCollectionRepository(_context);
             Follows = new FollowRepository(_context);
             Reactions = new ReactionRepository(_context);
+            UserConversations = new UserConversationRepository(_context);
         }
 
         // Core entities

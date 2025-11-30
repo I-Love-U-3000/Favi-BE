@@ -1,6 +1,7 @@
 ﻿using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Favi_BE.Interfaces.Services
 {
@@ -9,6 +10,9 @@ namespace Favi_BE.Interfaces.Services
         Task<PostResponse?> GetByIdAsync(Guid id, Guid? currentUserId);
         Task<PostResponse> CreateAsync(Guid authorId, string? caption, IEnumerable<string>? tags, PrivacyLevel privacyLevel,
             LocationDto? location);
+
+        Task<PostResponse> CreateAsync(Guid authorId, string? caption, IEnumerable<string>? tags, PrivacyLevel privacyLevel,
+            LocationDto? location, List<IFormFile>? mediaFiles);
         Task<bool> UpdateAsync(Guid postId, Guid requesterId, string? caption);
         Task<bool> DeleteAsync(Guid postId, Guid requesterId);
 

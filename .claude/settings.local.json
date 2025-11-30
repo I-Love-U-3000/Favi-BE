@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__read_file"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

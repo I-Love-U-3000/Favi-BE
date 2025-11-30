@@ -39,5 +39,12 @@ namespace Favi_BE.API.Data.Repositories
                 .OrderByDescending(m => m.CreatedAt)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<int> GetUnreadCountAsync(Guid conversationId, DateTime afterTime)
+        {
+            return await _dbSet
+                .Where(m => m.ConversationId == conversationId && m.CreatedAt > afterTime)
+                .CountAsync();
+        }
     }
 }

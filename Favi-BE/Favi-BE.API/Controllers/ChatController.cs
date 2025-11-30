@@ -1,6 +1,7 @@
 ﻿using Favi_BE.API.Interfaces.Services;
 using Favi_BE.API.Models.Dtos;
 using Favi_BE.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace Favi_BE.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly IChatService _chat;

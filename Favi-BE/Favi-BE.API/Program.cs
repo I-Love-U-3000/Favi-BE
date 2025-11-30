@@ -1,4 +1,5 @@
 ﻿using Favi_BE.API.Data.Repositories;
+using Favi_BE.API.Hubs;
 using Favi_BE.API.Interfaces.Repositories;
 using Favi_BE.API.Interfaces.Services;
 using Favi_BE.API.Services;
@@ -70,8 +71,8 @@ builder.Services.AddCors(options =>
                 "https://127.0.0.1:3000"
             )
             .AllowAnyHeader()                // cần cho Authorization, Content-Type
-            .AllowAnyMethod();
-        // .AllowCredentials();         // chỉ bật nếu dùng cookie
+            .AllowAnyMethod()
+            .AllowCredentials(); // Required for SignalR with authentication
     });
 });
 
@@ -108,6 +109,10 @@ builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPrivacyGuard, PrivacyGuard>();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Add services to the container.
@@ -166,5 +171,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

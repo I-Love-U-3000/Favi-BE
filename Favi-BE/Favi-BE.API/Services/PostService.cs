@@ -175,6 +175,18 @@ namespace Favi_BE.Services
             PrivacyLevel privacyLevel,
             LocationDto? location)
         {
+            // Call the overload without media files for backward compatibility
+            return await CreateAsync(authorId, caption, tags, privacyLevel, location, null);
+        }
+
+        public async Task<PostResponse> CreateAsync(
+            Guid authorId,
+            string? caption,
+            IEnumerable<string>? tags,
+            PrivacyLevel privacyLevel,
+            LocationDto? location,
+            List<IFormFile>? mediaFiles)
+        {
             var now = DateTime.UtcNow;
             var post = new Post
             {
@@ -201,7 +213,57 @@ namespace Favi_BE.Services
                 }
             }
 
-            await _uow.CompleteAsync();
+            // Handle media files if provided
+            List<PostMedia>? createdMedias = null;
+            if (mediaFiles != null && mediaFiles.Any())
+            {
+                // Filter valid media files
+                var allowedFiles = mediaFiles
+                    .Where(f => f?.Length > 0
+                             && !string.IsNullOrWhiteSpace(f.ContentType)
+                             && f.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (allowedFiles.Count > 0)
+                {
+                    createdMedias = new List<PostMedia>();
+                    var startPosition = 0;
+
+                    foreach (var file in allowedFiles)
+                    {
+                        var uploaded = await _cloudinary.TryUploadAsync(file);
+                        if (uploaded == null)
+                        {
+                            // If any media upload fails, rollback the entire transaction
+                            throw new InvalidOperationException($"Failed to upload media file: {file.FileName}. Post creation cancelled.");
+                        }
+
+                        var media = new PostMedia
+                        {
+                            Id = Guid.NewGuid(),
+                            PostId = post.Id,
+                            Url = uploaded.Url,
+                            ThumbnailUrl = uploaded.ThumbnailUrl,
+                            Position = startPosition++,
+                            PublicId = uploaded.PublicId,
+                            Width = uploaded.Width,
+                            Height = uploaded.Height
+                        };
+
+                        createdMedias.Add(media);
+                        await _uow.PostMedia.AddAsync(media);
+                    }
+                }
+            }
+
+            try
+            {
+                await _uow.CompleteAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to create post. The post could not be saved to the database.", ex);
+            }
 
             var full = await _uow.Posts.GetPostWithAllAsync(post.Id);
             return await MapPostToResponseAsync(full ?? post, authorId);

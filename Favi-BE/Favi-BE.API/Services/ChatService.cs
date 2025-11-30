@@ -1,263 +1,321 @@
-﻿using Favi_BE.API.Interfaces.Services;
+using Favi_BE.API.Interfaces.Repositories;
+using Favi_BE.API.Interfaces.Services;
 using Favi_BE.API.Models.Dtos;
 using Favi_BE.API.Models.Entities;
 using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.API.Models.Enums;
 using Favi_BE.Interfaces;
+using Favi_BE.Interfaces.Repositories;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Favi_BE.API.Services
 {
     public class ChatService : IChatService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IConversationRepository _conversations;
+        private readonly IMessageRepository _messages;
+        private readonly IUserConversationRepository _userConversations;
+        private readonly IProfileRepository _profiles;
 
         public ChatService(IUnitOfWork uow)
         {
             _uow = uow;
+            _conversations = uow.Conversations;
+            _messages = uow.Messages;
+            _userConversations = uow.UserConversations;
+            _profiles = uow.Profiles;
         }
 
         public async Task<ConversationSummaryDto> GetOrCreateDmAsync(Guid currentProfileId, Guid otherProfileId)
         {
-            if (currentProfileId == otherProfileId)
-                throw new ArgumentException("Cannot create DM with yourself.");
+            // Check if other profile exists
+            var otherProfile = await _profiles.GetByIdAsync(otherProfileId);
+            if (otherProfile == null)
+                throw new ArgumentException("Other user not found");
 
-            var existing = await _uow.Conversations.FindDmConversationAsync(currentProfileId, otherProfileId);
-            if (existing is null)
+            // Find existing DM conversation
+            var existingConv = await _conversations.FindDmConversationAsync(currentProfileId, otherProfileId);
+            
+            if (existingConv != null)
             {
-                var now = DateTime.UtcNow;
+                return await MapToSummaryDtoAsync(existingConv, currentProfileId);
+            }
 
-                var conversation = new Conversation
-                {
-                    Id = Guid.NewGuid(),
-                    Type = ConversationType.Dm,
-                    CreatedAt = now
-                };
+            // Create new DM conversation
+            var conversation = new Conversation
+            {
+                Id = Guid.NewGuid(),
+                Type = ConversationType.Dm,
+                CreatedAt = DateTime.UtcNow,
+                LastMessageAt = null
+            };
 
-                await _uow.Conversations.AddAsync(conversation);
+            await _conversations.AddAsync(conversation);
 
-                var memberCurrent = new UserConversation
+            // Add both users to conversation
+            var userConvs = new List<UserConversation>
+            {
+                new UserConversation
                 {
                     ConversationId = conversation.Id,
                     ProfileId = currentProfileId,
                     Role = "member",
-                    JoinedAt = now
-                };
-                var memberOther = new UserConversation
+                    JoinedAt = DateTime.UtcNow
+                },
+                new UserConversation
                 {
                     ConversationId = conversation.Id,
                     ProfileId = otherProfileId,
                     Role = "member",
-                    JoinedAt = now
-                };
+                    JoinedAt = DateTime.UtcNow
+                }
+            };
 
-                await _uow.UserConversations.AddAsync(memberCurrent);
-                await _uow.UserConversations.AddAsync(memberOther);
+            await _userConversations.AddRangeAsync(userConvs);
+            await _uow.CompleteAsync();
 
-                await _uow.CompleteAsync();
-
-                existing = conversation;
-            }
-
-            var convoWithMembers = await _uow.Conversations.GetConversationWithMembersAsync(existing.Id)
-                                  ?? existing;
-
-            return await MapConversationSummaryAsync(convoWithMembers, currentProfileId);
+            // Load full conversation for mapping
+            var fullConv = await _conversations.GetConversationWithMembersAsync(conversation.Id)
+                          ?? conversation;
+            
+            return await MapToSummaryDtoAsync(fullConv, currentProfileId);
         }
 
         public async Task<ConversationSummaryDto> CreateGroupAsync(Guid currentProfileId, CreateGroupConversationRequest dto)
         {
-            var members = dto.MemberIds.Distinct().ToList();
-            if (!members.Contains(currentProfileId))
-                members.Add(currentProfileId);
+            if (dto.MemberIds == null || !dto.MemberIds.Any())
+                throw new ArgumentException("At least one member is required");
 
-            var now = DateTime.UtcNow;
+            // Validate all members exist
+            var memberIds = dto.MemberIds.Distinct().ToList();
+            if (memberIds.Contains(currentProfileId))
+                throw new ArgumentException("Cannot include yourself in group creation");
 
+            var members = await _profiles.FindAsync(p => memberIds.Contains(p.Id));
+            if (members.Count() != memberIds.Count)
+                throw new ArgumentException("One or more members not found");
+
+            // Create group conversation
             var conversation = new Conversation
             {
                 Id = Guid.NewGuid(),
                 Type = ConversationType.Group,
-                CreatedAt = now
+                CreatedAt = DateTime.UtcNow,
+                LastMessageAt = null
             };
 
-            await _uow.Conversations.AddAsync(conversation);
+            await _conversations.AddAsync(conversation);
 
-            foreach (var memberId in members)
+            // Add creator as owner and members
+            var userConvs = new List<UserConversation>
             {
-                var role = memberId == currentProfileId ? "owner" : "member";
-                await _uow.UserConversations.AddAsync(new UserConversation
+                new UserConversation
+                {
+                    ConversationId = conversation.Id,
+                    ProfileId = currentProfileId,
+                    Role = "owner",
+                    JoinedAt = DateTime.UtcNow
+                }
+            };
+
+            foreach (var memberId in memberIds)
+            {
+                userConvs.Add(new UserConversation
                 {
                     ConversationId = conversation.Id,
                     ProfileId = memberId,
-                    Role = role,
-                    JoinedAt = now
+                    Role = "member",
+                    JoinedAt = DateTime.UtcNow
                 });
             }
 
+            await _userConversations.AddRangeAsync(userConvs);
             await _uow.CompleteAsync();
 
-            var withMembers = await _uow.Conversations.GetConversationWithMembersAsync(conversation.Id)
-                             ?? conversation;
-
-            return await MapConversationSummaryAsync(withMembers, currentProfileId);
+            // Load full conversation for mapping
+            var fullConv = await _conversations.GetConversationWithMembersAsync(conversation.Id)
+                          ?? conversation;
+            
+            return await MapToSummaryDtoAsync(fullConv, currentProfileId);
         }
 
-        public async Task<IEnumerable<ConversationSummaryDto>> GetConversationsAsync(
-            Guid currentProfileId, int page, int pageSize)
+        public async Task<IEnumerable<ConversationSummaryDto>> GetConversationsAsync(Guid currentProfileId, int page, int pageSize)
         {
-            var skip = (page - 1) * pageSize;
-            var conversations = await _uow.Conversations.GetConversationsForUserAsync(currentProfileId, skip, pageSize);
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
 
-            var list = new List<ConversationSummaryDto>();
-            foreach (var c in conversations)
+            var skip = (page - 1) * pageSize;
+            var conversations = await _conversations.GetConversationsForUserAsync(currentProfileId, skip, pageSize);
+
+            var summaries = new List<ConversationSummaryDto>();
+            foreach (var conv in conversations)
             {
-                list.Add(await MapConversationSummaryAsync(c, currentProfileId));
+                var summary = await MapToSummaryDtoAsync(conv, currentProfileId);
+                summaries.Add(summary);
             }
 
-            return list;
+            return summaries;
         }
 
         public async Task<(IEnumerable<MessageDto> Items, int Total)> GetMessagesAsync(
             Guid currentProfileId, Guid conversationId, int page, int pageSize)
         {
-            // TODO: kiểm tra currentProfileId có trong conversation không
-            var member = await _uow.UserConversations.GetAsync(conversationId, currentProfileId);
-            if (member is null)
-                throw new UnauthorizedAccessException("You are not a member of this conversation.");
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 50;
+
+            // Verify user has access to conversation
+            var userConv = await _userConversations.GetAsync(conversationId, currentProfileId);
+            if (userConv == null)
+                throw new UnauthorizedAccessException("Access denied to conversation");
 
             var skip = (page - 1) * pageSize;
-            var (items, total) = await _uow.Messages.GetMessagesForConversationAsync(conversationId, skip, pageSize);
+            var (messages, total) = await _messages.GetMessagesForConversationAsync(conversationId, skip, pageSize);
 
-            var dtos = items.Select(MapMessageToDto).ToList();
-            return (dtos, total);
+            var messageDtos = messages.Select(m => MapToMessageDto(m)).ToList();
+            
+            // Update last read message
+            if (messages.Any())
+            {
+                var lastMessage = messages.First();
+                userConv.LastReadMessageId = lastMessage.Id;
+                _userConversations.Update(userConv);
+                await _uow.CompleteAsync();
+            }
+
+            return (messageDtos, total);
         }
 
         public async Task<MessageDto> SendMessageAsync(
             Guid currentProfileId, Guid conversationId, SendMessageRequest dto)
         {
-            var member = await _uow.UserConversations.GetAsync(conversationId, currentProfileId);
-            if (member is null)
-                throw new UnauthorizedAccessException("You are not a member of this conversation.");
+            // Verify user has access to conversation
+            var userConv = await _userConversations.GetAsync(conversationId, currentProfileId);
+            if (userConv == null)
+                throw new UnauthorizedAccessException("Access denied to conversation");
 
-            var now = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(dto.Content) && string.IsNullOrWhiteSpace(dto.MediaUrl))
+                throw new ArgumentException("Message must have content or media");
 
             var message = new Message
             {
                 Id = Guid.NewGuid(),
                 ConversationId = conversationId,
                 SenderId = currentProfileId,
-                Content = dto.Content,
-                MediaUrl = dto.MediaUrl,
-                CreatedAt = now,
+                Content = dto.Content?.Trim(),
+                MediaUrl = dto.MediaUrl?.Trim(),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = null,
                 IsEdited = false
             };
 
-            await _uow.Messages.AddAsync(message);
+            await _messages.AddAsync(message);
 
-            // Update conversation
-            var convo = await _uow.Conversations.GetByIdAsync(conversationId);
-            if (convo is not null)
+            // Update conversation last message time
+            var conversation = await _conversations.GetByIdAsync(conversationId);
+            if (conversation != null)
             {
-                convo.LastMessageAt = now;
-                _uow.Conversations.Update(convo);
+                conversation.LastMessageAt = message.CreatedAt;
+                _conversations.Update(conversation);
             }
-
-            // Mark sender read
-            member.LastReadMessageId = message.Id;
-            _uow.UserConversations.Update(member);
 
             await _uow.CompleteAsync();
 
-            // load sender info
-            var loaded = await _uow.Messages.GetByIdAsync(message.Id);
-            if (loaded is null)
-                loaded = message;
-
-            return MapMessageToDto(loaded);
+            return MapToMessageDto(message);
         }
 
         public async Task MarkAsReadAsync(Guid currentProfileId, Guid conversationId, Guid lastMessageId)
         {
-            var member = await _uow.UserConversations.GetAsync(conversationId, currentProfileId);
-            if (member is null)
-                throw new UnauthorizedAccessException("You are not a member of this conversation.");
+            // Verify user has access to conversation
+            var userConv = await _userConversations.GetAsync(conversationId, currentProfileId);
+            if (userConv == null)
+                throw new UnauthorizedAccessException("Access denied to conversation");
 
-            // đảm bảo message thuộc conversation
-            var msg = await _uow.Messages.GetByIdAsync(lastMessageId);
-            if (msg is null || msg.ConversationId != conversationId)
-                throw new ArgumentException("Invalid message id");
+            // Verify message exists and belongs to conversation
+            var message = await _messages.GetByIdAsync(lastMessageId);
+            if (message == null || message.ConversationId != conversationId)
+                throw new ArgumentException("Invalid message");
 
-            member.LastReadMessageId = lastMessageId;
-            _uow.UserConversations.Update(member);
+            userConv.LastReadMessageId = lastMessageId;
+            _userConversations.Update(userConv);
             await _uow.CompleteAsync();
         }
 
-        // ----------------- helpers -----------------
-
-        private async Task<ConversationSummaryDto> MapConversationSummaryAsync(
-            Conversation conversation,
-            Guid currentProfileId)
+        private async Task<ConversationSummaryDto> MapToSummaryDtoAsync(Conversation conversation, Guid currentProfileId)
         {
-            // Lấy last message
-            var lastMessage = conversation.Messages
-                .OrderByDescending(m => m.CreatedAt)
-                .FirstOrDefault()
-                ?? await _uow.Messages.GetLastMessageAsync(conversation.Id);
-
-            var members = conversation.UserConversations;
-
-            // Tính unread
-            int unread = 0;
-            var currentMember = members.FirstOrDefault(m => m.ProfileId == currentProfileId);
-            if (currentMember != null)
+            // Load related data if not already loaded
+            if (conversation.UserConversations == null || !conversation.UserConversations.Any())
             {
-                DateTime lastReadTime = DateTime.MinValue;
-                if (currentMember.LastReadMessageId.HasValue)
-                {
-                    var lastReadMessage = await _uow.Messages.GetByIdAsync(currentMember.LastReadMessageId.Value);
-                    if (lastReadMessage != null)
-                        lastReadTime = lastReadMessage.CreatedAt;
-                }
-
-                // Đếm số message mới hơn lastReadTime
-                unread = await (_uow as dynamic).Messages
-                    .CountAsync(conversation.Id, lastReadTime); // bạn có thể implement CountAsync riêng nếu muốn
-                // hoặc đơn giản bỏ unread nếu thấy phức tạp quá
+                conversation = await _conversations.GetConversationWithMembersAsync(conversation.Id)
+                              ?? conversation;
             }
 
-            var memberDtos = members.Select(uc =>
-                new ConversationMemberDto(
+            var members = conversation.UserConversations?
+                .Select(uc => new ConversationMemberDto(
                     uc.ProfileId,
-                    uc.Profile.Username,
-                    uc.Profile.DisplayName,
-                    uc.Profile.AvatarUrl
-                )).ToList();
+                    uc.Profile?.Username ?? "Unknown",
+                    uc.Profile?.DisplayName,
+                    uc.Profile?.AvatarUrl
+                )) ?? new List<ConversationMemberDto>();
 
-            string? preview = lastMessage?.Content ?? (lastMessage?.MediaUrl != null ? "[media]" : null);
+            // Get last message for preview
+            var lastMessage = await _messages.GetLastMessageAsync(conversation.Id);
+            string? lastMessagePreview = null;
+            if (lastMessage != null)
+            {
+                lastMessagePreview = !string.IsNullOrWhiteSpace(lastMessage.Content)
+                    ? (lastMessage.Content.Length > 50 
+                        ? lastMessage.Content.Substring(0, 47) + "..."
+                        : lastMessage.Content)
+                    : "[Media]";
+            }
+
+            // Get unread count
+            var userConv = conversation.UserConversations?
+                .FirstOrDefault(uc => uc.ProfileId == currentProfileId);
+            
+            var unreadCount = 0;
+            if (userConv?.LastReadMessageId != null)
+            {
+                unreadCount = await _messages.GetUnreadCountAsync(
+                    conversation.Id, 
+                    userConv.LastReadMessage.CreatedAt
+                );
+            }
+            else
+            {
+                // If no last read message, count all messages as unread
+                var allMessages = await _messages.FindAsync(m => m.ConversationId == conversation.Id);
+                unreadCount = allMessages.Count();
+            }
 
             return new ConversationSummaryDto(
                 conversation.Id,
                 conversation.Type,
                 conversation.LastMessageAt,
-                preview,
-                unread,
-                memberDtos
+                lastMessagePreview,
+                unreadCount,
+                members
             );
         }
 
-        private static MessageDto MapMessageToDto(Message m)
+        private MessageDto MapToMessageDto(Message message)
         {
             return new MessageDto(
-                m.Id,
-                m.ConversationId,
-                m.SenderId,
-                m.Sender?.Username ?? string.Empty,
-                m.Sender?.DisplayName,
-                m.Sender?.AvatarUrl,
-                m.Content,
-                m.MediaUrl,
-                m.CreatedAt,
-                m.UpdatedAt,
-                m.IsEdited
+                message.Id,
+                message.ConversationId,
+                message.SenderId,
+                message.Sender?.Username ?? "Unknown",
+                message.Sender?.DisplayName,
+                message.Sender?.AvatarUrl,
+                message.Content,
+                message.MediaUrl,
+                message.CreatedAt,
+                message.UpdatedAt,
+                message.IsEdited
             );
         }
     }
