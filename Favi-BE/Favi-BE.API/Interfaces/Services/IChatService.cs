@@ -15,5 +15,7 @@ namespace Favi_BE.API.Interfaces.Services
             Guid currentProfileId, Guid conversationId, SendMessageRequest dto);
 
         Task MarkAsReadAsync(Guid currentProfileId, Guid conversationId, Guid lastMessageId);
+
+        Task UpdateUserLastActiveAsync(Guid userId);
     }
 }

@@ -136,6 +136,20 @@ namespace Favi_BE.API.Hubs
             if (Guid.TryParse(userIdStr, out var userId))
             {
                 _logger.LogInformation($"User {userId} connected to chat hub");
+                
+                // Update user's last active time via service
+                try
+                {
+                    var chatService = _serviceProvider.GetService<IChatService>();
+                    if (chatService != null)
+                    {
+                        await chatService.UpdateUserLastActiveAsync(userId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to update last active time for user {userId}");
+                }
             }
 
             await base.OnConnectedAsync();

@@ -30,6 +30,17 @@ namespace Favi_BE.API.Services
             _profiles = uow.Profiles;
         }
 
+        public async Task UpdateUserLastActiveAsync(Guid userId)
+        {
+            var profile = await _profiles.GetByIdAsync(userId);
+            if (profile != null)
+            {
+                profile.LastActiveAt = DateTime.UtcNow;
+                _profiles.Update(profile);
+                await _uow.CompleteAsync();
+            }
+        }
+
         public async Task<ConversationSummaryDto> GetOrCreateDmAsync(Guid currentProfileId, Guid otherProfileId)
         {
             // Check if other profile exists
