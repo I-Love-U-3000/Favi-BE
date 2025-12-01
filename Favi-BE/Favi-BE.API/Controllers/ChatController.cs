@@ -40,9 +40,25 @@ namespace Favi_BE.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var currentUserId = User.GetUserIdFromMetadata();
-            var result = await _chat.GetConversationsAsync(currentUserId, page, pageSize);
-            return Ok(result);
+            try
+            {
+                var currentUserId = User.GetUserIdFromMetadata();
+                var result = await _chat.GetConversationsAsync(currentUserId, page, pageSize);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception here for debugging
+                return StatusCode(500, "An error occurred while retrieving conversations");
+            }
         }
 
         [HttpGet("{conversationId:guid}/messages")]

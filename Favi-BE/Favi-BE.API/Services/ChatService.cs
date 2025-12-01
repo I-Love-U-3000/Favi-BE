@@ -287,14 +287,23 @@ namespace Favi_BE.API.Services
             // Get unread count
             var userConv = conversation.UserConversations?
                 .FirstOrDefault(uc => uc.ProfileId == currentProfileId);
-            
+
             var unreadCount = 0;
             if (userConv?.LastReadMessageId != null)
             {
-                unreadCount = await _messages.GetUnreadCountAsync(
-                    conversation.Id, 
-                    userConv.LastReadMessage.CreatedAt
-                );
+                DateTime lastReadTime;
+                if (userConv.LastReadMessage != null)
+                {
+                    lastReadTime = userConv.LastReadMessage.CreatedAt;
+                }
+                else
+                {
+                    // If LastReadMessageId exists but LastReadMessage is null, fetch the message
+                    var lastReadMessage = await _messages.GetByIdAsync(userConv.LastReadMessageId.Value);
+                    lastReadTime = lastReadMessage?.CreatedAt ?? DateTime.MinValue;
+                }
+
+                unreadCount = await _messages.GetUnreadCountAsync(conversation.Id, lastReadTime);
             }
             else
             {
