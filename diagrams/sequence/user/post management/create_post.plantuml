@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Create Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+end box
+
+User -> PostController: POST /api/posts\n(CreatePostRequest)
+activate PostController
+
+PostController -> PostService: CreateAsync(authorId, caption, tags)
+activate PostService
+PostService --> PostController: PostResponse
+deactivate PostService
+
+PostController --> User: 201 Created (PostResponse)
+deactivate PostController
+@enduml

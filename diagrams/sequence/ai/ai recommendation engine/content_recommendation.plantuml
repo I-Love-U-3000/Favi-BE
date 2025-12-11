@@ -1,0 +1,32 @@
+@startuml
+!theme vibrant
+title Content Recommendations Sequence (Explore Page)
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IRecommendationService" as RecoService
+  participant "VectorIndexAPI" as VectorIndexAPI
+end box
+
+User -> PostController: GET /api/posts/explore
+activate PostController
+
+PostController -> RecoService: GetContentRecommendations(userId)
+activate RecoService
+
+RecoService -> VectorIndexAPI: POST /recommend_content\n(user_profile)
+activate VectorIndexAPI
+VectorIndexAPI --> RecoService: List<PostId>
+deactivate VectorIndexAPI
+
+RecoService -> RecoService: GetPostsFromIds(postIds)
+
+RecoService --> PostController: PagedResult<PostResponse>
+deactivate RecoService
+
+PostController --> User: 200 OK (Paged Posts)
+deactivate PostController
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Comment on Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CommentsController" as CommentController
+  participant "ICommentService" as CommentService
+end box
+
+User -> CommentController: POST /api/comments\n(CreateCommentRequest)
+activate CommentController
+
+CommentController -> CommentService: CreateAsync(postId, userId, content, parentId)
+activate CommentService
+CommentService --> CommentController: CommentResponse
+deactivate CommentService
+
+CommentController --> User: 200 OK (CommentResponse)
+deactivate CommentController
+@enduml

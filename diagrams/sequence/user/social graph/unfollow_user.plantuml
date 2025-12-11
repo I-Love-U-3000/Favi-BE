@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Unfollow User Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+end box
+
+User -> ProfileController: DELETE /api/profiles/follow/{targetId}
+activate ProfileController
+
+ProfileController -> ProfileService: UnfollowAsync(userId, targetId)
+activate ProfileService
+ProfileService --> ProfileController: bool wasSuccessful
+deactivate ProfileService
+
+alt Unfollow successful
+    ProfileController --> User: 200 OK
+else Unfollow failed
+    ProfileController --> User: 400 Bad Request
+end
+
+deactivate ProfileController
+@enduml

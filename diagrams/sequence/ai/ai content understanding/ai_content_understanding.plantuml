@@ -1,0 +1,41 @@
+@startuml
+!theme vibrant
+title AI Content Understanding Sequence (Internal Process)
+
+actor User
+participant "PostsController" as PostController
+participant "PostService" as PostService
+participant "MessageQueue" as MessageQueue
+participant "ContentUnderstandingWorker" as Worker
+participant "VectorIndexAPI" as VectorIndexAPI
+participant "ITagService" as TagService
+
+User -> PostController: Create/Update Post
+activate PostController
+PostController -> PostService: CreateAsync/UpdateAsync
+activate PostService
+PostService -> MessageQueue: Enqueue(PostForTagging)
+deactivate PostService
+PostController --> User: 200 OK
+
+deactivate PostController
+
+MessageQueue -> Worker: Dequeue(PostForTagging)
+activate Worker
+Worker -> VectorIndexAPI: POST /generate_tags\n(text, image_urls)
+activate VectorIndexAPI
+VectorIndexAPI --> Worker: List<string> (tags)
+deactivate VectorIndexAPI
+
+Worker -> TagService: GetOrCreateTags(tags)
+activate TagService
+TagService --> Worker: List<Tag>
+deactivate TagService
+
+Worker -> PostService: AddTagsToPost(postId, tags)
+activate PostService
+PostService --> Worker: done
+deactivate PostService
+
+deactivate Worker
+@enduml

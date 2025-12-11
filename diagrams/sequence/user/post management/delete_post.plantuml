@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Delete Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "PostsController" as PostController
+  participant "IPostService" as PostService
+end box
+
+User -> PostController: DELETE /api/posts/{id}
+activate PostController
+
+PostController -> PostService: DeleteAsync(id, requesterId)
+activate PostService
+PostService --> PostController: bool wasSuccessful
+deactivate PostService
+
+alt Delete successful
+    PostController --> User: 204 No Content
+else Forbidden or Not Found
+    PostController --> User: 403 Forbidden
+end
+
+deactivate PostController
+@enduml

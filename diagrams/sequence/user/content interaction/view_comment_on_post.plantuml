@@ -1,0 +1,44 @@
+@startuml
+!theme vibrant
+title View Comments on Post Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CommentsController" as CommentController
+  participant "IPostService" as PostService
+  participant "ICommentService" as CommentService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> CommentController: GET /api/comments/post/{postId}
+activate CommentController
+
+CommentController -> PostService: GetEntityAsync(postId)
+activate PostService
+PostService --> CommentController: Post (or null)
+deactivate PostService
+
+alt Post exists
+    CommentController -> PrivacyGuard: CanViewPostAsync(post, viewerId)
+    activate PrivacyGuard
+    PrivacyGuard --> CommentController: bool canView
+    deactivate PrivacyGuard
+
+    alt User can view post
+        CommentController -> CommentService: GetByPostAsync(postId, page, pageSize)
+        activate CommentService
+        CommentService --> CommentController: PagedResult<CommentResponse>
+        deactivate CommentService
+
+        CommentController --> User: 200 OK (Paged Comments)
+    else User cannot view post
+        CommentController --> User: 403 Forbidden
+    end
+
+else Post does not exist
+    CommentController --> User: 404 Not Found
+end
+
+deactivate CommentController
+@enduml

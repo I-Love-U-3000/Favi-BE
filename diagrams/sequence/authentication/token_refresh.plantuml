@@ -1,0 +1,26 @@
+@startuml
+!theme vibrant
+title Token Refresh Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "AuthController" as AuthController
+  participant "ISupabaseAuthService" as SupabaseAuthService
+end box
+
+group Token Refresh
+    User -> AuthController: POST /api/auth/refresh\n(RefreshToken)
+    activate AuthController
+    AuthController -> SupabaseAuthService: RefreshAsync(RefreshToken)
+    activate SupabaseAuthService
+    SupabaseAuthService --> AuthController: SupabaseAuthResponse (or null)
+    deactivate SupabaseAuthService
+    alt Refresh successful
+        AuthController --> User: 200 OK (AuthResponse)
+    else Invalid token
+        AuthController --> User: 401 Unauthorized
+    end
+    deactivate AuthController
+end
+@enduml

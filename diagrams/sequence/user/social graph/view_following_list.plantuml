@@ -1,0 +1,42 @@
+@startuml
+!theme vibrant
+title View Followings List Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> ProfileController: GET /api/profiles/{id}/followings
+activate ProfileController
+
+ProfileController -> ProfileService: GetEntityByIdAsync(id)
+activate ProfileService
+ProfileService --> ProfileController: Profile (or null)
+deactivate ProfileService
+
+alt Profile exists
+    ProfileController -> PrivacyGuard: CanViewFollowListAsync(profile, viewerId)
+    activate PrivacyGuard
+    PrivacyGuard --> ProfileController: bool canView
+    deactivate PrivacyGuard
+
+    alt User can view list
+        ProfileController -> ProfileService: GetFollowingsAsync(id, skip, take)
+        activate ProfileService
+        ProfileService --> ProfileController: List<ProfileResponse>
+        deactivate ProfileService
+        ProfileController --> User: 200 OK (List)
+    else User cannot view
+        ProfileController --> User: 403 Forbidden
+    end
+
+else Profile does not exist
+    ProfileController --> User: 404 Not Found
+end
+
+deactivate ProfileController
+@enduml

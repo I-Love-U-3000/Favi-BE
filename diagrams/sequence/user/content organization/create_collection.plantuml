@@ -1,0 +1,22 @@
+@startuml
+!theme vibrant
+title Create Collection Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CollectionsController" as CollectionController
+  participant "ICollectionService" as CollectionService
+end box
+
+User -> CollectionController: POST /api/collections\n(CreateCollectionRequest)
+activate CollectionController
+
+CollectionController -> CollectionService: CreateAsync(userId, dto)
+activate CollectionService
+CollectionService --> CollectionController: CollectionResponse
+deactivate CollectionService
+
+CollectionController --> User: 200 OK (CollectionResponse)
+deactivate CollectionController
+@enduml

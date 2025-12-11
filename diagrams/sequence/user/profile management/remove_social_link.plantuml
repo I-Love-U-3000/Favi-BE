@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Remove Social Link Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+end box
+
+User -> ProfileController: DELETE /api/profiles/links/{linkId}
+activate ProfileController
+
+ProfileController -> ProfileService: RemoveSocialLinkAsync(userId, linkId)
+activate ProfileService
+ProfileService --> ProfileController: bool wasRemoved
+deactivate ProfileService
+
+alt Link removed
+    ProfileController --> User: 200 OK
+else Link not found
+    ProfileController --> User: 404 Not Found
+end
+
+deactivate ProfileController
+@enduml

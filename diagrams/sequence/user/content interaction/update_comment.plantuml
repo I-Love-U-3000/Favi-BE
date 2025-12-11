@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Update Comment Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CommentsController" as CommentController
+  participant "ICommentService" as CommentService
+end box
+
+User -> CommentController: PUT /api/comments/{id}\n(UpdateCommentRequest)
+activate CommentController
+
+CommentController -> CommentService: UpdateAsync(id, userId, content)
+activate CommentService
+CommentService --> CommentController: CommentResponse (or null)
+deactivate CommentService
+
+alt Update successful
+    CommentController --> User: 200 OK (CommentResponse)
+else Not Found or Forbidden
+    CommentController --> User: 404 Not Found
+end
+
+deactivate CommentController
+@enduml

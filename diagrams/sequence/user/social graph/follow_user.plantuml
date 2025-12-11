@@ -1,0 +1,47 @@
+@startuml
+!theme vibrant
+title Follow User Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "ProfilesController" as ProfileController
+  participant "IProfileService" as ProfileService
+  participant "IPrivacyGuard" as PrivacyGuard
+end box
+
+User -> ProfileController: POST /api/profiles/follow/{targetId}
+activate ProfileController
+
+ProfileController -> ProfileService: GetEntityByIdAsync(targetId)
+activate ProfileService
+ProfileService --> ProfileController: Profile (or null)
+deactivate ProfileService
+
+alt Target profile exists
+    ProfileController -> PrivacyGuard: CanFollowAsync(profile, userId)
+    activate PrivacyGuard
+    PrivacyGuard --> ProfileController: bool canFollow
+    deactivate PrivacyGuard
+
+    alt User can follow
+        ProfileController -> ProfileService: FollowAsync(userId, targetId)
+        activate ProfileService
+        ProfileService --> ProfileController: bool wasSuccessful
+        deactivate ProfileService
+
+        alt Follow successful
+            ProfileController --> User: 200 OK
+        else Follow failed
+            ProfileController --> User: 400 Bad Request
+        end
+    else User cannot follow
+        ProfileController --> User: 403 Forbidden
+    end
+
+else Target does not exist
+    ProfileController --> User: 404 Not Found
+end
+
+deactivate ProfileController
+@enduml

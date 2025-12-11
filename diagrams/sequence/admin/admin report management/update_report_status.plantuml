@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Update Report Status Sequence
+
+actor Admin
+
+box "Favi-BE Backend" #LightBlue
+  participant "ReportsController" as ReportController
+  participant "IReportService" as ReportService
+end box
+
+Admin -> ReportController: PUT /api/reports/{id}\n(UpdateReportStatusRequest)
+activate ReportController
+
+ReportController -> ReportService: UpdateStatusAsync(id, dto)
+activate ReportService
+ReportService --> ReportController: bool wasSuccessful
+deactivate ReportService
+
+alt Update successful
+    ReportController --> Admin: 200 OK
+else Report not found
+    ReportController --> Admin: 404 Not Found
+end
+
+deactivate ReportController
+@enduml

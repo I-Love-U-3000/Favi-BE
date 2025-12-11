@@ -1,0 +1,27 @@
+@startuml
+!theme vibrant
+title Update Collection Sequence
+
+actor User
+
+box "Favi-BE Backend" #LightBlue
+  participant "CollectionsController" as CollectionController
+  participant "ICollectionService" as CollectionService
+end box
+
+User -> CollectionController: PUT /api/collections/{id}\n(UpdateCollectionRequest)
+activate CollectionController
+
+CollectionController -> CollectionService: UpdateAsync(id, userId, dto)
+activate CollectionService
+CollectionService --> CollectionController: CollectionResponse (or null)
+deactivate CollectionService
+
+alt Update successful
+    CollectionController --> User: 200 OK (CollectionResponse)
+else Not Found or Forbidden
+    CollectionController --> User: 404 Not Found
+end
+
+deactivate CollectionController
+@enduml
