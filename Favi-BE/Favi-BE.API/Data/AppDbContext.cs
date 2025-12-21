@@ -20,6 +20,8 @@ namespace Favi_BE.Data
         public DbSet<PostCollection> PostCollections { get; set; }
         public DbSet<PostTag> PostTags { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
+        public DbSet<UserModeration> UserModerations { get; set; }
+        public DbSet<AdminAction> AdminActions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -137,6 +139,31 @@ namespace Favi_BE.Data
                 .WithMany(pf => pf.Reports)
                 .HasForeignKey(r => r.ReporterId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ===== User Moderation =====
+            modelBuilder.Entity<UserModeration>()
+                .HasOne(um => um.Profile)
+                .WithMany(p => p.ModerationHistory)
+                .HasForeignKey(um => um.ProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserModeration>()
+                .HasOne(um => um.Admin)
+                .WithMany()
+                .HasForeignKey(um => um.AdminId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserModeration>()
+                .HasOne(um => um.AdminAction)
+                .WithMany(a => a.UserModerations)
+                .HasForeignKey(um => um.AdminActionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AdminAction>()
+                .HasOne(a => a.Admin)
+                .WithMany()
+                .HasForeignKey(a => a.AdminId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
     }

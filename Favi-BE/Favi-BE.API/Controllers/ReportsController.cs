@@ -1,4 +1,5 @@
-﻿using Favi_BE.Common;
+using Favi_BE.Authorization;
+using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
@@ -34,12 +35,12 @@ namespace Favi_BE.Controllers
             return Ok(report);
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Policy = AdminPolicies.RequireAdmin)]
         [HttpGet]
         public async Task<ActionResult<PagedResult<ReportResponse>>> GetAll(int page = 1, int pageSize = 20) =>
             Ok(await _reports.GetAllAsync(page, pageSize));
 
-        [Authorize(Roles = "admin")]
+        [Authorize(Policy = AdminPolicies.RequireAdmin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStatus(Guid id, UpdateReportStatusRequest dto)
         {

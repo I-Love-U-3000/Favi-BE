@@ -18,6 +18,9 @@ namespace Favi_BE.Models.Entities
         public DateTime? LastActiveAt { get; set; }
         public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
         public PrivacyLevel FollowPrivacyLevel { get; set; } = PrivacyLevel.Public;
+        public bool IsBanned { get; set; }
+        public DateTime? BannedUntil { get; set; }
+
         // Navigation
         public ICollection<SocialLink> SocialLinks { get; set; } = new List<SocialLink>();
         public ICollection<Collection> Collections { get; set; } = new List<Collection>();
@@ -25,5 +28,6 @@ namespace Favi_BE.Models.Entities
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
         public ICollection<Report> Reports { get; set; } = new List<Report>();
+        public ICollection<UserModeration> ModerationHistory { get; set; } = new List<UserModeration>();
     }
 }

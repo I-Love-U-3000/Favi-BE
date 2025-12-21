@@ -35,6 +35,8 @@ namespace Favi_BE.Services
                 profile.LastActiveAt ?? DateTime.MinValue,
                 profile.PrivacyLevel,
                 profile.FollowPrivacyLevel,
+                profile.IsBanned,
+                profile.BannedUntil,
                 followers,
                 followings
             );
@@ -152,7 +154,8 @@ namespace Favi_BE.Services
                 Username = username,
                 DisplayName = displayName ?? username,
                 CreatedAt = DateTime.UtcNow,
-                LastActiveAt = DateTime.UtcNow
+                LastActiveAt = DateTime.UtcNow,
+                IsBanned = false
             };
             await _uow.Profiles.AddAsync(profile);
             await _uow.CompleteAsync();

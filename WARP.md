@@ -239,15 +239,3 @@ Key configuration sections in `appsettings.json` / environment variables:
 Docker Compose sets all required environment variables.
 
 ## Current Implementation Status
-
-See `FunctionalChecklist.md` for detailed feature tracking. Key implemented areas:
-- ✅ User authentication and profiles
-- ✅ Post creation, editing, media management
-- ✅ Comments and reactions
-- ✅ Collections
-- ✅ Follow system
-- ✅ Privacy controls
-- ✅ Basic search
-- ✅ Content reporting
-- ⏳ AI-powered features (vector search implemented, other AI features planned)
-- ⏳ Admin moderation tools (partially implemented)

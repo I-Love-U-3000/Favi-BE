@@ -26,6 +26,8 @@ namespace Favi_BE.Data
             Tags = new TagRepository(_context);
             Reports = new ReportRepository(_context);
             SocialLinks = new SocialLinkRepository(_context);
+            UserModerations = new UserModerationRepository(_context);
+            AdminActions = new AdminActionRepository(_context);
 
             // Join tables
             PostTags = new PostTagRepository(_context);
@@ -43,6 +45,8 @@ namespace Favi_BE.Data
         public ITagRepository Tags { get; private set; }
         public IReportRepository Reports { get; private set; }
         public ISocialLinkRepository SocialLinks { get; private set; }
+        public IUserModerationRepository UserModerations { get; private set; }
+        public IAdminActionRepository AdminActions { get; private set; }
 
         // Join tables
         public IPostTagRepository PostTags { get; private set; }

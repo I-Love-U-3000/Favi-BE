@@ -13,6 +13,8 @@ namespace Favi_BE.Models.Dtos
         DateTime LastActiveAt,
         PrivacyLevel PrivacyLevel,
         PrivacyLevel FollowPrivacyLevel,
+        bool IsBanned,
+        DateTime? BannedUntil,
         int? FollowersCount,
         int? FollowingCount
     );

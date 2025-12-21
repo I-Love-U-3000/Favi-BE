@@ -27,5 +27,14 @@ namespace Favi_BE.Common
                 throw new UnauthorizedAccessException($"Invalid user_metadata: {ex.Message}");
             }
         }
+
+        public static bool IsAdmin(this ClaimsPrincipal user)
+        {
+            if (user?.Identity?.IsAuthenticated != true)
+                return false;
+
+            var role = user.FindFirstValue("account_role");
+            return string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

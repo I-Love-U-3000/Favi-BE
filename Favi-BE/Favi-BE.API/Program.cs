@@ -1,4 +1,5 @@
-﻿using Favi_BE.Common;
+using Favi_BE.Authorization;
+using Favi_BE.Common;
 using Favi_BE.Data;
 using Favi_BE.Data.Repositories;
 using Favi_BE.Interfaces;
@@ -7,6 +8,7 @@ using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -47,10 +49,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+builder.Services.AddSingleton<IAuthorizationHandler, RequireAdminHandler>();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireUser", policy => policy.RequireClaim("account_role", "user"));
-    options.AddPolicy("RequireAdmin", policy => policy.RequireClaim("account_role", "admin"));
+    options.AddPolicy("RequireUser", policy => policy.RequireClaim("account_role", new[] { "user", "admin" }));
+    options.AddPolicy(AdminPolicies.RequireAdmin, policy =>
+        policy.Requirements.Add(new RequireAdminRequirement()));
 });
 
 // Add CORS
@@ -84,6 +88,8 @@ builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISocialLinkRepository, SocialLinkRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<IAdminActionRepository, AdminActionRepository>();
+builder.Services.AddScoped<IUserModerationRepository, UserModerationRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -100,6 +106,8 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPrivacyGuard, PrivacyGuard>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IUserModerationService, UserModerationService>();
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Add services to the container.
@@ -159,4 +167,20 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "ok",
+    timestamp = DateTime.UtcNow
+}))
+.WithName("GetHealthCheck")
+.AllowAnonymous();
+app.MapPost("/health", () => Results.Ok(new
+{
+    status = "ok",
+    timestamp = DateTime.UtcNow
+}))
+.WithName("PostHealthCheck")
+.AllowAnonymous();
+
 app.Run();
+

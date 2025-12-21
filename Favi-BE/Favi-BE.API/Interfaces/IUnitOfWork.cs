@@ -15,6 +15,8 @@ namespace Favi_BE.Interfaces
         ITagRepository Tags { get; }
         IReportRepository Reports { get; }
         ISocialLinkRepository SocialLinks { get; }
+        IUserModerationRepository UserModerations { get; }
+        IAdminActionRepository AdminActions { get; }
 
         // Join tables and relationships
         IPostTagRepository PostTags { get; }

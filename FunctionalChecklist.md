@@ -1,4 +1,4 @@
-# Functional Checklist for Favi-BE
+<!-- # Functional Checklist for Favi-BE
 
 This document tracks the implementation status of key features across different domains of the application. It's used for progress tracking and future planning.
 
@@ -144,4 +144,4 @@ diagrams/sequence/admin/admin_analytics_and_monitoring.plantuml
 diagrams/sequence/ai/ai_search_enhancement.plantuml
 diagrams/sequence/ai/ai_content_moderation.plantuml
 diagrams/sequence/ai/ai_recommendation_engine.plantuml
-diagrams/sequence/ai/ai_content_understanding.plantuml
+diagrams/sequence/ai/ai_content_understanding.plantuml -->
