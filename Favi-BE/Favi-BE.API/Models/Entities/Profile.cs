@@ -1,4 +1,6 @@
-﻿using Favi_BE.Models.Entities.JoinTables;
+﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.API.Models.Entities.JoinTables;
+using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
 using Microsoft.Extensions.Hosting;
 using System.Xml.Linq;
@@ -29,5 +31,7 @@ namespace Favi_BE.Models.Entities
         public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
         public ICollection<Report> Reports { get; set; } = new List<Report>();
         public ICollection<UserModeration> ModerationHistory { get; set; } = new List<UserModeration>();
+        public ICollection<Message> Messages { get; set; } = new List<Message>();
+        public ICollection<UserConversation> UserConversations { get; set; } = new List<UserConversation>();
     }
 }

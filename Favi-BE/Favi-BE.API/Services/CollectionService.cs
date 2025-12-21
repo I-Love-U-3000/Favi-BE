@@ -29,10 +29,22 @@ namespace Favi_BE.Services
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
+
             await _uow.Collections.AddAsync(collection);
             await _uow.CompleteAsync();
 
-            return new CollectionResponse(collection.Id, collection.ProfileId, collection.Title, collection.Description, collection.CoverImageUrl?? string.Empty, collection.PrivacyLevel, collection.CreatedAt, collection.UpdatedAt, new List<Guid>(), 0);
+            return new CollectionResponse(
+                collection.Id,
+                collection.ProfileId,
+                collection.Title,
+                collection.Description,
+                collection.CoverImageUrl ?? string.Empty,
+                collection.PrivacyLevel,
+                collection.CreatedAt,
+                collection.UpdatedAt,
+                new List<Guid>(),
+                0
+            );
         }
 
         public async Task<CollectionResponse?> UpdateAsync(Guid collectionId, Guid requesterId, UpdateCollectionRequest dto)
@@ -49,7 +61,18 @@ namespace Favi_BE.Services
             _uow.Collections.Update(collection);
             await _uow.CompleteAsync();
 
-            return new CollectionResponse(collection.Id, collection.ProfileId, collection.Title, collection.Description, collection.CoverImageUrl, collection.PrivacyLevel, collection.CreatedAt, collection.UpdatedAt, new List<Guid>(), 0);
+            return new CollectionResponse(
+                collection.Id,
+                collection.ProfileId,
+                collection.Title,
+                collection.Description,
+                collection.CoverImageUrl ?? string.Empty,
+                collection.PrivacyLevel,
+                collection.CreatedAt,
+                collection.UpdatedAt,
+                new List<Guid>(),
+                0
+            );
         }
 
         public async Task<bool> DeleteAsync(Guid collectionId, Guid requesterId)
@@ -93,7 +116,19 @@ namespace Favi_BE.Services
             if (collection is null) return null;
 
             var postIds = collection.PostCollections?.Select(pc => pc.PostId) ?? new List<Guid>();
-            return new CollectionResponse(collection.Id, collection.ProfileId, collection.Title, collection.Description, collection.CoverImageUrl, collection.PrivacyLevel, collection.CreatedAt, collection.UpdatedAt, postIds, postIds.Count());
+
+            return new CollectionResponse(
+                collection.Id,
+                collection.ProfileId,
+                collection.Title,
+                collection.Description,
+                collection.CoverImageUrl ?? string.Empty,
+                collection.PrivacyLevel,
+                collection.CreatedAt,
+                collection.UpdatedAt,
+                postIds,
+                postIds.Count()
+            );
         }
 
         public async Task<bool> AddPostAsync(Guid collectionId, Guid postId, Guid requesterId)
@@ -133,7 +168,17 @@ namespace Favi_BE.Services
             var dtos = posts.Select(p =>
             {
                 var medias = p.PostMedias?.Select(m =>
-                    new PostMediaResponse(m.Id, m.PostId ?? Guid.Empty, m.Url, m.PublicId, m.Width, m.Height, m.Format, m.Position, m.ThumbnailUrl)
+                    new PostMediaResponse(
+                        m.Id,
+                        m.PostId ?? Guid.Empty,
+                        m.Url,
+                        m.PublicId,
+                        m.Width,
+                        m.Height,
+                        m.Format,
+                        m.Position,
+                        m.ThumbnailUrl
+                    )
                 ).ToList() ?? new List<PostMediaResponse>();
 
                 var tags = p.PostTags?.Select(pt =>
@@ -150,6 +195,21 @@ namespace Favi_BE.Services
 
                 var reactionSummary = new ReactionSummaryDto(totalReactions, reactionCounts, userReaction);
 
+                // 🆕 map location đúng Post + PostResponse mới
+                LocationDto? location = null;
+                if (p.LocationName != null ||
+                    p.LocationFullAddress != null ||
+                    p.LocationLatitude != null ||
+                    p.LocationLongitude != null)
+                {
+                    location = new LocationDto(
+                        p.LocationName,
+                        p.LocationFullAddress,
+                        p.LocationLatitude,
+                        p.LocationLongitude
+                    );
+                }
+
                 return new PostResponse(
                     p.Id,
                     p.ProfileId,
@@ -159,7 +219,9 @@ namespace Favi_BE.Services
                     p.Privacy,
                     medias,
                     tags,
-                    reactionSummary
+                    reactionSummary,
+                    p.Comments.Count,
+                    location
                 );
             });
 
@@ -170,6 +232,5 @@ namespace Favi_BE.Services
         {
             return await _uow.Collections.GetByIdAsync(id);
         }
-
     }
 }

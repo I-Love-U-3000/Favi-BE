@@ -1,13 +1,16 @@
 ﻿using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Enums;
 
 namespace Favi_BE.Interfaces.Services
 {
     public interface ICommentService
     {
+        Task<CommentResponse?> GetByIdAsync(Guid commentId, Guid? currentUserId);
         Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId);
         Task<CommentResponse?> UpdateAsync(Guid commentId, Guid requesterId, string content);
         Task<bool> DeleteAsync(Guid commentId, Guid requesterId);
-        Task<PagedResult<CommentResponse>> GetByPostAsync(Guid postId, int page, int pageSize);
+        Task<ReactionSummaryDto> GetReactionsAsync(Guid commentId, Guid? currentUserId);
+        Task<PagedResult<CommentResponse>> GetByPostAsync(Guid currentUserId, Guid postId, int page, int pageSize);
+        Task<ReactionType?> ToggleReactionAsync(Guid commentId, Guid userId, ReactionType type);
     }
-
 }

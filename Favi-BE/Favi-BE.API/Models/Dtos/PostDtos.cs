@@ -5,7 +5,9 @@ namespace Favi_BE.Models.Dtos
     public record CreatePostRequest(
         // Guid AuthorProfileId lấy từ jwt claims tránh mạo danh đăng
         string? Caption,
-        IEnumerable<String>? Tags
+        IEnumerable<String>? Tags,
+        PrivacyLevel PrivacyLevel,   
+        LocationDto? Location
     );
 
     public record UpdatePostRequest(
@@ -22,7 +24,9 @@ namespace Favi_BE.Models.Dtos
         PrivacyLevel PrivacyLevel,
         IEnumerable<PostMediaResponse> Medias,
         IEnumerable<TagDto> Tags,
-        ReactionSummaryDto Reactions
+        ReactionSummaryDto Reactions,
+        int CommentsCount,
+        LocationDto? Location
     );
 
     public record PostMediaResponse(
@@ -51,5 +55,12 @@ namespace Favi_BE.Models.Dtos
     public record TagDto(
         Guid Id,
         string Name
+    );
+
+    public record LocationDto(
+        string? Name,
+        string? FullAddress,
+        double? Latitude,
+        double? Longitude
     );
 }

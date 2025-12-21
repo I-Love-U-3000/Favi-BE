@@ -13,6 +13,11 @@ namespace Favi_BE.Models.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
+        public string? LocationName { get; set; }        
+        public string? LocationFullAddress { get; set; } 
+        public double? LocationLatitude { get; set; }    
+        public double? LocationLongitude { get; set; }
+
         public Profile Profile { get; set; } = null!;
         public ICollection<PostMedia> PostMedias { get; set; } = new List<PostMedia>();
         public ICollection<PostTag> PostTags { get; set; } = new List<PostTag>();

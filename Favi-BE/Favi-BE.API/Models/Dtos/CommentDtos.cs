@@ -1,4 +1,6 @@
-﻿namespace Favi_BE.Models.Dtos
+﻿using Favi_BE.Models.Enums;
+
+namespace Favi_BE.Models.Dtos
 {
     public record CreateCommentRequest(
         Guid PostId,
@@ -18,7 +20,8 @@
         string Content,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
-        Guid? ParentCommentId // nếu hỗ trợ reply nhiều cấp
+        Guid? ParentCommentId,
+        ReactionSummaryDto Reactions
     )
     {
         public List<CommentResponse> Replies { get; init; } = new();

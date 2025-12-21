@@ -3,6 +3,7 @@ using System;
 using Favi_BE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Favi_BE.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251129174310_AddChat")]
+    partial class AddChat
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,43 +24,6 @@ namespace Favi_BE.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ActionType")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("ReportId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("TargetEntityId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TargetEntityType")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("TargetProfileId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminId");
-
-                    b.ToTable("AdminActions");
-                });
 
             modelBuilder.Entity("Favi_BE.API.Models.Entities.Conversation", b =>
                 {
@@ -396,9 +362,6 @@ namespace Favi_BE.Migrations
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("BannedUntil")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Bio")
                         .HasColumnType("text");
 
@@ -413,9 +376,6 @@ namespace Favi_BE.Migrations
 
                     b.Property<int>("FollowPrivacyLevel")
                         .HasColumnType("integer");
-
-                    b.Property<bool>("IsBanned")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastActiveAt")
                         .HasColumnType("timestamp with time zone");
@@ -511,62 +471,6 @@ namespace Favi_BE.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("Favi_BE.Models.Entities.UserModeration", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ActionType")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("AdminActionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AdminId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ProfileId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AdminActionId");
-
-                    b.HasIndex("AdminId");
-
-                    b.HasIndex("ProfileId");
-
-                    b.ToTable("UserModerations");
-                });
-
-            modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>
-                {
-                    b.HasOne("Favi_BE.Models.Entities.Profile", "Admin")
-                        .WithMany()
-                        .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Admin");
                 });
 
             modelBuilder.Entity("Favi_BE.API.Models.Entities.JoinTables.UserConversation", b =>
@@ -776,38 +680,6 @@ namespace Favi_BE.Migrations
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("Favi_BE.Models.Entities.UserModeration", b =>
-                {
-                    b.HasOne("Favi_BE.Models.Entities.AdminAction", "AdminAction")
-                        .WithMany("UserModerations")
-                        .HasForeignKey("AdminActionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Favi_BE.Models.Entities.Profile", "Admin")
-                        .WithMany()
-                        .HasForeignKey("AdminId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Favi_BE.Models.Entities.Profile", "Profile")
-                        .WithMany("ModerationHistory")
-                        .HasForeignKey("ProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Admin");
-
-                    b.Navigation("AdminAction");
-
-                    b.Navigation("Profile");
-                });
-
-            modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>
-                {
-                    b.Navigation("UserModerations");
-                });
-
             modelBuilder.Entity("Favi_BE.API.Models.Entities.Conversation", b =>
                 {
                     b.Navigation("Messages");
@@ -847,8 +719,6 @@ namespace Favi_BE.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Messages");
-
-                    b.Navigation("ModerationHistory");
 
                     b.Navigation("Posts");
 

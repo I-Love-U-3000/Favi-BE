@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage;
 using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Interfaces;
+using Favi_BE.API.Interfaces.Repositories;
+using Favi_BE.API.Data.Repositories;
 
 namespace Favi_BE.Data
 {
@@ -28,12 +30,15 @@ namespace Favi_BE.Data
             SocialLinks = new SocialLinkRepository(_context);
             UserModerations = new UserModerationRepository(_context);
             AdminActions = new AdminActionRepository(_context);
+            Conversations = new ConversationRepository(_context);
+            Messages = new MessageRepository(_context);
 
             // Join tables
             PostTags = new PostTagRepository(_context);
             PostCollections = new PostCollectionRepository(_context);
             Follows = new FollowRepository(_context);
             Reactions = new ReactionRepository(_context);
+            UserConversations = new UserConversationRepository(_context);
         }
 
         // Core entities
@@ -47,12 +52,15 @@ namespace Favi_BE.Data
         public ISocialLinkRepository SocialLinks { get; private set; }
         public IUserModerationRepository UserModerations { get; private set; }
         public IAdminActionRepository AdminActions { get; private set; }
+        public IConversationRepository Conversations { get; private set; }
+        public IMessageRepository Messages { get; private set; }
 
         // Join tables
         public IPostTagRepository PostTags { get; private set; }
         public IPostCollectionRepository PostCollections { get; private set; }
         public IFollowRepository Follows { get; private set; }
         public IReactionRepository Reactions { get; private set; }
+        public IUserConversationRepository UserConversations { get; private set; }
 
         public int Complete()
         {

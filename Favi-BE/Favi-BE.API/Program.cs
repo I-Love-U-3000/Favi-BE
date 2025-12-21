@@ -1,4 +1,9 @@
 using Favi_BE.Authorization;
+﻿using Favi_BE.API.Data.Repositories;
+using Favi_BE.API.Hubs;
+using Favi_BE.API.Interfaces.Repositories;
+using Favi_BE.API.Interfaces.Services;
+using Favi_BE.API.Services;
 using Favi_BE.Common;
 using Favi_BE.Data;
 using Favi_BE.Data.Repositories;
@@ -70,8 +75,8 @@ builder.Services.AddCors(options =>
                 "https://127.0.0.1:3000"
             )
             .AllowAnyHeader()                // cần cho Authorization, Content-Type
-            .AllowAnyMethod();
-        // .AllowCredentials();         // chỉ bật nếu dùng cookie
+            .AllowAnyMethod()
+            .AllowCredentials(); // Required for SignalR with authentication
     });
 });
 
@@ -90,6 +95,9 @@ builder.Services.AddScoped<ISocialLinkRepository, SocialLinkRepository>();
 builder.Services.AddScoped<ITagRepository, TagRepository>();
 builder.Services.AddScoped<IAdminActionRepository, AdminActionRepository>();
 builder.Services.AddScoped<IUserModerationRepository, UserModerationRepository>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IUserConversationRepository, UserConversationRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -108,6 +116,11 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<IPrivacyGuard, PrivacyGuard>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IUserModerationService, UserModerationService>();
+builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Add services to the container.
@@ -181,6 +194,8 @@ app.MapPost("/health", () => Results.Ok(new
 }))
 .WithName("PostHealthCheck")
 .AllowAnonymous();
+// Map SignalR Hub
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();
 
