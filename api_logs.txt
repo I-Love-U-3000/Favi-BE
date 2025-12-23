@@ -1,0 +1,46 @@
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+Unhandled exception. System.InvalidOperationException: The ConnectionString property has not been initialized.
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 1/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+   at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 2/10: The ConnectionString property has not been initialized.
+   at Npgsql.NpgsqlConnection.Open(Boolean async, CancellationToken cancellationToken)
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 3/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 4/10: The ConnectionString property has not been initialized.
+[Migrate] retry 5/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+   at Npgsql.NpgsqlConnection.Open()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenDbConnection(Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternal(Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.Open(Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReader(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.HistoryRepository.GetAppliedMigrations()
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlHistoryRepository.GetAppliedMigrations()
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
+   at Program.<Main>$(String[] args) in /src/Favi-BE.API/Program.cs:line 165
+   at Program.<Main>(String[] args)
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 6/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 7/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 8/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 9/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.
+[Migrate] retry 10/10: The ConnectionString property has not been initialized.
+fail: Microsoft.EntityFrameworkCore.Database.Connection[20004]
+      An error occurred using the connection to database '' on server ''.

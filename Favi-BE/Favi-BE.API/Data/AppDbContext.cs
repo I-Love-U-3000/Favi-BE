@@ -185,7 +185,6 @@ namespace Favi_BE.Data
                 .WithMany()
                 .HasForeignKey(a => a.AdminId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
 
             // Conversation
             modelBuilder.Entity<Conversation>(b =>

@@ -22,4 +22,12 @@
         string Name,
         int PostCount
     );
+
+    // Semantic search request from client
+    public record SemanticSearchRequest(
+        string Query,
+        int? Page = 1,
+        int? PageSize = 20,
+        int? K = 100
+    );
 }

@@ -6,15 +6,13 @@ namespace Favi_BE.Models.Dtos
         Guid OwnerProfileId,
         string Title,
         string? Description,
-        PrivacyLevel PrivacyLevel,
-        string? CoverImageUrl
+        PrivacyLevel PrivacyLevel
     );
 
     public record UpdateCollectionRequest(
         string? Title,
         string? Description,
-        PrivacyLevel? PrivacyLevel,
-        string? CoverImageUrl
+        PrivacyLevel? PrivacyLevel
     );
 
     public record CollectionResponse(

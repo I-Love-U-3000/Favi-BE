@@ -17,6 +17,7 @@ namespace Favi_BE.Services
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
+        private readonly IVectorIndexService _vectorIndex;
 
         // ------- Trending Score constants -------
         private const double W_Like = 1.0;    // Wl
@@ -30,11 +31,12 @@ namespace Favi_BE.Services
         private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
         private const int TrendingCandidateLimit = 500; // tối đa ứng viên để tính trending
 
-        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy)
+        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, IVectorIndexService vectorIndex)
         {
             _uow = uow;
             _cloudinary = cloudinary;
             _privacy = privacy;
+            _vectorIndex = vectorIndex;
         }
 
         public Task<Post?> GetEntityAsync(Guid id) => _uow.Posts.GetByIdAsync(id);
@@ -266,7 +268,23 @@ namespace Favi_BE.Services
                 throw new InvalidOperationException($"Failed to create post. The post could not be saved to the database.", ex);
             }
 
+            // Vectorize post for semantic search (fire-and-forget, don't block post creation)
             var full = await _uow.Posts.GetPostWithAllAsync(post.Id);
+            if (full != null && _vectorIndex.IsEnabled())
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _vectorIndex.IndexPostAsync(full);
+                    }
+                    catch
+                    {
+                        // Swallow - errors logged in VectorIndexService
+                    }
+                });
+            }
+
             return await MapPostToResponseAsync(full ?? post, authorId);
         }
 
@@ -292,38 +310,110 @@ namespace Favi_BE.Services
             if (post is null) return false;
             if (post.ProfileId != requesterId) return false;
 
-            // 1) lấy medias để có PublicId trước khi xóa DB
-            var medias = await _uow.PostMedia.GetByPostIdAsync(postId);
-            var publicIds = medias
-                .Select(m => m.PublicId)
-                .Where(pid => !string.IsNullOrWhiteSpace(pid))
-                .Distinct()
-                .ToList();
+            // Soft delete: set expiration date to 30 days from now
+            post.DeletedDayExpiredAt = DateTime.UtcNow.AddDays(30);
+            post.UpdatedAt = DateTime.UtcNow;
 
-            // 2) xóa trong DB
-            _uow.PostMedia.RemoveRange(medias);
-            _uow.Posts.Remove(post);
-
+            _uow.Posts.Update(post);
             await _uow.CompleteAsync();
-
-            // 3) dọn orphan tags
-            var orphanTags = await _uow.Tags.GetTagsWithNoPostsAsync();
-            foreach (var tag in orphanTags)
-                _uow.Tags.Remove(tag);
-
-            await _uow.CompleteAsync();
-
-            // 4) xóa cloudinary (không làm fail request nếu xóa ảnh lỗi)
-            if (publicIds.Count > 0)
-            {
-                foreach (var pid in publicIds)
-                {
-                    // TryDeleteAsync đã "an toàn" => trả bool
-                    _ = await _cloudinary.TryDeleteAsync(pid);
-                }
-            }
 
             return true;
+        }
+
+        public async Task<bool> RestoreAsync(Guid postId, Guid requesterId)
+        {
+            var post = await _uow.Posts.GetByIdAsync(postId);
+            if (post is null) return false;
+            if (post.ProfileId != requesterId) return false;
+            if (post.DeletedDayExpiredAt is null) return false; // Not deleted
+
+            // Restore from recycle bin
+            post.DeletedDayExpiredAt = null;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            _uow.Posts.Update(post);
+            await _uow.CompleteAsync();
+
+            return true;
+        }
+
+        public async Task<bool> ArchiveAsync(Guid postId, Guid requesterId)
+        {
+            var post = await _uow.Posts.GetByIdAsync(postId);
+            if (post is null) return false;
+            if (post.ProfileId != requesterId) return false;
+            if (post.DeletedDayExpiredAt is not null) return false; // Cannot archive deleted post
+
+            post.IsArchived = true;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            _uow.Posts.Update(post);
+            await _uow.CompleteAsync();
+
+            return true;
+        }
+
+        public async Task<bool> UnarchiveAsync(Guid postId, Guid requesterId)
+        {
+            var post = await _uow.Posts.GetByIdAsync(postId);
+            if (post is null) return false;
+            if (post.ProfileId != requesterId) return false;
+
+            post.IsArchived = false;
+            post.UpdatedAt = DateTime.UtcNow;
+
+            _uow.Posts.Update(post);
+            await _uow.CompleteAsync();
+
+            return true;
+        }
+
+        public async Task<PagedResult<PostResponse>> GetRecycleBinAsync(Guid userId, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            // Get all soft-deleted posts for this user
+            var allDeletedPosts = await _uow.Posts.FindAsync(p =>
+                p.ProfileId == userId && p.DeletedDayExpiredAt != null);
+
+            var deletedPosts = allDeletedPosts
+                .OrderByDescending(p => p.DeletedDayExpiredAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
+            var responses = new List<PostResponse>();
+            foreach (var p in deletedPosts)
+                responses.Add(await MapPostToResponseAsync(p, userId));
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, allDeletedPosts.Count());
+        }
+
+        public async Task<PagedResult<PostResponse>> GetArchivedAsync(Guid userId, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            // Get all archived posts for this user
+            var allArchivedPosts = await _uow.Posts.FindAsync(p =>
+                p.ProfileId == userId && p.IsArchived && p.DeletedDayExpiredAt == null);
+
+            var archivedPosts = allArchivedPosts
+                .OrderByDescending(p => p.UpdatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
+            var responses = new List<PostResponse>();
+            foreach (var p in archivedPosts)
+                responses.Add(await MapPostToResponseAsync(p, userId));
+
+            return new PagedResult<PostResponse>(responses, page, pageSize, allArchivedPosts.Count());
         }
 
         // --------------------------------------------------------------------

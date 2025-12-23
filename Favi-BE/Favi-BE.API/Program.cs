@@ -119,9 +119,22 @@ builder.Services.AddScoped<IUserModerationService, UserModerationService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
 
+// Add background services
+builder.Services.AddHostedService<PostCleanupService>();
+
 // Add SignalR
 builder.Services.AddSignalR();
 builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
+
+// Configure VectorIndex options and service
+builder.Services.Configure<VectorIndexOptions>(builder.Configuration.GetSection("VectorIndex"));
+builder.Services.AddHttpClient<IVectorIndexService, VectorIndexService>(client =>
+{
+    var vectorConfig = builder.Configuration.GetSection("VectorIndex");
+    var baseUrl = vectorConfig["BaseUrl"] ?? "http://vector-index-api:8080";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 // Add services to the container.
 
@@ -137,7 +150,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 var app = builder.Build();
 

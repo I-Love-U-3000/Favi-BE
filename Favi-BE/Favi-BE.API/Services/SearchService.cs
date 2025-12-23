@@ -7,10 +7,14 @@ namespace Favi_BE.Services
     public class SearchService : ISearchService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IVectorIndexService _vectorIndex;
+        private readonly IPrivacyGuard _privacy;
 
-        public SearchService(IUnitOfWork uow)
+        public SearchService(IUnitOfWork uow, IVectorIndexService vectorIndex, IPrivacyGuard privacy)
         {
             _uow = uow;
+            _vectorIndex = vectorIndex;
+            _privacy = privacy;
         }
 
         public async Task<SearchResult> SearchAsync(SearchRequest dto)
@@ -32,6 +36,88 @@ namespace Favi_BE.Services
                 .Select(t => new SearchTagDto(t.Id, t.Name, 0));
 
             return new SearchResult(matchedPosts, matchedTags);
+        }
+
+        public async Task<SearchResult> SemanticSearchAsync(SemanticSearchRequest dto, Guid userId)
+        {
+            var query = dto.Query.Trim();
+            var page = dto.Page ?? 1;
+            var pageSize = dto.PageSize ?? 20;
+            var k = dto.K ?? 100;
+
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (k < 1) k = 100;
+
+            // Get semantic search results from vector API
+            var vectorResults = await _vectorIndex.SearchAsync(userId, query, k);
+
+            if (!vectorResults.Any())
+            {
+                // No results from vector search - return empty
+                return new SearchResult(
+                    Enumerable.Empty<SearchPostDto>(),
+                    Enumerable.Empty<SearchTagDto>()
+                );
+            }
+
+            // Extract post IDs and convert to Guids
+            var postIds = vectorResults
+                .Select(r => Guid.TryParse(r.PostId, out var guid) ? (Guid?)guid : null)
+                .Where(g => g.HasValue)
+                .Select(g => g!.Value)
+                .ToList();
+
+            if (!postIds.Any())
+            {
+                return new SearchResult(
+                    Enumerable.Empty<SearchPostDto>(),
+                    Enumerable.Empty<SearchTagDto>()
+                );
+            }
+
+            // Fetch posts from database
+            var posts = await _uow.Posts.GetAllAsync();
+            var matchedPosts = new List<SearchPostDto>();
+
+            // Create score lookup for ordering
+            var scoreMap = vectorResults.ToDictionary(
+                r => Guid.TryParse(r.PostId, out var g) ? g : Guid.Empty,
+                r => r.Score
+            );
+
+            foreach (var postId in postIds)
+            {
+                var post = posts.FirstOrDefault(p => p.Id == postId);
+                if (post == null) continue;
+
+                // Check privacy permissions
+                if (!await _privacy.CanViewPostAsync(post, userId))
+                    continue;
+
+                matchedPosts.Add(new SearchPostDto(
+                    post.Id,
+                    post.Caption ?? string.Empty,
+                    post.PostMedias?.FirstOrDefault()?.Url ?? string.Empty
+                ));
+            }
+
+            // Maintain vector search order (by score, descending)
+            var orderedPosts = matchedPosts
+                .OrderByDescending(p => scoreMap.GetValueOrDefault(p.Id, 0))
+                .ToList();
+
+            // Apply pagination
+            var skip = (page - 1) * pageSize;
+            var pagedPosts = orderedPosts
+                .Skip(skip)
+                .Take(pageSize);
+
+            // Semantic search doesn't return tags
+            return new SearchResult(
+                pagedPosts,
+                Enumerable.Empty<SearchTagDto>()
+            );
         }
     }
 }

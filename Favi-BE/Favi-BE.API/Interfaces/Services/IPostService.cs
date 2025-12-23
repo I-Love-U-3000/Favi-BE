@@ -15,6 +15,11 @@ namespace Favi_BE.Interfaces.Services
             LocationDto? location, List<IFormFile>? mediaFiles);
         Task<bool> UpdateAsync(Guid postId, Guid requesterId, string? caption);
         Task<bool> DeleteAsync(Guid postId, Guid requesterId);
+        Task<bool> RestoreAsync(Guid postId, Guid requesterId);
+        Task<bool> ArchiveAsync(Guid postId, Guid requesterId);
+        Task<bool> UnarchiveAsync(Guid postId, Guid requesterId);
+        Task<PagedResult<PostResponse>> GetRecycleBinAsync(Guid userId, int page, int pageSize);
+        Task<PagedResult<PostResponse>> GetArchivedAsync(Guid userId, int page, int pageSize);
 
         // Media
         Task<IEnumerable<PostMediaResponse>> UploadMediaAsync(Guid postId, IEnumerable<IFormFile> files, Guid requesterId);

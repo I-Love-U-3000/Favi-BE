@@ -17,7 +17,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<IEnumerable<Post>> GetPostsByProfileIdAsync(Guid profileId, int skip, int take)
         {
             return await _dbSet
-                .Where(p => p.ProfileId == profileId)
+                .Where(p => p.ProfileId == profileId && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -30,6 +30,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<IEnumerable<Post>> GetPostsWithMediaAsync(int skip, int take)
         {
             return await _dbSet
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -55,7 +56,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<IEnumerable<Post>> GetFeedByFollowingsAsync(Guid profileId, int skip, int take)
         {
             return await _dbSet
-                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId))
+                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -68,7 +69,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<IEnumerable<Post>> GetPostsByTagIdAsync(Guid tagId, int skip, int take)
         {
             return await _dbSet
-                .Where(p => p.PostTags.Any(pt => pt.TagId == tagId))
+                .Where(p => p.PostTags.Any(pt => pt.TagId == tagId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -81,7 +82,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<IEnumerable<Post>> GetPostsByCollectionIdAsync(Guid collectionId, int skip, int take)
         {
             return await _dbSet
-                .Where(p => p.PostCollections.Any(pc => pc.CollectionId == collectionId))
+                .Where(p => p.PostCollections.Any(pc => pc.CollectionId == collectionId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -94,6 +95,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<IEnumerable<Post>> GetLatestPostsAsync(int skip, int take)
         {
             return await _dbSet
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -118,7 +120,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<(IEnumerable<Post> Items, int Total)> GetFeedPagedAsync(Guid profileId, int skip, int take)
         {
             var baseQuery = _dbSet
-                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId) || p.ProfileId == profileId) 
+                .Where(p => (_context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId) || p.ProfileId == profileId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt);
 
             var total = await baseQuery.CountAsync();
@@ -137,7 +139,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<(IEnumerable<Post> Items, int Total)> GetPostsByTagPagedAsync(Guid tagId, int skip, int take)
         {
             var query = _dbSet
-                .Where(p => p.PostTags.Any(pt => pt.TagId == tagId))
+                .Where(p => p.PostTags.Any(pt => pt.TagId == tagId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .Include(p => p.Profile)
                 .Include(p => p.PostMedias)
                 .Include(p => p.PostTags)
@@ -160,7 +162,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<(IEnumerable<Post> Items, int Total)> GetPostsByCollectionPagedAsync(Guid collectionId, int skip, int take)
         {
             var query = _dbSet
-                .Where(p => p.PostCollections.Any(pc => pc.CollectionId == collectionId))
+                .Where(p => p.PostCollections.Any(pc => pc.CollectionId == collectionId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .Include(p => p.Profile)
                 .Include(p => p.PostMedias)
                 .Include(p => p.PostTags)

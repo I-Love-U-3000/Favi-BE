@@ -17,18 +17,18 @@ namespace Favi_BE.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<CollectionResponse>> Create(CreateCollectionRequest dto)
+        public async Task<ActionResult<CollectionResponse>> Create([FromForm] CreateCollectionRequest dto, [FromForm] IFormFile? coverImage)
         {
             var userId = User.GetUserIdFromMetadata();
-            return Ok(await _collections.CreateAsync(userId, dto));
+            return Ok(await _collections.CreateAsync(userId, dto, coverImage));
         }
 
         [Authorize]
         [HttpPut("{id}")]
-        public async Task<ActionResult<CollectionResponse>> Update(Guid id, UpdateCollectionRequest dto)
+        public async Task<ActionResult<CollectionResponse>> Update(Guid id, [FromForm] UpdateCollectionRequest dto, [FromForm] IFormFile? coverImage)
         {
             var userId = User.GetUserIdFromMetadata();
-            var updated = await _collections.UpdateAsync(id, userId, dto);
+            var updated = await _collections.UpdateAsync(id, userId, dto, coverImage);
             return updated is null
                 ? NotFound(new { code = "COLLECTION_NOT_FOUND_OR_FORBIDDEN", message = "Không tìm thấy hoặc bạn không có quyền sửa bộ sưu tập này." })
                 : Ok(updated);

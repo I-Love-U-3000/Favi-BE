@@ -10,6 +10,7 @@ namespace Favi_BE.Models.Entities
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string? CoverImageUrl { get; set; }
+        public string? CoverImagePublicId { get; set; }
         public PrivacyLevel PrivacyLevel { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

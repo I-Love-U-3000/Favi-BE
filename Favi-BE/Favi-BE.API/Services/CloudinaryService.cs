@@ -21,7 +21,7 @@ namespace Favi_BE.Services
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<PostMediaResponse?> TryUploadAsync(IFormFile file, CancellationToken ct = default)
+        public async Task<PostMediaResponse?> TryUploadAsync(IFormFile file, CancellationToken ct = default, string? folder = null)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace Favi_BE.Services
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(file.FileName, stream),
-                    Folder = "favi_posts",
+                    Folder = folder ?? "favi_posts",
                     Transformation = new Transformation().Quality("auto").FetchFormat("auto")
                 };
 
@@ -56,19 +56,19 @@ namespace Favi_BE.Services
             }
         }
 
-        public async Task<PostMediaResponse> UploadAsyncOrThrow(IFormFile file, CancellationToken ct = default)
+        public async Task<PostMediaResponse> UploadAsyncOrThrow(IFormFile file, CancellationToken ct = default, string? folder = null)
         {
             await using var stream = file.OpenReadStream();
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(file.FileName, stream),
-                Folder = "favi_posts",
+                Folder = folder ?? "favi_posts",
                 Transformation = new Transformation().Quality("auto").FetchFormat("auto")
             };
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams, ct);
             if (uploadResult.StatusCode != System.Net.HttpStatusCode.OK)
-                throw new Exception("Cloudinary upload failed"); 
+                throw new Exception("Cloudinary upload failed");
 
             return new PostMediaResponse(
                 Id: Guid.Empty,

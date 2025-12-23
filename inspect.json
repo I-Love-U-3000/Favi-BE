@@ -1,0 +1,255 @@
+[
+    {
+        "Id": "51d98f5985570dcd84e2ef78459957e9e4e3f0dda0bbf3566d6bb70b87a04820",
+        "Created": "2025-12-23T08:51:18.581769079Z",
+        "Path": "dotnet",
+        "Args": [
+            "Favi-BE.API.dll"
+        ],
+        "State": {
+            "Status": "exited",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 139,
+            "Error": "",
+            "StartedAt": "2025-12-23T08:51:19.647768455Z",
+            "FinishedAt": "2025-12-23T08:51:44.638371156Z"
+        },
+        "Image": "sha256:97a504fa921fbae792d30180fe386a7dc1577e259a289da07eb96c518b3a1f28",
+        "ResolvConfPath": "/var/lib/docker/containers/51d98f5985570dcd84e2ef78459957e9e4e3f0dda0bbf3566d6bb70b87a04820/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/51d98f5985570dcd84e2ef78459957e9e4e3f0dda0bbf3566d6bb70b87a04820/hostname",
+        "HostsPath": "/var/lib/docker/containers/51d98f5985570dcd84e2ef78459957e9e4e3f0dda0bbf3566d6bb70b87a04820/hosts",
+        "LogPath": "/var/lib/docker/containers/51d98f5985570dcd84e2ef78459957e9e4e3f0dda0bbf3566d6bb70b87a04820/51d98f5985570dcd84e2ef78459957e9e4e3f0dda0bbf3566d6bb70b87a04820-json.log",
+        "Name": "/favi-be-favi-api-1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "favi-be_default",
+            "PortBindings": {
+                "8080/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "5000"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": null,
+            "DnsSearch": null,
+            "ExtraHosts": [],
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": null,
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": null,
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": null,
+            "Name": ""
+        },
+        "Mounts": [],
+        "Config": {
+            "Hostname": "51d98f598557",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "ExposedPorts": {
+                "8080/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "CloudinarySettings__ApiKey=751624888575967",
+                "ConnectionStrings__Default=Host=favi-postgres;Port=5432;Database=favi;Username=favi;Password=favi;Include Error Detail=true",
+                "Jwt__Audience=favi.web",
+                "Jwt_RefreshDays=7",
+                "Jwt__Key=uqw9n0eu129nucouno132n21nu39c012uci2903u129ncu293ue32oru32nu3294u290c4u3294cnu39rcuwsidcbjewoibruewiu2398rnuewcnyewiugfnyw8rny398rcu39tu349ony3o8tfyaewo8wayorway8ocrawycruwayruiawbyowuybcraeworcbyawurbhyawuifywao8ryworhyaewuorawurwy8",
+                "ASPNETCORE_URLS=http://+:8080",
+                "Jwt__Issuer=favi.local",
+                "Jwt_AccessMinutes=60",
+                "Supabase__Url=https://jgounylmgjcmlwyzzzhv.supabase.co",
+                "VectorIndex__BaseUrl=http://vector-index-api:8080",
+                "SupabaseSecret=VhFfo0qXjH4NmPgASomHxX2RWN+7zUFCV0vgUOi9dXqJ0ETm6Tlh5uu1n9o2gqEH3+yvi1xMdaE0FRX+4b8HvA==",
+                "CloudinarySettings__ApiSecret=cMkSP_iSpIxqXhWCKhVhWhsoLq8",
+                "Supabase__ApiKey=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnb3VueWxtZ2pjbWx3eXp6emh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzQ2NjAsImV4cCI6MjA3Mzc1MDY2MH0.5cjyGppqNqndilyIjEVnnlhpVPZLQ089Ens0Rur-G_w",
+                "CloudinarySettings__CloudName=dumyugxhm",
+                "VectorIndex__Enabled=true",
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "APP_UID=1654",
+                "ASPNETCORE_HTTP_PORTS=8080",
+                "DOTNET_RUNNING_IN_CONTAINER=true",
+                "DOTNET_VERSION=9.0.11",
+                "ASPNET_VERSION=9.0.11"
+            ],
+            "Cmd": null,
+            "Image": "favi-be-favi-api",
+            "Volumes": null,
+            "WorkingDir": "/app",
+            "Entrypoint": [
+                "dotnet",
+                "Favi-BE.API.dll"
+            ],
+            "OnBuild": null,
+            "Labels": {
+                "com.docker.compose.config-hash": "38277f28e48b2c0c941071e9ece5a988493adf4e964ea51b62c477bdfe588823",
+                "com.docker.compose.container-number": "1",
+                "com.docker.compose.depends_on": "favi-postgres:service_healthy:false",
+                "com.docker.compose.image": "sha256:97a504fa921fbae792d30180fe386a7dc1577e259a289da07eb96c518b3a1f28",
+                "com.docker.compose.oneoff": "False",
+                "com.docker.compose.project": "favi-be",
+                "com.docker.compose.project.config_files": "C:\\Users\\tophu\\source\\repos\\Favi-BE\\docker-compose.yml",
+                "com.docker.compose.project.working_dir": "C:\\Users\\tophu\\source\\repos\\Favi-BE",
+                "com.docker.compose.replace": "favi-api-1",
+                "com.docker.compose.service": "favi-api",
+                "com.docker.compose.version": "2.40.3"
+            },
+            "StopTimeout": 1
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "MacAddress": "",
+            "Networks": {
+                "favi-be_default": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "favi-be-favi-api-1",
+                        "favi-api"
+                    ],
+                    "MacAddress": "",
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "fa847b124f11c681527e84c980984a499f5f158e7e60137afb7278818affd74f",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "favi-be-favi-api-1",
+                        "favi-api",
+                        "51d98f598557"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:9c25ba90a99d7e461d471242cacaa48a787e4ca407b78c124c78a9154982780f",
+            "size": 1817,
+            "platform": {
+                "architecture": "amd64",
+                "os": "linux"
+            }
+        }
+    }
+]

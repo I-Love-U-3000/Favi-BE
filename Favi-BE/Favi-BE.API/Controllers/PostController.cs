@@ -203,7 +203,7 @@ namespace Favi_BE.Controllers
         }
 
         // ======================
-        // 🔹 DELETE: Xoá post (cascade tự lo)
+        // 🔹 DELETE: Xoá post (soft delete - move to recycle bin)
         // ======================
         [Authorize]
         [HttpDelete("{id:guid}")]
@@ -212,8 +212,74 @@ namespace Favi_BE.Controllers
             var requesterId = User.GetUserIdFromMetadata();
             var ok = await _posts.DeleteAsync(id, requesterId);
             return ok
-                ? NoContent()
+                ? Ok(new { message = "Bài viết đã được chuyển vào thùng rác." })
                 : StatusCode(403, new { code = "POST_FORBIDDEN_OR_NOT_FOUND", message = "Không thể xoá bài viết (không tồn tại hoặc bạn không phải chủ sở hữu)." });
+        }
+
+        // ======================
+        // 🔹 POST: Restore post from recycle bin
+        // ======================
+        [Authorize]
+        [HttpPost("{id:guid}/restore")]
+        public async Task<IActionResult> Restore(Guid id)
+        {
+            var requesterId = User.GetUserIdFromMetadata();
+            var ok = await _posts.RestoreAsync(id, requesterId);
+            return ok
+                ? Ok(new { message = "Bài viết đã được khôi phục." })
+                : StatusCode(403, new { code = "POST_RESTORE_FAILED", message = "Không thể khôi phục bài viết (không tồn tại, không bị xoá hoặc bạn không phải chủ sở hữu)." });
+        }
+
+        // ======================
+        // 🔹 GET: Recycle bin posts
+        // ======================
+        [Authorize]
+        [HttpGet("recycle-bin")]
+        public async Task<ActionResult<PagedResult<PostResponse>>> GetRecycleBin([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var userId = User.GetUserIdFromMetadata();
+            var result = await _posts.GetRecycleBinAsync(userId, page, pageSize);
+            return Ok(result);
+        }
+
+        // ======================
+        // 🔹 POST: Archive post
+        // ======================
+        [Authorize]
+        [HttpPost("{id:guid}/archive")]
+        public async Task<IActionResult> Archive(Guid id)
+        {
+            var requesterId = User.GetUserIdFromMetadata();
+            var ok = await _posts.ArchiveAsync(id, requesterId);
+            return ok
+                ? Ok(new { message = "Bài viết đã được lưu trữ." })
+                : StatusCode(403, new { code = "POST_ARCHIVE_FAILED", message = "Không thể lưu trữ bài viết (không tồn tại, đã bị xoá hoặc bạn không phải chủ sở hữu)." });
+        }
+
+        // ======================
+        // 🔹 POST: Unarchive post
+        // ======================
+        [Authorize]
+        [HttpPost("{id:guid}/unarchive")]
+        public async Task<IActionResult> Unarchive(Guid id)
+        {
+            var requesterId = User.GetUserIdFromMetadata();
+            var ok = await _posts.UnarchiveAsync(id, requesterId);
+            return ok
+                ? Ok(new { message = "Bài viết đã được bỏ lưu trữ." })
+                : StatusCode(403, new { code = "POST_UNARCHIVE_FAILED", message = "Không thể bỏ lưu trữ bài viết (không tồn tại hoặc bạn không phải chủ sở hữu)." });
+        }
+
+        // ======================
+        // 🔹 GET: Archived posts
+        // ======================
+        [Authorize]
+        [HttpGet("archived")]
+        public async Task<ActionResult<PagedResult<PostResponse>>> GetArchived([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var userId = User.GetUserIdFromMetadata();
+            var result = await _posts.GetArchivedAsync(userId, page, pageSize);
+            return Ok(result);
         }
 
         // ======================

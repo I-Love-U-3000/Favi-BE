@@ -6,9 +6,7 @@ services:
       dockerfile: ./FaviBE.Dockerfile
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: >
-        Host=favi-postgres;Port=5432;Database=favi;
-        Username=favi;Password=favi;Include Error Detail=true
+      ConnectionStrings__Default: "Host=favi-postgres;Port=5432;Database=favi;Username=favi;Password=favi;Include Error Detail=true"
       # JWT (khớp appsettings: Jwt:Key/Issuer/Audience)
       Jwt__Key: uqw9n0eu129nucouno132n21nu39c012uci2903u129ncu293ue32oru32nu3294u290c4u3294cnu39rcuwsidcbjewoibruewiu2398rnuewcnyewiugfnyw8rny398rcu39tu349ony3o8tfyaewo8wayorway8ocrawycruwayruiawbyowuybcraeworcbyawurbhyawuifywao8ryworhyaewuorawurwy8
       Jwt__Issuer: favi.local
@@ -32,9 +30,10 @@ services:
       VectorIndex__BaseUrl: http://vector-index-api:8080
       VectorIndex__Enabled: "true"
     depends_on:
-      - favi-postgres
+      favi-postgres:
+        condition: service_healthy
     ports:
-      - "5000:8080"                  # http://localhost:5000
+      - "5000:8080" # http://localhost:5000
 
   # ===== Postgres cho Favi =====
   favi-postgres:
@@ -48,7 +47,7 @@ services:
     volumes:
       - favi_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U favi -d favi"]
+      test: [ "CMD-SHELL", "pg_isready -U favi -d favi" ]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -57,11 +56,11 @@ services:
   vector-index-api:
     build:
       context: ./Vector-index-api
-      dockerfile: ./VectorIndexApi.Dockerfile   # <— dùng đúng file bạn nêu
+      dockerfile: ./VectorIndexApi.Dockerfile # <— dùng đúng file bạn nêu
     environment:
       QDRANT_URL: http://qdrant:6333
-      FRIENDS_URL: http://favi-api:8080         # <— gọi trực tiếp Favi để lấy friends
-      REDIS_URL: redis://redis:6379/0           # nếu bạn đã thêm Redis RL
+      FRIENDS_URL: http://favi-api:8080 # <— gọi trực tiếp Favi để lấy friends
+      REDIS_URL: redis://redis:6379/0 # nếu bạn đã thêm Redis RL
       COLLECTION_NAME: posts_demo
       MODEL_NAME: ViT-B-32
       PRETRAINED: openai
@@ -74,7 +73,7 @@ services:
       - redis
       - favi-api
     ports:
-      - "18080:8080"                # http://localhost:18080 (dev)
+      - "18080:8080" # http://localhost:18080 (dev)
 
   # ===== Qdrant + Redis (cho vector) =====
   qdrant:
@@ -86,7 +85,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server","--save","","--appendonly","no"]
+    command: [ "redis-server", "--save", "", "--appendonly", "no" ]
 
 volumes:
   favi_pgdata:

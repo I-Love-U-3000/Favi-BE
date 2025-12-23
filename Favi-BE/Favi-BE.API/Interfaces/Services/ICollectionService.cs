@@ -1,12 +1,13 @@
 ﻿using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Favi_BE.Interfaces.Services
 {
     public interface ICollectionService
     {
-        Task<CollectionResponse> CreateAsync(Guid ownerId, CreateCollectionRequest dto);
-        Task<CollectionResponse?> UpdateAsync(Guid collectionId, Guid requesterId, UpdateCollectionRequest dto);
+        Task<CollectionResponse> CreateAsync(Guid ownerId, CreateCollectionRequest dto, IFormFile? coverImage);
+        Task<CollectionResponse?> UpdateAsync(Guid collectionId, Guid requesterId, UpdateCollectionRequest dto, IFormFile? coverImage);
         Task<bool> DeleteAsync(Guid collectionId, Guid requesterId);
 
         Task<PagedResult<CollectionResponse>> GetByOwnerAsync(Guid ownerId, int page, int pageSize);

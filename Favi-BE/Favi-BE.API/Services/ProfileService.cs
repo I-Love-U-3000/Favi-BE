@@ -354,6 +354,8 @@ namespace Favi_BE.Services
                     profile.LastActiveAt ?? DateTime.MinValue,
                     profile.PrivacyLevel,
                     profile.FollowPrivacyLevel,
+                    profile.IsBanned,
+                    profile.BannedUntil,
                     followers,
                     followings
                 ));

@@ -3,6 +3,7 @@ using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Enums;
+using Microsoft.AspNetCore.Http;
 using System.Linq;
 
 namespace Favi_BE.Services
@@ -10,21 +11,46 @@ namespace Favi_BE.Services
     public class CollectionService : ICollectionService
     {
         private readonly IUnitOfWork _uow;
+        private readonly ICloudinaryService _cloudinary;
 
-        public CollectionService(IUnitOfWork uow)
+        public CollectionService(IUnitOfWork uow, ICloudinaryService cloudinary)
         {
             _uow = uow;
+            _cloudinary = cloudinary;
         }
 
-        public async Task<CollectionResponse> CreateAsync(Guid ownerId, CreateCollectionRequest dto)
+        public async Task<CollectionResponse> CreateAsync(Guid ownerId, CreateCollectionRequest dto, IFormFile? coverImage)
         {
+            string? coverImageUrl = null;
+            string? coverImagePublicId = null;
+
+            // Handle cover image upload if provided
+            if (coverImage != null && coverImage.Length > 0)
+            {
+                // Validate file type
+                if (!coverImage.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Cover image must be an image file.");
+                }
+
+                var uploaded = await _cloudinary.TryUploadAsync(coverImage, folder: "favi_collections");
+                if (uploaded == null)
+                {
+                    throw new InvalidOperationException($"Failed to upload cover image: {coverImage.FileName}");
+                }
+
+                coverImageUrl = uploaded.Url;
+                coverImagePublicId = uploaded.PublicId;
+            }
+
             var collection = new Collection
             {
                 Id = Guid.NewGuid(),
                 ProfileId = ownerId,
                 Title = dto.Title,
                 Description = dto.Description,
-                CoverImageUrl = dto.CoverImageUrl,
+                CoverImageUrl = coverImageUrl,
+                CoverImagePublicId = coverImagePublicId,
                 PrivacyLevel = dto.PrivacyLevel,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -47,14 +73,39 @@ namespace Favi_BE.Services
             );
         }
 
-        public async Task<CollectionResponse?> UpdateAsync(Guid collectionId, Guid requesterId, UpdateCollectionRequest dto)
+        public async Task<CollectionResponse?> UpdateAsync(Guid collectionId, Guid requesterId, UpdateCollectionRequest dto, IFormFile? coverImage)
         {
             var collection = await _uow.Collections.GetByIdAsync(collectionId);
             if (collection is null || collection.ProfileId != requesterId) return null;
 
+            // Handle cover image update if provided
+            if (coverImage != null && coverImage.Length > 0)
+            {
+                // Validate file type
+                if (!coverImage.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Cover image must be an image file.");
+                }
+
+                // Delete old cover image from Cloudinary if it exists
+                if (!string.IsNullOrWhiteSpace(collection.CoverImagePublicId))
+                {
+                    await _cloudinary.TryDeleteAsync(collection.CoverImagePublicId);
+                }
+
+                // Upload new cover image
+                var uploaded = await _cloudinary.TryUploadAsync(coverImage, folder: "favi_collections");
+                if (uploaded == null)
+                {
+                    throw new InvalidOperationException($"Failed to upload cover image: {coverImage.FileName}");
+                }
+
+                collection.CoverImageUrl = uploaded.Url;
+                collection.CoverImagePublicId = uploaded.PublicId;
+            }
+
             if (!string.IsNullOrWhiteSpace(dto.Title)) collection.Title = dto.Title;
             if (!string.IsNullOrWhiteSpace(dto.Description)) collection.Description = dto.Description;
-            if (!string.IsNullOrWhiteSpace(dto.CoverImageUrl)) collection.CoverImageUrl = dto.CoverImageUrl;
             collection.PrivacyLevel = dto.PrivacyLevel ?? collection.PrivacyLevel;
             collection.UpdatedAt = DateTime.UtcNow;
 
@@ -79,6 +130,12 @@ namespace Favi_BE.Services
         {
             var collection = await _uow.Collections.GetByIdAsync(collectionId);
             if (collection is null || collection.ProfileId != requesterId) return false;
+
+            // Delete cover image from Cloudinary if it exists
+            if (!string.IsNullOrWhiteSpace(collection.CoverImagePublicId))
+            {
+                await _cloudinary.TryDeleteAsync(collection.CoverImagePublicId);
+            }
 
             _uow.Collections.Remove(collection);
             await _uow.CompleteAsync();
