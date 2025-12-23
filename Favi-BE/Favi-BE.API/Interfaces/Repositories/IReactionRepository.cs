@@ -10,7 +10,9 @@ namespace Favi_BE.Interfaces.Repositories
     {
         Task<IEnumerable<Reaction>> GetReactionsByPostIdAsync(Guid postId);
         Task<IEnumerable<Reaction>> GetReactionsByCommentIdAsync(Guid commentId);
+        Task<IEnumerable<Reaction>> GetReactionsByCollectionIdAsync(Guid collectionId);
         Task<Reaction> GetProfileReactionOnPostAsync(Guid profileId, Guid postId);
         Task<Reaction> GetProfileReactionOnCommentAysnc(Guid profileId, Guid commentId);
+        Task<Reaction> GetProfileReactionOnCollectionAsync(Guid profileId, Guid collectionId);
     }
 }

@@ -59,6 +59,8 @@ namespace Favi_BE.Services
             await _uow.Collections.AddAsync(collection);
             await _uow.CompleteAsync();
 
+            var reactions = await BuildReactionSummaryAsync(collection.Id, ownerId);
+
             return new CollectionResponse(
                 collection.Id,
                 collection.ProfileId,
@@ -69,7 +71,8 @@ namespace Favi_BE.Services
                 collection.CreatedAt,
                 collection.UpdatedAt,
                 new List<Guid>(),
-                0
+                0,
+                reactions
             );
         }
 
@@ -112,6 +115,8 @@ namespace Favi_BE.Services
             _uow.Collections.Update(collection);
             await _uow.CompleteAsync();
 
+            var reactions = await BuildReactionSummaryAsync(collection.Id, requesterId);
+
             return new CollectionResponse(
                 collection.Id,
                 collection.ProfileId,
@@ -122,7 +127,8 @@ namespace Favi_BE.Services
                 collection.CreatedAt,
                 collection.UpdatedAt,
                 new List<Guid>(),
-                0
+                0,
+                reactions
             );
         }
 
@@ -142,15 +148,18 @@ namespace Favi_BE.Services
             return true;
         }
 
-        public async Task<PagedResult<CollectionResponse>> GetByOwnerAsync(Guid ownerId, int page, int pageSize)
+        public async Task<PagedResult<CollectionResponse>> GetByOwnerAsync(Guid ownerId, int page, int pageSize, Guid? currentUserId = null)
         {
             var skip = (page - 1) * pageSize;
             var (collections, total) = await _uow.Collections.GetAllByOwnerPagedAsync(ownerId, skip, pageSize);
 
-            var dtos = collections.Select(c =>
+            var dtos = new List<CollectionResponse>();
+            foreach (var c in collections)
             {
                 var postIds = c.PostCollections?.Select(pc => pc.PostId).ToList() ?? new List<Guid>();
-                return new CollectionResponse(
+                var reactions = await BuildReactionSummaryAsync(c.Id, currentUserId);
+
+                dtos.Add(new CollectionResponse(
                     c.Id,
                     c.ProfileId,
                     c.Title,
@@ -160,19 +169,21 @@ namespace Favi_BE.Services
                     c.CreatedAt,
                     c.UpdatedAt,
                     postIds,
-                    postIds.Count
-                );
-            });
+                    postIds.Count,
+                    reactions
+                ));
+            }
 
             return new PagedResult<CollectionResponse>(dtos, page, pageSize, total);
         }
 
-        public async Task<CollectionResponse?> GetByIdAsync(Guid collectionId)
+        public async Task<CollectionResponse?> GetByIdAsync(Guid collectionId, Guid? currentUserId = null)
         {
             var collection = await _uow.Collections.GetCollectionWithPostsAsync(collectionId);
             if (collection is null) return null;
 
             var postIds = collection.PostCollections?.Select(pc => pc.PostId) ?? new List<Guid>();
+            var reactions = await BuildReactionSummaryAsync(collection.Id, currentUserId);
 
             return new CollectionResponse(
                 collection.Id,
@@ -184,7 +195,8 @@ namespace Favi_BE.Services
                 collection.CreatedAt,
                 collection.UpdatedAt,
                 postIds,
-                postIds.Count()
+                postIds.Count(),
+                reactions
             );
         }
 
@@ -288,6 +300,180 @@ namespace Favi_BE.Services
         public async Task<Collection?> GetEntityByIdAsync(Guid id)
         {
             return await _uow.Collections.GetByIdAsync(id);
+        }
+
+        // ===== Reaction Methods =====
+
+        public async Task<ReactionSummaryDto> GetReactionsAsync(Guid collectionId, Guid? currentUserId)
+        {
+            return await BuildReactionSummaryAsync(collectionId, currentUserId);
+        }
+
+        public async Task<ReactionType?> ToggleReactionAsync(Guid collectionId, Guid userId, ReactionType type)
+        {
+            var collection = await _uow.Collections.GetByIdAsync(collectionId);
+            if (collection is null) return null;
+
+            var existing = await _uow.Reactions.GetProfileReactionOnCollectionAsync(userId, collectionId);
+
+            if (existing is null)
+            {
+                // Add new reaction
+                await _uow.Reactions.AddAsync(new Models.Entities.JoinTables.Reaction
+                {
+                    CollectionId = collectionId,
+                    ProfileId = userId,
+                    Type = type,
+                    CreatedAt = DateTime.UtcNow
+                });
+                await _uow.CompleteAsync();
+                return type;
+            }
+
+            if (existing.Type == type)
+            {
+                // Remove reaction (same type clicked again)
+                _uow.Reactions.Remove(existing);
+                await _uow.CompleteAsync();
+                return null;
+            }
+
+            // Change reaction type
+            existing.Type = type;
+            _uow.Reactions.Update(existing);
+            await _uow.CompleteAsync();
+            return type;
+        }
+
+        private async Task<ReactionSummaryDto> BuildReactionSummaryAsync(Guid collectionId, Guid? currentUserId)
+        {
+            var reactions = await _uow.Reactions.GetReactionsByCollectionIdAsync(collectionId);
+
+            var byType = reactions
+                .GroupBy(r => r.Type)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var total = byType.Values.Sum();
+
+            ReactionType? mine = null;
+            if (currentUserId.HasValue)
+            {
+                var my = reactions.FirstOrDefault(r => r.ProfileId == currentUserId.Value);
+                if (my != null) mine = my.Type;
+            }
+
+            return new ReactionSummaryDto(total, byType, mine);
+        }
+
+        // ===== Trending Algorithm =====
+
+        private const double W_Like = 1.0;
+        private const double W_Comment = 3.0;
+        private const double W_Share = 5.0;
+        private const double W_View = 0.2;
+        private const double Lambda = 0.1;
+        private const double Beta = 0.5;
+        private const double MaxAgeHours = 72;
+        private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
+        private const int TrendingCandidateLimit = 500;
+
+        public async Task<PagedResult<CollectionResponse>> GetTrendingCollectionsAsync(int page, int pageSize, Guid? currentUserId = null)
+        {
+            // Get candidate collections (up to limit)
+            var skip = 0;
+            var take = TrendingCandidateLimit;
+            var (candidates, _) = await _uow.Collections.GetAllPagedAsync(skip, take);
+
+            var now = DateTime.UtcNow;
+            var scored = new List<(Collection Collection, double Score)>();
+
+            foreach (var collection in candidates)
+            {
+                // Age filter (72 hours max)
+                var ageHours = (now - collection.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                // Calculate trending score
+                var score = await ComputeCollectionTrendingScoreAsync(collection);
+
+                scored.Add((collection, score));
+            }
+
+            // Sort by score (descending)
+            var ordered = scored
+                .OrderByDescending(x => x.Score)
+                .ToList();
+
+            // Paginate
+            var total = ordered.Count;
+            var pageItems = ordered
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => x.Collection)
+                .ToList();
+
+            var responses = new List<CollectionResponse>();
+            foreach (var c in pageItems)
+            {
+                var postIds = c.PostCollections?.Select(pc => pc.PostId).ToList() ?? new List<Guid>();
+                var reactions = await BuildReactionSummaryAsync(c.Id, currentUserId);
+
+                responses.Add(new CollectionResponse(
+                    c.Id,
+                    c.ProfileId,
+                    c.Title,
+                    c.Description,
+                    c.CoverImageUrl ?? string.Empty,
+                    c.PrivacyLevel,
+                    c.CreatedAt,
+                    c.UpdatedAt,
+                    postIds,
+                    postIds.Count,
+                    reactions
+                ));
+            }
+
+            return new PagedResult<CollectionResponse>(responses, page, pageSize, total);
+        }
+
+        private async Task<double> ComputeCollectionTrendingScoreAsync(Collection collection)
+        {
+            var now = DateTime.UtcNow;
+
+            // Age-based filtering
+            var ageHours = Math.Max((now - collection.CreatedAt).TotalHours, 0);
+            if (ageHours > MaxAgeHours)
+                return 0;
+
+            // Get engagement metrics
+            var reactions = await _uow.Reactions.GetReactionsByCollectionIdAsync(collection.Id);
+            var likeCount = reactions.Count();
+            var commentCount = 0; // Collections don't have comments
+            var shareCount = 0;   // Not yet tracked
+            var viewCount = 0;    // Not yet tracked
+
+            // Base engagement (minimum 1.0 for new collections with no interaction)
+            var engagement =
+                1.0 +
+                W_Like * likeCount +
+                W_Comment * commentCount +
+                W_Share * shareCount +
+                W_View * viewCount;
+
+            // Time decay factor (exponential decay)
+            var decay = Math.Exp(-Lambda * ageHours);
+
+            // Velocity calculation (recency boost)
+            var from = now - VelocityWindow;
+            var recentReactions = reactions.Count(r => r.CreatedAt >= from);
+
+            var deltaE = recentReactions;
+            var velocity = VelocityWindow.TotalHours > 0
+                ? deltaE / VelocityWindow.TotalHours
+                : 0;
+
+            var score = engagement * decay * (1 + Beta * velocity);
+            return score;
         }
     }
 }

@@ -62,7 +62,8 @@ namespace Favi_BE.Controllers
         [HttpGet("owner/{ownerId}")]
         public async Task<ActionResult<PagedResult<CollectionResponse>>> GetByOwner(Guid ownerId, int page = 1, int pageSize = 20)
         {
-            return Ok(await _collections.GetByOwnerAsync(ownerId, page, pageSize));
+            var currentUserId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            return Ok(await _collections.GetByOwnerAsync(ownerId, page, pageSize, currentUserId));
         }
 
         [HttpGet("{id}")]
@@ -76,7 +77,7 @@ namespace Favi_BE.Controllers
             if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
                 return StatusCode(403, new { code = "COLLECTION_FORBIDDEN", message = "Bạn không có quyền xem bộ sưu tập này." });
 
-            return Ok(await _collections.GetByIdAsync(id));
+            return Ok(await _collections.GetByIdAsync(id, viewerId));
         }
         [Authorize]
         [HttpPost("{id}/posts/{postId}")]
@@ -98,6 +99,34 @@ namespace Favi_BE.Controllers
             return ok
                 ? NoContent()
                 : StatusCode(403, new { code = "NOT_OWNER_OR_INVALID", message = "Không thể xoá khỏi bộ sưu tập." });
+        }
+
+        [Authorize]
+        [HttpPost("{id}/reactions")]
+        public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
+        {
+            var userId = User.GetUserIdFromMetadata();
+
+            if (!Enum.TryParse<Models.Enums.ReactionType>(type, true, out var reactionType))
+                return BadRequest(new { code = "INVALID_REACTION_TYPE", message = "Loại reaction không hợp lệ." });
+
+            var collection = await _collections.GetEntityByIdAsync(id);
+            if (collection is null)
+                return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
+
+            var newState = await _collections.ToggleReactionAsync(id, userId, reactionType);
+
+            if (newState is null)
+                return Ok(new { removed = true, message = "Reaction đã được gỡ." });
+
+            return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
+        }
+
+        [HttpGet("trending")]
+        public async Task<ActionResult<PagedResult<CollectionResponse>>> GetTrending(int page = 1, int pageSize = 20)
+        {
+            var currentUserId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            return Ok(await _collections.GetTrendingCollectionsAsync(page, pageSize, currentUserId));
         }
     }
 }

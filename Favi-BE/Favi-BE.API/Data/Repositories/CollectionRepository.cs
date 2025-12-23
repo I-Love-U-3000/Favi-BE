@@ -43,5 +43,15 @@ namespace Favi_BE.Data.Repositories
             return (items, total);
         }
 
+        public async Task<(IEnumerable<Collection> Items, int Total)> GetAllPagedAsync(int skip, int take)
+        {
+            var query = _dbSet
+                .Include(c => c.PostCollections)
+                .OrderByDescending(c => c.CreatedAt);
+
+            var total = await query.CountAsync();
+            var items = await query.Skip(skip).Take(take).ToListAsync();
+            return (items, total);
+        }
     }
 }

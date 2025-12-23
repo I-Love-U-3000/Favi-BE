@@ -119,6 +119,12 @@ namespace Favi_BE.Data
                     .HasForeignKey(r => r.CommentId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Reaction -> Collection (optional)
+                entity.HasOne(r => r.Collection)
+                    .WithMany(col => col.Reactions)
+                    .HasForeignKey(r => r.CollectionId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
                 // Reaction -> Profile (required)
                 entity.HasOne(r => r.Profile)
                     .WithMany(pf => pf.Reactions)
@@ -131,6 +137,10 @@ namespace Favi_BE.Data
 
                 // Mỗi profile chỉ được react 1 lần trên 1 comment
                 entity.HasIndex(r => new { r.CommentId, r.ProfileId })
+                    .IsUnique();
+
+                // Mỗi profile chỉ được react 1 lần trên 1 collection
+                entity.HasIndex(r => new { r.CollectionId, r.ProfileId })
                     .IsUnique();
             });
 

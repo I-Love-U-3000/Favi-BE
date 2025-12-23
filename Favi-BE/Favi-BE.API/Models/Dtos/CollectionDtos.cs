@@ -25,7 +25,8 @@ namespace Favi_BE.Models.Dtos
         DateTime CreatedAt,
         DateTime UpdatedAt,
         IEnumerable<Guid> PostIds,
-        int PostCount
+        int PostCount,
+        ReactionSummaryDto Reactions
     );
 
 }

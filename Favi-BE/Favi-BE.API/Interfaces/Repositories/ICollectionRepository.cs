@@ -10,5 +10,6 @@ namespace Favi_BE.Interfaces.Repositories
         Task<IEnumerable<Collection>> GetCollectionsByProfileIdAsync(Guid profileId);
         Task<Collection> GetCollectionWithPostsAsync(Guid collectionId);
         Task<(IEnumerable<Collection> Items, int Total)> GetAllByOwnerPagedAsync(Guid ownerId, int skip, int take);
+        Task<(IEnumerable<Collection> Items, int Total)> GetAllPagedAsync(int skip, int take);
     }
 }

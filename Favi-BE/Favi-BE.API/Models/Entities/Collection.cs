@@ -17,5 +17,6 @@ namespace Favi_BE.Models.Entities
 
         public Profile Profile { get; set; } = null!;
         public ICollection<PostCollection> PostCollections { get; set; } = new List<PostCollection>();
+        public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
     }
 }
