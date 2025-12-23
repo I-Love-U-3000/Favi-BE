@@ -56,7 +56,6 @@ namespace Favi_BE.Services
             }
         }
 
-        // (Optional) Bản strict nếu bạn vẫn muốn dùng ở chỗ khác
         public async Task<PostMediaResponse> UploadAsyncOrThrow(IFormFile file, CancellationToken ct = default)
         {
             await using var stream = file.OpenReadStream();
@@ -69,7 +68,7 @@ namespace Favi_BE.Services
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams, ct);
             if (uploadResult.StatusCode != System.Net.HttpStatusCode.OK)
-                throw new Exception("Cloudinary upload failed"); // ⚠️ chỉ dùng khi bạn thật sự muốn throw
+                throw new Exception("Cloudinary upload failed"); 
 
             return new PostMediaResponse(
                 Id: Guid.Empty,
@@ -82,6 +81,42 @@ namespace Favi_BE.Services
                 Position: 0,
                 ThumbnailUrl: uploadResult?.Eager?.FirstOrDefault()?.SecureUrl?.ToString()
             );
+        }
+
+        public async Task<bool> TryDeleteAsync(string publicId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(publicId))
+                return true;
+
+            try
+            {
+                var delParams = new DeletionParams(publicId)
+                {
+                    ResourceType = ResourceType.Image,
+                    Invalidate = true
+                };
+
+                // ✅ CloudinaryDotNet bản của bạn chỉ nhận 1 tham số
+                var result = await _cloudinary.DestroyAsync(delParams);
+
+                return string.Equals(result.Result, "ok", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(result.Result, "not found", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public async Task<int> TryDeleteManyAsync(IEnumerable<string> publicIds, CancellationToken ct = default)
+        {
+            if (publicIds == null) return 0;
+
+            var ok = 0;
+            foreach (var id in publicIds.Where(x => !string.IsNullOrWhiteSpace(x)))
+            {
+                if (await TryDeleteAsync(id, ct)) ok++;
+            }
+            return ok;
         }
     }
 }
