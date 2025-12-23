@@ -247,7 +247,8 @@ namespace Favi_BE.Services
                             Position = startPosition++,
                             PublicId = uploaded.PublicId,
                             Width = uploaded.Width,
-                            Height = uploaded.Height
+                            Height = uploaded.Height,
+                            Format = uploaded.Format
                         };
 
                         createdMedias.Add(media);
@@ -291,18 +292,36 @@ namespace Favi_BE.Services
             if (post is null) return false;
             if (post.ProfileId != requesterId) return false;
 
+            // 1) lấy medias để có PublicId trước khi xóa DB
             var medias = await _uow.PostMedia.GetByPostIdAsync(postId);
-            _uow.PostMedia.RemoveRange(medias);
+            var publicIds = medias
+                .Select(m => m.PublicId)
+                .Where(pid => !string.IsNullOrWhiteSpace(pid))
+                .Distinct()
+                .ToList();
 
+            // 2) xóa trong DB
+            _uow.PostMedia.RemoveRange(medias);
             _uow.Posts.Remove(post);
+
             await _uow.CompleteAsync();
 
+            // 3) dọn orphan tags
             var orphanTags = await _uow.Tags.GetTagsWithNoPostsAsync();
             foreach (var tag in orphanTags)
-            {
                 _uow.Tags.Remove(tag);
-            }
+
             await _uow.CompleteAsync();
+
+            // 4) xóa cloudinary (không làm fail request nếu xóa ảnh lỗi)
+            if (publicIds.Count > 0)
+            {
+                foreach (var pid in publicIds)
+                {
+                    // TryDeleteAsync đã "an toàn" => trả bool
+                    _ = await _cloudinary.TryDeleteAsync(pid);
+                }
+            }
 
             return true;
         }
