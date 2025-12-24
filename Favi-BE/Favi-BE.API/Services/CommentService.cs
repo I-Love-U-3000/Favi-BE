@@ -11,12 +11,14 @@ namespace Favi_BE.Services
     public class CommentService : ICommentService
     {
         private readonly IUnitOfWork _uow;
-        private readonly INotificationService _notificationService;
+        private readonly INotificationService? _notificationService;
+        private readonly IAuditService? _auditService;
 
-        public CommentService(IUnitOfWork uow, INotificationService notificationService)
+        public CommentService(IUnitOfWork uow, INotificationService? notificationService = null, IAuditService? auditService = null)
         {
             _uow = uow;
             _notificationService = notificationService;
+            _auditService = auditService;
         }
 
         public async Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId)
@@ -239,6 +241,38 @@ namespace Favi_BE.Services
             }
 
             return new ReactionSummaryDto(total, byType, mine);
+        }
+
+        // --------------------------------------------------------------------
+        // Admin Operations
+        // --------------------------------------------------------------------
+        public async Task<bool> AdminDeleteAsync(Guid commentId, Guid adminId, string reason)
+        {
+            var comment = await _uow.Comments.GetByIdAsync(commentId);
+            if (comment is null) return false;
+
+            var targetProfileId = comment.ProfileId;
+
+            _uow.Comments.Remove(comment);
+
+            // Log admin action
+            if (_auditService != null)
+            {
+                await _auditService.LogAsync(new Favi_BE.Models.Entities.AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = adminId,
+                    ActionType = Models.Enums.AdminActionType.DeleteContent,
+                    TargetEntityId = commentId,
+                    TargetEntityType = "Comment",
+                    TargetProfileId = targetProfileId,
+                    Notes = reason,
+                    CreatedAt = DateTime.UtcNow
+                }, saveChanges: false);
+            }
+
+            await _uow.CompleteAsync();
+            return true;
         }
     }
 }

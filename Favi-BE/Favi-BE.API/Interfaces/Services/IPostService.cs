@@ -38,6 +38,7 @@ namespace Favi_BE.Interfaces.Services
         Task<PagedResult<PostResponse>> GetExploreAsync(Guid userId, int page, int pageSize);
         Task<PagedResult<PostResponse>> GetLatestAsync(int page, int pageSize);
         Task<Post?> GetEntityAsync(Guid id);
+        Task<bool> AdminDeleteAsync(Guid postId, Guid adminId, string reason);
     }
 
 }

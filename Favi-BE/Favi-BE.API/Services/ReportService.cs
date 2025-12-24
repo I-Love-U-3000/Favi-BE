@@ -10,10 +10,12 @@ namespace Favi_BE.Services
     public class ReportService : IReportService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IAuditService? _auditService;
 
-        public ReportService(IUnitOfWork uow)
+        public ReportService(IUnitOfWork uow, IAuditService? auditService = null)
         {
             _uow = uow;
+            _auditService = auditService;
         }
 
         public async Task<ReportResponse> CreateAsync(CreateReportRequest dto)
@@ -45,7 +47,7 @@ namespace Favi_BE.Services
             return new PagedResult<ReportResponse>(dtos, page, pageSize, total);
         }
 
-        public async Task<bool> UpdateStatusAsync(Guid reportId, UpdateReportStatusRequest dto)
+        public async Task<bool> UpdateStatusAsync(Guid reportId, UpdateReportStatusRequest dto, Guid adminId)
         {
             var report = await _uow.Reports.GetByIdAsync(reportId);
             if (report is null) return false;
@@ -54,6 +56,19 @@ namespace Favi_BE.Services
             report.ActedAt = DateTime.UtcNow;
 
             _uow.Reports.Update(report);
+
+            // Log admin action for resolve report
+            if (_auditService != null && dto.NewStatus == ReportStatus.Resolved)
+            {
+                await _auditService.LogUserActionAsync(
+                    adminId,
+                    AdminActionType.ResolveReport,
+                    null,
+                    $"Resolved report {reportId}",
+                    reportId,
+                    saveChanges: false);
+            }
+
             await _uow.CompleteAsync();
             return true;
         }

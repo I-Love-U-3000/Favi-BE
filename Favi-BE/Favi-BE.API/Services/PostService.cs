@@ -18,7 +18,8 @@ namespace Favi_BE.Services
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
         private readonly IVectorIndexService _vectorIndex;
-        private readonly INotificationService _notificationService;
+        private readonly INotificationService? _notificationService;
+        private readonly IAuditService? _auditService;
 
         // ------- Trending Score constants -------
         private const double W_Like = 1.0;    // Wl
@@ -32,13 +33,14 @@ namespace Favi_BE.Services
         private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
         private const int TrendingCandidateLimit = 500; // tối đa ứng viên để tính trending
 
-        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, IVectorIndexService vectorIndex, INotificationService? notificationService = null)
+        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, IVectorIndexService vectorIndex, INotificationService? notificationService = null, IAuditService? auditService = null)
         {
             _uow = uow;
             _cloudinary = cloudinary;
             _privacy = privacy;
             _vectorIndex = vectorIndex;
             _notificationService = notificationService;
+            _auditService = auditService;
         }
 
         public Task<Post?> GetEntityAsync(Guid id) => _uow.Posts.GetByIdAsync(id);
@@ -817,6 +819,40 @@ namespace Favi_BE.Services
                 responses.Add(await MapPostToResponseAsync(p, null));
 
             return new PagedResult<PostResponse>(responses, page, pageSize, total);
+        }
+
+        // --------------------------------------------------------------------
+        // Admin Operations
+        // --------------------------------------------------------------------
+        public async Task<bool> AdminDeleteAsync(Guid postId, Guid adminId, string reason)
+        {
+            var post = await _uow.Posts.GetByIdAsync(postId);
+            if (post is null) return false;
+
+            // Soft delete: set expiration date to 30 days from now
+            post.DeletedDayExpiredAt = DateTime.UtcNow.AddDays(30);
+            post.UpdatedAt = DateTime.UtcNow;
+
+            _uow.Posts.Update(post);
+
+            // Log admin action
+            if (_auditService != null)
+            {
+                await _auditService.LogAsync(new Favi_BE.Models.Entities.AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = adminId,
+                    ActionType = Models.Enums.AdminActionType.DeleteContent,
+                    TargetEntityId = postId,
+                    TargetEntityType = "Post",
+                    TargetProfileId = post.ProfileId,
+                    Notes = reason,
+                    CreatedAt = DateTime.UtcNow
+                }, saveChanges: false);
+            }
+
+            await _uow.CompleteAsync();
+            return true;
         }
     }
 }

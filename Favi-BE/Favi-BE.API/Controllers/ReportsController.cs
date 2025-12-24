@@ -44,7 +44,8 @@ namespace Favi_BE.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStatus(Guid id, UpdateReportStatusRequest dto)
         {
-            var ok = await _reports.UpdateStatusAsync(id, dto);
+            var adminId = User.GetUserIdFromMetadata();
+            var ok = await _reports.UpdateStatusAsync(id, dto, adminId);
             return ok
                 ? Ok(new { message = "Đã cập nhật trạng thái báo cáo." })
                 : NotFound(new { code = "REPORT_NOT_FOUND", message = "Không tìm thấy báo cáo." });
