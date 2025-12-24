@@ -18,7 +18,7 @@ namespace Favi_BE.Services
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
         private readonly IVectorIndexService _vectorIndex;
-        private readonly INotificationService? _notificationService;
+        private readonly INotificationService _notificationService;
 
         // ------- Trending Score constants -------
         private const double W_Like = 1.0;    // Wl
@@ -569,22 +569,7 @@ namespace Favi_BE.Services
                 });
                 await _uow.CompleteAsync();
 
-                // Send notification for new reaction
-                if (_notificationService != null)
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            await _notificationService.CreatePostReactionNotificationAsync(userId, postId);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Log but don't throw - notification shouldn't break the main flow
-                            Console.WriteLine($"[PostService] Error sending notification: {ex.Message}");
-                        }
-                    });
-                }
+                await _notificationService.CreatePostReactionNotificationAsync(userId, postId);
 
                 return type;
             }

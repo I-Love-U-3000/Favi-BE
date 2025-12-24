@@ -11,9 +11,9 @@ namespace Favi_BE.Services
     public class CommentService : ICommentService
     {
         private readonly IUnitOfWork _uow;
-        private readonly INotificationService? _notificationService;
+        private readonly INotificationService _notificationService;
 
-        public CommentService(IUnitOfWork uow, INotificationService? notificationService = null)
+        public CommentService(IUnitOfWork uow, INotificationService notificationService)
         {
             _uow = uow;
             _notificationService = notificationService;
@@ -36,20 +36,7 @@ namespace Favi_BE.Services
             await _uow.CompleteAsync();
 
             // Send notification for new comment (only if not replying to self)
-            if (_notificationService != null)
-            {
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _notificationService.CreateCommentNotificationAsync(authorId, postId, comment.Id);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[CommentService] Error sending notification: {ex.Message}");
-                    }
-                });
-            }
+            await _notificationService.CreateCommentNotificationAsync(authorId, postId, comment.Id);
 
             var summary = await BuildReactionSummaryAsync(comment.Id, authorId);
 
