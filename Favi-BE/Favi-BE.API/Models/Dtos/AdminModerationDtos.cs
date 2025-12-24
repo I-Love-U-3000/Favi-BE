@@ -26,4 +26,8 @@ namespace Favi_BE.Models.Dtos
         Guid AdminActionId,
         Guid AdminId
     );
+
+    public record AdminDeleteContentRequest(
+        [Required(ErrorMessage = "Lý do là bắt buộc.")] string Reason
+    );
 }

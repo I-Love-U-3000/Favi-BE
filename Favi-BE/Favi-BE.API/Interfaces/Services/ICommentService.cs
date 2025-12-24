@@ -12,5 +12,6 @@ namespace Favi_BE.Interfaces.Services
         Task<ReactionSummaryDto> GetReactionsAsync(Guid commentId, Guid? currentUserId);
         Task<PagedResult<CommentResponse>> GetByPostAsync(Guid currentUserId, Guid postId, int page, int pageSize);
         Task<ReactionType?> ToggleReactionAsync(Guid commentId, Guid userId, ReactionType type);
+        Task<bool> AdminDeleteAsync(Guid commentId, Guid adminId, string reason);
     }
 }
