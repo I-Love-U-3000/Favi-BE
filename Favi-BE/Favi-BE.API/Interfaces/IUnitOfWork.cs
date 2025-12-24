@@ -20,6 +20,7 @@ namespace Favi_BE.Interfaces
         IAdminActionRepository AdminActions { get; }
         IConversationRepository Conversations { get; }
         IMessageRepository Messages { get; }
+        INotificationRepository Notifications { get; }
 
         // Join tables and relationships
         IPostTagRepository PostTags { get; }

@@ -27,6 +27,7 @@ namespace Favi_BE.Data
         public DbSet<Conversation> Conversations { get; set; } = default!;
         public DbSet<Message> Messages { get; set; } = default!;
         public DbSet<UserConversation> UserConversations { get; set; } = default!;
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -253,6 +254,45 @@ namespace Favi_BE.Data
                     .WithMany() // không cần navigation ngược
                     .HasForeignKey(uc => uc.LastReadMessageId)
                     .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // Notification
+            modelBuilder.Entity<Notification>(b =>
+            {
+                b.HasKey(n => n.Id);
+
+                b.Property(n => n.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property(n => n.Type)
+                    .HasColumnType("integer");
+
+                // Notification -> Recipient
+                b.HasOne(n => n.Recipient)
+                    .WithMany()
+                    .HasForeignKey(n => n.RecipientProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Notification -> Actor
+                b.HasOne(n => n.Actor)
+                    .WithMany()
+                    .HasForeignKey(n => n.ActorProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Notification -> Post (optional)
+                b.HasOne(n => n.TargetPost)
+                    .WithMany()
+                    .HasForeignKey(n => n.TargetPostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Notification -> Comment (optional)
+                b.HasOne(n => n.TargetComment)
+                    .WithMany()
+                    .HasForeignKey(n => n.TargetCommentId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Index for faster queries
+                b.HasIndex(n => new { n.RecipientProfileId, n.CreatedAt });
             });
         }
     }

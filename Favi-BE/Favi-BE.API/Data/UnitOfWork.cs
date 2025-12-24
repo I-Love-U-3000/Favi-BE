@@ -32,6 +32,7 @@ namespace Favi_BE.Data
             AdminActions = new AdminActionRepository(_context);
             Conversations = new ConversationRepository(_context);
             Messages = new MessageRepository(_context);
+            Notifications = new NotificationRepository(_context);
 
             // Join tables
             PostTags = new PostTagRepository(_context);
@@ -54,6 +55,7 @@ namespace Favi_BE.Data
         public IAdminActionRepository AdminActions { get; private set; }
         public IConversationRepository Conversations { get; private set; }
         public IMessageRepository Messages { get; private set; }
+        public INotificationRepository Notifications { get; private set; }
 
         // Join tables
         public IPostTagRepository PostTags { get; private set; }

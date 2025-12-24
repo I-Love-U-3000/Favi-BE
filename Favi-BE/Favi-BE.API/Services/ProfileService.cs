@@ -9,11 +9,13 @@ namespace Favi_BE.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
+        private readonly INotificationService? _notificationService;
 
-        public ProfileService(IUnitOfWork uow, ICloudinaryService cloudinary)
+        public ProfileService(IUnitOfWork uow, ICloudinaryService cloudinary, INotificationService? notificationService = null)
         {
             _uow = uow;
             _cloudinary = cloudinary;
+            _notificationService = notificationService;
         }
 
         public async Task<ProfileResponse?> GetByIdAsync(Guid profileId)
@@ -80,6 +82,23 @@ namespace Favi_BE.Services
                 CreatedAt = DateTime.UtcNow
             });
             await _uow.CompleteAsync();
+
+            // Send notification for new follower
+            if (_notificationService != null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _notificationService.CreateFollowNotificationAsync(followerId, followeeId);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ProfileService] Error sending notification: {ex.Message}");
+                    }
+                });
+            }
+
             return true;
         }
 

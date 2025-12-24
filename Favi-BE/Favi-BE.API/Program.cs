@@ -98,6 +98,7 @@ builder.Services.AddScoped<IUserModerationRepository, UserModerationRepository>(
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IUserConversationRepository, UserConversationRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -118,6 +119,7 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IUserModerationService, UserModerationService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Add background services
 builder.Services.AddHostedService<PostCleanupService>();
@@ -207,8 +209,9 @@ app.MapPost("/health", () => Results.Ok(new
 }))
 .WithName("PostHealthCheck")
 .AllowAnonymous();
-// Map SignalR Hub
+// Map SignalR Hubs
 app.MapHub<ChatHub>("/chatHub");
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
 

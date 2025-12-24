@@ -3,12 +3,16 @@
 namespace Favi_BE.Models.Dtos
 {
     public record NotificationDto(
-        int Id,
+        Guid Id,
         NotificationType Type,
         Guid ActorProfileId,
+        string ActorUsername,
+        string? ActorDisplayName,
+        string? ActorAvatarUrl,
         Guid? TargetPostId,
         Guid? TargetCommentId,
         string Message,
+        bool IsRead,
         DateTime CreatedAt
     );
 }

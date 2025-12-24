@@ -11,10 +11,12 @@ namespace Favi_BE.Services
     public class CommentService : ICommentService
     {
         private readonly IUnitOfWork _uow;
+        private readonly INotificationService? _notificationService;
 
-        public CommentService(IUnitOfWork uow)
+        public CommentService(IUnitOfWork uow, INotificationService? notificationService = null)
         {
             _uow = uow;
+            _notificationService = notificationService;
         }
 
         public async Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId)
@@ -33,14 +35,30 @@ namespace Favi_BE.Services
             await _uow.Comments.AddAsync(comment);
             await _uow.CompleteAsync();
 
+            // Send notification for new comment (only if not replying to self)
+            if (_notificationService != null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _notificationService.CreateCommentNotificationAsync(authorId, postId, comment.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[CommentService] Error sending notification: {ex.Message}");
+                    }
+                });
+            }
+
             var summary = await BuildReactionSummaryAsync(comment.Id, authorId);
 
-            return new CommentResponse(comment.Id, 
-                comment.PostId, 
+            return new CommentResponse(comment.Id,
+                comment.PostId,
                 comment.ProfileId,
-                comment.Content, 
-                comment.CreatedAt, 
-                comment.UpdatedAt, 
+                comment.Content,
+                comment.CreatedAt,
+                comment.UpdatedAt,
                 comment.ParentCommentId,
                 Reactions: summary);
         }
@@ -171,6 +189,23 @@ namespace Favi_BE.Services
                     CreatedAt = DateTime.UtcNow
                 });
                 await _uow.CompleteAsync();
+
+                // Send notification for new comment reaction
+                if (_notificationService != null)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _notificationService.CreateCommentReactionNotificationAsync(userId, commentId);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[CommentService] Error sending notification: {ex.Message}");
+                        }
+                    });
+                }
+
                 return type;
             }
 
@@ -187,7 +222,7 @@ namespace Favi_BE.Services
                     Console.WriteLine($"[ToggleCommentReaction] Error when removing reaction: {ex.Message}");
                     if (ex.InnerException != null)
                         Console.WriteLine($"[ToggleCommentReaction] Inner: {ex.InnerException.Message}");
-                    throw; 
+                    throw;
                 }
                 return null;
             }
