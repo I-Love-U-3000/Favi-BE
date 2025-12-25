@@ -102,6 +102,7 @@ deactivate View
 | (5) | BR5 | **Storing Rules:**<br>The database inserts two records into `UserConversations`, linking both the current user and the target user to the new conversation. |
 | (6) | BR6 | **Displaying Rules:**<br>The system returns the new `ConversationId`. |
 | (7) | BR7 | **Displaying Rules:**<br>The UI opens the newly created chat window, allowing the user to send the first message. |
+| (8) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -203,6 +204,7 @@ deactivate View
 | (3) | BR3 | **Validating Rules:**<br>System checks member count (Must be > 1 other person). |
 | (4) | BR4 | **Storing Rules:**<br>System calls `ChatController.CreateGroup`.<br>Inserts into `"Conversations"` (`Type = 1` for Group).<br>Inserts into `"UserConversations"` for **every** selected member + Creator. |
 | (5) | BR5 | **Displaying Rules:**<br>System redirects to the new Group Chat room. |
+| (6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -291,6 +293,7 @@ end
 | (4) | BR4 | **Storing Rules:**<br>The database updates the `Conversations` table, setting `LastMessageAt` to the current time to bump the conversation to the top. |
 | (5) | BR5 | **Displaying Rules:**<br>The system returns the full `MessageDto` (including the generated ID). |
 | (6) | BR6 | **Displaying Rules:**<br>The UI updates the message status from "Sending..." to "Sent" (or displays a delivery tick). |
+| (7) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. The UI updates status to "Failed". |
 
 ### Diagrams
 
@@ -377,6 +380,7 @@ end
 | (2) | BR2 | **Validation Rules:**<br>Frontend checks if message timestamp < 15 minutes. |
 | (3) | BR3 | **Submitting Rules:**<br>System calls `ChatController` to delete/soft-delete. |
 | (4) | BR4 | **Storing Rules:**<br>Backend removes the record from `"Messages"` table or sets `Content` to NULL. |
+| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -523,6 +527,7 @@ View -> User: Display List
 | (1) | BR1 | **Selecting Rules:**<br>User clicks on a Conversation to open it. |
 | (2) | BR2 | **Submitting Rules:**<br>System calls `ChatController.MarkAsRead(convId, lastMsgId)`. |
 | (3) | BR3 | **Storing Rules:**<br>System updates `"UserConversations"` table: sets `LastReadMessageId` to the ID of the newest message in that chat. |
+| (4) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -598,6 +603,7 @@ end
 | (2) | BR2 | **Displaying Rules:**<br>System displays Warning: "You won't receive further messages". (Refer to MSG Confirm 2). |
 | (3) | BR3 | **Submitting Rules:**<br>User confirms. System calls `ChatController.LeaveGroup`. |
 | (4) | BR4 | **Storing Rules:**<br>System deletes the `UserConversation` record for this user and this group. |
+| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 

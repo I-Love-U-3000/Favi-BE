@@ -29,6 +29,7 @@
 | (4) | BR4 | **Storing Rules:**<br>The database creates a new record in the `Reports` table with `Status = Pending` for admin review. |
 | (5) | BR5 | **Displaying Rules:**<br>The system returns the created `ReportResponse` object to the client. |
 | (6) | BR6 | **Displaying Rules:**<br>The UI displays a "Thank you" toast message, informing the user that the report has been received. |
+| (7) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 

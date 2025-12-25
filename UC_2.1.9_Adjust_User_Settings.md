@@ -31,6 +31,7 @@
 | (4) | BR4 | **Displaying Rules:**<br>The system returns the updated `Profile` entity/DTO. |
 | (5) | BR5 | **Displaying Rules:**<br>The UI updates the profile view with the new information and closes the modal (or shows a "Saved" toast). |
 | (6) | BR6 | **Displaying Rules:**<br>Show Error. |
+| (7) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -120,6 +121,7 @@ end
 | (2) | BR2 | **Displaying Rules:**<br>System shows "Add Link" form: `[txtPlatform]`, `[txtUrl]`. |
 | (3) | BR3 | **Submitting Rules:**<br>User enters data and confirms. System calls `ProfilesController.AddLink(dto)`. |
 | (4) | BR4 | **Storing Rules:**<br>System inserts a new record into `"SocialLinks"` table with `ProfileId = @me`. |
+| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -198,6 +200,7 @@ end
 | (3) | BR3 | **Storing Rules:**<br>The database permanently deletes the `Profiles` record (and cascades deletes to associated data like `Follows`, `UserConversations`). |
 | (4) | BR4 | **Processing Rules:**<br>The system calls the Authentication Provider (e.g., Auth0/Firebase) to remove the user's login identity. |
 | (5) | BR5 | **Displaying Rules:**<br>The system returns a success message indicating the account is deleted. |
+| (6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 | (6) | BR6 | **Displaying Rules:**<br>The UI forcibly logs the user out and redirects them to the Landing/Login page. |
 
 ### Diagrams

@@ -108,6 +108,7 @@ deactivate View
 | (3) | BR3 | **Storing Rules:**<br>The database updates the record in the `Notifications` table, setting the `IsRead` column to `TRUE`. |
 | (4) | BR4 | **Displaying Rules:**<br>The system returns a success status (200 OK) to acknowledge the update. |
 | (5) | BR5 | **Processing Rules:**<br>The UI reads the `TargetUrl` or resource parameters from the notification and redirects the browser to the relevant content (e.g., specific Post, Comment, or Profile). |
+| (6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -194,6 +195,7 @@ deactivate View
 | (2) | BR2 | **Submitting Rules:**<br>System calls `NotificationsController.MarkAllAsRead()`. |
 | (3) | BR3 | **Storing Rules:**<br>SQL: `UPDATE "Notifications" SET "IsRead" = true WHERE "RecipientProfileId" = @me`. |
 | (4) | BR4 | **Displaying Rules:**<br>Frontend clears the red badge count on the Bell Icon immediately. |
+| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -274,6 +276,7 @@ end
 | (1) | BR1 | **Selecting Rules:**<br>User swipes left on an item or uses the delete menu options. |
 | (2) | BR2 | **Submitting Rules:**<br>System calls `NotificationsController` DELETE endpoint. |
 | (3) | BR3 | **Storing Rules:**<br>System deletes the row from `"Notifications"`. |
+| (4) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -353,6 +356,7 @@ end
 | (2) | BR2 | **Selecting Rules:**<br>User toggles "Email Notifications for Likes" to OFF. |
 | (3) | BR3 | **Submitting Rules:**<br>System calls `ProfilesController.UpdateSettings`. |
 | (4) | BR4 | **Storing Rules:**<br>Updates the JSONB settings column or specific columns in `"Profiles"` table. |
+| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 

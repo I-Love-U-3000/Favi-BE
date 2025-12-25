@@ -32,6 +32,7 @@
 | (6) | BR6 | **Querying Rules:**<br>The system calls the backend API method `ProfilesController.Followings` (`GET /api/profiles/{id}/followings`). |
 | (7) | BR7 | **Querying Rules:**<br>The database executes a `SELECT` query on the `Follows` table, filtering records where `FollowerId` matches the current user's ID. |
 | (8) | BR8 | **Displaying Rules:**<br>The system returns the list of `ProfileDto` objects and renders them in the "Following" list view. |
+| (9) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs (e.g., Database connection), the Global Exception Handler logs the error details and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -158,6 +159,7 @@ deactivate View
 | (4) | BR4 | **Storing Rules:**<br>If valid, the database inserts a new record into the `Follows` table with `FollowerId` (current user) and `FolloweeId` (target user). |
 | (5) | BR5 | **Displaying Rules:**<br>The system returns a `200 OK` success response to the client. |
 | (6) | BR6 | **Displaying Rules:**<br>The UI updates the `[btnFollow]` button state to "Following" to reflect the new relationship. |
+| (7) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -262,6 +264,7 @@ end
 | (5) | BR5 | **Storing Rules:**<br>The database deletes the identified record from the `Follows` table. |
 | (6) | BR6 | **Displaying Rules:**<br>The system returns a success message indicating the user has been unfollowed. |
 | (7) | BR7 | **Displaying Rules:**<br>The UI resets the button state from "Following" back to "Follow". |
+| (8) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -443,6 +446,7 @@ View --> User: Display Dropdown List
 | (6) | BR6 | **Storing Rules:**<br>The database deletes any existing records in the `Follows` table (both directions) to sever connections. |
 | (7) | BR7 | **Displaying Rules:**<br>The system returns a success status. |
 | (8) | BR8 | **Displaying Rules:**<br>The UI redirects the user to the Home Screen or updates the view to hide the blocked profile. |
+| (9) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -538,6 +542,7 @@ end
 | (3) | BR3 | **Storing Rules:**<br>The database deletes the corresponding record from the `UserModerations` table. |
 | (4) | BR4 | **Displaying Rules:**<br>The system returns a success confirmaton (200 OK). |
 | (5) | BR5 | **Displaying Rules:**<br>The UI removes the unblocked user from the displayed list immediately. |
+| (6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
 
 ### Diagrams
 
