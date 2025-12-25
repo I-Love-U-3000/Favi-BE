@@ -6,7 +6,7 @@ namespace Favi_BE.Interfaces.Services
 {
     public interface IReportService
     {
-        Task<ReportResponse> CreateAsync(CreateReportRequest dto);
+        Task<ReportResponse?> CreateAsync(CreateReportRequest dto);
         Task<PagedResult<ReportResponse>> GetAllAsync(int page, int pageSize);
         Task<bool> UpdateStatusAsync(Guid reportId, UpdateReportStatusRequest dto, Guid adminId);
         Task<PagedResult<ReportResponse>> GetReportsByReporterIdAsync(Guid reporterId, int page, int pageSize);

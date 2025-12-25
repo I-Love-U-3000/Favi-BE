@@ -10,12 +10,14 @@ namespace Favi_BE.Services
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<ProfileService> _logger;
 
-        public ProfileService(IUnitOfWork uow, ICloudinaryService cloudinary, INotificationService notificationService)
+        public ProfileService(IUnitOfWork uow, ICloudinaryService cloudinary, INotificationService notificationService, ILogger<ProfileService> logger)
         {
             _uow = uow;
             _cloudinary = cloudinary;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<ProfileResponse?> GetByIdAsync(Guid profileId)
@@ -46,56 +48,80 @@ namespace Favi_BE.Services
 
         public async Task<ProfileResponse?> UpdateAsync(Guid profileId, ProfileUpdateRequest dto)
         {
-            var profile = await _uow.Profiles.GetByIdAsync(profileId);
-            if (profile is null) return null;
+            try
+            {
+                var profile = await _uow.Profiles.GetByIdAsync(profileId);
+                if (profile is null) return null;
 
-            if (!string.IsNullOrWhiteSpace(dto.DisplayName))
-                profile.DisplayName = dto.DisplayName;
-            if (!string.IsNullOrWhiteSpace(dto.Bio))
-                profile.Bio = dto.Bio;
-            if (!string.IsNullOrWhiteSpace(dto.AvatarUrl))
-                profile.AvatarUrl = dto.AvatarUrl;
-            if (!string.IsNullOrWhiteSpace(dto.CoverUrl))
-                profile.CoverUrl = dto.CoverUrl;
-            if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != profile.Username)
-                profile.Username = dto.Username;
-            if (dto.PrivacyLevel.HasValue)
-                profile.PrivacyLevel = dto.PrivacyLevel.Value;
-            if (dto.FollowPrivacyLevel.HasValue)
-                profile.FollowPrivacyLevel = dto.FollowPrivacyLevel.Value;
-            profile.LastActiveAt = DateTime.UtcNow;
-            _uow.Profiles.Update(profile);
+                if (!string.IsNullOrWhiteSpace(dto.DisplayName))
+                    profile.DisplayName = dto.DisplayName;
+                if (!string.IsNullOrWhiteSpace(dto.Bio))
+                    profile.Bio = dto.Bio;
+                if (!string.IsNullOrWhiteSpace(dto.AvatarUrl))
+                    profile.AvatarUrl = dto.AvatarUrl;
+                if (!string.IsNullOrWhiteSpace(dto.CoverUrl))
+                    profile.CoverUrl = dto.CoverUrl;
+                if (!string.IsNullOrWhiteSpace(dto.Username) && dto.Username != profile.Username)
+                    profile.Username = dto.Username;
+                if (dto.PrivacyLevel.HasValue)
+                    profile.PrivacyLevel = dto.PrivacyLevel.Value;
+                if (dto.FollowPrivacyLevel.HasValue)
+                    profile.FollowPrivacyLevel = dto.FollowPrivacyLevel.Value;
+                profile.LastActiveAt = DateTime.UtcNow;
+                _uow.Profiles.Update(profile);
 
-            await _uow.CompleteAsync();
-            return await GetByIdAsync(profileId);
+                await _uow.CompleteAsync();
+                return await GetByIdAsync(profileId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> FollowAsync(Guid followerId, Guid followeeId)
         {
             if (followerId == followeeId) return false;
-            if (await _uow.Follows.IsFollowingAsync(followerId, followeeId)) return true;
-
-            await _uow.Follows.AddAsync(new Models.Entities.JoinTables.Follow
+            try
             {
-                FollowerId = followerId,
-                FolloweeId = followeeId,
-                CreatedAt = DateTime.UtcNow
-            });
-            await _uow.CompleteAsync();
+                if (await _uow.Follows.IsFollowingAsync(followerId, followeeId)) return true;
 
-            await _notificationService.CreateFollowNotificationAsync(followerId, followeeId);
+                await _uow.Follows.AddAsync(new Models.Entities.JoinTables.Follow
+                {
+                    FollowerId = followerId,
+                    FolloweeId = followeeId,
+                    CreatedAt = DateTime.UtcNow
+                });
+                await _uow.CompleteAsync();
 
-            return true;
+                await _notificationService.CreateFollowNotificationAsync(followerId, followeeId);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error following user. Follower: {FollowerId}, Target: {TargetId}", followerId, followeeId);
+                throw;
+            }
         }
 
         public async Task<bool> UnfollowAsync(Guid followerId, Guid followeeId)
         {
-            var follow = await _uow.Follows.GetAsync(followerId, followeeId);
-            if (follow is null) return false;
+            try
+            {
+                var follow = await _uow.Follows.GetAsync(followerId, followeeId);
+                if (follow is null) return false;
 
-            _uow.Follows.Remove(follow);
-            await _uow.CompleteAsync();
-            return true;
+                _uow.Follows.Remove(follow);
+                await _uow.CompleteAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unfollowing user. Follower: {FollowerId}, Target: {TargetId}", followerId, followeeId);
+                throw;
+            }
         }
 
         public async Task<IEnumerable<FollowResponse>> GetFollowersAsync(Guid profileId)
@@ -200,132 +226,148 @@ namespace Favi_BE.Services
 
         public async Task<PostMediaResponse?> UploadAvatarAsync(Guid profileId, IFormFile file)
         {
-            // 1. Kiểm tra profile tồn tại
-            var profile = await _uow.Profiles.GetByIdAsync(profileId);
-            if (profile is null) return null;
-
-            // 2. Validate file giống PostService
-            if (file == null || file.Length == 0) return null;
-            if (string.IsNullOrWhiteSpace(file.ContentType) ||
-                !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-                return null;
-
-            // 3. Upload Cloudinary
-            var uploaded = await _cloudinary.TryUploadAsync(file);
-            if (uploaded is null) return null;
-
-            // 4. Xoá avatar cũ (nếu có)
-            var oldAvatar = await _uow.PostMedia.GetProfileAvatar(profileId);
-            if (oldAvatar is not null)
+            try
             {
-                // TODO: nếu muốn xoá trên Cloudinary, dùng oldAvatar.PublicId ở đây
-                _uow.PostMedia.Remove(oldAvatar);
+                // 1. Kiểm tra profile tồn tại
+                var profile = await _uow.Profiles.GetByIdAsync(profileId);
+                if (profile is null) return null;
+
+                // 2. Validate file giống PostService
+                if (file == null || file.Length == 0) return null;
+                if (string.IsNullOrWhiteSpace(file.ContentType) ||
+                    !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return null;
+
+                // 3. Upload Cloudinary
+                var uploaded = await _cloudinary.TryUploadAsync(file);
+                if (uploaded is null) return null;
+
+                // 4. Xoá avatar cũ (nếu có)
+                var oldAvatar = await _uow.PostMedia.GetProfileAvatar(profileId);
+                if (oldAvatar is not null)
+                {
+                    // TODO: nếu muốn xoá trên Cloudinary, dùng oldAvatar.PublicId ở đây
+                    _uow.PostMedia.Remove(oldAvatar);
+                }
+
+                // 5. Tạo PostMedia mới
+                var media = new PostMedia
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = profileId,
+                    PostId = null,
+                    Url = uploaded.Url,
+                    ThumbnailUrl = uploaded.ThumbnailUrl,
+                    PublicId = uploaded.PublicId,
+                    Width = uploaded.Width,
+                    Height = uploaded.Height,
+                    Format = uploaded.Format,
+                    Position = 0,
+                    IsAvatar = true,
+                    IsPoster = false
+                };
+
+                await _uow.PostMedia.AddAsync(media);
+
+                // 6. Cập nhật AvatarUrl trong bảng Profile (nếu còn dùng)
+                profile.AvatarUrl = media.Url;
+                profile.LastActiveAt = DateTime.UtcNow;
+                _uow.Profiles.Update(profile);
+
+                // 7. Lưu
+                await _uow.CompleteAsync();
+
+                // 8. Map đúng constructor PostMediaResponse (giống PostService)
+                return new PostMediaResponse(
+                    media.Id,
+                    media.PostId ?? Guid.Empty,
+                    media.Url,
+                    media.PublicId,
+                    media.Width,
+                    media.Height,
+                    media.Format,
+                    media.Position,
+                    media.ThumbnailUrl
+                );
             }
-
-            // 5. Tạo PostMedia mới
-            var media = new PostMedia
+            catch (Exception ex)
             {
-                Id = Guid.NewGuid(),
-                ProfileId = profileId,
-                PostId = null,
-                Url = uploaded.Url,
-                ThumbnailUrl = uploaded.ThumbnailUrl,
-                PublicId = uploaded.PublicId,
-                Width = uploaded.Width,
-                Height = uploaded.Height,
-                Format = uploaded.Format,
-                Position = 0,
-                IsAvatar = true,
-                IsPoster = false
-            };
-
-            await _uow.PostMedia.AddAsync(media);
-
-            // 6. Cập nhật AvatarUrl trong bảng Profile (nếu còn dùng)
-            profile.AvatarUrl = media.Url;
-            profile.LastActiveAt = DateTime.UtcNow;
-            _uow.Profiles.Update(profile);
-
-            // 7. Lưu
-            await _uow.CompleteAsync();
-
-            // 8. Map đúng constructor PostMediaResponse (giống PostService)
-            return new PostMediaResponse(
-                media.Id,
-                media.PostId ?? Guid.Empty,
-                media.Url,
-                media.PublicId,
-                media.Width,
-                media.Height,
-                media.Format,
-                media.Position,
-                media.ThumbnailUrl
-            );
+                _logger.LogError(ex, "Error uploading avatar for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<PostMediaResponse?> UploadPosterAsync(Guid profileId, IFormFile file)
         {
-            // 1. Kiểm tra profile tồn tại
-            var profile = await _uow.Profiles.GetByIdAsync(profileId);
-            if (profile is null) return null;
-
-            // 2. Validate file giống PostService
-            if (file == null || file.Length == 0) return null;
-            if (string.IsNullOrWhiteSpace(file.ContentType) ||
-                !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-                return null;
-
-            // 3. Upload Cloudinary
-            var uploaded = await _cloudinary.TryUploadAsync(file);
-            if (uploaded is null) return null;
-
-            // 4. Xoá poster cũ (nếu có)
-            var oldPoster = await _uow.PostMedia.GetProfilePoster(profileId);
-            if (oldPoster is not null)
+            try
             {
-                // TODO: nếu muốn xoá trên Cloudinary, dùng oldPoster.PublicId ở đây
-                _uow.PostMedia.Remove(oldPoster);
+                // 1. Kiểm tra profile tồn tại
+                var profile = await _uow.Profiles.GetByIdAsync(profileId);
+                if (profile is null) return null;
+
+                // 2. Validate file giống PostService
+                if (file == null || file.Length == 0) return null;
+                if (string.IsNullOrWhiteSpace(file.ContentType) ||
+                    !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return null;
+
+                // 3. Upload Cloudinary
+                var uploaded = await _cloudinary.TryUploadAsync(file);
+                if (uploaded is null) return null;
+
+                // 4. Xoá poster cũ (nếu có)
+                var oldPoster = await _uow.PostMedia.GetProfilePoster(profileId);
+                if (oldPoster is not null)
+                {
+                    // TODO: nếu muốn xoá trên Cloudinary, dùng oldPoster.PublicId ở đây
+                    _uow.PostMedia.Remove(oldPoster);
+                }
+
+                // 5. Tạo PostMedia mới
+                var media = new PostMedia
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = profileId,
+                    PostId = null,
+                    Url = uploaded.Url,
+                    ThumbnailUrl = uploaded.ThumbnailUrl,
+                    PublicId = uploaded.PublicId,
+                    Width = uploaded.Width,
+                    Height = uploaded.Height,
+                    Format = uploaded.Format,
+                    Position = 0,
+                    IsAvatar = false,
+                    IsPoster = true
+                };
+
+                await _uow.PostMedia.AddAsync(media);
+
+                // 6. Cập nhật CoverUrl trong Profile
+                profile.CoverUrl = media.Url;
+                profile.LastActiveAt = DateTime.UtcNow;
+                _uow.Profiles.Update(profile);
+
+                // 7. Lưu
+                await _uow.CompleteAsync();
+
+                // 8. Map đúng constructor PostMediaResponse
+                return new PostMediaResponse(
+                    media.Id,
+                    media.PostId ?? Guid.Empty,
+                    media.Url,
+                    media.PublicId,
+                    media.Width,
+                    media.Height,
+                    media.Format,
+                    media.Position,
+                    media.ThumbnailUrl
+                );
             }
-
-            // 5. Tạo PostMedia mới
-            var media = new PostMedia
+            catch (Exception ex)
             {
-                Id = Guid.NewGuid(),
-                ProfileId = profileId,
-                PostId = null,
-                Url = uploaded.Url,
-                ThumbnailUrl = uploaded.ThumbnailUrl,
-                PublicId = uploaded.PublicId,
-                Width = uploaded.Width,
-                Height = uploaded.Height,
-                Format = uploaded.Format,
-                Position = 0,
-                IsAvatar = false,
-                IsPoster = true
-            };
-
-            await _uow.PostMedia.AddAsync(media);
-
-            // 6. Cập nhật CoverUrl trong Profile
-            profile.CoverUrl = media.Url;
-            profile.LastActiveAt = DateTime.UtcNow;
-            _uow.Profiles.Update(profile);
-
-            // 7. Lưu
-            await _uow.CompleteAsync();
-
-            // 8. Map đúng constructor PostMediaResponse
-            return new PostMediaResponse(
-                media.Id,
-                media.PostId ?? Guid.Empty,
-                media.Url,
-                media.PublicId,
-                media.Width,
-                media.Height,
-                media.Format,
-                media.Position,
-                media.ThumbnailUrl
-            );
+                _logger.LogError(ex, "Error uploading poster for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<IEnumerable<ProfileResponse>> GetRecommendedAsync(Guid viewerId, int skip = 0, int take = 20)

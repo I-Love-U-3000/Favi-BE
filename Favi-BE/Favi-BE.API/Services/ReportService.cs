@@ -3,6 +3,7 @@ using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Enums;
+using Microsoft.Extensions.Logging;
 using System.Linq;
 
 namespace Favi_BE.Services
@@ -11,30 +12,40 @@ namespace Favi_BE.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly IAuditService? _auditService;
+        private readonly ILogger<ReportService> _logger;
 
-        public ReportService(IUnitOfWork uow, IAuditService? auditService = null)
+        public ReportService(IUnitOfWork uow, ILogger<ReportService> logger, IAuditService? auditService = null)
         {
             _uow = uow;
             _auditService = auditService;
+            _logger = logger;
         }
 
-        public async Task<ReportResponse> CreateAsync(CreateReportRequest dto)
+        public async Task<ReportResponse?> CreateAsync(CreateReportRequest dto)
         {
-            var report = new Report
+            try
             {
-                Id = Guid.NewGuid(),
-                ReporterId = dto.ReporterProfileId,
-                TargetType = dto.TargetType,
-                TargetId = dto.TargetId,
-                Reason = dto.Reason,
-                Status = ReportStatus.Pending,
-                CreatedAt = DateTime.UtcNow
-            };
+                var report = new Report
+                {
+                    Id = Guid.NewGuid(),
+                    ReporterId = dto.ReporterProfileId,
+                    TargetType = dto.TargetType,
+                    TargetId = dto.TargetId,
+                    Reason = dto.Reason,
+                    Status = ReportStatus.Pending,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-            await _uow.Reports.AddAsync(report);
-            await _uow.CompleteAsync();
+                await _uow.Reports.AddAsync(report);
+                await _uow.CompleteAsync();
 
-            return new ReportResponse(report.Id, report.ReporterId, report.TargetType, report.TargetId, report.Reason, report.Status, report.CreatedAt, report.ActedAt, report.Data);
+                return new ReportResponse(report.Id, report.ReporterId, report.TargetType, report.TargetId, report.Reason, report.Status, report.CreatedAt, report.ActedAt, report.Data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating report. Reporter: {ReporterId}, Target: {TargetId}", dto.ReporterProfileId, dto.TargetId);
+                throw;
+            }
         }
 
         public async Task<PagedResult<ReportResponse>> GetAllAsync(int page, int pageSize)

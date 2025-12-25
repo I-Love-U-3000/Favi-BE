@@ -179,33 +179,49 @@ namespace Favi_BE.Services
 
         public async Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientId)
         {
-            var notification = await _uow.Notifications.GetByIdAsync(notificationId);
-            if (notification is null || notification.RecipientProfileId != recipientId) return false;
+            try
+            {
+                var notification = await _uow.Notifications.GetByIdAsync(notificationId);
+                if (notification is null || notification.RecipientProfileId != recipientId) return false;
 
-            notification.IsRead = true;
-            _uow.Notifications.Update(notification);
-            await _uow.CompleteAsync();
+                notification.IsRead = true;
+                _uow.Notifications.Update(notification);
+                await _uow.CompleteAsync();
 
-            return true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking notification {NotificationId} as read for user {UserId}", notificationId, recipientId);
+                throw;
+            }
         }
 
         public async Task<bool> MarkAllAsReadAsync(Guid recipientId)
         {
-            var notifications = await _uow.Notifications.FindAsync(n => n.RecipientProfileId == recipientId && !n.IsRead);
-
-            foreach (var notification in notifications)
+            try
             {
-                notification.IsRead = true;
-                _uow.Notifications.Update(notification);
+                var notifications = await _uow.Notifications.FindAsync(n => n.RecipientProfileId == recipientId && !n.IsRead);
+
+                foreach (var notification in notifications)
+                {
+                    notification.IsRead = true;
+                    _uow.Notifications.Update(notification);
+                }
+
+                await _uow.CompleteAsync();
+
+                // Send updated unread count via SignalR
+                await _hubContext.Clients.User(recipientId.ToString())
+                    .SendAsync("UnreadCountUpdated", 0);
+
+                return true;
             }
-
-            await _uow.CompleteAsync();
-
-            // Send updated unread count via SignalR
-            await _hubContext.Clients.User(recipientId.ToString())
-                .SendAsync("UnreadCountUpdated", 0);
-
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking all notifications as read for user {UserId}", recipientId);
+                throw;
+            }
         }
 
         public async Task SendNotificationAsync(Guid recipientId, NotificationDto notification)

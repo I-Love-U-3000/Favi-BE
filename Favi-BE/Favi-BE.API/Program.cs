@@ -186,6 +186,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseMiddleware<Favi_BE.API.Middleware.ExceptionHandlingMiddleware>();
+
 app.UseCors("Frontend");
 
 app.UseHttpsRedirection();
