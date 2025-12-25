@@ -390,10 +390,18 @@ start
 :DELETE /api/chat/messages/{id};
 |Database|
 :DELETE FROM "Messages" WHERE Id=@id;
-|System|
-:Return OK;
-|Authenticated User|
-:Message disappears;
+if (Success?) then (Yes)
+  |System|
+  :Return OK;
+  |Authenticated User|
+  :Message disappears;
+else (No)
+  |System|
+  :Log Error;
+  :Return 500;
+  |Authenticated User|
+  :Show Error;
+endif
 stop
 @enduml
 ```
@@ -411,11 +419,21 @@ View -> Controller: DELETE /api/chat/messages/{id}
 activate Controller
 Controller -> DB: Delete Record
 activate DB
-DB --> Controller: Success
-deactivate DB
-Controller --> View: 200 OK
-deactivate Controller
-View -> View: Remove Component
+alt Success
+    DB --> Controller: Success
+    deactivate DB
+    Controller --> View: 200 OK
+    deactivate Controller
+    View -> View: Remove Component
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 @enduml
 ```
 
@@ -519,7 +537,13 @@ start
 |Database|
 :UPDATE "UserConversations" 
 SET LastReadMessageId = @latest;
-stop
+if (Success?) then (Yes)
+    stop
+else (No)
+    :Log Error;
+    :Return 500;
+    stop
+endif
 @enduml
 ```
 
@@ -536,10 +560,19 @@ View -> Controller: MarkAsRead(id, msgId)
 activate Controller
 Controller -> DB: Update Pivot Table
 activate DB
-DB --> Controller: Done
-deactivate DB
-Controller --> View: 204 No Content
-deactivate Controller
+alt Success
+    DB --> Controller: Done
+    deactivate DB
+    Controller --> View: 204 No Content
+    deactivate Controller
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+end
 @enduml
 ```
 
@@ -579,10 +612,18 @@ start
 :POST /api/chat/{id}/leave;
 |Database|
 :DELETE FROM "UserConversations";
-|System|
-:Return Success;
-|Authenticated User|
-:Redirect to Inbox;
+if (Success?) then (Yes)
+    |System|
+    :Return Success;
+    |Authenticated User|
+    :Redirect to Inbox;
+else (No)
+    |System|
+    :Log Error;
+    :Return 500;
+    |Authenticated User|
+    :Show Error;
+endif
 stop
 @enduml
 ```
@@ -600,9 +641,19 @@ View -> Controller: LeaveGroup(id)
 activate Controller
 Controller -> DB: Remove Member
 activate DB
-DB --> Controller: Done
-deactivate DB
-Controller --> View: OK
-deactivate Controller
+alt Success
+    DB --> Controller: Done
+    deactivate DB
+    Controller --> View: OK
+    deactivate Controller
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 @enduml
 ```

@@ -56,10 +56,18 @@ if (Click "Following" Tab?) then (yes)
   :(6) Call GET /api/profiles/{id}/followings;
   |Database|
   :(7) SELECT * FROM "Follows" WHERE FollowerId;
-  |System|
-  :(8) Return List;
-  |Authenticated User|
-  :(8) View List of Followings;
+  if (Success?) then (Yes)
+      |System|
+      :(8) Return List;
+      |Authenticated User|
+      :(8) View List of Followings;
+  else (No)
+      |System|
+      :Log Error;
+      :Return 500;
+      |Authenticated User|
+      :Show Error;
+  endif
 endif
 stop
 @enduml
@@ -80,6 +88,7 @@ View -> Controller: GetFollowers(userId)
 activate Controller
 Controller -> DB: Query(Where FolloweeId == userId)
 activate DB
+alt Success
 DB --> Controller: List<Follow>
 deactivate DB
 loop For Each Follow
@@ -88,6 +97,15 @@ end
 Controller --> View: List<ProfileDto>
 deactivate Controller
 View --> User: Display "Followers" Tab
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 deactivate View
 
 User -> View: Click "Following" Tab
@@ -96,11 +114,21 @@ View -> Controller: GetFollowings(userId)
 activate Controller
 Controller -> DB: Query(Where FollowerId == userId)
 activate DB
+alt Success
 DB --> Controller: List<Follow>
 deactivate DB
-Controller --> View: List<ProfileDto>
-deactivate Controller
-View --> User: Update List
+    Controller --> View: List<ProfileDto>
+    deactivate Controller
+    View --> User: Update List
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 deactivate View
 @enduml
 ```
@@ -433,10 +461,18 @@ start
 |Database|
 :(5) INSERT INTO "UserModerations";
 :(6) DELETE FROM "Follows";
-|System|
-:(7) Return Success;
-|Authenticated User|
-:(8) Redirect to Home;
+if (Success?) then (Yes)
+  |System|
+  :(7) Return Success;
+  |Authenticated User|
+  :(8) Redirect to Home;
+else (No)
+  |System|
+  :Log Error;
+  :Return 500;
+  |Authenticated User|
+  :Show Error;
+endif
 stop
 @enduml
 ```
@@ -459,12 +495,23 @@ activate Controller
 Controller -> DB_Mod: Add Block Record
 Controller -> DB_Follow: Remove Mutual Follows
 activate DB_Follow
-DB_Follow --> Controller: Done
-deactivate DB_Follow
-Controller --> Modal: 200 OK
-deactivate Controller
-Modal -> User: Show "Blocked" Toast
-Modal -> View: Redirect Home
+activate DB_Follow
+alt Success
+    DB_Follow --> Controller: Done
+    deactivate DB_Follow
+    Controller --> Modal: 200 OK
+    deactivate Controller
+    Modal -> User: Show "Blocked" Toast
+    Modal -> View: Redirect Home
+else Database Error
+    activate DB_Follow
+    DB_Follow --> Controller: Exception
+    deactivate DB_Follow
+    Controller -> Controller: Log Error
+    Controller --> Modal: 500 Error
+    deactivate Controller
+    Modal -> User: Show Error Action
+end
 @enduml
 ```
 
@@ -505,10 +552,18 @@ start
 :(2) DELETE /api/users/block/{id};
 |Database|
 :(3) DELETE FROM "UserModerations";
-|System|
-:(4) Return Success;
-|Authenticated User|
-:(5) User removed from list;
+if (Success?) then (Yes)
+    |System|
+    :(4) Return Success;
+    |Authenticated User|
+    :(5) User removed from list;
+else (No)
+    |System|
+    :Log Error;
+    :Return 500;
+    |Authenticated User|
+    :Show Error;
+endif
 stop
 @enduml
 ```
@@ -526,11 +581,21 @@ View -> Controller: Unblock(targetId)
 activate Controller
 Controller -> DB: Delete Record
 activate DB
-DB --> Controller: Done
-deactivate DB
-Controller --> View: 200 OK
-deactivate Controller
-View -> View: Remove Item from List
+alt Success
+    DB --> Controller: Done
+    deactivate DB
+    Controller --> View: 200 OK
+    deactivate Controller
+    View -> View: Remove Item from List
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 @enduml
 ```
 

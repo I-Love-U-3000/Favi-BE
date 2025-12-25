@@ -132,9 +132,16 @@ start
 |System|
 :POST /api/profiles/links;
 |Database|
+|Database|
 :INSERT INTO "SocialLinks";
-|System|
-:Return LinkDto;
+if (Success?) then (Yes)
+    |System|
+    :Return LinkDto;
+else (No)
+    |System|
+    :Log Error;
+    :Return 500;
+endif
 stop
 @enduml
 ```
@@ -152,10 +159,19 @@ View -> Controller: AddLink(dto)
 activate Controller
 Controller -> DB: Add Entity
 activate DB
-DB --> Controller: Success
-deactivate DB
-Controller --> View: Return Created Dto
-deactivate Controller
+alt Success
+    DB --> Controller: Success
+    deactivate DB
+    Controller --> View: Return Created Dto
+    deactivate Controller
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: LogError
+    Controller --> View: 500 Error
+    deactivate Controller
+end
 @enduml
 ```
 
@@ -196,12 +212,21 @@ start
 |System|
 :(2) DELETE /api/profiles;
 |Database|
+|Database|
 :(3) DELETE FROM "Profiles";
-|System|
-:(4) Call Auth Provider Delete;
-:(5) Return Success;
-|Authenticated User|
-:(6) Logged Out;
+if (Success?) then (Yes)
+    |System|
+    :(4) Call Auth Provider Delete;
+    :(5) Return Success;
+    |Authenticated User|
+    :(6) Logged Out;
+else (No)
+    |System|
+    :Log Error;
+    :Return 500;
+    |Authenticated User|
+    :Show Error;
+endif
 stop
 @enduml
 ```
@@ -220,11 +245,21 @@ View -> Controller: Delete()
 activate Controller
 Controller -> DB: Remove Profile (Cascade)
 activate DB
-DB --> Controller: Done
-deactivate DB
-Controller -> Auth: DeleteUser(id)
-Controller --> View: 200 OK
-deactivate Controller
-View -> User: Logout
+alt Success
+    DB --> Controller: Done
+    deactivate DB
+    Controller -> Auth: DeleteUser(id)
+    Controller --> View: 200 OK
+    deactivate Controller
+    View -> User: Logout
+else Failed
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 @enduml
 ```

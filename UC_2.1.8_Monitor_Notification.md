@@ -287,8 +287,16 @@ start
 :DELETE /api/notifications/{id};
 |Database|
 :DELETE FROM "Notifications" WHERE Id=@id;
-|System|
-:Return OK;
+if (Success?) then (Yes)
+  |System|
+  :Return OK;
+else (No)
+  |System|
+  :Log Error;
+  :Return 500;
+  |Authenticated User|
+  :Show Error;
+endif
 stop
 @enduml
 ```
@@ -306,10 +314,20 @@ View -> Controller: Delete API
 activate Controller
 Controller -> DB: Remove
 activate DB
-DB --> Controller: Done
-deactivate DB
-Controller --> View: OK
-deactivate Controller
+alt Success
+    DB --> Controller: Done
+    deactivate DB
+    Controller --> View: OK
+    deactivate Controller
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 @enduml
 ```
 
@@ -348,8 +366,16 @@ start
 :PATCH /api/profiles/settings;
 |Database|
 :UPDATE "Profiles" SET Settings...;
-|System|
-:Return Updated Settings;
+if (Success?) then (Yes)
+  |System|
+  :Return Updated Settings;
+else (No)
+  |System|
+  :Log Error;
+  :Return 500;
+  |Authenticated User|
+  :Show Error;
+endif
 stop
 @enduml
 ```
@@ -367,9 +393,19 @@ View -> Controller: UpdateSettings(dto)
 activate Controller
 Controller -> DB: Save Changes
 activate DB
-DB --> Controller: Done
-deactivate DB
-Controller --> View: OK
-deactivate Controller
+alt Success
+    DB --> Controller: Done
+    deactivate DB
+    Controller --> View: OK
+    deactivate Controller
+else Database Error
+    activate DB
+    DB --> Controller: Exception
+    deactivate DB
+    Controller -> Controller: Log Error
+    Controller --> View: 500 Error
+    deactivate Controller
+    View -> User: Show Error
+end
 @enduml
 ```

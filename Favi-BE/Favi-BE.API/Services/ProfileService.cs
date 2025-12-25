@@ -154,28 +154,44 @@ namespace Favi_BE.Services
 
         public async Task<SocialLinkDto> AddSocialLinkAsync(Guid profileId, SocialLinkDto dto)
         {
-            var entity = new SocialLink
+            try
             {
-                Id = Guid.NewGuid(),
-                ProfileId = profileId,
-                Kind = dto.SocialKind,
-                Url = dto.Url,
-                CreatedAt = DateTime.UtcNow
-            };
-            await _uow.SocialLinks.AddAsync(entity);
-            await _uow.CompleteAsync();
+                var entity = new SocialLink
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = profileId,
+                    Kind = dto.SocialKind,
+                    Url = dto.Url,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _uow.SocialLinks.AddAsync(entity);
+                await _uow.CompleteAsync();
 
-            return new SocialLinkDto(entity.Id, entity.Kind, entity.Url);
+                return new SocialLinkDto(entity.Id, entity.Kind, entity.Url);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding social link for profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<bool> RemoveSocialLinkAsync(Guid profileId, Guid linkId)
         {
-            var link = await _uow.SocialLinks.GetByIdAsync(linkId);
-            if (link is null || link.ProfileId != profileId) return false;
+            try
+            {
+                var link = await _uow.SocialLinks.GetByIdAsync(linkId);
+                if (link is null || link.ProfileId != profileId) return false;
 
-            _uow.SocialLinks.Remove(link);
-            await _uow.CompleteAsync();
-            return true;
+                _uow.SocialLinks.Remove(link);
+                await _uow.CompleteAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing social link {LinkId} for profile {ProfileId}", linkId, profileId);
+                throw;
+            }
         }
         public async Task<Profile> CreateProfileAsync(Guid id, string username, string? displayName)
         {
@@ -195,11 +211,19 @@ namespace Favi_BE.Services
 
         public async Task<bool> DeleteAsync(Guid profileId)
         {
-            var profile = await _uow.Profiles.GetByIdAsync(profileId);
-            if (profile is null) return false;
-            _uow.Profiles.Remove(profile);
-            await _uow.CompleteAsync();
-            return true;
+            try
+            {
+                var profile = await _uow.Profiles.GetByIdAsync(profileId);
+                if (profile is null) return false;
+                _uow.Profiles.Remove(profile);
+                await _uow.CompleteAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting profile {ProfileId}", profileId);
+                throw;
+            }
         }
 
         public async Task<Profile?> GetEntityByIdAsync(Guid profileId)
