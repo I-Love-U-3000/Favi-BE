@@ -7,7 +7,7 @@ namespace Favi_BE.Models.Dtos
     {
         public string BaseUrl { get; set; } = string.Empty;
         public bool Enabled { get; set; } = true;
-        public int TimeoutSeconds { get; set; } = 10;
+        public int TimeoutSeconds { get; set; } = 60;
         public double Alpha { get; set; } = 0.5;
     }
 

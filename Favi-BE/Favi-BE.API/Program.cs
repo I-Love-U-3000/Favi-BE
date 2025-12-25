@@ -134,7 +134,9 @@ builder.Services.AddHttpClient<IVectorIndexService, VectorIndexService>(client =
 {
     var vectorConfig = builder.Configuration.GetSection("VectorIndex");
     var baseUrl = vectorConfig["BaseUrl"] ?? "http://vector-index-api:8080";
+    var timeoutSeconds = int.Parse(vectorConfig["TimeoutSeconds"] ?? "60");
     client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 

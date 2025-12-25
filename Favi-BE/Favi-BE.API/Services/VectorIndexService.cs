@@ -112,15 +112,20 @@ namespace Favi_BE.Services
             try
             {
                 _logger.LogInformation(
-                    "Semantic search for user {UserId}, query: '{Query}', k: {K}",
-                    userId, query, k
+                    "Semantic search for user {UserId}, query: '{Query}', k: {K}, timeout: {Timeout}s",
+                    userId, query, k, _options.TimeoutSeconds
                 );
+
+                // Log the base address for debugging
+                _logger.LogDebug("Vector API BaseAddress: {BaseAddress}", _httpClient.BaseAddress);
 
                 using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 cts.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds));
 
                 // GET /search?user_id=xxx&q=xxx&k=xxx
                 var url = $"/search?user_id={userId}&q={Uri.EscapeDataString(query)}&k={k}";
+                _logger.LogDebug("Calling vector API: {Url}", url);
+
                 var response = await _httpClient.GetAsync(url, cts.Token);
 
                 if (!response.IsSuccessStatusCode)
@@ -144,10 +149,28 @@ namespace Favi_BE.Services
 
                 return result ?? new List<VectorSearchResultItem>();
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                _logger.LogInformation("Semantic search was cancelled by client");
+                return new List<VectorSearchResultItem>();
+            }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Timeout during semantic search after {TimeoutSeconds}s",
-                    _options.TimeoutSeconds);
+                _logger.LogWarning(
+                    "Timeout during semantic search after {TimeoutSeconds}s. " +
+                    "The vector API at {BaseUrl} may be slow or unresponsive. " +
+                    "Consider increasing TimeoutSeconds or checking the vector API service.",
+                    _options.TimeoutSeconds, _httpClient.BaseAddress
+                );
+                return new List<VectorSearchResultItem>();
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex,
+                    "HTTP error during semantic search. BaseAddress: {BaseAddress}. " +
+                    "Ensure the vector API service is running and accessible.",
+                    _httpClient.BaseAddress
+                );
                 return new List<VectorSearchResultItem>();
             }
             catch (Exception ex)
