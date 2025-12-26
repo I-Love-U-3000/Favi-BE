@@ -9,7 +9,6 @@ namespace Favi_BE.Controllers;
 
 [ApiController]
 [Route("api/admin/users")]
-[Authorize(Policy = AdminPolicies.RequireAdmin)]
 public class AdminUsersController : ControllerBase
 {
     private readonly IUserModerationService _moderationService;

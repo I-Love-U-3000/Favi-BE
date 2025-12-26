@@ -35,12 +35,10 @@ namespace Favi_BE.Controllers
             return Ok(report);
         }
 
-        [Authorize(Policy = AdminPolicies.RequireAdmin)]
         [HttpGet]
         public async Task<ActionResult<PagedResult<ReportResponse>>> GetAll(int page = 1, int pageSize = 20) =>
             Ok(await _reports.GetAllAsync(page, pageSize));
 
-        [Authorize(Policy = AdminPolicies.RequireAdmin)]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStatus(Guid id, UpdateReportStatusRequest dto)
         {
