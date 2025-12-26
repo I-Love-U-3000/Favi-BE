@@ -9,7 +9,6 @@ namespace Favi_BE.Controllers;
 
 [ApiController]
 [Route("api/admin/content")]
-[Authorize(Policy = AdminPolicies.RequireAdmin)]
 public class AdminContentController : ControllerBase
 {
     private readonly IPostService _postService;

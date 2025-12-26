@@ -120,6 +120,7 @@ builder.Services.AddScoped<IUserModerationService, UserModerationService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 // Add background services
 builder.Services.AddHostedService<PostCleanupService>();
