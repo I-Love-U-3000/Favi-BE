@@ -1,0 +1,46 @@
+Stt,Tên chức năng chính,Tên chức năng con,Mobile,Web,C1,W1,C2,W2,C3,W3,C4,W4,C5,W5
+1,System Administration,Manage user accounts,,x,4,5,3,4,2,4,2,5,1,3
+2,System Administration,Manage user roles,,x,2,3,2,3,1,2,1,3,1,2
+3,System Administration,Manage employee accounts,,x,4,5,3,4,2,4,2,5,1,3
+4,System Administration,Configure security policies,,x,3,4,2,3,2,3,2,4,1,3
+5,System Administration,Monitor system performance,,x,2,3,1,2,1,2,1,3,1,2
+6,System Administration,View system analytics,,x,3,4,2,3,2,3,1,3,1,2
+7,System Administration,Track system usage,,x,2,3,2,3,1,2,1,3,1,2
+8,Booking & Ticketing,Search flights,x,x,5,6,4,5,3,5,3,6,2,4
+9,Booking & Ticketing,View flight details,x,x,3,4,2,3,2,3,2,4,1,2
+10,Booking & Ticketing,Book tickets,x,x,6,7,5,6,4,6,4,7,3,5
+11,Booking & Ticketing,Enter passenger details,x,x,4,5,3,4,2,4,2,5,2,3
+12,Booking & Ticketing,Select seats,x,x,4,5,3,4,3,5,2,5,2,4
+13,Booking & Ticketing,Manage seat assignments,x,x,3,4,2,3,2,3,2,4,1,3
+14,Booking & Ticketing,Manage bookings,x,x,5,6,4,5,3,5,3,6,2,4
+15,Booking & Ticketing,Look up booking,x,x,3,4,2,3,2,3,2,4,1,3
+16,Booking & Ticketing,Handle ticket modifications,x,x,4,5,3,4,3,5,2,5,2,4
+17,Booking & Ticketing,Process ticket booking,x,x,5,6,4,5,3,5,3,6,2,4
+18,Booking & Ticketing,Ask for refund,x,x,4,5,3,4,2,4,2,5,2,4
+19,Booking & Ticketing,Search customer bookings,x,x,4,5,3,4,2,4,2,5,1,3
+20,Financial Management,View financial reports,,x,4,5,3,4,3,5,2,5,2,4
+21,Financial Management,Generate statistics,,x,4,5,3,4,3,5,2,5,2,4
+22,Financial Management,Track booking revenue,,x,3,4,2,3,2,3,2,4,1,3
+23,Financial Management,View revenue analytics,,x,4,5,3,4,3,5,2,5,2,4
+24,Customer Support & Communication,Contact customer support via chat,,x,5,6,4,5,4,6,3,6,2,4
+25,Customer Support & Communication,Handle customer inquiries,,x,4,5,3,4,3,5,2,5,2,4
+26,Customer Support & Communication,Assist with bookings,,x,3,4,2,3,2,3,2,4,1,3
+27,Customer Support & Communication,Escalate complex issues,,x,3,4,2,3,2,3,2,4,1,3
+28,Customer Support & Communication,Access business policies,,x,2,3,1,2,1,2,1,3,1,2
+29,Authentication & Access,Register,x,x,4,5,3,4,2,4,2,5,2,4
+30,Authentication & Access,Log in,x,x,3,4,2,3,2,3,2,4,2,3
+31,Authentication & Access,Reset password,x,x,3,4,2,3,2,3,2,4,1,3
+32,Flight Operations,Manage aircraft database,,x,4,5,3,4,2,4,2,5,1,3
+33,Flight Operations,Manage airport database,,x,4,5,3,4,2,4,2,5,1,3
+34,Flight Operations,Manage ticket classes,,x,3,4,2,3,2,3,2,4,1,3
+35,Flight Operations,Configure business rules,,x,4,5,3,4,3,5,2,5,2,4
+36,Flight Operations,Manage flight information,,x,5,6,4,5,3,5,3,6,2,4
+37,Flight Operations,Create flight schedules,,x,5,6,4,5,3,5,3,6,2,4
+38,Flight Operations,Update flight schedules,,x,4,5,3,4,3,5,2,5,2,4
+39,Flight Operations,Monitor and adjust flight operations,,x,4,5,3,4,3,5,2,5,2,4
+40,Payment Processing,Make payment,x,x,5,6,4,5,3,5,3,6,2,4
+41,Payment Processing,Process payment,,x,4,5,3,4,3,5,2,5,2,4
+42,Payment Processing,Process refunds,,x,4,5,3,4,3,5,2,5,2,4
+43,Payment Processing,Handle payment gateway,,x,5,6,4,5,4,6,3,6,2,4
+,,Tổng,,,206,,165,,176,,205,,146
+,,Tính giá trị hiệu chỉnh,,,,,,,,,,,,

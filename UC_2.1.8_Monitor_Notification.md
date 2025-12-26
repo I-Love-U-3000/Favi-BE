@@ -7,51 +7,48 @@
 
 ---
 
-## 2.1.8.1 Monitor Notification (View List)
+## 2.1.8.1 Monitor Notification (Overview)
 
 ### Use Case Description
 | Attribute | Details |
 | :--- | :--- |
-| **Name** | **Monitor Notification (View List)** |
-| **Description** | View the notification stream. |
+| **Name** | **Monitor Notification** |
+| **Description** | Central hub for viewing and managing system alerts and notifications. |
 | **Actor** | Authenticated User |
-| **Trigger** | ❖ User clicks the [iconBell] on the Navigation Bar. |
-| **Pre-condition** | ❖ User is logged in. |
-| **Post-condition** | ❖ System displays the notification dropdown/page with recent alerts. |
+| **Trigger** | ❖ User clicks the "Bell" icon. |
+| **Post-condition** | ❖ User views or manages notifications. |
 
 ### Business Rules (BR)
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>When the user clicks the Bell Icon on the navbar, the system toggles the Notification Center dropdown/page. |
-| (2) | BR2 | **Querying Rules:**<br>The system calls `NotificationsController.GetNotifications` (`GET /api/notifications`) to fetch the latest alerts. |
-| (3) | BR3 | **Querying Rules:**<br>The database executes a `SELECT` query on the `Notifications` table, filtering for records where `RecipientId` is the current user, ordered by time. |
-| (4) | BR4 | **Displaying Rules:**<br>The system returns a `PagedResult` containing notification DTOs. |
-| (5) | BR5 | **Displaying Rules:**<br>The UI renders the notification list. |
-| (5.1) | BR5.1 | **Displaying Rules (Unread):**<br>If `IsRead` is false, the item is displayed with a highlighted background (e.g., light blue) to indicate it is new. |
-| (5.2) | BR5.2 | **Displaying Rules (Read):**<br>If `IsRead` is true, the item is displayed with a standard/white background. |
+| (1) | BR1 | **Initialization:**<br>❖ The System fetches the user's notification stream, highlighting unread items.<br>❖ The System provides controls to Mark as Read, Delete, or Configure preferences. |
 
 ### Diagrams
 
 **Activity Diagram**
 ```plantuml
 @startuml
-|Authenticated User|
+|User|
 start
-:(1) Click Bell Icon;
-|System|
-:(2) GET /api/notifications;
-|Database|
-:(3) SELECT * FROM "Notifications";
-|System|
-:(4) Return PagedResult;
-|Authenticated User|
-:(5) Processing Display;
-if (IsRead?) then (Yes)
-  :(5.1) Show White BG;
-else (No)
-  :(5.2) Show Highlight BG;
-endif
+:(1) View Notification Hub;
+:Choose Function;
+split
+    -> View List;
+    :(2.1) Activity\nView Notifications;
+split again
+    -> Read;
+    :(2.2) Activity\nMark as Read;
+split again
+    -> Mark All;
+    :(2.3) Activity\nMark All Read;
+split again
+    -> Delete;
+    :(2.4) Activity\nDelete Notification;
+split again
+    -> Configure;
+    :(2.5) Activity\nConfigure Preferences;
+end split
 stop
 @enduml
 ```
@@ -60,28 +57,28 @@ stop
 ```plantuml
 @startuml
 autonumber
-actor "Authenticated User" as User
-boundary "NavbarView (Mock)" as View
+actor "User" as User
+boundary "NotificationHub" as View
 control "NotificationsController" as Controller
-entity "Notifications" as Entity
 
-User -> View: Click [iconBell]
-activate View
-View -> Controller: GetNotifications(paging)
+User -> View: Open Notifications
+View -> Controller: GetNotifications()
 activate Controller
-Controller -> Entity: Query (RecipientId = Me)
-activate Entity
-Entity --> Controller: Return List
-deactivate Entity
-Controller --> View: Return PagedResult
+Controller --> View: PagedResult<NotificationDto>
 deactivate Controller
-View --> User: Render List
+View -> User: Display List
 
-opt Highlight Unread
-    View -> View: Check IsRead
-    note right: If false, apply highlight
+opt Mark Read
+    ref over User, View, Controller: Sequence Mark Read
 end
-deactivate View
+
+opt Mark All Read
+    ref over User, View, Controller: Sequence Mark All Read
+end
+
+opt Delete
+    ref over User, View, Controller: Sequence Delete
+end
 @enduml
 ```
 
@@ -103,12 +100,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>When the user clicks on a specific notification item, the system handles the read confirmation and navigation. |
-| (2) | BR2 | **Processing Rules:**<br>The system calls `NotificationsController.MarkAsRead` (`PUT /api/notifications/{id}/read`) for that specific notification. |
-| (3) | BR3 | **Storing Rules:**<br>The database updates the record in the `Notifications` table, setting the `IsRead` column to `TRUE`. |
-| (4) | BR4 | **Displaying Rules:**<br>The system returns a success status (200 OK) to acknowledge the update. |
-| (5) | BR5 | **Processing Rules:**<br>The UI reads the `TargetUrl` or resource parameters from the notification and redirects the browser to the relevant content (e.g., specific Post, Comment, or Profile). |
-| (6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Processing & Storing Rules:**<br>❖ When user selects an item, System calls method `MarkAsRead(id)` (Step 2).<br>❖ System updates data in the table “Notifications” in the database (Refer to “Notifications” table in “DB Sheet” file) setting `IsRead` = `True` (Step 3). |
+| (3.1)-(4) | BR2 | **Displaying Rules:**<br>❖ System returns Success (Step 3.1).<br>❖ System validates the `TargetUrl` contained in the notification data.<br>❖ System redirects browser to the specific content page (e.g., Post Details or User Profile) (Refer to “PostDetail” view in “View Description” file) (Step 4). |
+| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 3.2).<br> System returns `500 Internal Server Error`.<br> Show Error (Step 5). |
 
 ### Diagrams
 
@@ -125,15 +119,14 @@ start
 :(3) UPDATE "Notifications" SET IsRead=TRUE;
 if (Update Success?) then (Yes)
     |System|
-    :(4) Return Success;
+    :(3.1) Return Success;
     |Authenticated User|
-    :(5) Navigate to Target;
+    :(4) Navigate to Target;
 else (No)
     |System|
-    :Log Error;
-    :Return Error (500);
+    :(3.2) Log Error & Return 500;
     |Authenticated User|
-    :Show Error;
+    :(5) Show Error;
 endif
 stop
 @enduml
@@ -191,11 +184,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User clicks the "Mark all as read" button/icon in the header. |
-| (2) | BR2 | **Submitting Rules:**<br>System calls `NotificationsController.MarkAllAsRead()`. |
-| (3) | BR3 | **Storing Rules:**<br>SQL: `UPDATE "Notifications" SET "IsRead" = true WHERE "RecipientProfileId" = @me`. |
-| (4) | BR4 | **Displaying Rules:**<br>Frontend clears the red badge count on the Bell Icon immediately. |
-| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Storing Rules:**<br>❖ User clicks "Mark All as Read". System calls method `MarkAllAsRead()` (Step 2).<br>❖ System executes syntax `UPDATE Notifications SET IsRead=1 WHERE RecipientId=[User.ID]` on table “Notifications” (Refer to “Notifications” table in “DB Sheet” file) (Step 3). |
+| (3.1)-(4) | BR2 | **Displaying Rules:**<br>❖ System returns success confirmation (Step 3.1).<br>❖ System clears the "Unread Badge" count on the Navigation Bar (Refer to “NavBar” view in “View Description” file) (Step 4). |
+| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 3.2).<br> System returns 500.<br> Show Error (Step 5). |
 
 ### Diagrams
 
@@ -204,22 +195,21 @@ deactivate View
 @startuml
 |Authenticated User|
 start
-:Click Mark All;
+:(1) Click Mark All;
 |System|
-:PUT /api/notifications/read-all;
+:(2) PUT /api/notifications/read-all;
 |Database|
-:UPDATE "Notifications" ...;
+:(3) UPDATE "Notifications" ...;
 if (Update Success?) then (Yes)
     |System|
-    :Return OK;
+    :(3.1) Return OK;
     |Authenticated User|
-    :Badge Disappears;
+    :(4) Badge Disappears;
 else (No)
     |System|
-    :Log Error;
-    :Return Error (500);
+    :(3.2) Log Error & Return 500;
     |Authenticated User|
-    :Show Error;
+    :(5) Show Error;
 endif
 stop
 @enduml
@@ -228,10 +218,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "NotificationCenterHeader" as View
-participant "NotificationsController" as Controller
-participant "Notifications" as DB
+boundary "NotificationCenterHeader" as View
+control "NotificationsController" as Controller
+entity "Notifications" as DB
 
 User -> View: Click Checkmark
 View -> Controller: MarkAllAsRead()
@@ -273,10 +264,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User swipes left on an item or uses the delete menu options. |
-| (2) | BR2 | **Submitting Rules:**<br>System calls `NotificationsController` DELETE endpoint. |
-| (3) | BR3 | **Storing Rules:**<br>System deletes the row from `"Notifications"`. |
-| (4) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Storing Rules:**<br>❖ User selects Delete option. System calls method `DeleteNotification(id)` (Step 2).<br>❖ System deletes the record from table “Notifications” in the database (Refer to “Notifications” table in “DB Sheet” file) (Step 3). |
+| (3.1) | BR2 | **Displaying Rules:**<br>❖ System returns `200 OK` (Step 3.1).<br>❖ System removes the item from the list view immediately. |
+| (3.2)-(4) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 3.2).<br> System returns 500.<br> Show Error (Step 4). |
 
 ### Diagrams
 
@@ -285,20 +275,19 @@ end
 @startuml
 |Authenticated User|
 start
-:Swipe Delete;
+:(1) Swipe Delete;
 |System|
-:DELETE /api/notifications/{id};
+:(2) DELETE /api/notifications/{id};
 |Database|
-:DELETE FROM "Notifications" WHERE Id=@id;
+:(3) DELETE FROM "Notifications" WHERE Id=@id;
 if (Success?) then (Yes)
   |System|
-  :Return OK;
+  :(3.1) Return OK;
 else (No)
   |System|
-  :Log Error;
-  :Return 500;
+  :(3.2) Log Error & Return 500;
   |Authenticated User|
-  :Show Error;
+  :(4) Show Error;
 endif
 stop
 @enduml
@@ -307,10 +296,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "NotificationItem" as View
-participant "NotificationsController" as Controller
-participant "Notifications" as DB
+boundary "NotificationItem" as View
+control "NotificationsController" as Controller
+entity "Notifications" as DB
 
 User -> View: Delete Action
 View -> Controller: Delete API
@@ -352,11 +342,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Displaying Rules:**<br>User enters "Settings -> Notifications". Displays list of toggles (Likes, Comments, Follows). |
-| (2) | BR2 | **Selecting Rules:**<br>User toggles "Email Notifications for Likes" to OFF. |
-| (3) | BR3 | **Submitting Rules:**<br>System calls `ProfilesController.UpdateSettings`. |
-| (4) | BR4 | **Storing Rules:**<br>Updates the JSONB settings column or specific columns in `"Profiles"` table. |
-| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Storing Rules:**<br>❖ User changes a toggle value (e.g., "Email For Likes"). System calls method `UpdateSettings(dto)` (Step 2).<br>❖ System updates the `Settings` JSON column in table “Profiles” (Refer to “Profiles” table in “DB Sheet” file) for the current user (Step 3). |
+| (3.1) | BR2 | **Displaying Rules:**<br>❖ System returns updated settings (Step 3.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_SETTINGS_SAVED). |
+| (3.2)-(4) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 3.2).<br> System returns 500.<br> Show Error (Step 4). |
 
 ### Diagrams
 
@@ -365,20 +353,19 @@ end
 @startuml
 |Authenticated User|
 start
-:Toggle Switch;
+:(1) Toggle Switch;
 |System|
-:PATCH /api/profiles/settings;
+:(2) PATCH /api/profiles/settings;
 |Database|
-:UPDATE "Profiles" SET Settings...;
+:(3) UPDATE "Profiles" SET Settings...;
 if (Success?) then (Yes)
   |System|
-  :Return Updated Settings;
+  :(3.1) Return Updated Settings;
 else (No)
   |System|
-  :Log Error;
-  :Return 500;
+  :(3.2) Log Error & Return 500;
   |Authenticated User|
-  :Show Error;
+  :(4) Show Error;
 endif
 stop
 @enduml
@@ -387,10 +374,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "NotificationSettingsView" as View
-participant "ProfilesController" as Controller
-participant "Profiles" as DB
+boundary "NotificationSettingsView" as View
+control "ProfilesController" as Controller
+entity "Profiles" as DB
 
 User -> View: Toggle "Email for Likes"
 View -> Controller: UpdateSettings(dto)

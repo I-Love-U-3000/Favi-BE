@@ -1,0 +1,16 @@
+STT,Nội dung câu hỏi,Điểm (0-5),Ghi chú
+1,Hệ thống đòi hỏi phải bảo đảm an toàn về việc cập nhật và cứu dữ liệu hay không?,4,Cần cơ chế backup/restore tin cậy cho dữ liệu người dùng
+2,Đòi hỏi việc truyền thông hay không?,5,Hệ thống hoạt động hoàn toàn qua mạng (Mobile & Web)
+3,Có các chức năng xử lý phân bố hay không?,4,Kiến trúc Client-Server, API, xử lý background
+4,Vấn đề tốc độ có quan trọng hay không?,4,Trải nghiệm người dùng MXH yêu cầu phản hồi nhanh
+5,Hệ thống có đòi hỏi cấu hình mạnh?,3,Máy chủ cần cấu hình tốt để chịu tải
+6,Có đòi hỏi nhập dữ liệu trực tuyến hay không?,5,Người dùng liên tục đăng bài, chat, comment
+7,Dữ liệu nhập trực tuyến (nếu có) có đòi hỏi giao dịch (transaction) hay không?,4,Các thao tác cần đảm bảo tính toàn vẹn (Post, Payment)
+8,Dữ liệu lưu trữ được cập nhật trực tuyến hay không?,5,Dữ liệu thay đổi realtime
+9,Có yêu cầu các thao tác nhập xuất hay các câu truy vấn phức tạp không?,4,Search engine, gợi ý bạn bè, newsfeed
+10,Xử lý bên trong có phức tạp không?,4,Thuật toán hiển thị newsfeed, xử lý ảnh/video
+11,Mã nguồn có cần thiết kế để có thể dùng lại không?,4,Module hóa để phát triển lâu dài
+12,Sự chuyển đổi dữ liệu và cài đặt hệ thống có được bao gồm trong giai đoạn thiết kế không?,3,Cần quy trình deploy automation
+13,Hệ thống có được thiết kế để cài đặt cho nhiều tổ chức khác nhau không?,3,Khả năng mở rộng cho nhiều tenant hoặc môi trường
+14,Hệ thống có được thiết kế để dễ dàng thay đổi và dễ dàng sử dụng bởi người dùng không?,5,UX là yếu tố sống còn của MXH
+,Tổng (Fi),57,

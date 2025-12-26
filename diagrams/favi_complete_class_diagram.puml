@@ -1,0 +1,336 @@
+@startuml
+!theme plain
+hide empty members
+left to right direction
+skinparam packageStyle rectangle
+
+package "Enums" {
+    enum UserRole
+    enum PrivacyLevel
+    enum SocialKind
+    enum ConversationType
+    enum MediaType
+    enum ReactionType
+    enum AdminActionType
+    enum ReportTarget
+    enum ReportStatus
+    enum NotificationType
+    enum ModerationActionType
+    
+    enum GroupRole
+    enum MemberStatus
+    enum RequestStatus
+    enum ListingStatus
+    enum TransactionStatus
+    enum TicketStatus
+    enum RSVPStatus
+    enum PermissionLevel
+    enum CampaignStatus
+}
+
+package "Core Context" {
+    class Profile {
+        +Guid Id
+        +string Username
+        +string DisplayName
+        +string? AvatarUrl
+        +string? CoverUrl
+        +string? Bio
+        +UserRole Role
+        +PrivacyLevel PrivacyLevel
+        +bool IsBanned
+        +DateTime CreatedAt
+    }
+
+    class SocialLink {
+        +Guid Id
+        +SocialKind Kind
+        +string Url
+    }
+}
+
+package "Content Context" {
+    class Post {
+        +Guid Id
+        +string? Caption
+        +PrivacyLevel Privacy
+        +string? LocationName
+        +double? LocationLatitude
+        +double? LocationLongitude
+        +bool IsArchived
+        +DateTime CreatedAt
+    }
+
+    class PostMedia {
+        +Guid Id
+        +string Url
+        +MediaType Type
+        +int Position
+    }
+
+    class Comment {
+        +Guid Id
+        +string Content
+        +DateTime CreatedAt
+    }
+
+    class Collection {
+        +Guid Id
+        +string Title
+        +PrivacyLevel PrivacyLevel
+    }
+
+    class Reaction {
+        +Guid Id
+        +ReactionType Type
+    }
+
+    class Tag {
+        +Guid Id
+        +string Name
+    }
+
+    ' Join Entities
+    class PostTag
+    class PostCollection
+}
+
+package "Messaging Context" {
+    class Conversation {
+        +Guid Id
+        +ConversationType Type
+        +DateTime? LastMessageAt
+    }
+
+    class Message {
+        +Guid Id
+        +string? Content
+        +string? MediaUrl
+        +bool IsEdited
+        +DateTime CreatedAt
+    }
+
+    class UserConversation {
+        +string Role
+        +DateTime JoinedAt
+    }
+}
+
+package "Moderation Context" {
+    class Report {
+        +Guid Id
+        +ReportTarget TargetType
+        +string? Reason
+        +ReportStatus Status
+        +string? Data
+    }
+
+    class AdminAction {
+        +Guid Id
+        +AdminActionType ActionType
+        +string? Notes
+        +DateTime CreatedAt
+    }
+
+    class UserModeration {
+        +Guid Id
+        +ModerationActionType ActionType
+        +string Reason
+        +DateTime? ExpiresAt
+        +bool Active
+    }
+}
+
+package "Notification Context" {
+    class Notification {
+        +Guid Id
+        +NotificationType Type
+        +string Message
+        +bool IsRead
+    }
+}
+
+package "Professional Context (Expected)" {
+    class ProfessionalProfile {
+        +Guid Id
+        +string BusinessCategory
+        +string ContactEmail
+        +string? Website
+        +bool IsActive
+    }
+
+    class Insight {
+        +Guid Id
+        +DateTime Date
+        +int Reach
+        +int Impressions
+        +int ProfileVisits
+        +int FollowersGained
+    }
+
+    class AdCampaign {
+        +Guid Id
+        +string TargetAudience
+        +decimal Budget
+        +int DurationDays
+        +CampaignStatus Status
+    }
+}
+
+package "Community Context (Expected)" {
+    class Group {
+        +Guid Id
+        +string Name
+        +string Description
+        +PrivacyLevel PrivacyLevel
+        +string? CoverImageUrl
+    }
+
+    class GroupMember {
+        +Guid Id
+        +GroupRole Role
+        +MemberStatus Status
+        +DateTime JoinedAt
+    }
+
+    class GroupJoinRequest {
+        +Guid Id
+        +RequestStatus Status
+    }
+}
+
+package "Marketplace Context (Expected)" {
+    class MarketplaceListing {
+        +Guid Id
+        +string Title
+        +string Description
+        +decimal Price
+        +string Location
+        +ListingStatus Status
+    }
+
+    class Transaction {
+        +Guid Id
+        +decimal Amount
+        +TransactionStatus Status
+        +DateTime CreatedAt
+    }
+    
+    class Review {
+        +Guid Id
+        +int Rating
+        +string Comment
+    }
+}
+
+package "Event Context (Expected)" {
+    class Event {
+        +Guid Id
+        +string Title
+        +string Description
+        +DateTime StartTime
+        +DateTime EndTime
+        +string Location
+    }
+
+    class EventTicket {
+        +Guid Id
+        +string QrCode
+        +TicketStatus Status
+    }
+
+    class EventRSVP {
+        +Guid Id
+        +RSVPStatus Status
+    }
+}
+
+package "Collaborative Context (Expected)" {
+    class SharedAlbum {
+        +Guid Id
+        +string Title
+        +PrivacyLevel PrivacyLevel
+    }
+
+    class AlbumContributor {
+        +Guid Id
+        +PermissionLevel Level
+    }
+
+    class SharedMedia {
+        +Guid Id
+        +string Url
+        +DateTime TakenAt
+    }
+}
+
+' Relationships
+
+' Core
+Profile "1" *-- "*" SocialLink
+Profile "1" -- "*" Post : Creates >
+Profile "1" -- "*" Comment : Writes >
+Profile "1" -- "*" Collection : Owns >
+Profile "1" -- "*" Reaction : Reacts >
+Profile "1" -- "*" Notification : Receives >
+Profile "1" -- "*" Notification : Triggers >
+Profile "1" -- "*" Report : Reports >
+Profile "1" -- "*" UserConversation
+
+' Content
+Post "1" *-- "*" PostMedia
+Post "1" -- "*" Comment
+Post "1" -- "*" Reaction
+Post "1" -- "*" PostTag
+PostTag "*" -- "1" Tag
+PostCollection "*" -- "1" Post
+PostCollection "*" -- "1" Collection
+
+' Messaging
+Conversation "1" *-- "*" Message
+Conversation "1" -- "*" UserConversation
+UserConversation "*" -- "1" Profile
+Message "*" -- "1" Profile : Sender
+
+' Moderation
+Report "*" -- "1" Profile : Target (if User)
+Report "*" -- "1" Post : Target (if Post)
+Report "*" -- "1" Comment : Target (if Comment)
+UserModeration "*" -- "1" Profile : Target
+UserModeration "*" -- "1" AdminAction
+AdminAction "*" -- "1" Profile : Admin
+
+' Professional
+ProfessionalProfile "1" -- "1" Profile : Extends >
+ProfessionalProfile "1" -- "*" Insight
+ProfessionalProfile "1" -- "*" AdCampaign
+
+' Community
+Group "1" -- "*" GroupMember
+GroupMember "*" -- "1" Profile
+Group "1" -- "*" GroupJoinRequest
+GroupJoinRequest "*" -- "1" Profile
+Group "1" -- "*" Post : Group Content
+
+' Marketplace
+MarketplaceListing "*" -- "1" Profile : Seller
+MarketplaceListing "1" -- "*" Transaction
+Transaction "*" -- "1" Profile : Buyer
+MarketplaceListing "1" -- "*" Review
+Review "*" -- "1" Profile : Reviewer
+
+' Event
+Event "*" -- "1" Profile : Organizer
+Event "1" -- "*" EventTicket
+EventTicket "*" -- "1" Profile : Attendee
+Event "1" -- "*" EventRSVP
+EventRSVP "*" -- "1" Profile
+
+' Collaborative
+SharedAlbum "*" -- "1" Profile : Owner
+SharedAlbum "1" -- "*" AlbumContributor
+AlbumContributor "*" -- "1" Profile
+SharedAlbum "1" -- "*" SharedMedia
+SharedMedia "*" -- "1" Profile : Uploader
+
+@enduml

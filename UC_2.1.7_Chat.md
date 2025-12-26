@@ -7,44 +7,54 @@
 
 ---
 
-## 2.1.7.1 Chat (View Conversations)
+## 2.1.7.1 Chat (Overview)
 
 ### Use Case Description
 | Attribute | Details |
 | :--- | :--- |
-| **Name** | **Chat (View Conversations)** |
-| **Description** | The user views their inbox containing all active conversations. |
+| **Name** | **Chat Overview** |
+| **Description** | Central hub for real-time communication (Inbox, Direct Messages, Group Chats). |
 | **Actor** | Authenticated User |
-| **Trigger** | ❖ User clicks the [iconChat] in the Navigation Bar. |
-| **Pre-condition** | ❖ User is logged in. |
-| **Post-condition** | ❖ System displays the "ChatList" view with sorted conversations. |
+| **Trigger** | ❖ User clicks the "Chat" icon. |
+| **Post-condition** | ❖ User manages conversations or messages. |
 
 ### Business Rules (BR)
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>When the user clicks the Chat Icon in the navigation bar, the system opens the Chat List interface. |
-| (2) | BR2 | **Querying Rules:**<br>The system calls `ChatController.GetConversations` (`GET /api/chat/conversations`) to retrieve the user's active chats. |
-| (3) | BR3 | **Querying Rules:**<br>The database queries the `UserConversations` table, joining with `Conversations` and `Profiles` to get the latest message and recipient details. |
-| (4) | BR4 | **Displaying Rules:**<br>The system returns a list of conversation summaries (DTOs) to the frontend. |
-| (5) | BR5 | **Displaying Rules:**<br>The UI renders the list of conversations (Inbox), showing the last message and timestamp for each. |
+| (1) | BR1 | **Initialization:**<br>❖ The System fetches the user's active conversations sorted by recent activity.<br>❖ The System connects to the Real-time SignalR Hub to receive live updates. |
 
 ### Diagrams
 
 **Activity Diagram**
 ```plantuml
 @startuml
-|Authenticated User|
+|User|
 start
-:(1) Click Chat Icon;
-|System|
-:(2) Call GET /api/chat/conversations;
-|Database|
-:(3) SELECT * FROM "UserConversations";
-|System|
-:(4) Return List;
-|Authenticated User|
-:(4) View Inbox;
+:(1) Open Chat Hub;
+:Choose Function;
+split
+    -> View Inbox;
+    :(2.1) Activity\nView Conversations;
+split again
+    -> New DM;
+    :(2.2) Activity\nCreate Chat (DM);
+split again
+    -> New Group;
+    :(2.3) Activity\nCreate Group Chat;
+split again
+    -> Send/Reply;
+    :(2.4) Activity\nSend Message;
+split again
+    -> Unsend;
+    :(2.5) Activity\nDelete Message;
+split again
+    -> Search;
+    :(2.6) Activity\nSearch History;
+split again
+    -> Mark Read;
+    :(2.7) Activity\nMark Chat Read;
+end split
 stop
 @enduml
 ```
@@ -53,23 +63,32 @@ stop
 ```plantuml
 @startuml
 autonumber
-actor "Authenticated User" as User
-boundary "ChatListView (Mock)" as View
+actor "User" as User
+boundary "ChatHub" as View
 control "ChatController" as Controller
-entity "UserConversations" as Entity
 
 User -> View: Open Chat
-activate View
 View -> Controller: GetConversations()
 activate Controller
-Controller -> Entity: Query UserConversations
-activate Entity
-Entity --> Controller: Return List
-deactivate Entity
-Controller --> View: Return List<SummaryDto>
+Controller --> View: List<ConversationDto>
 deactivate Controller
-View --> User: Render List
-deactivate View
+View -> User: Display Inbox
+
+opt Create DM
+    ref over User, View, Controller: Sequence Create Chat
+end
+
+opt Create Group
+    ref over User, View, Controller: Sequence Create Group
+end
+
+opt Send Message
+    ref over User, View, Controller: Sequence Send Message
+end
+
+opt Unsend
+    ref over User, View, Controller: Sequence Unsend Message
+end
 @enduml
 ```
 
@@ -93,16 +112,9 @@ deactivate View
 | :---: | :---: | :--- |
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>When the user clicks the "Message" button on another user's profile, the system checks for an existing conversation. |
-| (2) | BR2 | **Querying Rules:**<br>The system calls `ChatController.GetOrCreateDm` (`POST /api/chat/dm/{targetId}`) with the target user's ID. |
-| (3) | BR3 | **Querying Rules:**<br>The database checks the `UserConversations` table to see if a direct message (DM) conversation already exists between these two users. |
-| (3.1) | BR3.1 | **Displaying Rules (Existing):**<br>If a conversation exists, the system returns its `ConversationId`, and the UI opens that chat window directly. |
-| (3.2) | BR3.2 | **Processing Rules (New):**<br>If no conversation exists, the system proceeds to step (4) to create a new one. |
-| (4) | BR4 | **Storing Rules:**<br>The database inserts a new record into the `Conversations` table (Type=DM). |
-| (5) | BR5 | **Storing Rules:**<br>The database inserts two records into `UserConversations`, linking both the current user and the target user to the new conversation. |
-| (6) | BR6 | **Displaying Rules:**<br>The system returns the new `ConversationId`. |
-| (7) | BR7 | **Displaying Rules:**<br>The UI opens the newly created chat window, allowing the user to send the first message. |
-| (8) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Conversation Discovery:**<br>❖ System calls method `GetOrCreateDm(targetId)`.<br>❖ System queries table “UserConversations” in the database to find a common `ConversationId` (Type=DM) between [User.ID] and [Target.ID].<br> **If Found**: System retrieves the existing ID and moves to step (3.1).<br> **If Not Found**: System moves to step (3.2) to create a new conversation record in “Conversations” table and inserts links in “UserConversations” (Steps 4-5). |
+| (5.1)-(6) | BR3 | **Displaying Rules:**<br>❖ After obtaining the ID (Step 5.1), System displays a “ChatWindow” screen (Refer to “ChatWindow” view in “View Description” file) for the specific conversation (Step 6).<br>❖ System initiates the connection to the SignalR hub for real-time updates. |
+| (5.2) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs during creation:<br> System logs the error (Step 5.2).<br> System returns `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -125,17 +137,16 @@ else (No)
   :(4) INSERT INTO "Conversations";
   :(5) INSERT INTO "UserConversations";
   if (Save Success?) then (Yes)
+      |System|
+      :(5.1) Return New Id;
   else (No)
     |System|
-    :Log Error;
-    :Return Error (500);
+    :(5.2) Log Error Return 500;
     stop
   endif
 endif
-|System|
-:(6) Return Summary;
 |Authenticated User|
-:(7) Open Chat Window;
+:(6) Open Chat Window;
 stop
 @enduml
 ```
@@ -199,12 +210,11 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User selects "New Group" and checks multiple users from the friend list. |
-| (2) | BR2 | **Submitting Rules:**<br>User enters Group Name and clicks [btnCreate]. |
-| (3) | BR3 | **Validating Rules:**<br>System checks member count (Must be > 1 other person). |
-| (4) | BR4 | **Storing Rules:**<br>System calls `ChatController.CreateGroup`.<br>Inserts into `"Conversations"` (`Type = 1` for Group).<br>Inserts into `"UserConversations"` for **every** selected member + Creator. |
-| (5) | BR5 | **Displaying Rules:**<br>System redirects to the new Group Chat room. |
-| (6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (1)-(2) | BR1 | **Selecting Rules:**<br>❖ User navigates to “Create Group” form (Refer to “GroupCreation” view in “View Description” file).<br>❖ User selects members from the friend list (Step 1) and enters a Group Name (Step 2).<br>❖ User clicks the `[btnCreate]` button. system moves to step (3). |
+| (3) | BR2 | **Group Validation Rule:**<br>❖ System validates the participant count.<br> **Invalid**: If Count < 2, System displays an error message (Refer to MSG_ERR_MIN_MEMBERS) (Step 3.1).<br> **Valid**: System moves to step (3.2). |
+| (3.2)-(5) | BR3 | **Processing & Storing Rules:**<br>❖ System calls method `CreateGroup(dto)` (Step 3.2).<br>❖ System inserts a new record into table “Conversations” (Refer to “Conversations” table in “DB Sheet” file) with `Type` = 1 (Group) (Step 4).<br>❖ System inserts multiple records into “UserConversations” table for each selected member (Step 5). |
+| (5.1)-(6) | BR4 | **Displaying Rules:**<br>❖ After creation, System returns Summary (Step 5.1).<br>❖ System displays the “ChatWindow” screen (Refer to “ChatWindow” view in “View Description” file) for the new group (Step 6).<br>❖ System sends a System Message to the chat: "Group created by [User]". |
+| (5.2)-(7) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 5.2).<br> System returns `500 Internal Server Error`.<br> System shows error to user (Step 7). |
 
 ### Diagrams
 
@@ -213,24 +223,29 @@ deactivate View
 @startuml
 |Authenticated User|
 start
-:Select Members;
-:Enter Name & Create;
+:(1) Select Members;
+:(2) Enter Name & Create;
 |System|
-:POST /api/chat/group;
-|Database|
-:INSERT INTO "Conversations";
-:Batch INSERT "UserConversations";
-if (Save Success?) then (Yes)
-    |System|
-    :Return Summary;
-    |Authenticated User|
-    :Open Group Chat;
-else (No)
-    |System|
-    :Log Error;
-    :Return Error (500);
-    |Authenticated User|
-    :Show Error;
+:(3) Validate Members (> 1);
+if (Valid?) then (No)
+  :(3.1) Show Error;
+  stop
+else (Yes)
+  :(3.2) POST /api/chat/group;
+  |Database|
+  :(4) INSERT INTO "Conversations";
+  :(5) Batch INSERT "UserConversations";
+  if (Save Success?) then (Yes)
+      |System|
+      :(5.1) Return Summary;
+      |Authenticated User|
+      :(6) Open Group Chat;
+  else (No)
+      |System|
+      :(5.2) Log Error & Return 500;
+      |Authenticated User|
+      :(7) Show Error;
+  endif
 endif
 stop
 @enduml
@@ -239,10 +254,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "NewGroupView" as View
-participant "ChatController" as Controller
-participant "AppDbContext" as DB
+boundary "NewGroupView" as View
+control "ChatController" as Controller
+entity "AppDbContext" as DB
 
 User -> View: Submit Form
 View -> Controller: CreateGroup(name, ids)
@@ -286,14 +302,10 @@ end
 | :---: | :---: | :--- |
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Submitting Rules:**<br>When the user types a message and hits Enter/Send, the system triggers the send process. |
-| (2) | BR2 | **Processing Rules:**<br>The frontend performs an Optimistic UI update, showing the message as "Sending..." immediately. |
-| (2.1) | BR2.1 | **Processing Rules:**<br>The system calls `ChatController.SendMessage` (`POST /api/chat/messages`) with the content and `ConversationId`. |
-| (3) | BR3 | **Storing Rules:**<br>The database inserts a new record into the `Messages` table with the current timestamp and sender ID. |
-| (4) | BR4 | **Storing Rules:**<br>The database updates the `Conversations` table, setting `LastMessageAt` to the current time to bump the conversation to the top. |
-| (5) | BR5 | **Displaying Rules:**<br>The system returns the full `MessageDto` (including the generated ID). |
-| (6) | BR6 | **Displaying Rules:**<br>The UI updates the message status from "Sending..." to "Sent" (or displays a delivery tick). |
-| (7) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. The UI updates status to "Failed". |
+| (1)-(2) | BR1 | **Submitting Rules:**<br>When the user types a message and hits Enter/Send (Step 1), the system performs an Optimistic UI update (Step 2) to show the message immediately as "Sending". |
+| (3)-(5) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `SendMessage(content, convId)` (Step 3).<br>❖ System inserts a new record into table “Messages” (Refer to “Messages” table in “DB Sheet” file) (Step 4).<br>❖ System updates `LastMessageAt` in table “Conversations” (Step 5).<br>❖ System broadcasts the message via SignalR to other participants. |
+| (5.1)-(6) | BR3 | **Displaying Rules:**<br>❖ The UI receives the `MessageDto` acknowledgement (Step 5.1).<br>❖ The UI updates the message status from "Sending..." to "Sent" (Refer to “MessageStatus” view in “View Description” file) (Step 6). |
+| (5.2)-(7) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 5.2).<br> System returns `500 Error`.<br> UI marks the message as "Failed" (red icon) (Step 7). |
 
 ### Diagrams
 
@@ -304,22 +316,21 @@ end
 start
 :(1) Send Message;
 |System|
-:Optimistic Update UI;
-:(2) POST /api/chat/messages;
+:(2) Optimistic Update UI;
+:(3) POST /api/chat/messages;
 |Database|
-:(3) INSERT INTO "Messages";
-:(4) UPDATE "Conversations";
+:(4) INSERT INTO "Messages";
+:(5) UPDATE "Conversations";
 if (Save Success?) then (Yes)
     |System|
-    :(5) Return MessageDto;
+    :(5.1) Return MessageDto;
     |Authenticated User|
     :(6) Status changes to "Sent";
 else (No)
     |System|
-    :Log Error;
-    :Return Error (500);
+    :(5.2) Log Error & Return 500;
     |Authenticated User|
-    :Status changes to "Failed";
+    :(7) Status changes to "Failed";
 endif
 stop
 @enduml
@@ -328,11 +339,12 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "ChatWindowView" as View
-participant "ChatController" as Controller
-participant "Messages" as DB_Msg
-participant "Conversations" as DB_Conv
+boundary "ChatWindowView" as View
+control "ChatController" as Controller
+entity "Messages" as DB_Msg
+entity "Conversations" as DB_Conv
 
 User -> View: Send "Hello"
 View -> View: Add Bubble (Pending)
@@ -376,11 +388,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User long-presses a message bubble and selects "Unsend". |
-| (2) | BR2 | **Validation Rules:**<br>Frontend checks if message timestamp < 15 minutes. |
-| (3) | BR3 | **Submitting Rules:**<br>System calls `ChatController` to delete/soft-delete. |
-| (4) | BR4 | **Storing Rules:**<br>Backend removes the record from `"Messages"` table or sets `Content` to NULL. |
-| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2) | BR2 | **Unsend Eligibility Check:**<br>❖ System/Frontend checks the timestamp of the message.<br> **Time > 15m**: The action is disabled or rejected (Refer to MSG_ERR_UNSEND_TIMEOUT) (Step 2.1).<br> **Time <= 15m**: System proceeds to step (2.2). |
+| (2.2)-(3) | BR3 | **Processing & Storing Rules:**<br>❖ System calls method `DeleteMessage(msgId)` (Step 2.2).<br>❖ System performs a Soft Delete updates the record in table “Messages” (Refer to “Messages” table in “DB Sheet” file) setting `IsDeleted` = True or `Content` = NULL (Step 3). |
+| (3.1)-(4) | BR4 | **Displaying Rules:**<br>❖ System returns OK (Step 3.1).<br>❖ Message disappears from view or content is replaced with "Message Unsent" (Step 4). |
+| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 3.2).<br> System returns `500 Internal Server Error`.<br> Show Error (Step 5). |
 
 ### Diagrams
 
@@ -389,22 +400,27 @@ end
 @startuml
 |Authenticated User|
 start
-:Select Unsend;
+:(1) Select Unsend;
 |System|
-:DELETE /api/chat/messages/{id};
-|Database|
-:DELETE FROM "Messages" WHERE Id=@id;
-if (Success?) then (Yes)
-  |System|
-  :Return OK;
-  |Authenticated User|
-  :Message disappears;
-else (No)
-  |System|
-  :Log Error;
-  :Return 500;
-  |Authenticated User|
-  :Show Error;
+:(2) Validate Time (<15m);
+if (Valid?) then (No)
+  :(2.1) Reject;
+  stop
+else (Yes)
+  :(2.2) DELETE /api/chat/messages/{id};
+  |Database|
+  :(3) DELETE FROM "Messages" WHERE Id=@id;
+  if (Success?) then (Yes)
+    |System|
+    :(3.1) Return OK;
+    |Authenticated User|
+    :(4) Message disappears;
+  else (No)
+    |System|
+    :(3.2) Log Error & Return 500;
+    |Authenticated User|
+    :(5) Show Error;
+  endif
 endif
 stop
 @enduml
@@ -413,10 +429,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "MessageBubble" as View
-participant "ChatController" as Controller
-participant "Messages" as DB
+boundary "MessageBubble" as View
+control "ChatController" as Controller
+entity "Messages" as DB
 
 User -> View: Click Unsend
 View -> Controller: DELETE /api/chat/messages/{id}
@@ -459,10 +476,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User types in the Search Bar within the Chat section. |
-| (2) | BR2 | **Searching Rules:**<br>System calls `ChatController` with query string. |
-| (3) | BR3 | **Querying Rules:**<br>SQL: `SELECT * FROM "Messages" WHERE Content LIKE %q% AND ConversationId IN (Select Id from UserConversations where ProfileId = @me)`. |
-| (4) | BR4 | **Displaying Rules:**<br>System displays list of messages grouped by Conversation. |
+| (2)-(4) | BR1 | **Querying Rules:**<br>❖ System calls method `SearchMessages(query)` (Step 2).<br>❖ System executes syntax `SELECT * FROM Messages WHERE Content LIKE %[query]%` on table “Messages” (Step 3).<br>❖ System joins with “UserConversations” to ensure the user has access to those messages (Step 4). |
+| (5)-(6) | BR2 | **Displaying Rules:**<br>❖ System returns results (Step 5).<br>❖ System groups results by Conversation.<br>❖ System displays the “SearchResults” list (Refer to “SearchResults” view in “View Description” file) (Step 6). |
 
 ### Diagrams
 
@@ -471,16 +486,16 @@ end
 @startuml
 |Authenticated User|
 start
-:Search "Plan";
+:(1) Input Keyword;
 |System|
-:GET /api/chat/search?q=Plan;
+:(2) GET /api/chat/search?q=Plan;
 |Database|
-:Query "Messages" 
-JOIN "UserConversations";
+:(3) Query "Messages";
+:(4) JOIN "UserConversations";
 |System|
-:Return Results;
+:(5) Return Results;
 |Authenticated User|
-:View Results;
+:(6) View Results;
 stop
 @enduml
 ```
@@ -488,10 +503,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "ChatSearchView" as View
-participant "ChatController" as Controller
-participant "Messages" as DB
+boundary "ChatSearchView" as View
+control "ChatController" as Controller
+entity "Messages" as DB
 
 User -> View: Search "Plan"
 View -> Controller: Search("Plan")
@@ -524,10 +540,8 @@ View -> User: Display List
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User clicks on a Conversation to open it. |
-| (2) | BR2 | **Submitting Rules:**<br>System calls `ChatController.MarkAsRead(convId, lastMsgId)`. |
-| (3) | BR3 | **Storing Rules:**<br>System updates `"UserConversations"` table: sets `LastReadMessageId` to the ID of the newest message in that chat. |
-| (4) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2)-(4) | BR1 | **Processing & Storing Rules:**<br>❖ When entering the screen, System calls method `MarkAsRead(convId)` (Step 2).<br>❖ System updates table “UserConversations” setting `LastReadMessageId` to the latest message ID (Steps 3-4).<br>❖ System triggers a badge update on the client side. |
+| (4.1) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 4.1).<br> System returns `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -536,17 +550,17 @@ View -> User: Display List
 @startuml
 |Authenticated User|
 start
-:Open Chat;
+:(1) Open Chat;
 |System|
-:Background Call MarkAsRead;
+:(2) Background Call MarkAsRead;
 |Database|
-:UPDATE "UserConversations" 
-SET LastReadMessageId = @latest;
+:(3) UPDATE "UserConversations";
+:(4) SET LastReadMessageId = @latest;
 if (Success?) then (Yes)
     stop
 else (No)
-    :Log Error;
-    :Return 500;
+    |System|
+    :(4.1) Log Error;
     stop
 endif
 @enduml
@@ -555,10 +569,11 @@ endif
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "ChatWindow" as View
-participant "ChatController" as Controller
-participant "UserConversations" as DB
+boundary "ChatWindow" as View
+control "ChatController" as Controller
+entity "UserConversations" as DB
 
 User -> View: Open
 View -> Controller: MarkAsRead(id, msgId)
@@ -599,11 +614,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User clicks "Group Info" -> "Leave Group". |
-| (2) | BR2 | **Displaying Rules:**<br>System displays Warning: "You won't receive further messages". (Refer to MSG Confirm 2). |
-| (3) | BR3 | **Submitting Rules:**<br>User confirms. System calls `ChatController.LeaveGroup`. |
-| (4) | BR4 | **Storing Rules:**<br>System deletes the `UserConversation` record for this user and this group. |
-| (5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (2) | BR1 | **Leave Confirmation Logic:**<br>❖ System displays a Warning Dialog (Refer to MSG_CONFIRM_LEAVE).<br> **Confirmed**: User accepts consequences. System moves to step (3).<br> **Cancelled**: The dialog closes; action aborted. |
+| (3)-(4) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `LeaveGroup(convId)` (Step 3).<br>❖ System deletes the record from table “UserConversations” (Refer to “UserConversations” table in “DB Sheet” file) for the current user and target group (Step 4). |
+| (4.1)-(5) | BR3 | **Displaying Rules:**<br>❖ After leave, System returns success (Step 4.1).<br>❖ System redirects user to Inbox (Step 5). |
+| (4.2)-(6) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 4.2).<br> System returns `500 Internal Server Error`.<br> Show Error (Step 6). |
 
 ### Diagrams
 
@@ -612,23 +626,22 @@ end
 @startuml
 |Authenticated User|
 start
-:Leave Group;
-:Confirm;
+:(1) Leave Group;
+:(2) Confirm;
 |System|
-:POST /api/chat/{id}/leave;
+:(3) POST /api/chat/{id}/leave;
 |Database|
-:DELETE FROM "UserConversations";
+:(4) DELETE FROM "UserConversations";
 if (Success?) then (Yes)
     |System|
-    :Return Success;
+    :(4.1) Return Success;
     |Authenticated User|
-    :Redirect to Inbox;
+    :(5) Redirect to Inbox;
 else (No)
     |System|
-    :Log Error;
-    :Return 500;
+    :(4.2) Log Error & Return 500;
     |Authenticated User|
-    :Show Error;
+    :(6) Show Error;
 endif
 stop
 @enduml
@@ -637,10 +650,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "GroupInfoView" as View
-participant "ChatController" as Controller
-participant "UserConversations" as DB
+boundary "GroupInfoView" as View
+control "ChatController" as Controller
+entity "UserConversations" as DB
 
 User -> View: Leave
 View -> Controller: LeaveGroup(id)

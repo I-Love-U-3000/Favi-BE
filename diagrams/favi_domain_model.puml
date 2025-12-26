@@ -1,0 +1,127 @@
+@startuml
+!theme plain
+hide empty members
+hide methods
+left to right direction
+skinparam packageStyle rectangle
+
+' --- MODULE: AUTHENTICATION & PROFILES (Use Cases 2.1.1, 2.1.2, 2.1.6, 2.1.9) ---
+package "Authentication & Profiles" {
+    class Profile {
+        Start Point of User
+        Includes Settings (JSON)
+    }
+    class Follow {
+        Social Graph Connection
+    }
+    class UserModeration {
+        Block / Mute logic
+    }
+}
+
+' --- MODULE: CONTENT MANAGEMENT (Use Cases 2.1.3, 2.1.5) ---
+package "Content Management" {
+    class Post {
+        Core Content Unit
+        Can be Shared/Reposted
+    }
+    class PostMedia
+    class HiddenPost {
+        User specific hidden content
+    }
+    
+    class Collection {
+        User Lists / Bookmarks
+    }
+    class CollectionItem {
+        Link between Collection & Post
+    }
+    class CollectionReaction
+}
+
+' --- MODULE: COMMUNICATION (Use Case 2.1.7) ---
+package "Communication (Chat)" {
+    class Conversation {
+        DM or Group Chat scope
+    }
+    class UserConversation {
+        Participant info & Read status
+    }
+    class Message
+}
+
+' --- MODULE: COMMUNITIES / GROUPS (Use Case 2.1.12) ---
+package "Communities" {
+    class Group
+    class GroupMember
+    class GroupJoinRequest
+    ' Note: Posts can be linked to Groups
+}
+
+' --- MODULE: NOTIFICATIONS (Use Case 2.1.8) ---
+package "Notifications" {
+    class Notification
+}
+
+' --- MODULE: PROFESSIONAL TOOLS (Use Case 2.1.11) ---
+package "Professional Tools" {
+    class ProfessionalProfile {
+        Extension for Creators/Business
+    }
+    class Insight {
+        Daily Metrics
+    }
+    class AdCampaign
+}
+
+' --- MODULE: ADMINISTRATION (Use Case 2.1.10, 2.1.13) ---
+package "Administration" {
+    class Report
+}
+
+' ================= RELATIONSHIPS =================
+
+' Profiles & Social
+Profile "1" -- "*" Follow : Follower >
+Profile "1" -- "*" Follow : Followee >
+Profile "1" -- "*" UserModeration : Source/Target >
+Profile "1" -- "0..1" ProfessionalProfile : Has >
+
+' Content
+Profile "1" -- "*" Post : Author >
+Post "1" *-- "*" PostMedia
+Profile "1" -- "*" HiddenPost : Hides >
+HiddenPost "*" -- "1" Post
+
+' Collections
+Profile "1" -- "*" Collection : Owns >
+Collection "1" -- "*" CollectionItem
+CollectionItem "*" -- "1" Post
+Profile "1" -- "*" CollectionReaction : Likes >
+CollectionReaction "*" -- "1" Collection
+
+' Chat
+Profile "1" -- "*" UserConversation
+UserConversation "*" -left- "1" Conversation
+Conversation "1" *-- "*" Message
+Message "*" -- "1" Profile : Sender >
+
+' Groups
+Profile "1" -- "*" GroupMember
+GroupMember "*" -left- "1" Group
+Profile "1" -- "*" GroupJoinRequest
+GroupJoinRequest "*" -left- "1" Group
+Group "1" -- "*" Post : Contains >
+
+' Notifications
+Profile "1" -- "*" Notification : Recipient >
+
+' Professional
+ProfessionalProfile "1" -- "*" Insight
+ProfessionalProfile "1" -- "*" AdCampaign
+
+' Admin
+Profile "1" -- "*" Report : Reporter/Target >
+Post "1" -- "*" Report : Reported Content >
+
+@enduml

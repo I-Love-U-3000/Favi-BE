@@ -7,6 +7,66 @@
 
 ---
 
+## 2.1.10.1 Supervise Content (Overview)
+
+### Use Case Description
+| Attribute | Details |
+| :--- | :--- |
+| **Name** | **Supervise Content** |
+| **Description** | Central hub for content moderation and reporting. |
+| **Actor** | Authenticated User |
+| **Trigger** | ❖ User accesses reporting functions or support center. |
+| **Post-condition** | ❖ User submits reports or tracks report status. |
+
+### Business Rules (BR)
+
+| Activity | BR Code | Description |
+| :---: | :---: | :--- |
+| (1) | BR1 | **Initialization:**<br>❖ The System allows users to flag content for review.<br>❖ The System provides a history view of submitted reports. |
+
+### Diagrams
+
+**Activity Diagram**
+```plantuml
+@startuml
+|User|
+start
+:(1) Supervise Content;
+:Choose Function;
+split
+    -> Report Content;
+    :(2.1) Activity\nReport Post/User;
+split again
+    -> View History;
+    :(2.2) Activity\nView Report History;
+end split
+stop
+@enduml
+```
+
+**Sequence Diagram**
+```plantuml
+@startuml
+autonumber
+actor "User" as User
+boundary "ContentHub" as View
+control "ReportsController" as Controller
+
+User -> View: Interact
+View -> User: Display Options
+
+opt Report
+    ref over User, View, Controller: Sequence Report Content
+end
+
+opt View History
+    ref over User, View, Controller: Sequence View History
+end
+@enduml
+```
+
+---
+
 ## 2.1.10.2 Report Post / Comment / User
 
 ### Use Case Description
@@ -27,9 +87,9 @@
 | (2) | BR2 | **Processing Rules:**<br>The system calls `ReportsController.Create` (`POST /api/reports`) with the `ReportDto` containing the target ID and reason. |
 | (3) | BR3 | **Validation Rules:**<br>The system validates the request (e.g., checking if the user is allowed to report this content via `PrivacyGuard`). |
 | (4) | BR4 | **Storing Rules:**<br>The database creates a new record in the `Reports` table with `Status = Pending` for admin review. |
-| (5) | BR5 | **Displaying Rules:**<br>The system returns the created `ReportResponse` object to the client. |
-| (6) | BR6 | **Displaying Rules:**<br>The UI displays a "Thank you" toast message, informing the user that the report has been received. |
-| (7) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error and returns a `500 Internal Server Error`. |
+| (4.1) | BR5 | **Displaying Rules:**<br>The system returns the created `ReportResponse` object to the client (Step 4.1). |
+| (5) | BR6 | **Displaying Rules:**<br>The UI displays a "Thank you" toast message, informing the user that the report has been received (Step 5). |
+| (4.2)-(6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error (Step 4.2) and returns a `500 Internal Server Error`.<br>System shows error (Step 6). |
 
 ### Diagrams
 
@@ -50,15 +110,14 @@ start
 :(4) INSERT INTO "Reports";
 if (Save Success?) then (Yes)
   |System|
-  :(5) Return ReportResponse;
+  :(4.1) Return ReportResponse;
   |Authenticated User|
-  :(6) Show "Thanks for reporting";
+  :(5) Show "Thanks for reporting";
 else (No)
   |System|
-  :(5a) Log Error;
-  :(5b) Return Error (500);
+  :(4.2) Log Error & Return 500;
   |Authenticated User|
-  :(6a) Show Error Message;
+  :(6) Show Error Message;
 endif
 stop
 @enduml
@@ -117,9 +176,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Selecting Rules:**<br>User goes to Help Center -> "My Support Requests". |
-| (2) | BR2 | **Querying Rules:**<br>System calls `ReportsController.GetMyReports()`.<br>SQL: `SELECT * FROM "Reports" WHERE "ReporterId" = @me`. |
-| (3) | BR3 | **Displaying Rules:**<br>System displays list. Items show Status (Pending/Resolved). |
+| (2)-(3) | BR1 | **Querying Rules:**<br>❖ System calls method `ReportsController.GetMyReports()`.<br>❖ System queries data in the table “Reports” in the database (Refer to “Reports” table in “DB Sheet” file) with syntax `SELECT * FROM Reports WHERE ReporterId = [User.ID]`.<br>❖ System includes Status information (Pending, Resolved). |
+| (4)-(5) | BR2 | **Display Workflow:**<br>❖ System displays a “ReportList” screen (Refer to “ReportList” view in “View Description” file).<br>❖ System renders the items with status badges:<br> **Pending**: Displayed with "Open" badge (Refer to “BadgeOpen” style).<br> **Resolved**: Displayed with "Closed" badge (Refer to “BadgeClosed” style). |
+| (6) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error.<br> System returns `500 Internal Server Error`. |
 
 ### Diagrams
 
@@ -128,16 +187,16 @@ deactivate View
 @startuml
 |Authenticated User|
 start
-:Open Support Inbox;
+:(1) Open Support Inbox;
 |System|
-:GET /api/reports/my;
+:(2) GET /api/reports/my;
 |Database|
-:SELECT * FROM "Reports" 
+:(3) SELECT * FROM "Reports" 
 WHERE ReporterId=@me;
 |System|
-:Return List;
+:(4) Return List;
 |Authenticated User|
-:View Status;
+:(5) View Status;
 stop
 @enduml
 ```
@@ -145,10 +204,11 @@ stop
 **Sequence Diagram**
 ```plantuml
 @startuml
+autonumber
 actor "Authenticated User" as User
-participant "SupportInboxView" as View
-participant "ReportsController" as Controller
-participant "Reports" as DB
+boundary "SupportInboxView" as View
+control "ReportsController" as Controller
+entity "Reports" as DB
 
 User -> View: Open Page
 View -> Controller: GetMyReports()
