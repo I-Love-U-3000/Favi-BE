@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Display:**<br>❖ System displays Post Interface.<br>❖ Options enabled based on Ownership/Context. |
+| (1) | BR1 | **Display:**<br>❖ The **System** renders the **Post Interface** on the screen, presenting the Post content and available actions to the **User**.<br>❖ The **System** actively checks the **User's** permissions (Ownership or Relationship context) to enable or disable specific buttons (e.g., Edit, Delete). |
 
 ### Diagrams
 
@@ -121,7 +121,6 @@ opt React
     ref over User, View, Controller: Sequence React to Post
 end
 @enduml
-@enduml
 ```
 
 ---
@@ -142,10 +141,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `CreatePostModal` calls `postApi.create(formData)`.<br>❖ **API**: `POST /api/posts`. Top-level params: `Caption`, `PrivacyLevel`, `Tags`, `Location`, `mediaFiles` (Multipart).<br>❖ **Backend**: `PostsController.Create` extracts User ID from JWT. Calls `_posts.CreateAsync`. |
-| (3.2)-(4) | BR2 | **Persistence:**<br>❖ **Service**: Uploads media to Cloudinary (if any).<br>❖ **DB**: Inserts `Post`, `PostMedia`, `PostTag` (Join Table) in a Transaction.<br>❖ **Tags**: `_tags.LinkAsync` ensures tags exist or created. |
-| (4.2)-(5) | BR3 | **Completion:**<br>❖ **Response**: `201 Created` with `PostResponse`.<br>❖ **Frontend**: Prepend new post to `feed` list. |
-| (4.1)-(6) | BR_Error | **Exception:**<br>❖ Validation Error (Empty content): `400 Bad Request`.<br>❖ Upload Fail: `400 Bad Request` { code: "MEDIA_UPLOAD_FAILED" }. |
+| (2)-(3) | BR1 | **Submission:**<br>❖ The **Frontend** component `CreatePostModal` collects the form data and invokes the `postApi.create(formData)` method to submit the content.<br>❖ The **API** receives a `POST` request at `/api/posts`, containing top-level parameters such as `Caption`, `PrivacyLevel`, `Tags`, `Location`, and `mediaFiles` (Multipart).<br>❖ The **Backend** `PostsController.Create` method extracts the authenticated User ID from the JWT token and delegates the creation logic to `_posts.CreateAsync`. |
+| (3.2)-(4) | BR2 | **Persistence:**<br>❖ The **Service** uploads any attached media files to **Cloudinary** and retrieves the remote URLs.<br>❖ The **System** persists the data by inserting records into the `Post`, `PostMedia`, and `PostTag` (Join Table) tables within a single Database Transaction.<br>❖ The `_tags.LinkAsync` method ensures that all referenced tags effectively exist or are created if new. |
+| (4.2)-(5) | BR3 | **Completion:**<br>❖ The **System** returns a `201 Created` HTTP response containing the full `PostResponse` DTO.<br>❖ The **Frontend** receives the response and immediately prepends the new post to the local `feed` list for instant feedback. |
+| (4.1)-(6) | BR_Error | **Exception:**<br>❖ If the validation fails (e.g., empty content), the **System** returns a `400 Bad Request` error.<br>❖ If the media upload fails, the **System** returns a `400 Bad Request` with the specific error code `MEDIA_UPLOAD_FAILED`. |
 
 ### Diagrams
 
@@ -228,9 +227,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `EditPostForm` calls `postApi.update(id, { caption })`.<br>❖ **API**: `PUT /api/posts/{id}`.<br>❖ **Backend**: `PostsController.Update` calls `_posts.UpdateAsync(id, userId, caption)`. |
-| (3.2)-(4) | BR2 | **Logic:**<br>❖ **Ownership**: Service checks if `Post.ProfileId == userId`. If not -> `false`.<br>❖ **Update**: Modifies `Caption`, `UpdatedAt`.<br>❖ **Response**: `200 OK`. |
-| (3.2.1)-(5) | BR_Error | **Exception:**<br>❖ Forbidden/Not Found: Returns `403 Forbidden` { code: "POST_FORBIDDEN_OR_NOT_FOUND" }. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `EditPostForm` captures the changes and calls the `postApi.update(id, { caption })` function.<br>❖ The **API** receives a `PUT` request at `/api/posts/{id}`.<br>❖ The **Backend** controller `PostsController.Update` invokes the business logic via `_posts.UpdateAsync(id, userId, caption)`. |
+| (3.2)-(4) | BR2 | **Logic:**<br>❖ The **Service** first verifies **Ownership** by checking if `Post.ProfileId` matches the requesting `userId`. If they do not match, it returns `false`.<br>❖ The **System** updates the `Caption` and `UpdatedAt` fields in the database.<br>❖ The **System** returns a `200 OK` response upon success. |
+| (3.2.1)-(5) | BR_Error | **Exception:**<br>❖ If the user is forbidden or the post is not found, the **System** returns a `403 Forbidden` response with the error code `POST_FORBIDDEN_OR_NOT_FOUND`. |
 
 ### Diagrams
 
@@ -312,8 +311,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `DELETE /api/posts/{id}`.<br>❖ **Backend**: `PostsController.Delete` calls `_posts.DeleteAsync`.<br>❖ **Logic**: Sets `IsDeleted = true`, `DeletedAt = UtcNow`. Moves to "Recycle Bin". |
-| (3.2)-(4) | BR2 | **Success:**<br>❖ **Response**: `200 OK` { message: "Bài viết đã được chuyển vào thùng rác." }.<br>❖ **Frontend**: Removes post from feed instantly. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `DELETE` request at the endpoint `/api/posts/{id}`.<br>❖ The **Backend** controller `PostsController.Delete` triggers the deletion logic via `_posts.DeleteAsync`.<br>❖ The **System** performs a **Soft Delete** by setting `IsDeleted = true` and `DeletedAt = UtcNow`, effectively moving the post to the "Recycle Bin". |
+| (3.2)-(4) | BR2 | **Success:**<br>❖ The **System** returns a `200 OK` response with the message "Bài viết đã được chuyển vào thùng rác.".<br>❖ The **Frontend** immediately removes the post component from the feed view. |
 
 ### Diagrams
 
@@ -389,9 +388,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Keyword Search:**<br>❖ **API**: `POST /api/search` { `Query`, `Type`: `Post` }.<br>❖ **Backend**: `SearchController.Search` -> `_search.SearchAsync`.<br>❖ **DB**: `Posts.Caption ILIKE %q%` OR `Tags.Name == q`. |
-| (4) | BR2 | **Semantic Search:**<br>❖ **API**: `POST /api/search/semantic`.<br>❖ **Backend**: `SearchController.SemanticSearch` -> `_search.SemanticSearchAsync`.<br>❖ **Logic**: Generates embedding for query, compares with `PostEmbeddings` vector table using Cosine Similarity. |
-| (5) | BR3 | **Result:**<br>❖ **Response**: `200 OK` with `SearchResult` (List of PostResponse). |
+| (2)-(3) | BR1 | **Keyword Search:**<br>❖ The **API** receives a `POST` request at `/api/search` with the body content `{ Query, Type: 'Post' }`.<br>❖ The **Backend** controller `SearchController.Search` calls `_search.SearchAsync`.<br>❖ The **Database** executes a query to find matches where `Posts.Caption ILIKE %q%` OR `Tags.Name == q`. |
+| (4) | BR2 | **Semantic Search:**<br>❖ The **API** receives a `POST` request at `/api/search/semantic`.<br>❖ The **Backend** controller `SearchController.SemanticSearch` delegates to `_search.SemanticSearchAsync`.<br>❖ The **System** generates an embedding for the query and compares it with the `PostEmbeddings` vector table using **Cosine Similarity**. |
+| (5) | BR3 | **Result:**<br>❖ The **System** returns a `200 OK` response containing a `SearchResult` object, which includes a list of `PostResponse` items. |
 
 ### Diagrams
 
@@ -471,9 +470,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Routing:**<br>❖ **Authenticated**: `GET /api/posts/feed`. `PostsController` calls `Release.GetFeedAsync(userId)`.<br>❖ **Guest**: `GET /api/posts/guest-feed`. Calls `_posts.GetGuestFeedAsync()`. |
-| (4) | BR2 | **Fetching:**<br>❖ **Feed Logic**: Queries `Posts` where `AuthorId` IN (FollowedIds) OR `AuthorId` == Me. Ordered by `CreatedAt` Desc.<br>❖ **Privacy**: `GetFeedAsync` already filters visible posts, but Controller double-checks `_privacy.CanViewPostAsync` for safety. |
-| (5) | BR3 | **Response:**<br>❖ **API**: `200 OK` with `PagedResult<PostResponse>`.<br>❖ **Frontend**: Infinite scroll populates list. |
+| (2)-(3) | BR1 | **Routing:**<br>❖ For an **Authenticated User**, the request is routed to `GET /api/posts/feed`, where `PostsController` calls `Release.GetFeedAsync(userId)`.<br>❖ For a **Guest**, the request is routed to `GET /api/posts/guest-feed`, which calls `_posts.GetGuestFeedAsync()`. |
+| (4) | BR2 | **Fetching:**<br>❖ The **Feed Logic** queries the `Posts` table where `AuthorId` is in the user's `FollowedIds` OR `AuthorId` is the user themselves, ordering by `CreatedAt` Descending.<br>❖ The **System** enforces **Privacy** rules: `GetFeedAsync` filters valid posts, but the Controller double-checks `_privacy.CanViewPostAsync` for additional safety. |
+| (5) | BR3 | **Response:**<br>❖ The **API** returns a `200 OK` response containing a `PagedResult<PostResponse>`.<br>❖ The **Frontend** utilizes Infinite Scroll to populate the list as the user navigates down. |
 
 ### Diagrams
 
@@ -555,8 +554,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Fetching:**<br>❖ **API**: `GET /api/posts/explore`.<br>❖ **Backend**: `PostsController.GetExplore` calls `_posts.GetExploreAsync(userId)`.<br>❖ **Logic**: Queries `Posts` shuffled or ordered by Engagement (Like/Comment count), excluding Followed authors (discovery purpose). |
-| (3.1) | BR_Error | **Exception:**<br>Returns `200 OK` (Empty) if no content. |
+| (2)-(3) | BR1 | **Fetching:**<br>❖ The **API** endpoint `GET /api/posts/explore` receives the request.<br>❖ The **Backend** `PostsController.GetExplore` calls `_posts.GetExploreAsync(userId)`.<br>❖ The **System** queries the `Posts` table, either shuffled or ordered by Engagement (Like/Comment count), excluding any authors already followed by the user to ensure discovery. |
+| (3.1) | BR_Error | **Exception:**<br>If no content is available, the **System** returns a `200 OK` response with an empty list. |
 
 ### Diagrams
 
@@ -624,8 +623,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Internal Repost (Invented):**<br>❖ **API**: `POST /api/posts/{id}/share`.<br>❖ **Backend**: `ShareAsync` creates a new Post with `SharedPostId = originId`.<br>❖ **Content**: Acts as a quote-tweet or simple repost. |
-| (2.1) | BR2 | **External Share:**<br>❖ **Frontend**: Generates link `https://favi.app/posts/{id}` using the ID from props.<br>❖ **Action**: Copies to clipboard or opens Native Share Sheet (Mobile). No Backend call required. |
+| (2)-(3) | BR1 | **Internal Repost (Invented):**<br>❖ The **API** receives a `POST` request at `/api/posts/{id}/share`.<br>❖ The **Backend** function `ShareAsync` creates a new `Post` entity with `SharedPostId` set to the original ID.<br>❖ The **System** treats this content as a quote-tweet or simple repost on the user's timeline. |
+| (2.1) | BR2 | **External Share:**<br>❖ The **Frontend** generates a shareable link in the format `https://favi.app/posts/{id}` using the ID from the properties.<br>❖ The **System** copies the link to the clipboard or opens the Native Share Sheet on mobile devices. No Backend call is required. |
 
 ### Diagrams
 
@@ -713,8 +712,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing (Invented):**<br>❖ **API**: `POST /api/posts/{id}/hide`.<br>❖ **Backend**: Inserts into `HiddenPosts` table (UserId, PostId).<br>❖ **Feed**: Future feed queries: `WHERE PostId NOT IN (SELECT PostId FROM HiddenPosts)`. |
-| (4) | BR2 | **UI:**<br>❖ **Frontend**: Optimistically removes post from DOM. |
+| (2)-(3) | BR1 | **Processing (Invented):**<br>❖ The **API** receives a `POST` request at `/api/posts/{id}/hide`.<br>❖ The **Backend** inserts a new record into the `HiddenPosts` table linking the `UserId` and `PostId`.<br>❖ The **System** updates future feed queries to include the clause `WHERE PostId NOT IN (SELECT PostId FROM HiddenPosts)`. |
+| (4) | BR2 | **UI:**<br>❖ The **Frontend** optimistically removes the post from the DOM to provide immediate feedback to the user. |
 
 ### Diagrams
 
@@ -773,5 +772,3 @@ else Error
 end
 @enduml
 ```
-
-

@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization Logic:**<br>❖ The System retrieves all collections owned by the Authenticated User, as well as collections they are following or have reacted to.<br>❖ The UI evaluates ownership permissions for each collection card to enable or disable specific management actions (Create, Update, Delete are restricted to Owners). |
+| (1) | BR1 | **Initialization Logic:**<br>❖ The **System** retrieves all collections owned by the **Authenticated User**, as well as any collections they are following or have reacted to.<br>❖ The **System** evaluates the ownership permissions for each collection card to dynamically enable or disable specific management actions (e.g., Create, Update, Delete are restricted to Owners). |
 
 ### Diagrams
 
@@ -104,10 +104,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `CreateCollectionModal` calls `collectionApi.create(formData)`.<br>❖ **API**: `POST /api/collections`.<br>❖ **Backend**: `CollectionsController.Create`. |
-| (3.1) | BR2 | **Upload:**<br>❖ **Service**: `_collections.CreateAsync` calls `_cloudinary.TryUploadAsync` if cover image provided.<br>❖ **Logic**: Returns URL. |
-| (4) | BR3 | **Persistence:**<br>❖ **DB**: Insert `Collection` { `OwnerId`, `Name`, `CoverUrl`, `IsPrivate=true` }.<br>❖ **Response**: `200 OK` with `CollectionResponse`. |
-| (4.1) | BR_Error | **Exception:**<br>❖ Upload Error: `400 Bad Request`. DB Error: `500`. |
+| (2)-(3) | BR1 | **Submission:**<br>❖ The **Frontend** `CreateCollectionModal` calls `collectionApi.create(formData)` to submit the new collection.<br>❖ The **API** receives a `POST` request at `/api/collections`.<br>❖ The **Backend** controller `CollectionsController.Create` handles the request. |
+| (3.1) | BR2 | **Upload:**<br>❖ The **Service** `_collections.CreateAsync` calls `_cloudinary.TryUploadAsync` if a cover image is provided.<br>❖ The **Logic** waits for the upload to complete and returns the resulting URL. |
+| (4) | BR3 | **Persistence:**<br>❖ The **Database** inserts a new `Collection` record with `OwnerId`, `Name`, `CoverUrl`, and default `IsPrivate=true`.<br>❖ The **System** returns a `200 OK` response with the `CollectionResponse`. |
+| (4.1) | BR_Error | **Exception:**<br>❖ If the upload fails, the **System** returns `400 Bad Request`. If a Database error occurs, it returns `500`. |
 
 ### Diagrams
 
@@ -122,10 +122,10 @@ start
 if (Has Image?) then (Yes)
   :(3) Upload to Cloudinary;
   if (Upload Success?) then (Yes)
-    :(3.1) Get URL;
+      :(3.1) Get URL;
   else (No)
-    :(3.2) Log/Return Error;
-    stop
+      :(3.2) Log/Return Error;
+      stop
   endif
 endif
 |Database|
@@ -199,9 +199,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `PUT /api/collections/{id}`.<br>❖ **Backend**: `CollectionsController.Update` calls `_collections.UpdateAsync`.<br>❖ **Logic**: Verifies Owner. Uploads new image if provided. |
-| (4) | BR2 | **Persistence:**<br>❖ **DB**: Update `Collections`.<br>❖ **Response**: `200 OK` with updated details. |
-| (4.1) | BR_Error | **Exception:**<br>❖ Forbidden/Not Found: `404 Not Found`. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `PUT` request at `/api/collections/{id}`.<br>❖ The **Backend** `CollectionsController.Update` calls `_collections.UpdateAsync`.<br>❖ The **Logic** validates that the requester is the Owner and uploads a new image if one is provided. |
+| (4) | BR2 | **Persistence:**<br>❖ The **Database** updates the `Collections` table.<br>❖ The **System** returns `200 OK` with the updated details. |
+| (4.1) | BR_Error | **Exception:**<br>❖ If the collection is Not Found or the user is Forbidden, the **System** returns `404 Not Found`. |
 
 ### Diagrams
 
@@ -296,9 +296,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `DELETE /api/collections/{id}`.<br>❖ **Backend**: `CollectionsController.Delete`.<br>❖ **Logic**: Verifies Owner. |
-| (4) | BR2 | **Persistence:**<br>❖ **DB**: `_uow.Collections.Remove(collection)`.<br>❖ **Response**: `204 No Content`. |
-| (3.1) | BR_Error | **Exception:**<br>❖ Forbidden: `403 Forbidden` { message: "NOT_OWNER" }. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `DELETE` request at `/api/collections/{id}`.<br>❖ The **Backend** `CollectionsController.Delete` executes logic to verify Ownership. |
+| (4) | BR2 | **Persistence:**<br>❖ The **Database** executes `_uow.Collections.Remove(collection)`.<br>❖ The **System** returns `204 No Content` indicating success. |
+| (3.1) | BR_Error | **Exception:**<br>❖ If the user is not the owner, the **System** returns `403 Forbidden` with the message "NOT_OWNER". |
 
 ### Diagrams
 
@@ -386,11 +386,10 @@ end
 | **Trigger** | ❖ User clicks Heart icon. |
 
 ### Business Rules (BR)
-
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `POST /api/collections/{id}/reactions` { type }.<br>❖ **Backend**: `ToggleReactionAsync`.<br>❖ **Logic**: Checks if Reaction exists. |
-| (4) | BR2 | **Toggle:**<br>❖ **DB**: If exists -> Remove. If new -> Add.<br>❖ **Response**: `200 OK` { removed: bool, type: string }. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `POST` request at `/api/collections/{id}/reactions` with the reaction type.<br>❖ The **Backend** calls `ToggleReactionAsync`.<br>❖ The **Logic** checks if the Reaction already exists. |
+| (4) | BR2 | **Toggle:**<br>❖ The **Database**: If it exists -> Remove it. If it is new -> Add it.<br>❖ The **System** returns `200 OK` with the status `{ removed: bool, type: string }`. |
 
 ### Diagrams
 
@@ -478,9 +477,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `POST /api/collections/{id}/posts/{postId}`.<br>❖ **Backend**: `CollectionsController.AddPost`.<br>❖ **Logic**: `_collections.AddPostAsync`. Checks Owner. |
-| (3.2) | BR2 | **Persistence:**<br>❖ **DB**: Insert `CollectionItems` { `CollectionId`, `PostId` }.<br>❖ **Check**: If exists -> Skip/Return.<br>❖ **Response**: `200 OK`. |
-| (3.1) | BR_Error | **Exception:**<br>❖ Not Owner / Invalid: `403 Forbidden`. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `POST` request at `/api/collections/{id}/posts/{postId}`.<br>❖ The **Backend** `CollectionsController.AddPost` calls `_collections.AddPostAsync`.<br>❖ The **Logic** checks that the user is the Owner of the collection. |
+| (3.2) | BR2 | **Persistence:**<br>❖ The **Database** inserts the `CollectionItems` record with `CollectionId` and `PostId`.<br>❖ **Check**: If the item already exists, the **System** skips or returns success.<br>❖ The **System** returns `200 OK`. |
+| (3.1) | BR_Error | **Exception:**<br>❖ If user is Not Owner or the input is Invalid, the **System** returns `403 Forbidden`. |
 
 ### Diagrams
 

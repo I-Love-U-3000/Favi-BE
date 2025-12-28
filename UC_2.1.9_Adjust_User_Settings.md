@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ The System fetches the current user's profile and settings.<br>❖ The System provides navigation to Update Profile, Social Links, Privacy, or Delete Account. |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** fetches the current user's profile and settings.<br>❖ The **System** provides navigation options to Update Profile, Social Links, Privacy, or Delete Account. |
 
 ### Diagrams
 
@@ -97,13 +97,12 @@ end
 | **Post-condition** | ❖ Profile information (Name, Bio, Avatar) is updated in the database. |
 
 ### Business Rules (BR)
-
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(2.1) | BR1 | **Validation:**<br>❖ **Frontend**: `yup` schema validation (Name required, Bio < 500 chars).<br>❖ **API**: `PUT /api/profiles` Body: `ProfileUpdateDto`.<br>❖ **Backend**: `ProfilesController.UpdateProfile(dto)` checks `ModelState.IsValid`.<br> **Invalid**: Returns `400 Bad Request`. |
-| (2.2)-(3) | BR2 | **Processing:**<br>❖ **Service**: `_profiles.UpdateAsync(userId, dto)`.<br>❖ **DB**: `Profiles.Find(id)`. Update fields. `SaveChanges()`. |
-| (3.1)-(4) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` (ProfileDto).<br>❖ **Frontend**: Updates `userSlice`. Success Toast. |
-| (3.2)-(5) | BR_Error | **Error:**<br>❖ **DB Error**: `500`. Logged.<br>❖ **Frontend**: Show error toast. |
+| (2)-(2.1) | BR1 | **Validation:**<br>❖ The **Frontend** uses `yup` schema validation (e.g., Name required, Bio < 500 chars).<br>❖ The **API** receives a `PUT` request at `/api/profiles` with `ProfileUpdateDto`.<br>❖ The **Backend** `ProfilesController.UpdateProfile(dto)` checks `ModelState.IsValid`.<br> If **Invalid**, the **System** returns `400 Bad Request`. |
+| (2.2)-(3) | BR2 | **Processing:**<br>❖ The **Service** `_profiles.UpdateAsync(userId, dto)` is invoked.<br>❖ The **Database** finds the profile via `Profiles.Find(id)`, updates the fields, and calls `SaveChanges()`. |
+| (3.1)-(4) | BR3 | **Completion:**<br>❖ The **System** returns `200 OK` with the updated `ProfileDto`.<br>❖ The **Frontend** updates the `userSlice` and displays a Success Toast. |
+| (3.2)-(5) | BR_Error | **Error:**<br>❖ If a **DB Error** occurs, the **System** returns `500` and logs it.<br>❖ The **Frontend** displays an error toast. |
 
 ### Diagrams
 
@@ -189,9 +188,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Processing:**<br>❖ **Frontend**: `AddLinkModal` -> Submit. Calls `profileApi.addLink(dto)`.<br>❖ **API**: `POST /api/profiles/links`.<br>❖ **Backend**: `ProfilesController.AddLink`.<br>❖ **DB**: `INSERT INTO SocialLinks (ProfileId, Platform, Url)`. |
-| (2.1) | BR2 | **Completion:**<br>❖ **Response**: `200 OK` (LinkDto).<br>❖ **Frontend**: Appends new link to list. Closes modal. |
-| (2.2) | BR_Error | **Error:**<br>❖ **Validation**: Invalid URL -> `400`.<br>❖ **Server**: `500`. |
+| (1)-(2) | BR1 | **Processing:**<br>❖ The **Frontend** `AddLinkModal` triggers `profileApi.addLink(dto)` on submit.<br>❖ The **API** receives a `POST` request at `/api/profiles/links`.<br>❖ The **Backend** `ProfilesController.AddLink` handles the request.<br>❖ The **Database** inserts a new record into `SocialLinks` with `ProfileId`, `Platform`, and `Url`. |
+| (2.1) | BR2 | **Completion:**<br>❖ The **System** returns `200 OK` with the `LinkDto`.<br>❖ The **Frontend** appends the new link to the list and closes the modal. |
+| (2.2) | BR_Error | **Error:**<br>❖ If Validation fails (Invalid URL), the **System** returns `400`.<br>❖ For server errors, it returns `500`. |
 
 ### Diagrams
 
@@ -264,10 +263,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Validation:**<br>❖ **Frontend**: Prompt user to type "DELETE". Check string match.<br>❖ **API**: `DELETE /api/profiles`. |
-| (3)-(4) | BR2 | **Processing:**<br>❖ **Backend**: `ProfilesController.Delete`. calls `_profiles.DeleteAsync`.<br>❖ **DB**: `Users.IsDeleted = 1` (Soft Delete) OR `DELETE FROM Profiles` (Hard Delete). |
-| (4.1)-(6) | BR3 | **Cleanup:**<br>❖ **Auth Service**: `_supabase.DeleteUserAsync(userId)`.<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: `auth.signOut()`. Redirect `/`. |
-| (4.2)-(7) | BR_Error | **Error:**<br>❖ **DB Error**: `500`. Logged.<br>❖ **Frontend**: "Failed to delete account". |
+| (1)-(2) | BR1 | **Validation:**<br>❖ The **Frontend** prompts the user to type "DELETE" and checks for a string match.<br>❖ Upon success, it initiates `DELETE /api/profiles`. |
+| (3)-(4) | BR2 | **Processing:**<br>❖ The **Backend** `ProfilesController.Delete` invokes `_profiles.DeleteAsync`.<br>❖ The **Database** marks `Users.IsDeleted = 1` (Soft Delete) OR executes `DELETE FROM Profiles` (Hard Delete). |
+| (4.1)-(6) | BR3 | **Cleanup:**<br>❖ The **Auth Service** calls `_supabase.DeleteUserAsync(userId)`.<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** calls `auth.signOut()` and redirects to `/`. |
+| (4.2)-(7) | BR_Error | **Error:**<br>❖ If a **DB Error** occurs, the **System** returns `500` and logs the error.<br>❖ The **Frontend** displays "Failed to delete account". |
 
 ### Diagrams
 

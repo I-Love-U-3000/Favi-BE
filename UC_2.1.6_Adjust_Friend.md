@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization & Navigation:**<br>❖ The System loads the default connection list (usually "Followers" or "Following").<br>❖ The User can switch tabs to view differents lists (Suggestions, Blocked).<br>❖ The System enables actions (Follow, Unfollow, Block) based on the context of each profile card. |
+| (1) | BR1 | **Initialization & Navigation:**<br>❖ The **System** loads the default connection list (typically "Followers" or "Following").<br>❖ The **User** can switch tabs to view different lists, such as Suggestions or Blocked Users.<br>❖ The **System** enables context-sensitive actions (Follow, Unfollow, Block) based on the relationship state of each profile card. |
 
 ### Diagrams
 
@@ -107,10 +107,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Validation Workflow:**<br>❖ **Frontend**: `ProfileHeader` checks local state (isBlocked/isFollowing). Calls `profileApi.follow(targetId)`.<br>❖ **API**: `POST /api/profiles/follow/{targetId}`.<br>❖ **Backend**: `ProfilesController.Follow(targetId)` calls `_privacy.CanFollowAsync(followerId, followeeId)`.<br>❖ **Logic**: Checks `UserModerations` table for 'Block' relationship.<br> **Forbidden**: If blocked, throws `FriendshipException` ("Cannot follow blocked user"). Returns `403 Forbidden`.<br> **Allowed**: Proceeds to storage. |
-| (3.2) | BR2 | **Storage:**<br>❖ **Backend**: `_profiles.FollowAsync(followerId, targetId)`.<br>❖ **DB**: `INSERT INTO Follows (FollowerId, FolloweeId, CreatedAt) VALUES (...)`.<br>❖ **Notification**: `_notificationService.NotifyFollow(targetId, followerId)` triggers `INSERT INTO Notifications (Type='Follow', ...)`. |
-| (3.2.1)-(5) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` (Success).<br>❖ **Frontend**: Updates `isFollowing` state to `true`. Changes button text to "Following". Displays success toast (MSG_SUCCESS_FOLLOW). |
-| (3.2.4.2)-(6) | BR_Error | **Exception Handling:**<br>❖ If DB error (e.g. UniqueConstraint): Returns `409 Conflict`.<br>❖ **Generic Error**: Returns `500 Internal Server Error`.<br>❖ **Frontend**: Catches error, reverts button state, shows toast "Follow Failed". |
+| (2)-(3) | BR1 | **Validation Workflow:**<br>❖ The **Frontend** `ProfileHeader` checks the local state (isBlocked/isFollowing) and calls `profileApi.follow(targetId)`.<br>❖ The **API** receives a `POST` request at `/api/profiles/follow/{targetId}`.<br>❖ The **Backend** `ProfilesController.Follow(targetId)` invokes `_privacy.CanFollowAsync(followerId, followeeId)`.<br>❖ The **Logic** checks the `UserModerations` table for any 'Block' relationship.<br> If blocked, the **System** throws a `FriendshipException` ("Cannot follow blocked user") and returns `403 Forbidden`.<br> If allowed, the **System** proceeds to storage operation. |
+| (3.2) | BR2 | **Storage:**<br>❖ The **Backend** executes `_profiles.FollowAsync(followerId, targetId)`.<br>❖ The **Database** inserts a new record into `Follows` table with `FollowerId`, `FolloweeId`, and `CreatedAt` timestamp.<br>❖ The **NotificationService** triggers a notification via `_notificationService.NotifyFollow(targetId, followerId)`, inserting a record into the `Notifications` table. |
+| (3.2.1)-(5) | BR3 | **Completion:**<br>❖ The **System** returns a `200 OK` response.<br>❖ The **Frontend** updates the `isFollowing` state to `true`, changes the button text to "Following", and displays a success toast (MSG_SUCCESS_FOLLOW). |
+| (3.2.4.2)-(6) | BR_Error | **Exception Handling:**<br>❖ If a Database error occurs (e.g., UniqueConstraint), the **System** returns `409 Conflict`.<br>❖ For generic errors, the **System** returns `500 Internal Server Error`.<br>❖ The **Frontend** catches the error, reverts the button state, and displays a "Follow Failed" toast. |
 
 ### Diagrams
 
@@ -206,10 +206,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Confirmation:**<br>❖ **Frontend**: User clicks "Unfollow". App shows `ConfirmationModal` ("Are you sure you want to unfollow?").<br>❖ **Action**: User confirms. Frontend calls `profileApi.unfollow(targetId)`. |
-| (3)-(5) | BR2 | **Processing:**<br>❖ **API**: `DELETE /api/profiles/follow/{targetId}`.<br>❖ **Backend**: `ProfilesController.Unfollow(targetId)` calls `_profiles.UnfollowAsync(currentUserId, targetId)`.<br>❖ **DB**: `DELETE FROM Follows WHERE FollowerId=... AND FolloweeId=...`.<br>❖ **Validation**: Checks if record exists before deleting. |
-| (5.1)-(6) | BR3 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: `Redux` action `unfollowSuccess`. Button state reverts to "Follow". Success toast displayed (MSG_SUCCESS_UNFOLLOW). |
-| (5.2)-(7) | BR_Error | **Error Handling:**<br>❖ If relationship not found: Returns `404 Not Found`.<br>❖ **Server Error**: Returns `500`. Logged via `Serilog`.<br>❖ **Frontend**: Shows "Unfollow Failed" toast. |
+| (1)-(2) | BR1 | **Confirmation:**<br>❖ The **Frontend** displays a `ConfirmationModal` ("Are you sure you want to unfollow?") when the user clicks "Unfollow".<br>❖ Upon confirmation, the **Frontend** initiates a call to `profileApi.unfollow(targetId)`. |
+| (3)-(5) | BR2 | **Processing:**<br>❖ The **API** receives a `DELETE` request at `/api/profiles/follow/{targetId}`.<br>❖ The **Backend** `ProfilesController.Unfollow(targetId)` invokes `_profiles.UnfollowAsync(currentUserId, targetId)`.<br>❖ The **Database** executes a deletion against the `Follows` table where `FollowerId` and `FolloweeId` match the request.<br>❖ The **Logic** verifies the record exists before attempting deletion. |
+| (5.1)-(6) | BR3 | **Completion:**<br>❖ The **System** returns `200 OK` on success.<br>❖ The **Frontend** dispatches the `unfollowSuccess` Redux action, reverts the button state to "Follow", and displays a success message (MSG_SUCCESS_UNFOLLOW). |
+| (5.2)-(7) | BR_Error | **Error Handling:**<br>❖ If the relationship is not found, the **System** returns `404 Not Found`.<br>❖ For server-side errors, the **System** returns `500` and logs nature of the failure via `Serilog`.<br>❖ The **Frontend** displays an "Unfollow Failed" toast notification. |
 
 ### Diagrams
 
@@ -307,9 +307,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2) | BR1 | **Frontend Validation:**<br>❖ **Component**: `FriendSearchInput`.<br>❖ **Logic**: Debounce 500ms. If `query.length < 2`, do not send request.<br>❖ **Action**: `dispatch(searchUser(query))`. |
-| (2.2)-(3) | BR2 | **Processing:**<br>❖ **API**: `POST /api/search` Body: `{ query: "abc", type: "User" }`.<br>❖ **Backend**: `SearchController.Search(dto)` invokes `_searchService.SearchUsersAsync(query)`.<br>❖ **DB**: `SELECT * FROM Profiles WHERE DisplayName LIKE '%abc%' OR Username LIKE '%abc%'`.<br>❖ **Refinement**: Filters out blocked users via `UserModerations` check. |
-| (4)-(5) | BR3 | **Result:**<br>❖ **Response**: `200 OK` with `PagedResult<ProfileDto>`.<br>❖ **Frontend**: Updates `searchResults` state. Renders `UserList` component.<br>❖ **Empty**: If no matches, returns empty list. UI shows "No users found". |
+| (2) | BR1 | **Frontend Validation:**<br>❖ The **Frontend** `FriendSearchInput` component applies a 500ms debounce to the input.<br>❖ If the query length is less than 2 characters, the **System** abuts the request.<br>❖ Otherwise, it dispatches `searchUser(query)`. |
+| (2.2)-(3) | BR2 | **Processing:**<br>❖ The **API** processes a `POST` request to `/api/search` with the body `{ query: "abc", type: "User" }`.<br>❖ The **Backend** `SearchController.Search(dto)` invokes `_searchService.SearchUsersAsync(query)`.<br>❖ The **Database** executes a query `SELECT * FROM Profiles` matching `DisplayName` or `Username`.<br>❖ The **Logic** refines the results by filtering out blocked users via a check against `UserModerations`. |
+| (4)-(5) | BR3 | **Result:**<br>❖ The **System** returns `200 OK` with a `PagedResult<ProfileDto>`.<br>❖ The **Frontend** updates the `searchResults` state and renders the `UserList`.<br>❖ If no matches are found, the **Frontend** displays a "No users found" message. |
 
 ### Diagrams
 
@@ -379,10 +379,10 @@ View --> User: Display Dropdown List
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(3) | BR1 | **Confirmation:**<br>❖ **Frontend**: `UserProfileMenu` -> Click "Block". Shows `BlockWarningModal`.<br>❖ **User Input**: Clicks "Confirm Block".<br>❖ **Call**: `profileApi.blockUser(targetId)`. |
-| (4)-(6) | BR2 | **Processing:**<br>❖ **API**: `POST /api/user-moderation/block` Body: `{ targetId }`.<br>❖ **Backend**: `UserModerationController.Block(dto)` calls `_moderation.BlockAsync(userId, targetId)`.<br>❖ **DB Ops**: <br> 1. `INSERT INTO UserModerations (SourceId, TargetId, Type='Block')`.<br> 2. `DELETE FROM Follows WHERE ...` (Mutual unfollow). |
-| (6.1)-(7) | BR3 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Redirects user to Home (if on profile page) or hides user content immediately. Shows "User blocked" toast.<br>❖ **Cache**: Invalidates specific user cache keys. |
-| (6.2)-(8) | BR_Error | **Exception:**<br>❖ **Already Blocked**: Returns `409 Conflict`.<br>❖ **Server Error**: `500`.<br>❖ **Frontend**: Display error toast. |
+| (1)-(3) | BR1 | **Confirmation:**<br>❖ The **Frontend** displays a `BlockWarningModal` when the user selects "Block" from the `UserProfileMenu`.<br>❖ Upon explicit confirmation ("Confirm Block"), the **Frontend** calls `profileApi.blockUser(targetId)`. |
+| (4)-(6) | BR2 | **Processing:**<br>❖ The **API** receives a `POST` request at `/api/user-moderation/block` with the `{ targetId }`.<br>❖ The **Backend** `UserModerationController.Block(dto)` invokes `_moderation.BlockAsync(userId, targetId)`.<br>❖ The **Database** performs two operations: <br> 1. `INSERT INTO UserModerations` with `Type='Block'`.<br> 2. `DELETE FROM Follows` to remove any mutual follow status. |
+| (6.1)-(7) | BR3 | **Completion:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** immediately redirects the user to Home (if on the profile page) or hides the user's content.<br>❖ The **System** invalidates specific user cache keys. |
+| (6.2)-(8) | BR_Error | **Exception:**<br>❖ If the user is already blocked, the **System** returns `409 Conflict`.<br>❖ For server warnings, it returns `500`.<br>❖ The **Frontend** displays an error toast. |
 
 ### Diagrams
 
@@ -473,9 +473,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `BlockedUsersList` -> Click "Unblock". Calls `profileApi.unblock(targetId)`.<br>❖ **API**: `DELETE /api/user-moderation/block/{targetId}`.<br>❖ **Backend**: `UserModerationController.Unblock` calls `_moderation.UnblockAsync`.<br>❖ **DB**: `DELETE FROM UserModerations WHERE SourceId=... AND TargetId=... AND Type='Block'`. |
-| (3.1)-(4) | BR2 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Optimistically removes user from `BlockedUsersList` UI. Shows "User unblocked" toast. |
-| (3.2)-(5) | BR_Error | **Exception:**<br>❖ If not found: `404 Not Found`.<br>❖ **Error**: `500`. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `BlockedUsersList` initiates a call to `profileApi.unblock(targetId)` upon clicking "Unblock".<br>❖ The **API** request goes to `DELETE /api/user-moderation/block/{targetId}`.<br>❖ The **Backend** `UserModerationController.Unblock` calls `_moderation.UnblockAsync`.<br>❖ The **Database** deletes the matching record from `UserModerations` where `Type='Block'`. |
+| (3.1)-(4) | BR2 | **Completion:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** optimistically removes the user from the `BlockedUsersList` and displays a "User unblocked" toast. |
+| (3.2)-(5) | BR_Error | **Exception:**<br>❖ If the block record is not found, the **System** returns `404 Not Found`.<br>❖ For generic failures, it returns `500`. |
 
 ### Diagrams
 
@@ -555,8 +555,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(4) | BR1 | **Data Fetching:**<br>❖ **Frontend**: `RightSidebar` component mounts. Calls `profileApi.getRecommendations()`.<br>❖ **API**: `GET /api/profiles/recommendations?limit=5`.<br>❖ **Backend**: `ProfilesController.GetRecommendations` calls `_recommendationEngine.GetSuggestedUsersAsync`.<br>❖ **DB Query**: `SELECT * FROM Profiles p WHERE p.Id NOT IN (SELECT FolloweeId FROM Follows WHERE FollowerId = @me) ORDER BY Random() LIMIT 5`. |
-| (5)-(7) | BR2 | **Rendering:**<br>❖ **Response**: `200 OK` with `List<ProfileDto>`.<br>❖ **Frontend**: Renders `SuggestionCard` components. |
+| (2)-(4) | BR1 | **Data Fetching:**<br>❖ The **Frontend** `RightSidebar` component calls `profileApi.getRecommendations()` when mounted.<br>❖ The **API** receives a `GET` request at `/api/profiles/recommendations?limit=5`.<br>❖ The **Backend** `ProfilesController.GetRecommendations` delegates to `_recommendationEngine.GetSuggestedUsersAsync`.<br>❖ The **Database** executes a query to `SELECT` random profiles not already followed by the user. |
+| (5)-(7) | BR2 | **Rendering:**<br>❖ The **System** returns `200 OK` containing a list of `ProfileDto`.<br>❖ The **Frontend** renders `SuggestionCard` components for each user in the list. |
 
 ### Diagrams
 

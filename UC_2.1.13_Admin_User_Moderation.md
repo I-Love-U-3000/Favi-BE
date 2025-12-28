@@ -19,9 +19,10 @@
 | **Post-condition** | ❖ Admin views pending reports or takes action. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ System loads list of relevant Reports (Status=Pending).<br>❖ System displays summary stats (Total Open, High Priority). |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** loads a list of relevant Reports where `Status='Pending'`.<br>❖ The **System** displays summary statistics (e.g., Total Open, High Priority) to the Admin. |
 
 ### Diagrams
 
@@ -81,9 +82,10 @@ end
 | **Trigger** | ❖ Admin clicks "Reports" tab. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Query:**<br>❖ **Frontend**: `AdminReports`. Calls `adminApi.getReports(filter)`.<br>❖ **API**: `GET /api/admin/reports`.<br>❖ **Backend**: `AdminController.GetReports`.<br>❖ **DB**: `SELECT * FROM Reports r JOIN Profiles p ON r.ReporterId = p.Id`. |
+| (2)-(3) | BR1 | **Query:**<br>❖ The **Frontend** `AdminReports` calls `adminApi.getReports(filter)`.<br>❖ The **API** receives a `GET` request at `/api/admin/reports`.<br>❖ The **Backend** `AdminController.GetReports` executes the query.<br>❖ The **Database** performs a `SELECT * FROM Reports` joining `Profiles` to include Reporter details. |
 
 ### Diagrams
 
@@ -148,10 +150,11 @@ end
 | **Trigger** | ❖ Admin selects action on a report. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Process:**<br>❖ **Frontend**: Click "Ban User & Resolve". Calls `adminApi.resolve({ reportId, action: 'Ban' })`.<br>❖ **API**: `POST /api/admin/reports/{id}/resolve`.<br>❖ **Backend**: `AdminController.ResolveReport`.<br>❖ **DB**: Transaction:<br> 1. `UPDATE Reports SET Status='Resolved'.`<br> 2. `INSERT INTO UserModerations (Ban)...` |
-| (3) | BR2 | **Audit:**<br>❖ `INSERT INTO AuditLogs (AdminId, Action, Timestamp)`. |
+| (1)-(2) | BR1 | **Process:**<br>❖ The **Frontend** initiates `adminApi.resolve({ reportId, action: 'Ban' })` upon selection.<br>❖ The **API** receives a `POST` request at `/api/admin/reports/{id}/resolve`.<br>❖ The **Backend** `AdminController.ResolveReport` opens a transaction.<br>❖ The **Database** updates `Reports` setting `Status='Resolved'` and inserts a new record into `UserModerations` if the action is a Ban. |
+| (3) | BR2 | **Audit:**<br>❖ The **System** inserts a record into `AuditLogs` with `AdminId`, `Action`, and `Timestamp` to track the decision. |
 
 ### Diagrams
 

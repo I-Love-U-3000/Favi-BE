@@ -22,9 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Display Logic:**<br>❖ The System renders the Comment Thread component as part of the Post Detail view.<br>❖ The System evaluates the current user's permissions (Author/Admin) to dynamically enable or disable action buttons (Reply, Edit, Delete) for each comment. |
-
-### Diagrams
+| (1) | BR1 | **Display Logic:**<br>❖ The **System** renders the Comment Thread component as part of the Post Detail view.<br>❖ The **System** evaluates the current **User's** permissions (Author/Admin) to dynamically enable or disable action buttons (Reply, Edit, Delete) for each comment. |
 
 ### Diagrams
 
@@ -99,10 +97,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `CommentInput` calls `commentApi.create({ postId, content })`.<br>❖ **API**: `POST /api/comments` with `CreateCommentRequest`.<br>❖ **Backend**: `CommentsController.Create` calls `_comments.CreateAsync`. |
-| (3.2)-(4) | BR2 | **Persistence:**<br>❖ **DB**: `Comments` table insert. `ParentId = NULL`.<br>❖ **Notify**: `NotificationService` triggers if Author != PostOwner. |
-| (4.2)-(5) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` with `CommentResponse`.<br>❖ **Frontend**: Appends comment to list. |
-| (4.1)-(6) | BR_Error | **Exception:**<br>❖ Validation (Empty): `400 Bad Request`. DB Error: `500`. |
+| (2)-(3) | BR1 | **Submission:**<br>❖ The **Frontend** `CommentInput` component captures the text and calls `commentApi.create({ postId, content })`.<br>❖ The **API** receives a `POST` request at `/api/comments` with the `CreateCommentRequest` body.<br>❖ The **Backend** `CommentsController.Create` validates the request and invokes `_comments.CreateAsync`. |
+| (3.2)-(4) | BR2 | **Persistence:**<br>❖ The **Database** inserts a new record into the `Comments` table with `ParentId` set to NULL.<br>❖ The **NotificationService** triggers a notification if the **Author** is different from the Post Owner. |
+| (4.2)-(5) | BR3 | **Completion:**<br>❖ The **System** returns a `200 OK` response containing the `CommentResponse`.<br>❖ The **Frontend** immediately appends the new comment to the list for display. |
+| (4.1)-(6) | BR_Error | **Exception:**<br>❖ If validation fails (e.g., empty content), the **System** returns `400 Bad Request`. If a Database error occurs, it returns `500`. |
 
 ### Diagrams
 
@@ -185,9 +183,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: calls `commentApi.create({ postId, content, parentCommentId })`.<br>❖ **API**: `POST /api/comments` (Reused).<br>❖ **Backend**: Checks `ParentCommentId` existence. |
-| (3.2) | BR2 | **Persistence:**<br>❖ **DB**: Inserts `Comment` with `ParentId`.<br>❖ **Logic**: Supports nested threading (if UI supports it) or single-level nesting. |
-| (3.2.2)-(4) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` with `CommentResponse`.<br>❖ **Frontend**: Inserts reply under parent. |
+| (2)-(3) | BR1 | **Submission:**<br>❖ The **Frontend** calls `commentApi.create({ postId, content, parentCommentId })` with the target Parent ID.<br>❖ The **API** request is handled by `POST /api/comments` (Reused endpoint).<br>❖ The **Backend** explicitly verifies the existence of the `ParentCommentId`. |
+| (3.2) | BR2 | **Persistence:**<br>❖ The **Database** inserts the `Comment` record with the `ParentId` populated.<br>❖ The **Logic** supports nested threading (depending on UI implementation) or single-level nesting. |
+| (3.2.2)-(4) | BR3 | **Completion:**<br>❖ The **System** returns `200 OK` with the `CommentResponse`.<br>❖ The **Frontend** inserts the new reply under the parent comment in the thread. |
 
 ### Diagrams
 
@@ -280,9 +278,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `PUT /api/comments/{id}`.<br>❖ **Backend**: `CommentsController.Update` calls `_comments.UpdateAsync`.<br>❖ **Logic**: Verifies `AuthorId == UserId`. Updates Content. |
-| (3.2)-(4) | BR2 | **Persistence:**<br>❖ **DB**: Update `Comments` table.<br>❖ **Response**: `200 OK` with updated DTO. |
-| (3.2.1) | BR_Error | **Exception:**<br>❖ Not Found/Forbidden: `404 Not Found` (merged error code). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `PUT` request at `/api/comments/{id}`.<br>❖ The **Backend** `CommentsController.Update` calls `_comments.UpdateAsync`.<br>❖ The **Logic** strictly verifies that `AuthorId` matches the `UserId` of the requester. It then updates the Content. |
+| (3.2)-(4) | BR2 | **Persistence:**<br>❖ The **Database** updates the `Comments` table record.<br>❖ The **System** returns `200 OK` with the updated DTO. |
+| (3.2.1) | BR_Error | **Exception:**<br>❖ If the comment is Not Found or the user is Forbidden, the **System** returns `404 Not Found` (merged error code for security). |
 
 ### Diagrams
 
@@ -374,9 +372,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `DELETE /api/comments/{id}`.<br>❖ **Backend**: `CommentsController.Delete` calls `_comments.DeleteAsync`.<br>❖ **Logic**: Verifies Ownership. |
-| (3.2) | BR2 | **Persistence:**<br>❖ **DB**: Soft Delete (`IsDeleted = 1`).<br>❖ **Response**: `200 OK` { message: "Đã xoá bình luận." }. |
-| (3.2.2)-(4) | BR3 | **UI:**<br>❖ Remove from DOM. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **API** receives a `DELETE` request at `/api/comments/{id}`.<br>❖ The **Backend** `CommentsController.Delete` invokes `_comments.DeleteAsync`.<br>❖ The **Logic** verifies that the user is the Owner. |
+| (3.2) | BR2 | **Persistence:**<br>❖ The **Database** performs a Soft Delete by setting `IsDeleted = 1`.<br>❖ The **System** returns `200 OK` with the message "Đã xoá bình luận.". |
+| (3.2.2)-(4) | BR3 | **UI:**<br>❖ The **Frontend** removes the comment element from the DOM. |
 
 ### Diagrams
 

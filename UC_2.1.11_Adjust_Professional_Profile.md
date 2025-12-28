@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ The System displays the professional dashboard if the user has a Professional Profile.<br>❖ If not, it offers the option to "Switch to Professional Mode". |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** displays the professional dashboard if the user has a Professional Profile.<br>❖ If not, it offers the option to "Switch to Professional Mode". |
 
 ### Diagrams
 
@@ -94,9 +94,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `SwitchModeModal` -> Confirm. Calls `proApi.switchMode()`.<br>❖ **API**: `POST /api/professional/switch`.<br>❖ **Backend**: `ProfessionalController.SwitchToProfessional(userId)`.<br>❖ **DB**: `UPDATE Profiles SET IsProfessional=1 WHERE Id=@me`; `INSERT INTO ProfessionalProfiles (Id, Category)`. |
-| (3.1) | BR2 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Refresh user profile. Unlock "Dashboard" link in sidebar. Show "Welcome" modal. |
-| (3.2) | BR_Error | **Error:**<br>❖ **DB Error**: `500`. Logged.<br>❖ **Frontend**: "Failed to switch mode". |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `SwitchModeModal` prompts for confirmation and calls `proApi.switchMode()`.<br>❖ The **API** receives a `POST` request at `/api/professional/switch`.<br>❖ The **Backend** `ProfessionalController.SwitchToProfessional(userId)` executes the logic.<br>❖ The **Database** updates `Profiles` setting `IsProfessional=1` and inserts a new record into `ProfessionalProfiles` with `Category`. |
+| (3.1) | BR2 | **Completion:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** refreshes the user profile data, unlocks the "Dashboard" link in the sidebar, and shows a "Welcome" modal. |
+| (3.2) | BR_Error | **Error:**<br>❖ **DB Error**: `500` is returned and logged.<br>❖ The **Frontend** displays "Failed to switch mode". |
 
 ### Diagrams
 
@@ -174,9 +174,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Query:**<br>❖ **Frontend**: `ProDashboard`. Calls `proApi.getInsights({ days: 7 })`.<br>❖ **API**: `GET /api/professional/insights?days=7`.<br>❖ **Backend**: `ProfessionalController.GetInsights`.<br>❖ **DB**: `SELECT SUM(Impressions), SUM(Reach) FROM Insights WHERE ProfileId=@me AND Date >= @startDate`. |
-| (4) | BR2 | **Rendering:**<br>❖ **Response**: `200 OK` (InsightsDto).<br>❖ **Frontend**: Renders `Recharts` graphs (Line/Bar) for Reach and Engagement. |
-| (4.1) | BR_Error | **Error:**<br>❖ **Server**: `500`.<br>❖ **Frontend**: Shows "Data unavailable" placeholder. |
+| (2)-(3) | BR1 | **Query:**<br>❖ The **Frontend** `ProDashboard` component calls `proApi.getInsights({ days: 7 })`.<br>❖ The **API** receives `GET /api/professional/insights?days=7`.<br>❖ The **Backend** `ProfessionalController.GetInsights` is invoked.<br>❖ The **Database** executes `SELECT SUM(Impressions), SUM(Reach)` from `Insights` where `ProfileId` matches the user and `Date` is within the range. |
+| (4) | BR2 | **Rendering:**<br>❖ The **System** returns `200 OK` with the `InsightsDto`.<br>❖ The **Frontend** uses `Recharts` to render Line and Bar charts for Reach and Engagement. |
+| (4.1) | BR_Error | **Error:**<br>❖ **Server**: `500`.<br>❖ The **Frontend** displays a "Data unavailable" placeholder. |
 
 ### Diagrams
 
@@ -246,8 +246,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `BoostPostModal`. Calls `adsApi.createCampaign({ postId, budget, duration })`.<br>❖ **API**: `POST /api/ads/campaigns`.<br>❖ **Backend**: `AdsController.CreateCampaign`.<br>❖ **DB**: `INSERT INTO AdCampaigns (PostId, Budget, Status='Pending')`. |
-| (4) | BR2 | **Payment:**<br>❖ **Mock**: `_paymentGateway.Authorize(amount)`.<br>❖ **Response**: `201 Created`.<br>❖ **Frontend**: Toast "Boost submitted for review". |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `BoostPostModal` submits `adsApi.createCampaign({ postId, budget, duration })`.<br>❖ The **API** receives a `POST` request at `/api/ads/campaigns`.<br>❖ The **Backend** `AdsController.CreateCampaign` processes the request.<br>❖ The **Database** inserts `AdCampaigns` with `PostId`, `Budget`, and `Status='Pending'`. |
+| (4) | BR2 | **Payment:**<br>❖ The **System** performs a mock payment authorization via `_paymentGateway.Authorize(amount)`.<br>❖ The **System** returns `201 Created`.<br>❖ The **Frontend** shows a toast "Boost submitted for review". |
 | (5) | BR_Error | **Error:**<br>❖ **Payment Fail**: `402 Payment Required`.<br>❖ **Server**: `500`. |
 
 ### Diagrams

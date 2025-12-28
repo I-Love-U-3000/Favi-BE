@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ The System fetches the user's notification stream, highlighting unread items.<br>❖ The System provides controls to Mark as Read, Delete, or Configure preferences. |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** fetches the user's notification stream, automatically highlighting unread items.<br>❖ The **System** provides controls to Mark as Read, Delete, or Configure preferences. |
 
 ### Diagrams
 
@@ -100,9 +100,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `NotificationItem` onClick. Calls `notifyApi.markRead(id)`.<br>❖ **API**: `PUT /api/notifications/{id}/read`.<br>❖ **Backend**: `NotificationsController.MarkRead(id)`.<br>❖ **DB**: `UPDATE Notifications SET IsRead=1 WHERE Id=@id`. |
-| (3.1)-(4) | BR2 | **Routing:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Redirects `window.location` to `notification.targetUrl` (e.g. `/posts/{id}`). |
-| (3.2)-(5) | BR_Error | **Exception:**<br>❖ **Error**: `500 Server Error`. Logged.<br>❖ **Frontend**: Shows error toast. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `NotificationItem` calls `notifyApi.markRead(id)` on click.<br>❖ The **API** receives a `PUT` request at `/api/notifications/{id}/read`.<br>❖ The **Backend** `NotificationsController.MarkRead(id)` updates the `IsRead` flag to `true` in the **Database** `Notifications` table. |
+| (3.1)-(4) | BR2 | **Routing:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** redirects the `window.location` to the `notification.targetUrl` (e.g., specific post or profile). |
+| (3.2)-(5) | BR_Error | **Exception:**<br>❖ If a server error occurs (`500`), it is logged via Serilog.<br>❖ The **Frontend** displays an error toast. |
 
 ### Diagrams
 
@@ -184,9 +184,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `NotificationHeader` -> Click "Mark all read". Calls `notifyApi.markAllRead()`.<br>❖ **API**: `PUT /api/notifications/read-all`.<br>❖ **Backend**: `NotificationsController.MarkAllAsRead`.<br>❖ **DB**: `UPDATE Notifications SET IsRead=1 WHERE RecipientId=@currentUserId`. |
-| (3.1)-(4) | BR2 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Clears `unreadCount` badge in Redux. Resets UI badge to 0. |
-| (3.2)-(5) | BR_Error | **Error:**<br>❖ **Server Error**: `500`. Logged via Serilog.<br>❖ **Frontend**: Displays "Failed to mark all as read". |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `NotificationHeader` triggers `notifyApi.markAllRead()`.<br>❖ The **API** receives a `PUT` request at `/api/notifications/read-all`.<br>❖ The **Backend** `NotificationsController.MarkAllAsRead` executes a bulk `UPDATE` in the **Database** setting `IsRead=1` for all notifications belonging to `RecipientId`. |
+| (3.1)-(4) | BR2 | **Completion:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** clears the `unreadCount` badge in Redux and resets the UI badge to 0. |
+| (3.2)-(5) | BR_Error | **Error:**<br>❖ **Server Error**: `500`. Logged.<br>❖ **Frontend**: Displays "Failed to mark all as read". |
 
 ### Diagrams
 
@@ -264,9 +264,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: Swipe/Click Delete. Calls `notifyApi.delete(id)`.<br>❖ **API**: `DELETE /api/notifications/{id}`.<br>❖ **Backend**: `NotificationsController.Delete(id)`.<br>❖ **DB**: `DELETE FROM Notifications WHERE Id=@id`. |
-| (3.1) | BR2 | **Update:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Removes item from list using `filter`. |
-| (3.2)-(4) | BR_Error | **Error:**<br>❖ **Not Found**: `404` if ID invalid.<br>❖ **Server Error**: `500`. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** calls `notifyApi.delete(id)` on event.<br>❖ The **API** receives `DELETE /api/notifications/{id}`.<br>❖ The **Backend** `NotificationsController.Delete(id)` deletes the record from the **Database**. |
+| (3.1) | BR2 | **Update:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** removes the item from the local list using `filter`. |
+| (3.2)-(4) | BR_Error | **Error:**<br>❖ If ID is invalid, it returns `404 Not Found`.<br>❖ **Server Error**: `500`. |
 
 ### Diagrams
 
@@ -342,9 +342,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: Toggle Switch. Calls `profileApi.updateSettings(settingsDto)`.<br>❖ **API**: `PATCH /api/profiles/settings`.<br>❖ **Backend**: `ProfilesController.UpdateSettings`.<br>❖ **DB**: `UPDATE Profiles SET Settings = JSON_SET(Settings, '$.notifyLikes', @val) WHERE Id=@me`. |
-| (3.1) | BR2 | **Completion:**<br>❖ **Response**: `200 OK` (Updated Settings).<br>❖ **Frontend**: Updates local state. Toast "Settings Saved". |
-| (3.2)-(4) | BR_Error | **Error:**<br>❖ **Error**: `500`.<br>❖ **Frontend**: Reverts toggle switch. Shows error. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** Toggle Switch triggers `profileApi.updateSettings(settingsDto)`.<br>❖ The **API** receives `PATCH /api/profiles/settings`.<br>❖ The **Backend** `ProfilesController.UpdateSettings` updates the JSON settings field in the `Profiles` table in the **Database**. |
+| (3.1) | BR2 | **Completion:**<br>❖ The **System** returns `200 OK` with the Updated Settings.<br>❖ The **Frontend** updates the local state and shows a "Settings Saved" toast. |
+| (3.2)-(4) | BR_Error | **Error:**<br>❖ **Error**: `500`.<br>❖ The **Frontend** reverts the toggle switch and displays an error. |
 
 ### Diagrams
 

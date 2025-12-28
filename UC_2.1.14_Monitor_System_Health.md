@@ -19,9 +19,10 @@
 | **Post-condition** | ❖ Admin views metrics or logs. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ System checks service statuses (DB, Cache, Storage).<br>❖ System displays "Health Status" (Green/Yellow/Red). |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** checks service statuses (DB, Cache, Storage).<br>❖ The **System** displays an aggregate "Health Status" (Green/Yellow/Red). |
 
 ### Diagrams
 
@@ -81,10 +82,11 @@ end
 | **Trigger** | ❖ Admin clicks "Metrics". |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Data Retrieval:**<br>❖ **Frontend**: `MetricsDashboard`. Polls `healthApi.getMetrics()`.<br>❖ **API**: `GET /api/health/metrics`.<br>❖ **Backend**: `SystemHealthController.GetMetrics`.<br>❖ **Infrastructure**: Queries `Prometheus` HTTP API /metrics endpoint. |
-| (3.1) | BR_Error | **Exception:**<br>❖ Returns `503 Service Unavailable` if Prometheus unreachable. |
+| (2)-(3) | BR1 | **Data Retrieval:**<br>❖ The **Frontend** `MetricsDashboard` polls `healthApi.getMetrics()`.<br>❖ The **API** receives `GET /api/health/metrics`.<br>❖ The **Backend** `SystemHealthController.GetMetrics` handles the request.<br>❖ The **Infrastructure** queries the `Prometheus` HTTP API /metrics endpoint. |
+| (3.1) | BR_Error | **Exception:**<br>❖ The **System** returns `503 Service Unavailable` if Prometheus is unreachable. |
 
 ### Diagrams
 
@@ -141,9 +143,10 @@ View -> User: Render Graphs
 | **Trigger** | ❖ Admin clicks "Logs". |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Log Query:**<br>❖ **Frontend**: `LogExplorer`. Calls `healthApi.getLogs({ level: 'Error' })`.<br>❖ **API**: `GET /api/health/logs?level=Error`.<br>❖ **Backend**: `SystemHealthController.GetLogs`.<br>❖ **Infrastructure**: Queries `Seq` or `ElasticSearch` via HTTP Client. |
+| (2)-(3) | BR1 | **Log Query:**<br>❖ The **Frontend** `LogExplorer` calls `healthApi.getLogs({ level: 'Error' })` based on filters.<br>❖ The **API** receives a `GET` request at `/api/health/logs?level=Error`.<br>❖ The **Backend** `SystemHealthController.GetLogs` processes the query.<br>❖ The **Infrastructure** queries `Seq` or `ElasticSearch` via the HTTP Client to retrieve log entries. |
 
 ### Diagrams
 

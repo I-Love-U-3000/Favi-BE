@@ -19,9 +19,10 @@
 | **Post-condition** | ❖ User views content, joins/leaves, or moderates the group. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ System loads Group details and permissions based on the user's role (Admin, Moderator, Member, Guest).<br>❖ System displays options relevant to the role (e.g., "Settings" for Admins). |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** loads Group details and determines permissions based on the user's role (Admin, Moderator, Member, Guest).<br>❖ The **System** displays options relevant to the role (e.g., "Settings" for Admins). |
 
 ### Diagrams
 
@@ -98,11 +99,12 @@ end
 | **Post-condition** | ❖ Group created, User becomes Admin. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `CreateGroupForm`. Calls `groupApi.create(dto)`.<br>❖ **API**: `POST /api/groups`.<br>❖ **Backend**: `GroupsController.Create`.<br>❖ **DB Transaction**: <br> 1. `INSERT INTO Groups (Name, Privacy)`.<br> 2. `INSERT INTO GroupMembers (GroupId, UserId, Role='Admin')`. |
-| (4) | BR2 | **Completion:**<br>❖ **Response**: `201 Created` (GroupDto).<br>❖ **Frontend**: Redirect to `/groups/{id}`. |
-| (5) | BR_Error | **Error:**<br>❖ **Validation**: `400`.<br>❖ **Server**: `500`. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `CreateGroupForm` triggers `groupApi.create(dto)`.<br>❖ The **API** receives a `POST` request at `/api/groups`.<br>❖ The **Backend** `GroupsController.Create` initiates a transaction.<br>❖ The **Database** inserts a new record into `Groups` (Name, Privacy) and adds the creator to `GroupMembers` with `Role='Admin'`. |
+| (4) | BR2 | **Completion:**<br>❖ The **System** returns `201 Created` with the `GroupDto`.<br>❖ The **Frontend** redirects the user to the new group page `/groups/{id}`. |
+| (5) | BR_Error | **Error:**<br>❖ **Validation**: `400 Bad Request`.<br>❖ **Server**: `500`. |
 
 ### Diagrams
 
@@ -173,10 +175,11 @@ end
 | **Trigger** | ❖ Admin saves changes in Settings. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `GroupSettings`. Calls `groupApi.update(id, dto)`.<br>❖ **API**: `PUT /api/groups/{id}`.<br>❖ **Backend**: `GroupsController.Update`. Checks `_groupService.IsAdmin(userId, groupId)`.<br>❖ **DB**: `UPDATE Groups SET Name=@name, Description=@desc WHERE Id=@id`. |
-| (4) | BR2 | **Display:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Updates context/state. Shows success toast. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** `GroupSettings` triggers `groupApi.update(id, dto)`.<br>❖ The **API** receives `PUT /api/groups/{id}`.<br>❖ The **Backend** `GroupsController.Update` verifies ownership via `_groupService.IsAdmin(userId, groupId)`.<br>❖ The **Database** updates the `Groups` table setting `Name` and `Description`. |
+| (4) | BR2 | **Display:**<br>❖ The **System** returns `200 OK`.<br>❖ The **Frontend** updates the context state and displays a success toast. |
 
 ### Diagrams
 
@@ -243,10 +246,11 @@ end
 | **Trigger** | ❖ User clicks Join or Leave. |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2) | BR1 | **Join:**<br>❖ **Frontend**: Click "Join". Calls `groupApi.join(id)`.<br>❖ **API**: `POST /api/groups/{id}/join`.<br>❖ **Backend**: `GroupsController.Join`.<br>❖ **DB**: Check `Privacy`.<br> **Public**: `INSERT INTO GroupMembers`.<br> **Private**: `INSERT INTO GroupJoinRequests`. |
-| (3) | BR2 | **Leave:**<br>❖ **Frontend**: Click "Leave". Calls `groupApi.leave(id)`.<br>❖ **API**: `POST /api/groups/{id}/leave`.<br>❖ **DB**: `DELETE FROM GroupMembers WHERE UserId=@me AND GroupId=@id`. |
+| (2) | BR1 | **Join:**<br>❖ The **Frontend** calls `groupApi.join(id)`.<br>❖ The **API** receives `POST /api/groups/{id}/join`.<br>❖ The **Backend** `GroupsController.Join` checks the group's privacy setting.<br>❖ The **Database** executes:<br> If **Public**: `INSERT INTO GroupMembers`.<br> If **Private**: `INSERT INTO GroupJoinRequests`. |
+| (3) | BR2 | **Leave:**<br>❖ The **Frontend** calls `groupApi.leave(id)`.<br>❖ The **API** receives `POST /api/groups/{id}/leave`.<br>❖ The **Database** executes `DELETE FROM GroupMembers` where `UserId` matches the current user. |
 
 ### Diagrams
 
@@ -313,9 +317,10 @@ end
 | **Actor** | Group Admin / Moderator |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: Click Approve/Reject. Calls `groupApi.respondToRequest(reqId, action)`.<br>❖ **API**: `POST /api/groups/requests/{id}/response`.<br>❖ **Backend**: `GroupsController.Respond`.<br>❖ **DB**: <br> **Approve**: `INSERT INTO members...; DELETE FROM requests...`.<br> **Reject**: `DELETE FROM requests...`. |
+| (2)-(3) | BR1 | **Processing:**<br>❖ The **Frontend** calls `groupApi.respondToRequest(reqId, action)` (Approve/Reject).<br>❖ The **API** receives a `POST` at `/api/groups/requests/{id}/response`.<br>❖ The **Backend** `GroupsController.Respond` executes the logic.<br>❖ The **Database** performs:<br> **Approve**: `INSERT INTO GroupMembers...; DELETE FROM GroupJoinRequests...`.<br> **Reject**: `DELETE FROM GroupJoinRequests...`. |
 
 ### Diagrams
 
@@ -373,9 +378,10 @@ end
 | **Actor** | Group Admin |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Action:**<br>❖ **Frontend**: Select Member -> Ban. Calls `groupApi.banMember(groupId, userId)`.<br>❖ **API**: `PUT /api/groups/{id}/members/{userId}/ban`.<br>❖ **Backend**: `GroupsController.BanMember`.<br>❖ **DB**: `UPDATE GroupMembers SET Status='Banned'`. |
+| (1) | BR1 | **Action:**<br>❖ The **Frontend** initiates `groupApi.banMember(groupId, userId)`.<br>❖ The **API** receives `PUT /api/groups/{id}/members/{userId}/ban`.<br>❖ The **Backend** `GroupsController.BanMember` processes the request.<br>❖ The **Database** updates `GroupMembers` setting `Status='Banned'`. |
 
 ### Diagrams
 
@@ -433,9 +439,10 @@ end
 | **Actor** | Group Admin / Moderator |
 
 ### Business Rules (BR)
+
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Review:**<br>❖ **Frontend**: `ModQueue`. Click Approve. Calls `groupApi.approvePost(postId)`.<br>❖ **API**: `PUT /api/groups/posts/{id}/approve`.<br>❖ **Backend**: `GroupsController.ApprovePost`.<br>❖ **DB**: `UPDATE Posts SET Status='Active' WHERE Id=@id`. |
+| (1) | BR1 | **Review:**<br>❖ The **Frontend** `ModQueue` triggers `groupApi.approvePost(postId)` on approval.<br>❖ The **API** receives `PUT /api/groups/posts/{id}/approve`.<br>❖ The **Backend** `GroupsController.ApprovePost` actions the request.<br>❖ The **Database** updates the `Posts` table setting `Status='Active'` where `Id` matches. |
 
 ### Diagrams
 

@@ -22,7 +22,7 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Initialization:**<br>❖ The System allows users to flag content for review.<br>❖ The System provides a history view of submitted reports. |
+| (1) | BR1 | **Initialization:**<br>❖ The **System** allows users to flag content for review.<br>❖ The **System** provides a history view of submitted reports. |
 
 ### Diagrams
 
@@ -83,10 +83,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Submission:**<br>❖ **Frontend**: `ReportDialog`. User selects reason. Calls `reportApi.create({ targetId, targetType, reason })`. |
-| (2)-(4) | BR2 | **Processing:**<br>❖ **API**: `POST /api/reports`.<br>❖ **Backend**: `ReportsController.Create(dto)`. Checks `_privacy.CanReport`.<br>❖ **DB**: `INSERT INTO Reports (ReporterId, TargetId, Reason, Status='Pending')`. |
-| (4.1)-(5) | BR3 | **Completion:**<br>❖ **Response**: `201 Created`.<br>❖ **Frontend**: Shows "Report submitted" confirmation. Dialog closes. |
-| (4.2)-(6) | BR_Error | **Error:**<br>❖ **Invalid**: `400`.<br>❖ **Server**: `500`. |
+| (1) | BR1 | **Submission:**<br>❖ The **Frontend** shows a `ReportDialog` where the user selects a reason.<br>❖ Upon confirmation, it calls `reportApi.create({ targetId, targetType, reason })`. |
+| (2)-(4) | BR2 | **Processing:**<br>❖ The **API** receives a `POST` request at `/api/reports`.<br>❖ The **Backend** `ReportsController.Create(dto)` first checks `_privacy.CanReport`.<br>❖ The **Database** inserts a new record into `Reports` with `ReporterId`, `TargetId`, `Reason`, and sets `Status='Pending'`. |
+| (4.1)-(5) | BR3 | **Completion:**<br>❖ The **System** returns `201 Created`.<br>❖ The **Frontend** displays a "Report submitted" confirmation and closes the dialog. |
+| (4.2)-(6) | BR_Error | **Error:**<br>❖ If request is **Invalid**, the **System** returns `400`.<br>❖ For **Server** errors, it returns `500`. |
 
 ### Diagrams
 
@@ -173,9 +173,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Query:**<br>❖ **Frontend**: `SupportCenter`. Calls `reportApi.getMyReports()`.<br>❖ **API**: `GET /api/reports/my`.<br>❖ **Backend**: `ReportsController.GetMyReports`.<br>❖ **DB**: `SELECT * FROM Reports WHERE ReporterId=@me`. |
-| (4)-(5) | BR2 | **Display:**<br>❖ **Response**: `200 OK` (List).<br>❖ **Frontend**: Renders list using badges: "Open" (Green), "Closed" (Gray). |
-| (6) | BR_Error | **Error:**<br>❖ **Server**: `500`. Logged. |
+| (2)-(3) | BR1 | **Query:**<br>❖ The **Frontend** `SupportCenter` calls `reportApi.getMyReports()`.<br>❖ The **API** receives `GET /api/reports/my`.<br>❖ The **Backend** `ReportsController.GetMyReports` executes the query.<br>❖ The **Database** selects all records from `Reports` where `ReporterId` matches the current user. |
+| (4)-(5) | BR2 | **Display:**<br>❖ The **System** returns `200 OK` with the list.<br>❖ The **Frontend** renders the list using badges to indicate status (e.g., "Open" in Green, "Closed" in Gray). |
+| (6) | BR_Error | **Error:**<br>❖ If a **Server** error occurs, the **System** returns `500` and logs it. |
 
 ### Diagrams
 
