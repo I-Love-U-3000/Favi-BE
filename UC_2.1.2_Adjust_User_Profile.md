@@ -105,11 +105,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission:**<br>❖ User submits registration form (Step 1).<br>❖ System calls `Register(RegisterDto)` (Step 2).<br>❖ System checks Username validity (Step 3). |
-| (3.1)-(4) | BR2 | **Supabase Registration:**<br>❖ System calls `Supabase.RegisterAsync` (Step 4).<br> **Fail**: Return 400 (Step 4.1).<br> **Success**: Proceed to Step (4.2). |
-| (5) | BR3 | **Profile Sync (Webhook):**<br>❖ Supabase triggers Webhook `SyncProfile` (Step 5).<br>❖ System creates `Profile` record (Step 5.1). |
-| (4.2.2)-(6) | BR4 | **Completion:**<br>❖ Backend returns `SupabaseAuthResponse` (Step 4.2.2).<br>❖ Client redirects (Step 6). |
-| (3.1)-(7) | BR_Error | **Exception:**<br>If Registration fails: Log Error (Step 4.1). Show Error (Step 7). |
+| (2)-(3) | BR1 | **Submission & Validation:**<br>❖ **Frontend**: `RegisterForm` calls `authApi.register({email, password, username})`.<br>❖ **Backend**: `AuthController.Register(dto)` calls `_profiles.CheckValidUsername(dto.Username)`.<br>❖ **Logic**: Queries `Profiles` table for uniqueness. If exists -> Returns `409 Conflict`. |
+| (3.1)-(4) | BR2 | **Supabase Registration:**<br>❖ **Service**: `SupabaseAuthService` calls `POST /auth/v1/signup` with `{email, password, data: {username}}`.<br>❖ **Supabase**: Creates user in `auth.users`. Returns `200 OK` (User Object).<br>❖ **Error**: If fails, returns `400 Bad Request`. |
+| (5) | BR3 | **Profile Sync (Webhook):**<br>❖ **Supabase**: Triggers `POST` to configured Webhook URI `/api/profilessync/sync`.<br>❖ **Backend**: `ProfilesSyncController.SyncProfile(dto)` receives `SupabaseUserCreatedDto`.<br>❖ **DB**: `ProfileService.CreateProfileAsync` inserts new row into `Profiles` table with `Id=user_id`, `Username`, `DisplayName`. |
+| (4.2.2)-(6) | BR4 | **Completion:**<br>❖ **Response**: `AuthController` returns `200 OK (SupabaseAuthResponse)`.<br>❖ **Frontend**: Stores tokens, redirects to `/home`. |
 
 ### Diagrams
 
@@ -214,10 +213,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ System calls `UpdateProfile(dto)` (Step 2).<br>❖ System validates input (Step 3). |
-| (3.2)-(4) | BR2 | **Storage:**<br>❖ System updates `Profiles` table (Step 3.2).<br>❖ System changes `UpdatedAt` timestamp (Step 4). |
-| (3.2.2)-(5) | BR3 | **Completion:**<br>❖ Return Updated Dto (Step 3.2.2).<br>❖ UI Reflects changes (Step 5). |
-| (3.2.1)-(6) | BR_Error | **Exception:**<br> DB Error: Log (Step 3.2.1). Return 500. Show Error (Step 6). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: Calls `profileApi.updateProfile({displayName, bio, ...})`.<br>❖ **API**: `PUT /api/profiles`.<br>❖ **Backend**: `ProfilesController.Update` calls `_profiles.UpdateAsync(userId, dto)`. |
+| (3.2)-(4) | BR2 | **Storage:**<br>❖ **DB**: `UnitOfWork.Profiles.GetByIdAsync(id)` -> Updates fields -> `UnitOfWork.CompleteAsync()`.<br>❖ **Timestamp**: Updates `LastActiveAt` automatically. |
+| (3.2.2)-(5) | BR3 | **Completion:**<br>❖ **Response**: Returns `200 OK` with updated `ProfileResponse`.<br>❖ **Frontend**: Updates Redux store `user/profile` and shows success toast. |
+| (3.2.1)-(6) | BR_Error | **Exception:**<br>❖ If Profile not found (unlikely for `Update`): Return `404 NotFound`.<br>❖ If DB error: Return `500`. |
 
 ### Diagrams
 
@@ -294,9 +293,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Confirmation:**<br>❖ User requests deletion (Step 1).<br>❖ System calls `Info` to confirm intent (Step 2). |
-| (3.2)-(4) | BR2 | **Processing:**<br>❖ System calls `DeleteUser()` (Step 3.2).<br>❖ System updates `Profiles` -> `IsDeleted=1` (Step 4). |
-| (3.2.1)-(5) | BR3 | **Completion:**<br>❖ System logs out user (Step 3.2.1).<br>❖ Redirect to Login (Step 5). |
+| (2)-(3) | BR1 | **Confirmation:**<br>❖ **Frontend**: Modal "Are you sure?".<br>❖ **API**: `DELETE /api/profiles`. |
+| (3.2)-(4) | BR2 | **Processing:**<br>❖ **Backend**: `ProfilesController.Delete()` calls `_profiles.DeleteAsync(userId)`.<br>❖ **DB**: `UnitOfWork.Profiles.Remove(profile)` -> Hard deletes or Soft deletes depending on configuration (Code shows `Remove`, usually hard delete unless EF configured for Soft Delete). |
+| (3.2.1)-(5) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` { message: "Đã xoá tài khoản." }.<br>❖ **Frontend**: Calls `logout()` and redirects to Login. |
 
 ### Diagrams
 
@@ -363,9 +362,9 @@ deactivate Controller
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Search:**<br>❖ System calls `SearchProfiles(query)` (Step 2).<br>❖ System executes LIKE query on “Profiles” (Step 3). |
-| (3.2)-(4) | BR2 | **Result:**<br>❖ System returns List (Step 3.2).<br>❖ UI shows results (Step 4). |
-| (3.1)-(5) | BR_Error | **Exception:**<br>DB Error (Step 3): Log (Step 3.1). Show Error (Step 5). |
+| (2)-(3) | BR1 | **Search:**<br>❖ **Frontend**: `SearchInput` debounces input, calls `searchApi.search({ query, type: 'user' })`.<br>❖ **API**: `POST /api/search` with `SearchRequest`.<br>❖ **Backend**: `SearchController.Search` calls `_search.SearchAsync`.<br>❖ **Logic**: `SearchService` executes `Profiles.Where(p => p.Username.Contains(q) || p.DisplayName.Contains(q))`. |
+| (3.2)-(4) | BR2 | **Result:**<br>❖ **Response**: `200 OK` with `SearchResult` (List of Profiles).<br>❖ **Frontend**: Renders list of `ProfileCard`. |
+| (3.1)-(5) | BR_Error | **Exception:**<br>❖ Empty result returns `200 OK` with empty list. Error returns `500`. |
 
 ### Diagrams
 
@@ -435,9 +434,9 @@ deactivate DB
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Query:**<br>❖ System calls `GetProfile(username)` (Step 2).<br>❖ System queries “Profiles” table (Step 3). |
-| (4)-(5) | BR2 | **Relationships:**<br>❖ System checks “Follows” table (Step 4).<br>❖ System returns Dto (Step 5). |
-| (5.1)-(6) | BR_Error | **Exception:**<br>If DB Fail (Step 3): Log (Step 3.1). Return 500. Show Error (Step 6). |
+| (2)-(3) | BR1 | **Query:**<br>❖ **API**: `GET /api/profiles/{id}`.<br>❖ **Backend**: `ProfilesController.GetById(id)` calls `_profiles.GetEntityByIdAsync(id)`. |
+| (4)-(5) | BR2 | **Privacy & Relationships:**<br>❖ **Privacy**: `_privacy.CanViewProfileAsync(profile, viewerId)` checks `PrivacyLevel` and Follow status.<br>❖ **Service**: `_profiles.GetByIdAsync` fetches Follower/Following counts from `Follows` table.<br>❖ **Response**: `200 OK` with `ProfileResponse`. |
+| (5.1)-(6) | BR_Error | **Exception:**<br>❖ **Not Found**: If profile null -> `404 NotFound` { code: "PROFILE_NOT_FOUND" }.<br>❖ **Forbidden**: If private -> `403 Forbidden` { code: "PROFILE_FORBIDDEN" }. |
 
 ### Diagrams
 
@@ -510,8 +509,8 @@ deactivate DB
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing:**<br>❖ User toggles switch (Step 1).<br>❖ System calls `UpdatePrivacy(bool)` (Step 2).<br>❖ System Updates DB (Step 3). |
-| (3.2)-(4) | BR2 | **Completion:**<br>❖ Return OK (Step 3.2).<br>❖ Show Toast (Step 4). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `PrivacySettings` calls `updateProfile({ privacyLevel: 'Private' })`.<br>❖ **API**: Reuses `PUT /api/profiles`.<br>❖ **Backend**: `_profiles.UpdateAsync` maps `PrivacyLevel` from DTO to Entity. |
+| (3.2)-(4) | BR2 | **Completion:**<br>❖ **DB**: Updates `Profiles.PrivacyLevel`.<br>❖ **Response**: `200 OK` with updated profile. |
 
 ### Diagrams
 

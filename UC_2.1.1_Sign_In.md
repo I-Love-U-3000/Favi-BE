@@ -2,7 +2,7 @@
 
 **Module**: Authentication
 **Primary Actor**: User (Guest / Authenticated)
-**Backend Controller**: `Favi_BE.API.Controllers.AuthController`
+**Backend Controller**: `AuthController`
 **Database Tables**: `Profiles` (Read-Only via Sync), Supabase Auth (External)
 
 ---
@@ -23,10 +23,10 @@
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission:**<br>❖ User submits credentials (Step 1).<br>❖ System calls `Login(LoginDto)` (Step 2).<br>❖ System forwards request to Supabase Auth (Step 3). |
-| (3.1)-(4) | BR2 | **Validation (External):**<br>❖ Supabase verifies credentials (Step 3).<br> **Invalid**: Returns 400/401 (Step 3.1).<br> **Valid**: Returns Session/Tokens (Step 4). |
-| (5.2)-(6) | BR3 | **Completion:**<br>❖ Backend returns `SupabaseAuthResponse` (Step 5.2).<br>❖ UI saves tokens (Step 6). |
-| (5.1)-(7) | BR_Error | **Exception Handling:**<br>If Supabase unavailable: Log Error (Step 5.1), Return 500, Show Error (Step 7). |
+| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `LoginForm` calls `authApi.login({email, password})`.<br>❖ **API Call**: `POST /api/auth/login` with Body: `LoginDto { Email, Password }`.<br>❖ **Backend**: `AuthController.Login(dto)` invokes `_supabase.LoginAsync(email, password)`.<br>❖ **Service**: `SupabaseAuthService` sends `POST /auth/v1/token?grant_type=password` to Supabase Auth Server. |
+| (3.1)-(4) | BR2 | **Validation (External):**<br>❖ **Supabase**: Verifies credentials against `auth.users` table.<br> **Invalid**: Returns `400 Bad Request` ("invalid_grant").<br> **Valid**: Returns `200 OK` with `access_token`, `refresh_token`, `user` object. |
+| (5.2)-(6) | BR3 | **Completion:**<br>❖ **Backend**: `SupabaseAuthService` deserializes JSON to `SupabaseAuthResponse`.<br>❖ **Controller**: Returns `200 OK (SupabaseAuthResponse)`.<br>❖ **Frontend**: `authSlice` stores tokens in `localStorage`/`Redux State`. Redirects to `/home`. |
+| (5.1)-(7) | BR_Error | **Exception Handling:**<br>❖If Supabase returns `400`: `AuthController` returns `401 Unauthorized` `{ code: "INVALID_CREDENTIALS", message: "Email hoặc mật khẩu không đúng." }`.<br>❖ **Frontend**: Displays error message toast to user. |
 
 ### Diagrams
 
@@ -122,9 +122,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(3) | BR1 | **Initiation:**<br>❖ User clicks Google Login (Step 1).<br>❖ Client SDK redirects to Supabase/Google (Step 2).<br>❖ User grants permission (Step 3). |
-| (3.2)-(4) | BR2 | **Callback:**<br>❖ Google redirects back to App with Tokens (Step 3.2).<br>❖ Client SDK persists Session (Step 4). |
-| (3.1)-(5) | BR_Error | **Exception:**<br>If User denies/Provider fails: Log Error (Step 3.1). Show Error (Step 5). |
+| (1)-(3) | BR1 | **Initiation:**<br>❖ **Frontend**: `LoginScreen` calls `supabase.auth.signInWithOAuth({ provider: 'google' })`.<br>❖ **SDK**: Redirects browser to `https://<project-ref>.supabase.co/auth/v1/authorize?provider=google`.<br>❖ **User Action**: User consents on Google Consent Screen. |
+| (3.2)-(4) | BR2 | **Callback & Sync:**<br>❖ **Supabase**: Redirects to `SiteURL` with `access_token` and `refresh_token` in URL fragment.<br>❖ **Frontend**: `SupabaseAuthProvider` detects `onAuthStateChange`.<br>❖ **Backend (Sync)**: Supabase Webhook triggers `POST /api/profilessync/sync` (if configured) or Client calls `POST /api/auth/sync` (optional fallback).<br>❖ **Web App**: Persists session to `localStorage`. |
+| (3.1)-(5) | BR_Error | **Exception:**<br>❖ **Frontend**: If `error` param present in URL or user cancels, show "Login Cancelled" notification. |
 
 ### Diagrams
 
@@ -193,8 +193,8 @@ View -> User: Redirect Home
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Request:**<br>❖ User enters Email (Step 1).<br>❖ System calls `ResetPassword(email)` (Creative) (Step 2).<br>❖ Supabase sends email (Step 3). |
-| (4) | BR2 | **Completion:**<br>❖ System returns OK (Step 4). |
+| (2)-(3) | BR1 | **Request:**<br>❖ **Frontend**: `ForgotPasswordForm` calls `supabase.auth.resetPasswordForEmail(email, { redirectTo: '.../reset-password' })`.<br>❖ **Supabase**: Sends generic recovery email with Magic Link.<br>❖ **Note**: No Backend API call needed for this step (purely client-SDK mediated). |
+| (4) | BR2 | **Completion:**<br>❖ **User Interaction**: Clicks link in email -> Redirects to App with `access_token` (type=recovery).<br>❖ **Frontend**: Detects `recovery` event. Shows `ResetPasswordScreen`.<br>❖ **Action**: User enters new password. Frontend calls `supabase.auth.updateUser({ password: newPassword })`. |
 
 ### Diagrams
 
@@ -254,8 +254,8 @@ Controller --> User: 200 OK
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Action:**<br>User clicks Logout. |
-| (2) | BR2 | **Cleanup:**<br>Client clears LocalStorage/Cookies. Redirects to Login. |
+| (1)-(2) | BR1 | **Action:**<br>❖ **Frontend**: User clicks Logout button.<br>❖ **SDK**: Calls `supabase.auth.signOut()`.<br>❖ **Cleanup**: Removes `sb-<ref>-auth-token` from LocalStorage. Clears Redux/Context state. |
+| (3) | BR2 | **Redirect:**<br>❖ **Router**: Detects unauthenticated state. Redirects to `/login`. |
 
 ### Diagrams
 

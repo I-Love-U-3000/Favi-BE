@@ -2,7 +2,7 @@
 
 **Module**: Interaction / Engagement
 **Primary Actor**: Authenticated User
-**Backend Controller**: `Favi_BE.API.Controllers.CommentsController`
+**Backend Controller**: `CommentsController`
 **Database Tables**: `"Comments"`
 
 ---
@@ -99,10 +99,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Submission & Validation:**<br>❖ The User submits the comment text via the input field (Step 1).<br>❖ The System receives the `CreateCommentDto` containing the text and `PostId`.<br>❖ The System validates that the content is not empty and does not exceed the maximum character limit (Step 3). |
-| (3.2)-(4) | BR2 | **Persistence & Linking:**<br>❖ The System creates a new record in the `Comments` table with the current timestamp.<br>❖ The System establishes a foreign key link to the target `PostId` and `UserId` (Step 4). |
-| (4.2)-(5) | BR3 | **UI Update:**<br>❖ Upon success, the System returns the full `CommentDto` including the new ID and Author info.<br>❖ The UI appends the new comment to the bottom of the list without refreshing the page (Step 5). |
-| (4.1)-(6) | BR_Error | **Exception Handling:**<br>❖ If the database insert fails (Step 4):<br> The System logs the exception details.<br> The System returns a 500 Internal Server Error.<br> The UI displays a toast message "Failed to post comment" (Step 6). |
+| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `CommentInput` calls `commentApi.create({ postId, content })`.<br>❖ **API**: `POST /api/comments` with `CreateCommentRequest`.<br>❖ **Backend**: `CommentsController.Create` calls `_comments.CreateAsync`. |
+| (3.2)-(4) | BR2 | **Persistence:**<br>❖ **DB**: `Comments` table insert. `ParentId = NULL`.<br>❖ **Notify**: `NotificationService` triggers if Author != PostOwner. |
+| (4.2)-(5) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` with `CommentResponse`.<br>❖ **Frontend**: Appends comment to list. |
+| (4.1)-(6) | BR_Error | **Exception:**<br>❖ Validation (Empty): `400 Bad Request`. DB Error: `500`. |
 
 ### Diagrams
 
@@ -185,10 +185,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Reply Processing:**<br>❖ The System receives the reply request targeting a specific `ParentCommentId`.<br>❖ The System verifies that the Parent Comment exists and is not deleted (Step 3). |
-| (3.2) | BR2 | **Hierarchical Storage:**<br>❖ The System inserts a new record into the `Comments` table, populating the `ParentId` column to establish the threading relationship (Step 3.2). |
-| (3.2.2)-(4) | BR3 | **Threaded Display:**<br>❖ The System returns the created `CommentDto`.<br>❖ The UI renders the new comment indented or nested immediately under the parent comment to visualize the conversation flow (Step 4). |
-| (3.2.1)-(5) | BR_Error | **Exception Handling:**<br>❖ If the database operation fails:<br> Log the error stack trace.<br> Return a 500 error.<br> Show a "Reply failed" notification to the User (Step 5). |
+| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: calls `commentApi.create({ postId, content, parentCommentId })`.<br>❖ **API**: `POST /api/comments` (Reused).<br>❖ **Backend**: Checks `ParentCommentId` existence. |
+| (3.2) | BR2 | **Persistence:**<br>❖ **DB**: Inserts `Comment` with `ParentId`.<br>❖ **Logic**: Supports nested threading (if UI supports it) or single-level nesting. |
+| (3.2.2)-(4) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` with `CommentResponse`.<br>❖ **Frontend**: Inserts reply under parent. |
 
 ### Diagrams
 
@@ -281,9 +280,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Update Logic:**<br>❖ The System receives the edited text and the Comment ID.<br>❖ The System performs a strict ownership check to ensure only the original Author (or Admin) can modify the content (Step 3). |
-| (3.2)-(4) | BR2 | **Persistence:**<br>❖ The System executes an `UPDATE` command on the `Comments` table to modify the `Content` column and update the `UpdatedAt` timestamp (Step 3.2).<br>❖ The System returns the updated `CommentDto` (Step 4). |
-| (3.2.1) | BR_Error | **Exception Handling:**<br>❖ If the database update fails:<br> Log the error.<br> Return a 500 error.<br> The UI notifies the user and retains the edit mode/old content (Step 3.2.1). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `PUT /api/comments/{id}`.<br>❖ **Backend**: `CommentsController.Update` calls `_comments.UpdateAsync`.<br>❖ **Logic**: Verifies `AuthorId == UserId`. Updates Content. |
+| (3.2)-(4) | BR2 | **Persistence:**<br>❖ **DB**: Update `Comments` table.<br>❖ **Response**: `200 OK` with updated DTO. |
+| (3.2.1) | BR_Error | **Exception:**<br>❖ Not Found/Forbidden: `404 Not Found` (merged error code). |
 
 ### Diagrams
 
@@ -375,10 +374,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Deletion Logic:**<br>❖ The System receives a DELETE request for a specific Comment ID.<br>❖ The System validates that the requester is the owner of the comment or an Administrator (Step 3). |
-| (3.2) | BR2 | **Soft Deletion:**<br>❖ Unlike a hard delete, the System updates the `IsDeleted` flag to `1` in the `Comments` table to preserve history (Step 3.2). |
-| (3.2.2)-(4) | BR3 | **UI Removal:**<br>❖ Upon success (200 OK), the UI removes the comment node (and potentially its children) from the DOM immediately (Step 4). |
-| (3.2.1)-(5) | BR_Error | **Exception Handling:**<br>❖ If the operation fails:<br> Log the error.<br> Return 500.<br> Show "Delete failed" error to the User (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `DELETE /api/comments/{id}`.<br>❖ **Backend**: `CommentsController.Delete` calls `_comments.DeleteAsync`.<br>❖ **Logic**: Verifies Ownership. |
+| (3.2) | BR2 | **Persistence:**<br>❖ **DB**: Soft Delete (`IsDeleted = 1`).<br>❖ **Response**: `200 OK` { message: "Đã xoá bình luận." }. |
+| (3.2.2)-(4) | BR3 | **UI:**<br>❖ Remove from DOM. |
 
 ### Diagrams
 

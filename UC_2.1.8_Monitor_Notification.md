@@ -100,9 +100,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing & Storing Rules:**<br>❖ When user selects an item, System calls method `MarkAsRead(id)` (Step 2).<br>❖ System updates data in the table “Notifications” in the database (Refer to “Notifications” table in “DB Sheet” file) setting `IsRead` = `True` (Step 3). |
-| (3.1)-(4) | BR2 | **Displaying Rules:**<br>❖ System returns Success (Step 3.1).<br>❖ System validates the `TargetUrl` contained in the notification data.<br>❖ System redirects browser to the specific content page (e.g., Post Details or User Profile) (Refer to “PostDetail” view in “View Description” file) (Step 4). |
-| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 3.2).<br> System returns `500 Internal Server Error`.<br> Show Error (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `NotificationItem` onClick. Calls `notifyApi.markRead(id)`.<br>❖ **API**: `PUT /api/notifications/{id}/read`.<br>❖ **Backend**: `NotificationsController.MarkRead(id)`.<br>❖ **DB**: `UPDATE Notifications SET IsRead=1 WHERE Id=@id`. |
+| (3.1)-(4) | BR2 | **Routing:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Redirects `window.location` to `notification.targetUrl` (e.g. `/posts/{id}`). |
+| (3.2)-(5) | BR_Error | **Exception:**<br>❖ **Error**: `500 Server Error`. Logged.<br>❖ **Frontend**: Shows error toast. |
 
 ### Diagrams
 
@@ -184,9 +184,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Storing Rules:**<br>❖ User clicks "Mark All as Read". System calls method `MarkAllAsRead()` (Step 2).<br>❖ System executes syntax `UPDATE Notifications SET IsRead=1 WHERE RecipientId=[User.ID]` on table “Notifications” (Refer to “Notifications” table in “DB Sheet” file) (Step 3). |
-| (3.1)-(4) | BR2 | **Displaying Rules:**<br>❖ System returns success confirmation (Step 3.1).<br>❖ System clears the "Unread Badge" count on the Navigation Bar (Refer to “NavBar” view in “View Description” file) (Step 4). |
-| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 3.2).<br> System returns 500.<br> Show Error (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `NotificationHeader` -> Click "Mark all read". Calls `notifyApi.markAllRead()`.<br>❖ **API**: `PUT /api/notifications/read-all`.<br>❖ **Backend**: `NotificationsController.MarkAllAsRead`.<br>❖ **DB**: `UPDATE Notifications SET IsRead=1 WHERE RecipientId=@currentUserId`. |
+| (3.1)-(4) | BR2 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Clears `unreadCount` badge in Redux. Resets UI badge to 0. |
+| (3.2)-(5) | BR_Error | **Error:**<br>❖ **Server Error**: `500`. Logged via Serilog.<br>❖ **Frontend**: Displays "Failed to mark all as read". |
 
 ### Diagrams
 
@@ -264,9 +264,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Storing Rules:**<br>❖ User selects Delete option. System calls method `DeleteNotification(id)` (Step 2).<br>❖ System deletes the record from table “Notifications” in the database (Refer to “Notifications” table in “DB Sheet” file) (Step 3). |
-| (3.1) | BR2 | **Displaying Rules:**<br>❖ System returns `200 OK` (Step 3.1).<br>❖ System removes the item from the list view immediately. |
-| (3.2)-(4) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 3.2).<br> System returns 500.<br> Show Error (Step 4). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: Swipe/Click Delete. Calls `notifyApi.delete(id)`.<br>❖ **API**: `DELETE /api/notifications/{id}`.<br>❖ **Backend**: `NotificationsController.Delete(id)`.<br>❖ **DB**: `DELETE FROM Notifications WHERE Id=@id`. |
+| (3.1) | BR2 | **Update:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Removes item from list using `filter`. |
+| (3.2)-(4) | BR_Error | **Error:**<br>❖ **Not Found**: `404` if ID invalid.<br>❖ **Server Error**: `500`. |
 
 ### Diagrams
 
@@ -342,9 +342,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Storing Rules:**<br>❖ User changes a toggle value (e.g., "Email For Likes"). System calls method `UpdateSettings(dto)` (Step 2).<br>❖ System updates the `Settings` JSON column in table “Profiles” (Refer to “Profiles” table in “DB Sheet” file) for the current user (Step 3). |
-| (3.1) | BR2 | **Displaying Rules:**<br>❖ System returns updated settings (Step 3.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_SETTINGS_SAVED). |
-| (3.2)-(4) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 3.2).<br> System returns 500.<br> Show Error (Step 4). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: Toggle Switch. Calls `profileApi.updateSettings(settingsDto)`.<br>❖ **API**: `PATCH /api/profiles/settings`.<br>❖ **Backend**: `ProfilesController.UpdateSettings`.<br>❖ **DB**: `UPDATE Profiles SET Settings = JSON_SET(Settings, '$.notifyLikes', @val) WHERE Id=@me`. |
+| (3.1) | BR2 | **Completion:**<br>❖ **Response**: `200 OK` (Updated Settings).<br>❖ **Frontend**: Updates local state. Toast "Settings Saved". |
+| (3.2)-(4) | BR_Error | **Error:**<br>❖ **Error**: `500`.<br>❖ **Frontend**: Reverts toggle switch. Shows error. |
 
 ### Diagrams
 

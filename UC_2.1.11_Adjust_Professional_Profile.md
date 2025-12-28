@@ -94,9 +94,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Conversion Logic:**<br>❖ User confirms the switch (Step 1).<br>❖ System calls `SwitchToProfessional(userId)` (Step 2).<br>❖ System updates `Profiles.IsProfessional = 1` and inserts a new record into `ProfessionalProfiles` with default settings (Category, Contact Info) (Step 3). |
-| (3.1) | BR2 | **Display:**<br>❖ System returns success (Step 3.1).<br>❖ UI unlocks the "View Dashboard" button and displays a "Welcome to Pro" onboarding modal (Step 4). |
-| (3.2) | BR_Error | **Error Handling:**<br>❖ If DB update fails: Log error (Step 3.2), Return 500, Show Error (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `SwitchModeModal` -> Confirm. Calls `proApi.switchMode()`.<br>❖ **API**: `POST /api/professional/switch`.<br>❖ **Backend**: `ProfessionalController.SwitchToProfessional(userId)`.<br>❖ **DB**: `UPDATE Profiles SET IsProfessional=1 WHERE Id=@me`; `INSERT INTO ProfessionalProfiles (Id, Category)`. |
+| (3.1) | BR2 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Refresh user profile. Unlock "Dashboard" link in sidebar. Show "Welcome" modal. |
+| (3.2) | BR_Error | **Error:**<br>❖ **DB Error**: `500`. Logged.<br>❖ **Frontend**: "Failed to switch mode". |
 
 ### Diagrams
 
@@ -174,9 +174,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Data Aggregation:**<br>❖ System calls `GetInsights(range)` (Step 2).<br>❖ System queries `Insights` table for daily stats (Reach, Impressions, Profile Visits) and aggregates them for the selected date range (Step 3). |
-| (4) | BR2 | **Display:**<br>❖ System returns `InsightsDto` (Step 4).<br>❖ UI renders Line Charts for growth and Bar Charts for demographic breakdowns (Age/Gender/Location). |
-| (4.1) | BR_Error | **Exception:**<br>❖ If query fails: Log Error (Step 4.1), Return 500. UI shows "Insights Unavailable". |
+| (2)-(3) | BR1 | **Query:**<br>❖ **Frontend**: `ProDashboard`. Calls `proApi.getInsights({ days: 7 })`.<br>❖ **API**: `GET /api/professional/insights?days=7`.<br>❖ **Backend**: `ProfessionalController.GetInsights`.<br>❖ **DB**: `SELECT SUM(Impressions), SUM(Reach) FROM Insights WHERE ProfileId=@me AND Date >= @startDate`. |
+| (4) | BR2 | **Rendering:**<br>❖ **Response**: `200 OK` (InsightsDto).<br>❖ **Frontend**: Renders `Recharts` graphs (Line/Bar) for Reach and Engagement. |
+| (4.1) | BR_Error | **Error:**<br>❖ **Server**: `500`.<br>❖ **Frontend**: Shows "Data unavailable" placeholder. |
 
 ### Diagrams
 
@@ -246,9 +246,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Campaign Creation:**<br>❖ User configures budget and duration (Step 1).<br>❖ System calls `CreateCampaign(dto)` (Step 2).<br>❖ System inserts record into `AdCampaigns` with `Status=Pending` (Step 3). |
-| (4) | BR2 | **Payment Integration (Mock):**<br>❖ System validates Payment Method (Step 3.1).<br>❖ If valid, Campaign is saved. |
-| (5) | BR_Error | **Exception:**<br>❖ Log Error, Return 500, Show "Boost Failed". |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `BoostPostModal`. Calls `adsApi.createCampaign({ postId, budget, duration })`.<br>❖ **API**: `POST /api/ads/campaigns`.<br>❖ **Backend**: `AdsController.CreateCampaign`.<br>❖ **DB**: `INSERT INTO AdCampaigns (PostId, Budget, Status='Pending')`. |
+| (4) | BR2 | **Payment:**<br>❖ **Mock**: `_paymentGateway.Authorize(amount)`.<br>❖ **Response**: `201 Created`.<br>❖ **Frontend**: Toast "Boost submitted for review". |
+| (5) | BR_Error | **Error:**<br>❖ **Payment Fail**: `402 Payment Required`.<br>❖ **Server**: `500`. |
 
 ### Diagrams
 

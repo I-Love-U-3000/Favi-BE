@@ -83,13 +83,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1) | BR1 | **Submitting Rules:**<br>When the user selects a reason from the "Report" dialog and clicks "Submit", the system captures the input. |
-| (2) | BR2 | **Processing Rules:**<br>The system calls `ReportsController.Create` (`POST /api/reports`) with the `ReportDto` containing the target ID and reason. |
-| (3) | BR3 | **Validation Rules:**<br>The system validates the request (e.g., checking if the user is allowed to report this content via `PrivacyGuard`). |
-| (4) | BR4 | **Storing Rules:**<br>The database creates a new record in the `Reports` table with `Status = Pending` for admin review. |
-| (4.1) | BR5 | **Displaying Rules:**<br>The system returns the created `ReportResponse` object to the client (Step 4.1). |
-| (5) | BR6 | **Displaying Rules:**<br>The UI displays a "Thank you" toast message, informing the user that the report has been received (Step 5). |
-| (4.2)-(6) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error (Step 4.2) and returns a `500 Internal Server Error`.<br>System shows error (Step 6). |
+| (1) | BR1 | **Submission:**<br>❖ **Frontend**: `ReportDialog`. User selects reason. Calls `reportApi.create({ targetId, targetType, reason })`. |
+| (2)-(4) | BR2 | **Processing:**<br>❖ **API**: `POST /api/reports`.<br>❖ **Backend**: `ReportsController.Create(dto)`. Checks `_privacy.CanReport`.<br>❖ **DB**: `INSERT INTO Reports (ReporterId, TargetId, Reason, Status='Pending')`. |
+| (4.1)-(5) | BR3 | **Completion:**<br>❖ **Response**: `201 Created`.<br>❖ **Frontend**: Shows "Report submitted" confirmation. Dialog closes. |
+| (4.2)-(6) | BR_Error | **Error:**<br>❖ **Invalid**: `400`.<br>❖ **Server**: `500`. |
 
 ### Diagrams
 
@@ -176,9 +173,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Querying Rules:**<br>❖ System calls method `ReportsController.GetMyReports()`.<br>❖ System queries data in the table “Reports” in the database (Refer to “Reports” table in “DB Sheet” file) with syntax `SELECT * FROM Reports WHERE ReporterId = [User.ID]`.<br>❖ System includes Status information (Pending, Resolved). |
-| (4)-(5) | BR2 | **Display Workflow:**<br>❖ System displays a “ReportList” screen (Refer to “ReportList” view in “View Description” file).<br>❖ System renders the items with status badges:<br> **Pending**: Displayed with "Open" badge (Refer to “BadgeOpen” style).<br> **Resolved**: Displayed with "Closed" badge (Refer to “BadgeClosed” style). |
-| (6) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error.<br> System returns `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Query:**<br>❖ **Frontend**: `SupportCenter`. Calls `reportApi.getMyReports()`.<br>❖ **API**: `GET /api/reports/my`.<br>❖ **Backend**: `ReportsController.GetMyReports`.<br>❖ **DB**: `SELECT * FROM Reports WHERE ReporterId=@me`. |
+| (4)-(5) | BR2 | **Display:**<br>❖ **Response**: `200 OK` (List).<br>❖ **Frontend**: Renders list using badges: "Open" (Green), "Closed" (Gray). |
+| (6) | BR_Error | **Error:**<br>❖ **Server**: `500`. Logged. |
 
 ### Diagrams
 

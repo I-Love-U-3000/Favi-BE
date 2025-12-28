@@ -100,10 +100,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(2.1) | BR1 | **Validation Workflow:**<br>❖ System evaluates input data constraints (Name length, URL formats) (Step 2).<br> **Invalid**: System returns `400 Bad Request` (Step 2.1) and displays error messages (Refer to MSG_ERR_VALIDATION) (Step 6).<br> **Valid**: System moves to step (2.2) to persist changes. |
-| (2.2)-(3) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `UpdateProfile(dto)` (Step 2.2).<br>❖ System executes syntax `UPDATE Profiles SET Name=[Name], ... WHERE Id=[User.ID]` on table “Profiles” (Refer to “Profiles” table in “DB Sheet” file) (Step 3).<br>❖ System validates foreign key constraints (if any). |
-| (3.1)-(4) | BR3 | **Displaying Rules:**<br>❖ After updating data, System returns the Entity (Step 3.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_PROFILE_UPDATED).<br>❖ System refreshes the “Profile” view (Refer to “Profile” view in “View Description” file) with the new information (Step 4). |
-| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>If a system failure occurs, the Global Exception Handler logs the error (Step 3.2) and returns a `500 Internal Server Error`.<br>System shows error (Step 5). |
+| (2)-(2.1) | BR1 | **Validation:**<br>❖ **Frontend**: `yup` schema validation (Name required, Bio < 500 chars).<br>❖ **API**: `PUT /api/profiles` Body: `ProfileUpdateDto`.<br>❖ **Backend**: `ProfilesController.UpdateProfile(dto)` checks `ModelState.IsValid`.<br> **Invalid**: Returns `400 Bad Request`. |
+| (2.2)-(3) | BR2 | **Processing:**<br>❖ **Service**: `_profiles.UpdateAsync(userId, dto)`.<br>❖ **DB**: `Profiles.Find(id)`. Update fields. `SaveChanges()`. |
+| (3.1)-(4) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` (ProfileDto).<br>❖ **Frontend**: Updates `userSlice`. Success Toast. |
+| (3.2)-(5) | BR_Error | **Error:**<br>❖ **DB Error**: `500`. Logged.<br>❖ **Frontend**: Show error toast. |
 
 ### Diagrams
 
@@ -189,9 +189,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Processing & Storing Rules:**<br>❖ User submits the form. System calls method `AddLink(dto)` (Step 1).<br>❖ System inserts a new record into table “SocialLinks” in the database (Refer to “SocialLinks” table in “DB Sheet” file) (Step 2).<br>❖ System links the new record to the current profile via `ProfileId`. |
-| (2.1) | BR2 | **Displaying Rules:**<br>❖ System returns the created Link DTO (Step 2.1).<br>❖ The UI adds the new link item to the list in the “EditProfile” view. |
-| (2.2) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 2.2).<br> System returns 500. |
+| (1)-(2) | BR1 | **Processing:**<br>❖ **Frontend**: `AddLinkModal` -> Submit. Calls `profileApi.addLink(dto)`.<br>❖ **API**: `POST /api/profiles/links`.<br>❖ **Backend**: `ProfilesController.AddLink`.<br>❖ **DB**: `INSERT INTO SocialLinks (ProfileId, Platform, Url)`. |
+| (2.1) | BR2 | **Completion:**<br>❖ **Response**: `200 OK` (LinkDto).<br>❖ **Frontend**: Appends new link to list. Closes modal. |
+| (2.2) | BR_Error | **Error:**<br>❖ **Validation**: Invalid URL -> `400`.<br>❖ **Server**: `500`. |
 
 ### Diagrams
 
@@ -264,10 +264,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Selecting Rules:**<br>❖ User clicks "Delete Account" (Step 1). System displays a Confirmation Dialog (Refer to MSG_CONFIRM_DELETE_ACCOUNT).<br> **Confirmed**: User accepts permanent data loss (Step 2). System moves to step (3).<br> **Cancelled**: Action aborted. |
-| (3)-(4) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `DeleteProfile(userId)` (Step 3).<br>❖ System executes `DELETE FROM Profiles` (Refer to “Profiles” table in “DB Sheet” file) (Step 4). Cascading logic removes related data in “Follows”, “UserConversations”, etc. |
-| (4.1)-(6) | BR3 | **Displaying Rules:**<br>❖ System calls Auth Provider API to delete the identity (Step 4.1).<br>❖ System returns Success (Step 5).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_ACCOUNT_DELETED).<br>❖ System forces a logout and redirects the user to the “Landing” screen (Refer to “Landing” view in “View Description” file) (Step 6). |
-| (4.2)-(7) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 4.2).<br> System returns 500.<br> Show Error (Step 7). |
+| (1)-(2) | BR1 | **Validation:**<br>❖ **Frontend**: Prompt user to type "DELETE". Check string match.<br>❖ **API**: `DELETE /api/profiles`. |
+| (3)-(4) | BR2 | **Processing:**<br>❖ **Backend**: `ProfilesController.Delete`. calls `_profiles.DeleteAsync`.<br>❖ **DB**: `Users.IsDeleted = 1` (Soft Delete) OR `DELETE FROM Profiles` (Hard Delete). |
+| (4.1)-(6) | BR3 | **Cleanup:**<br>❖ **Auth Service**: `_supabase.DeleteUserAsync(userId)`.<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: `auth.signOut()`. Redirect `/`. |
+| (4.2)-(7) | BR_Error | **Error:**<br>❖ **DB Error**: `500`. Logged.<br>❖ **Frontend**: "Failed to delete account". |
 
 ### Diagrams
 

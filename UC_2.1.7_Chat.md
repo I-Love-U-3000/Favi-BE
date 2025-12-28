@@ -112,9 +112,9 @@ end
 | :---: | :---: | :--- |
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Conversation Discovery:**<br>❖ System calls method `GetOrCreateDm(targetId)`.<br>❖ System queries table “UserConversations” in the database to find a common `ConversationId` (Type=DM) between [User.ID] and [Target.ID].<br> **If Found**: System retrieves the existing ID and moves to step (3.1).<br> **If Not Found**: System moves to step (3.2) to create a new conversation record in “Conversations” table and inserts links in “UserConversations” (Steps 4-5). |
-| (5.1)-(6) | BR3 | **Displaying Rules:**<br>❖ After obtaining the ID (Step 5.1), System displays a “ChatWindow” screen (Refer to “ChatWindow” view in “View Description” file) for the specific conversation (Step 6).<br>❖ System initiates the connection to the SignalR hub for real-time updates. |
-| (5.2) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs during creation:<br> System logs the error (Step 5.2).<br> System returns `500 Internal Server Error`. |
+| (2)-(3) | BR1 | **Discovery & Creation:**<br>❖ **Frontend**: User clicks "Message" on Profile. Calls `chatApi.createDm(targetId)`.<br>❖ **API**: `POST /api/chat/dm` Body: `{ targetId }`.<br>❖ **Backend**: `ChatController.GetOrCreateDm` calls `_chatService.GetDmByParticipants(userId, targetId)`.<br>❖ **DB**: `SELECT ConversationId FROM UserConversations WHERE UserId IN (@user, @target) GROUP BY ConversationId HAVING COUNT(*)=2`.<br> **If Exists**: Returns existing `ConversationDto`.<br> **If New**: `INSERT INTO Conversations (Type=DM)`; `INSERT INTO UserConversations` for both users. |
+| (5.1)-(6) | BR2 | **Navigation:**<br>❖ **Response**: `200 OK` (ConversationDto).<br>❖ **Frontend**: Redirects to `/messages/{conversationId}`.<br>❖ **SignalR**: Client invokes `Hub.JoinGroup(conversationId)` for real-time events. |
+| (5.2) | BR_Error | **Exception:**<br>❖ **Error**: `500 Server Error`.<br>❖ **Frontend**: Show error toast. |
 
 ### Diagrams
 
@@ -210,11 +210,10 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Selecting Rules:**<br>❖ User navigates to “Create Group” form (Refer to “GroupCreation” view in “View Description” file).<br>❖ User selects members from the friend list (Step 1) and enters a Group Name (Step 2).<br>❖ User clicks the `[btnCreate]` button. system moves to step (3). |
-| (3) | BR2 | **Group Validation Rule:**<br>❖ System validates the participant count.<br> **Invalid**: If Count < 2, System displays an error message (Refer to MSG_ERR_MIN_MEMBERS) (Step 3.1).<br> **Valid**: System moves to step (3.2). |
-| (3.2)-(5) | BR3 | **Processing & Storing Rules:**<br>❖ System calls method `CreateGroup(dto)` (Step 3.2).<br>❖ System inserts a new record into table “Conversations” (Refer to “Conversations” table in “DB Sheet” file) with `Type` = 1 (Group) (Step 4).<br>❖ System inserts multiple records into “UserConversations” table for each selected member (Step 5). |
-| (5.1)-(6) | BR4 | **Displaying Rules:**<br>❖ After creation, System returns Summary (Step 5.1).<br>❖ System displays the “ChatWindow” screen (Refer to “ChatWindow” view in “View Description” file) for the new group (Step 6).<br>❖ System sends a System Message to the chat: "Group created by [User]". |
-| (5.2)-(7) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 5.2).<br> System returns `500 Internal Server Error`.<br> System shows error to user (Step 7). |
+| (1)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `CreateGroupModal`. User selects >1 friend. Clicks "Create".<br>❖ **Validation**: Local check: `selected.length >= 2`.<br>❖ **API**: `POST /api/chat/group` Body: `{ name: "Team", memberIds: [1, 2] }`. |
+| (3.2)-(5) | BR2 | **Processing:**<br>❖ **Backend**: `ChatController.CreateGroup(dto)` calls `_chatService.CreateGroupAsync`.<br>❖ **DB**: <br> 1. `INSERT INTO Conversations (Type=Group, Name=...)` -> Get `Id`.<br> 2. `INSERT INTO UserConversations` for Creator (Role=Admin) and Members (Role=Member). |
+| (5.1)-(6) | BR3 | **Completion & Notify:**<br>❖ **Response**: `201 Created` (ConversationDto).<br>❖ **SignalR**: Backend broadcasts `ReceiveNewConversation` to all members via `IHubContext`.<br>❖ **Frontend**: Creator navigates to new chat. Members see new chat appear in sidebar. |
+| (5.2)-(7) | BR_Error | **Exception:**<br>❖ **Validation**: If < 2 members, API returns `400 Bad Request`.<br>❖ **Frontend**: Displays "Select at least 2 members". |
 
 ### Diagrams
 
@@ -302,10 +301,10 @@ end
 | :---: | :---: | :--- |
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Submitting Rules:**<br>When the user types a message and hits Enter/Send (Step 1), the system performs an Optimistic UI update (Step 2) to show the message immediately as "Sending". |
-| (3)-(5) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `SendMessage(content, convId)` (Step 3).<br>❖ System inserts a new record into table “Messages” (Refer to “Messages” table in “DB Sheet” file) (Step 4).<br>❖ System updates `LastMessageAt` in table “Conversations” (Step 5).<br>❖ System broadcasts the message via SignalR to other participants. |
-| (5.1)-(6) | BR3 | **Displaying Rules:**<br>❖ The UI receives the `MessageDto` acknowledgement (Step 5.1).<br>❖ The UI updates the message status from "Sending..." to "Sent" (Refer to “MessageStatus” view in “View Description” file) (Step 6). |
-| (5.2)-(7) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs error (Step 5.2).<br> System returns `500 Error`.<br> UI marks the message as "Failed" (red icon) (Step 7). |
+| (1)-(2) | BR1 | **Optimistic Sending:**<br>❖ **Frontend**: `MessageInput`. User hits Enter.<br>❖ **Local State**: Adds temporary message object (`status='sending'`) to list.<br>❖ **API**: `POST /api/chat/messages` Body: `{ conversationId, content }`. |
+| (3)-(5) | BR2 | **Processing:**<br>❖ **Backend**: `ChatController.SendMessage` calls `_chatService.SendMessageAsync`.<br>❖ **DB**: `INSERT INTO Messages (ConversationId, SenderId, Content)`. Updates `Conversations.LastMessageAt`.<br>❖ **Real-time**: Calls `_hubContext.Clients.Group(convId).SendAsync("ReceiveMessage", msgDto)`. |
+| (5.1)-(6) | BR3 | **Confirmation:**<br>❖ **Response**: `201 Created` (MessageDto).<br>❖ **Frontend**: Replaces temporary object with real `MessageDto` (`status='sent'`). |
+| (5.2)-(7) | BR_Error | **Error:**<br>❖ **Frontend**: Fails? Set message status to `failed` (Red retry icon).<br>❖ **Retry Logic**: User can click to retry API call. |
 
 ### Diagrams
 
@@ -388,10 +387,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2) | BR2 | **Unsend Eligibility Check:**<br>❖ System/Frontend checks the timestamp of the message.<br> **Time > 15m**: The action is disabled or rejected (Refer to MSG_ERR_UNSEND_TIMEOUT) (Step 2.1).<br> **Time <= 15m**: System proceeds to step (2.2). |
-| (2.2)-(3) | BR3 | **Processing & Storing Rules:**<br>❖ System calls method `DeleteMessage(msgId)` (Step 2.2).<br>❖ System performs a Soft Delete updates the record in table “Messages” (Refer to “Messages” table in “DB Sheet” file) setting `IsDeleted` = True or `Content` = NULL (Step 3). |
-| (3.1)-(4) | BR4 | **Displaying Rules:**<br>❖ System returns OK (Step 3.1).<br>❖ Message disappears from view or content is replaced with "Message Unsent" (Step 4). |
-| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 3.2).<br> System returns `500 Internal Server Error`.<br> Show Error (Step 5). |
+| (2) | BR1 | **Validation:**<br>❖ **Frontend**: Checks `msg.sentAt`. If > 15 mins, "Unsend" option hidden/disabled.<br>❖ **Action**: `chatApi.unsendMessage(msgId)`. |
+| (2.2)-(3) | BR2 | **Processing:**<br>❖ **API**: `DELETE /api/chat/messages/{id}`.<br>❖ **Backend**: `ChatController.DeleteMessage`. Verifies `SenderId == CurrentUserId`. Check Timestamp.<br>❖ **DB**: `UPDATE Messages SET IsDeleted=1, Content=NULL WHERE Id=@id`.<br>❖ **Real-time**: Broadcasts `MessageDeleted` event via SignalR. |
+| (3.1)-(4) | BR3 | **UI Update:**<br>❖ **Frontend**: Receives `MessageDeleted` event or API success.<br>❖ **Action**: Replaces content with "Message unsent" italic text. |
+| (3.2)-(5) | BR_Error | **Exception:**<br>❖ **Timeout**: If backend check fails (>15m), return `400 Bad Request`.<br>❖ **Frontend**: Show "Cannot unsend old messages". |
 
 ### Diagrams
 
@@ -476,8 +475,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(4) | BR1 | **Querying Rules:**<br>❖ System calls method `SearchMessages(query)` (Step 2).<br>❖ System executes syntax `SELECT * FROM Messages WHERE Content LIKE %[query]%` on table “Messages” (Step 3).<br>❖ System joins with “UserConversations” to ensure the user has access to those messages (Step 4). |
-| (5)-(6) | BR2 | **Displaying Rules:**<br>❖ System returns results (Step 5).<br>❖ System groups results by Conversation.<br>❖ System displays the “SearchResults” list (Refer to “SearchResults” view in “View Description” file) (Step 6). |
+| (2)-(4) | BR1 | **Search:**<br>❖ **Frontend**: `ChatSidebar` search input. Calls `chatApi.searchMessages(query)`.<br>❖ **API**: `GET /api/chat/search?q={query}`.<br>❖ **Backend**: `ChatController.Search`.<br>❖ **DB**: `SELECT * FROM Messages m JOIN UserConversations uc ON m.ConversationId = uc.ConversationId WHERE uc.UserId = @me AND m.Content LIKE %query%`. |
+| (5)-(6) | BR2 | **Result:**<br>❖ **Response**: `200 OK` (List of MessageDto).<br>❖ **Frontend**: Displays results grouped by Conversation. Clicking jumps to message context. |
 
 ### Diagrams
 
@@ -540,8 +539,8 @@ View -> User: Display List
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(4) | BR1 | **Processing & Storing Rules:**<br>❖ When entering the screen, System calls method `MarkAsRead(convId)` (Step 2).<br>❖ System updates table “UserConversations” setting `LastReadMessageId` to the latest message ID (Steps 3-4).<br>❖ System triggers a badge update on the client side. |
-| (4.1) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 4.1).<br> System returns `500 Internal Server Error`. |
+| (2)-(4) | BR1 | **Processing:**<br>❖ **Frontend**: `useEffect` on chat mount. Calls `chatApi.markRead(conversationId, lastMessageId)`.<br>❖ **API**: `POST /api/chat/{id}/read` Body: `{ messageId }`.<br>❖ **Backend**: `ChatController.Read`.<br>❖ **DB**: `UPDATE UserConversations SET LastReadMessageId = @msgId WHERE UserId=@me AND ConversationId=@convId`.<br>❖ **SignalR**: Notify other clients (optional, for "Read Receipts"). |
+| (4.1) | BR_Error | **Error:**<br>❖ Silent failure (non-critical). Logged in backend. |
 
 ### Diagrams
 
@@ -614,10 +613,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2) | BR1 | **Leave Confirmation Logic:**<br>❖ System displays a Warning Dialog (Refer to MSG_CONFIRM_LEAVE).<br> **Confirmed**: User accepts consequences. System moves to step (3).<br> **Cancelled**: The dialog closes; action aborted. |
-| (3)-(4) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `LeaveGroup(convId)` (Step 3).<br>❖ System deletes the record from table “UserConversations” (Refer to “UserConversations” table in “DB Sheet” file) for the current user and target group (Step 4). |
-| (4.1)-(5) | BR3 | **Displaying Rules:**<br>❖ After leave, System returns success (Step 4.1).<br>❖ System redirects user to Inbox (Step 5). |
-| (4.2)-(6) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 4.2).<br> System returns `500 Internal Server Error`.<br> Show Error (Step 6). |
+| (2) | BR1 | **Confirmation:**<br>❖ **Frontend**: Click "Leave Group". Show Warning Modal.<br>❖ **Action**: `chatApi.leaveGroup(convId)`. |
+| (3)-(4) | BR2 | **Processing:**<br>❖ **API**: `POST /api/chat/{id}/leave`.<br>❖ **Backend**: `ChatController.LeaveGroup`.<br>❖ **DB**: `DELETE FROM UserConversations WHERE UserId=@me AND ConversationId=@id`.<br>❖ **System Message**: `INSERT INTO Messages (Content="User left", Type=System)`.<br>❖ **SignalR**: Broadcast "UserLeft" event to remaining members. |
+| (4.1)-(5) | BR3 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Redirects to Inbox root. Removes chat from list. |
+| (4.2)-(6) | BR_Error | **Exception:**<br>❖ **Error**: `500`.<br>❖ **Frontend**: Show detailed error message. |
 
 ### Diagrams
 

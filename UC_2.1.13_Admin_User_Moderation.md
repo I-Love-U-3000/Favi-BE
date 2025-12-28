@@ -83,7 +83,7 @@ end
 ### Business Rules (BR)
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Query:**<br>❖ System queries `Reports` table with filters (Status, Type, Date) (Step 2).<br>❖ System returns `PagedResult<ReportDto>` (Step 3). |
+| (2)-(3) | BR1 | **Query:**<br>❖ **Frontend**: `AdminReports`. Calls `adminApi.getReports(filter)`.<br>❖ **API**: `GET /api/admin/reports`.<br>❖ **Backend**: `AdminController.GetReports`.<br>❖ **DB**: `SELECT * FROM Reports r JOIN Profiles p ON r.ReporterId = p.Id`. |
 
 ### Diagrams
 
@@ -150,8 +150,8 @@ end
 ### Business Rules (BR)
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Process:**<br>❖ **Accept**: Admin confirms violation. System bans user or deletes content. Report Status = Resolved.<br>❖ **Deny**: Admin dismisses. Report Status = Rejected.<br>❖ System calls `ResolveReport(dto)` (Step 1) and updates DB (Step 2). |
-| (3) | BR2 | **Audit:**<br>❖ Log the decision in `AdminAuditLog` (if exists) or System Logs. |
+| (1)-(2) | BR1 | **Process:**<br>❖ **Frontend**: Click "Ban User & Resolve". Calls `adminApi.resolve({ reportId, action: 'Ban' })`.<br>❖ **API**: `POST /api/admin/reports/{id}/resolve`.<br>❖ **Backend**: `AdminController.ResolveReport`.<br>❖ **DB**: Transaction:<br> 1. `UPDATE Reports SET Status='Resolved'.`<br> 2. `INSERT INTO UserModerations (Ban)...` |
+| (3) | BR2 | **Audit:**<br>❖ `INSERT INTO AuditLogs (AdminId, Action, Timestamp)`. |
 
 ### Diagrams
 

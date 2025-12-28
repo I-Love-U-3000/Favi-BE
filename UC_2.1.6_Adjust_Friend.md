@@ -107,10 +107,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Validation Workflow:**<br>❖ The selected data will be checked by table “UserModerations” and corresponding “Permissions” in the database (Refer to “UserModerations” table in “DB Sheet” file) to check if there are any constraints (e.g., Blocked users).<br>❖ System calls method `PrivacyGuard.CanFollowAsync(followerId, followeeId)`.<br> If the action is **Allowed**: System moves to step (4).<br> If the action is **Forbidden**: System moves to step (3.1) to return `403 Forbidden`. System displays an error message (Refer to MSG_ERR_BLOCKED or MSG_ERR_FORBIDDEN) (Step 3.2). |
-| (3.2) | BR2 | **Storing Rules:**<br>❖ When the validations pass, System will move to step (4) to send data to database by method `Follow(targetId)`.<br>❖ System stores connection information in table “Follows” in the database (Refer to “Follows” table in “DB Sheet” file) with `FollowerId` = [User.ID] and `FolloweeId` = [Target.ID]. |
-| (3.2.1)-(5) | BR3 | **Displaying Rules:**<br>❖ System returns a `200 OK` success status (Step 4.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_FOLLOW) and updates the button state.<br>❖ The UI button changes to “Following” to reflect the new association (Step 5). |
-| (3.2.4.2)-(6) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error (Step 4.2).<br> System returns `500 Internal Server Error`.<br> System displays "Follow Failed" message (Step 6). |
+| (2)-(3) | BR1 | **Validation Workflow:**<br>❖ **Frontend**: `ProfileHeader` checks local state (isBlocked/isFollowing). Calls `profileApi.follow(targetId)`.<br>❖ **API**: `POST /api/profiles/follow/{targetId}`.<br>❖ **Backend**: `ProfilesController.Follow(targetId)` calls `_privacy.CanFollowAsync(followerId, followeeId)`.<br>❖ **Logic**: Checks `UserModerations` table for 'Block' relationship.<br> **Forbidden**: If blocked, throws `FriendshipException` ("Cannot follow blocked user"). Returns `403 Forbidden`.<br> **Allowed**: Proceeds to storage. |
+| (3.2) | BR2 | **Storage:**<br>❖ **Backend**: `_profiles.FollowAsync(followerId, targetId)`.<br>❖ **DB**: `INSERT INTO Follows (FollowerId, FolloweeId, CreatedAt) VALUES (...)`.<br>❖ **Notification**: `_notificationService.NotifyFollow(targetId, followerId)` triggers `INSERT INTO Notifications (Type='Follow', ...)`. |
+| (3.2.1)-(5) | BR3 | **Completion:**<br>❖ **Response**: `200 OK` (Success).<br>❖ **Frontend**: Updates `isFollowing` state to `true`. Changes button text to "Following". Displays success toast (MSG_SUCCESS_FOLLOW). |
+| (3.2.4.2)-(6) | BR_Error | **Exception Handling:**<br>❖ If DB error (e.g. UniqueConstraint): Returns `409 Conflict`.<br>❖ **Generic Error**: Returns `500 Internal Server Error`.<br>❖ **Frontend**: Catches error, reverts button state, shows toast "Follow Failed". |
 
 ### Diagrams
 
@@ -206,10 +206,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(2) | BR1 | **Confirmation Logic:**<br>❖ When the user clicks "Unfollow" (Step 1), System displays a Confirmation Dialog (Refer to “ConfirmationModal” view in “View Description” file) asking user to confirm (Step 2).<br> **On Cancel**: The user clicks "Cancel" (Step 2.1). The dialog closes, and the system moves to end state (Flow stops).<br> **On Confirm**: The user clicks "Confirm" (Step 2.2). System moves to step (3) to execute removal. |
-| (3)-(5) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `ProfilesController.Unfollow(targetId)` (Step 3).<br>❖ The input data will be checked by table “Follows” in the database (Refer to “Follows” table in “DB Sheet” file) (Step 4).<br>❖ System deletes the corresponding records from table “Follows” where `FollowerId` matches current user and `FolloweeId` matches target (Step 5). |
-| (5.1)-(6) | BR3 | **Displaying Rules:**<br>❖ After deleting data, System returns Success (Step 5.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_UNFOLLOW).<br>❖ The UI resets the button state from “Following” back to “Follow” (Step 6). |
-| (5.2)-(7) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error and returns 500 (Step 5.2).<br> System displays "Unfollow Failed" message (Step 7). |
+| (1)-(2) | BR1 | **Confirmation:**<br>❖ **Frontend**: User clicks "Unfollow". App shows `ConfirmationModal` ("Are you sure you want to unfollow?").<br>❖ **Action**: User confirms. Frontend calls `profileApi.unfollow(targetId)`. |
+| (3)-(5) | BR2 | **Processing:**<br>❖ **API**: `DELETE /api/profiles/follow/{targetId}`.<br>❖ **Backend**: `ProfilesController.Unfollow(targetId)` calls `_profiles.UnfollowAsync(currentUserId, targetId)`.<br>❖ **DB**: `DELETE FROM Follows WHERE FollowerId=... AND FolloweeId=...`.<br>❖ **Validation**: Checks if record exists before deleting. |
+| (5.1)-(6) | BR3 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: `Redux` action `unfollowSuccess`. Button state reverts to "Follow". Success toast displayed (MSG_SUCCESS_UNFOLLOW). |
+| (5.2)-(7) | BR_Error | **Error Handling:**<br>❖ If relationship not found: Returns `404 Not Found`.<br>❖ **Server Error**: Returns `500`. Logged via `Serilog`.<br>❖ **Frontend**: Shows "Unfollow Failed" toast. |
 
 ### Diagrams
 
@@ -307,9 +307,9 @@ deactivate View
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2) | BR1 | **Validation Logic:**<br>❖ The input data from `[txtSearch]` is validated.<br> **Invalid (Empty/Null)**: If input length is 0, the system ignores the request or displays a tooltip (Refer to MSG_WARN_EMPTY_SEARCH).<br> **Valid**: If input is valid, System moves to step (3). |
-| (2.2)-(3) | BR2 | **Querying Rules:**<br>❖ System calls method `SearchController.SearchPeople(query)`.<br>❖ System queries data in the table “Profiles” in the database (Refer to “Profiles” table in “DB Sheet” file) with syntax `SELECT * FROM Profiles WHERE Name LIKE %[query]%`. |
-| (4)-(5) | BR3 | **Displaying Rules:**<br>❖ After getting matched data, system displays a “SearchResults” list (Refer to “SearchResults” view in “View Description” file).<br>❖ The system renders a list of `ProfileDto` objects for the user to select. |
+| (2) | BR1 | **Frontend Validation:**<br>❖ **Component**: `FriendSearchInput`.<br>❖ **Logic**: Debounce 500ms. If `query.length < 2`, do not send request.<br>❖ **Action**: `dispatch(searchUser(query))`. |
+| (2.2)-(3) | BR2 | **Processing:**<br>❖ **API**: `POST /api/search` Body: `{ query: "abc", type: "User" }`.<br>❖ **Backend**: `SearchController.Search(dto)` invokes `_searchService.SearchUsersAsync(query)`.<br>❖ **DB**: `SELECT * FROM Profiles WHERE DisplayName LIKE '%abc%' OR Username LIKE '%abc%'`.<br>❖ **Refinement**: Filters out blocked users via `UserModerations` check. |
+| (4)-(5) | BR3 | **Result:**<br>❖ **Response**: `200 OK` with `PagedResult<ProfileDto>`.<br>❖ **Frontend**: Updates `searchResults` state. Renders `UserList` component.<br>❖ **Empty**: If no matches, returns empty list. UI shows "No users found". |
 
 ### Diagrams
 
@@ -379,10 +379,10 @@ View --> User: Display Dropdown List
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (1)-(3) | BR1 | **Selecting Rules & Confirmation:**<br>❖ User invokes the "Block" command from the profile menu (Step 1).<br>❖ System displays a Warning Dialog (Refer to MSG_CONFIRM_BLOCK) (Step 2).<br> **Confirmed**: User clicks Confirm (Step 3). System moves to step (4). |
-| (4)-(6) | BR2 | **Processing & Storing Rules:**<br>❖ System calls method `BlockUser(targetId)` (Step 4).<br>❖ System stores block information in table “UserModerations” in the database (Refer to “UserModerations” table in “DB Sheet” file) with Type='Block' (Step 5).<br>❖ System deletes any related records in table “Follows” (Refer to “Follows” table in “DB Sheet” file) to ensure no connection remains (Step 6). |
-| (6.1)-(7) | BR3 | **Displaying Rules:**<br>❖ After processing, System returns Success (Step 6.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_BLOCK).<br>❖ System redirects the user to the Home Screen or updates the view to hide the content (Refer to “Home” view in “View Description” file) (Step 7). |
-| (6.2)-(8) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error and returns 500 (Step 6.2).<br> System displays Error message (Step 8). |
+| (1)-(3) | BR1 | **Confirmation:**<br>❖ **Frontend**: `UserProfileMenu` -> Click "Block". Shows `BlockWarningModal`.<br>❖ **User Input**: Clicks "Confirm Block".<br>❖ **Call**: `profileApi.blockUser(targetId)`. |
+| (4)-(6) | BR2 | **Processing:**<br>❖ **API**: `POST /api/user-moderation/block` Body: `{ targetId }`.<br>❖ **Backend**: `UserModerationController.Block(dto)` calls `_moderation.BlockAsync(userId, targetId)`.<br>❖ **DB Ops**: <br> 1. `INSERT INTO UserModerations (SourceId, TargetId, Type='Block')`.<br> 2. `DELETE FROM Follows WHERE ...` (Mutual unfollow). |
+| (6.1)-(7) | BR3 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Redirects user to Home (if on profile page) or hides user content immediately. Shows "User blocked" toast.<br>❖ **Cache**: Invalidates specific user cache keys. |
+| (6.2)-(8) | BR_Error | **Exception:**<br>❖ **Already Blocked**: Returns `409 Conflict`.<br>❖ **Server Error**: `500`.<br>❖ **Frontend**: Display error toast. |
 
 ### Diagrams
 
@@ -473,9 +473,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Processing & Storing Rules:**<br>❖ System calls method `UnblockUser(targetId)` (Step 2).<br>❖ System deletes the corresponding "Block" record from table “UserModerations” in the database (Refer to “UserModerations” table in “DB Sheet” file) matched by `[User.ID]` and `[Target.ID]` (Step 3). |
-| (3.1)-(4) | BR2 | **Displaying Rules:**<br>❖ After deleting the block record, System returns Success (Step 3.1).<br>❖ System displays a successful notification (Refer to MSG_SUCCESS_UNBLOCK).<br>❖ System updates the "Blocked Users" list view (Refer to “BlockedList” view in “View Description” file) by removing the unblocked user item (Step 4). |
-| (3.2)-(5) | BR_Error | **Exception Handling Rules:**<br>❖ If a system failure occurs:<br> System logs the error and returns 500 (Step 3.2).<br> System displays Error message (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **Frontend**: `BlockedUsersList` -> Click "Unblock". Calls `profileApi.unblock(targetId)`.<br>❖ **API**: `DELETE /api/user-moderation/block/{targetId}`.<br>❖ **Backend**: `UserModerationController.Unblock` calls `_moderation.UnblockAsync`.<br>❖ **DB**: `DELETE FROM UserModerations WHERE SourceId=... AND TargetId=... AND Type='Block'`. |
+| (3.1)-(4) | BR2 | **Completion:**<br>❖ **Response**: `200 OK`.<br>❖ **Frontend**: Optimistically removes user from `BlockedUsersList` UI. Shows "User unblocked" toast. |
+| (3.2)-(5) | BR_Error | **Exception:**<br>❖ If not found: `404 Not Found`.<br>❖ **Error**: `500`. |
 
 ### Diagrams
 
@@ -555,8 +555,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(4) | BR1 | **Querying Rules:**<br>❖ System calls method `ProfilesController.GetRecommendations()` (Step 2).<br>❖ System queries data in the table “Profiles” in the database (Step 3).<br>❖ System filters out users already in “Follows” table (Step 4).<br>❖ System orders the results by [Strategy: MutualFriends/Random]. |
-| (5)-(7) | BR2 | **Displaying Rules:**<br>❖ System processes data (Randomize/Rank) (Step 5).<br>❖ System returns list (Step 6).<br>❖ System displays a “Suggestions” widget (Refer to “Suggestions” view in “View Description” file) filled with candidate profiles (Step 7). |
+| (2)-(4) | BR1 | **Data Fetching:**<br>❖ **Frontend**: `RightSidebar` component mounts. Calls `profileApi.getRecommendations()`.<br>❖ **API**: `GET /api/profiles/recommendations?limit=5`.<br>❖ **Backend**: `ProfilesController.GetRecommendations` calls `_recommendationEngine.GetSuggestedUsersAsync`.<br>❖ **DB Query**: `SELECT * FROM Profiles p WHERE p.Id NOT IN (SELECT FolloweeId FROM Follows WHERE FollowerId = @me) ORDER BY Random() LIMIT 5`. |
+| (5)-(7) | BR2 | **Rendering:**<br>❖ **Response**: `200 OK` with `List<ProfileDto>`.<br>❖ **Frontend**: Renders `SuggestionCard` components. |
 
 ### Diagrams
 

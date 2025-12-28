@@ -2,7 +2,7 @@
 
 **Module**: User Lists / Bookmarks
 **Primary Actor**: Authenticated User
-**Backend Controller**: `Favi_BE.API.Controllers.CollectionsController`
+**Backend Controller**: `CollectionsController`
 **Database Tables**: `"Collections"`, `"CollectionItems"`, `"CollectionReactions"`
 
 ---
@@ -104,10 +104,10 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Validation & Upload Process:**<br>❖ The System receives the collection name and an optional cover image file from the User.<br>❖ If an image file is present, the System authenticates with the Cloudinary service and uploads the file to a designated container.<br>❖ The System retrieves the secure, persistent URL of the uploaded image for storage (Step 3). |
-| (4) | BR2 | **Persistence & Default Privacy:**<br>❖ The System inserts a new record into the `Collections` table, storing the Name, the secure Image URL (if any), and the `OwnerId`.<br>❖ The System sets the default visibility `IsPrivate` to `true`, ensuring the collection is personal by default unless changed (Step 4). |
-| (5) | BR3 | **UI Real-time Update:**<br>❖ Upon successful creation, the System returns the complete `CollectionDto`.<br>❖ The UI immediately prepends the new collection card to the top of the grid view without requiring a full page reload (Step 5). |
-| (4.1) | BR_Error | **Exception Handling:**<br>❖ If the Cloudinary upload fails: The System logs the vendor-specific error and aborts the creation process.<br>❖ If the Database insert fails: The System logs the SQL exception and returns a 500 status code.<br>❖ The UI displays a distinct error message advising the user to retry or check their connection (Step 6). |
+| (2)-(3) | BR1 | **Submission:**<br>❖ **Frontend**: `CreateCollectionModal` calls `collectionApi.create(formData)`.<br>❖ **API**: `POST /api/collections`.<br>❖ **Backend**: `CollectionsController.Create`. |
+| (3.1) | BR2 | **Upload:**<br>❖ **Service**: `_collections.CreateAsync` calls `_cloudinary.TryUploadAsync` if cover image provided.<br>❖ **Logic**: Returns URL. |
+| (4) | BR3 | **Persistence:**<br>❖ **DB**: Insert `Collection` { `OwnerId`, `Name`, `CoverUrl`, `IsPrivate=true` }.<br>❖ **Response**: `200 OK` with `CollectionResponse`. |
+| (4.1) | BR_Error | **Exception:**<br>❖ Upload Error: `400 Bad Request`. DB Error: `500`. |
 
 ### Diagrams
 
@@ -199,10 +199,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Validation & Ownership Verification:**<br>❖ The System verifies that the requesting User is the legitimate Owner of the target collection.<br>❖ If a new cover image is uploaded, the System performs the Cloudinary upload process similar to creation (Step 3). |
-| (4) | BR2 | **Update Logic:**<br>❖ The System executes an update on the `Collections` table, modifying only the changed fields (`Name`, `Privacy`, or `CoverImageUrl`).<br>❖ The System updates the `UpdatedAt` timestamp to reflect the modification (Step 4). |
-| (5) | BR3 | **UI Synchronization:**<br>❖ The UI receives the updated DTO and immediately refreshes the collection card's visual elements (Name, Image) to reflect the changes (Step 5). |
-| (4.1) | BR_Error | **Exception Handling:**<br>❖ If any step fails (Auth, Upload, or DB):<br> The System logs the complete stack trace.<br> The System returns a 500 error.<br> The UI notifies the user that the update could not be saved (Step 6). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `PUT /api/collections/{id}`.<br>❖ **Backend**: `CollectionsController.Update` calls `_collections.UpdateAsync`.<br>❖ **Logic**: Verifies Owner. Uploads new image if provided. |
+| (4) | BR2 | **Persistence:**<br>❖ **DB**: Update `Collections`.<br>❖ **Response**: `200 OK` with updated details. |
+| (4.1) | BR_Error | **Exception:**<br>❖ Forbidden/Not Found: `404 Not Found`. |
 
 ### Diagrams
 
@@ -297,9 +296,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Safe Deletion Protocol:**<br>❖ The System performs a strict ownership check to ensure unauthorized users cannot delete collections.<br>❖ Instead of a physical delete, the System performs a "Service Soft Delete" by setting `IsDeleted = 1` in the `Collections` table (Step 3). |
-| (4) | BR2 | **UI Feedback:**<br>❖ Upon receiving a plain 200 OK success response, the UI utilizes a client-side filter to permanently remove the deleted item from the DOM (Step 4). |
-| (3.1) | BR_Error | **Exception Reporting:**<br>❖ The System captures any database constraints or connection errors.<br>❖ The System logs the error with high severity.<br>❖ The UI presents a clear "Delete Failed" message to the User (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `DELETE /api/collections/{id}`.<br>❖ **Backend**: `CollectionsController.Delete`.<br>❖ **Logic**: Verifies Owner. |
+| (4) | BR2 | **Persistence:**<br>❖ **DB**: `_uow.Collections.Remove(collection)`.<br>❖ **Response**: `204 No Content`. |
+| (3.1) | BR_Error | **Exception:**<br>❖ Forbidden: `403 Forbidden` { message: "NOT_OWNER" }. |
 
 ### Diagrams
 
@@ -390,9 +389,8 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Reaction Toggling Logic:**<br>❖ The System receives the toggle request.<br>❖ The System checks the `CollectionReactions` table for an existing record matching UserID and CollectionID.<br>❖ **If Exists:** The System deletes the record (Unreact).<br>❖ **If Not Exists:** The System inserts a new record (React) (Step 3). |
-| (4) | BR2 | **Count & State Synchronization:**<br>❖ The System recalculates (or increments/decrements) the cached `ReactionCount` for the Collection.<br>❖ The UI toggles the heart icon's visual state (Active Red vs Inactive Grey) to provide instant feedback (Step 4). |
-| (3.1) | BR_Error | **Failure Recovery:**<br>❖ If the database transaction fails:<br> The System logs the error.<br> The UI actively reverts the heart icon to its previous state to ensure data consistency (Step 6). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `POST /api/collections/{id}/reactions` { type }.<br>❖ **Backend**: `ToggleReactionAsync`.<br>❖ **Logic**: Checks if Reaction exists. |
+| (4) | BR2 | **Toggle:**<br>❖ **DB**: If exists -> Remove. If new -> Add.<br>❖ **Response**: `200 OK` { removed: bool, type: string }. |
 
 ### Diagrams
 
@@ -480,10 +478,9 @@ end
 
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Item Linkage Logic:**<br>❖ The System accepts the request to link a specific Post ID to a Collection ID.<br>❖ The System strictly verifies that the Authenticated User is the Owner of the target Collection.<br>❖ The System inserts a unique record into `CollectionItems` (Step 3). |
-| (3.2) | BR2 | **Duplicate Prevention:**<br>❖ The System pre-checks for existing links. If the Post is already in the Collection, the System returns a 409 Conflict (or 200 OK with no-op) to prevent duplicate entries (Step 3.2). |
-| (4) | BR3 | **User Confirmation:**<br>❖ The UI displays a temporary toast notification "Saved to [Collection Name]" confirming the action was successful (Step 4). |
-| (3.1) | BR_Error | **Exception Handling:**<br>❖ If the operation fails: The System logs the specific error code and the UI displays a generic "Save Failed" alert (Step 5). |
+| (2)-(3) | BR1 | **Processing:**<br>❖ **API**: `POST /api/collections/{id}/posts/{postId}`.<br>❖ **Backend**: `CollectionsController.AddPost`.<br>❖ **Logic**: `_collections.AddPostAsync`. Checks Owner. |
+| (3.2) | BR2 | **Persistence:**<br>❖ **DB**: Insert `CollectionItems` { `CollectionId`, `PostId` }.<br>❖ **Check**: If exists -> Skip/Return.<br>❖ **Response**: `200 OK`. |
+| (3.1) | BR_Error | **Exception:**<br>❖ Not Owner / Invalid: `403 Forbidden`. |
 
 ### Diagrams
 

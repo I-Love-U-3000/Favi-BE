@@ -1,0 +1,87 @@
+﻿STT,Chức Năng Chính,Chức Năng Con,Function Points,Người Phụ Trách,Giờ làm việc (Est. Hours)
+1,Sign In Use Case,Sign In (Email/Password),3.66,Minh Quang,14.64
+2,Sign In Use Case,Sign In (OAuth - Google),3.66,Minh Quang,14.64
+3,Sign In Use Case,Reset Password,0.00,Minh Quang,0.00
+4,Sign In Use Case,Log out,3.66,Minh Quang,14.64
+5,Adjust User Profile Use Case,Adjust User Profile,12.20,Phú Quý,48.80
+6,Adjust User Profile Use Case,Create User Profile (Sign up),12.20,Phú Quý,48.80
+7,Adjust User Profile Use Case,"Update User Profile (Avatar, Bio, Cover Photo)",12.20,Phú Quý,48.80
+8,Adjust User Profile Use Case,Delete User Profile,12.20,Minh Quang,48.80
+9,Adjust User Profile Use Case,Search User Profile,12.20,Minh Quang,48.80
+10,Adjust User Profile Use Case,View Other User Profile,12.20,Minh Quang,48.80
+11,Adjust User Profile Use Case,Manage privacy settings,12.20,Phú Quý,48.80
+12,Adjust Post Use Case,Adjust Post,20.74,Phú Quý,82.96
+13,Adjust Post Use Case,Create Post,18.30,Minh Quang,73.20
+14,Adjust Post Use Case,Update Post,12.20,Phú Quý,48.80
+15,Adjust Post Use Case,Delete Post,12.20,Phú Quý,48.80
+16,Adjust Post Use Case,Search Post,18.30,Minh Quang,73.20
+17,Adjust Post Use Case,View Post NewsFeed,20.74,Minh Quang,82.96
+18,Adjust Post Use Case,View Explore Feed,20.74,Minh Quang,82.96
+19,Adjust Post Use Case,Share Post,0.00,Phú Quý,0.00
+20,Adjust Post Use Case,Hide Post,12.20,Phú Quý,48.80
+21,Adjust Post Use Case,Restore Post,12.20,Phú Quý,48.80
+22,Adjust Post Use Case,Archive Post,12.20,Phú Quý,48.80
+23,Adjust Post Use Case,Unarchived Post,12.20,Phú Quý,48.80
+24,Adjust Post Use Case,React to Post,12.20,Minh Quang,48.80
+25,Adjust Comment Use Case,Adjust Comment,12.20,Phú Quý,48.80
+26,Adjust Comment Use Case,Create Comment,12.20,Minh Quang,48.80
+27,Adjust Comment Use Case,Reply to Comment,12.20,Phú Quý,48.80
+28,Adjust Comment Use Case,Update Comment,12.20,Minh Quang,48.80
+29,Adjust Comment Use Case,Delete Comment,12.20,Phú Quý,48.80
+30,Adjust Collection Use Case,Adjust Collection,12.20,Minh Quang,48.80
+31,Adjust Collection Use Case,Create Collection,12.20,Phú Quý,48.80
+32,Adjust Collection Use Case,Update Collection,12.20,Minh Quang,48.80
+33,Adjust Collection Use Case,Delete Collection,12.20,Phú Quý,48.80
+34,Adjust Collection Use Case,React/Unreact to Collection,12.20,Minh Quang,48.80
+35,Adjust Collection Use Case,Add Post to Collection,12.20,Phú Quý,48.80
+36,Adjust Friend Use Case,Adjust Friend,12.20,Minh Quang,48.80
+37,Adjust Friend Use Case,View friend list,12.20,Minh Quang,48.80
+38,Adjust Friend Use Case,Add Friend (Create follow),12.20,Phú Quý,48.80
+39,Adjust Friend Use Case,Delete Friend (Unfollow),12.20,Phú Quý,48.80
+40,Adjust Friend Use Case,Search Friend,12.20,Minh Quang,48.80
+41,Adjust Friend Use Case,Block User,12.20,Phú Quý,48.80
+42,Adjust Friend Use Case,Unblock User,12.20,Minh Quang,48.80
+43,Adjust Friend Use Case,View Friend Suggestions,12.20,Minh Quang,48.80
+44,Chat Use Case,Chat,3.66,Phú Quý,14.64
+45,Chat Use Case,View Conversations,3.66,Minh Quang,14.64
+46,Chat Use Case,Create Chat,12.20,Phú Quý,48.80
+47,Chat Use Case,Create Group Chat,12.20,Phú Quý,48.80
+48,Chat Use Case,Send Message,12.20,Minh Quang,48.80
+49,Chat Use Case,Delete Message (Unsend),12.20,Phú Quý,48.80
+50,Chat Use Case,Search Chat History,3.66,Minh Quang,14.64
+51,Chat Use Case,Mark Chat as Read,12.20,Phú Quý,48.80
+52,Chat Use Case,Leave Group Chat,3.66,Minh Quang,14.64
+53,Adjust User Profile Settings,Adjust User Profile Settings,12.20,Minh Quang,48.80
+54,Adjust User Profile Settings,Update Social Links,12.20,Phú Quý,48.80
+55,Adjust User Profile Settings,Delete Account,12.20,Minh Quang,48.80
+56,Monitor Notification,Monitor Notification,3.66,Minh Quang,14.64
+57,Monitor Notification,View list Notification,3.66,Minh Quang,14.64
+58,Monitor Notification,Mark Notification as Read,12.20,Phú Quý,48.80
+59,Monitor Notification,Mark all Notifications as Read,12.20,Phú Quý,48.80
+60,Monitor Notification,Delete Notification,12.20,Minh Quang,48.80
+61,Monitor Notification,Configure Notification Preferences,12.20,Phú Quý,48.80
+62,User Report Content,Supervise content,3.66,Minh Quang,14.64
+63,User Report Content,User Report Post/Comment/User,3.66,Minh Quang,14.64
+64,User Report Content,User view Own Report History,8.54,Minh Quang,34.16
+65,Adjust Professional Profile,Adjust Professional Profile,12.20,Phú Quý,48.80
+66,Adjust Professional Profile,Switch to Professional Mode,12.20,Minh Quang,48.80
+67,Adjust Professional Profile,View dashboard,4.88,Minh Quang,19.52
+68,Adjust Professional Profile,Manage ads campaign,18.30,Phú Quý,73.20
+69,Adjust Group,Adjust Group,12.20,Minh Quang,48.80
+70,Adjust Group,Create Group,12.20,Phú Quý,48.80
+71,Adjust Group,Update group settings,12.20,Minh Quang,48.80
+72,Adjust Group,Join/Leave Group,0.00,Phú Quý,0.00
+73,Adjust Group,Manage Join Request,12.20,Phú Quý,48.80
+74,Adjust Group,Manage Group Member,12.20,Phú Quý,48.80
+75,Adjust Group,Moderate Group Content,0.00,Minh Quang,0.00
+76,Admin User-level Moderation,Admin Moderation,3.66,Phú Quý,14.64
+77,Admin User-level Moderation,View all user reports,8.54,Minh Quang,34.16
+78,Admin User-level Moderation,Accept/Deny User report,3.66,Phú Quý,14.64
+79,Admin monitor system health,Monitor system health,10.98,Minh Quang,43.92
+80,Admin monitor system health,"View Realtime metrics (CPU, RAM, API Latency)",4.88,Minh Quang,19.52
+81,Admin monitor system health,View Application Log (Error/Info/Warn),14.64,Minh Quang,58.56
+
+TỔNG HỢP,,,,,
+Phú Quý,,,428.22,,1712.88
+Minh Quang,,,423.34,,1693.36
+TOTAL,,,851.56,,3406.24

@@ -83,8 +83,8 @@ end
 ### Business Rules (BR)
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Data Retrieval:**<br>❖ Query `Prometheus` or System Counters for CPU %, RAM Usage, and Request Latency (Step 2).<br>❖ Return `MetricsDto` to client (Step 3). |
-| (3.1) | BR_Error | **Exception:**<br>❖ Show "Metrics Unavailable" if query fails. |
+| (2)-(3) | BR1 | **Data Retrieval:**<br>❖ **Frontend**: `MetricsDashboard`. Polls `healthApi.getMetrics()`.<br>❖ **API**: `GET /api/health/metrics`.<br>❖ **Backend**: `SystemHealthController.GetMetrics`.<br>❖ **Infrastructure**: Queries `Prometheus` HTTP API /metrics endpoint. |
+| (3.1) | BR_Error | **Exception:**<br>❖ Returns `503 Service Unavailable` if Prometheus unreachable. |
 
 ### Diagrams
 
@@ -143,7 +143,7 @@ View -> User: Render Graphs
 ### Business Rules (BR)
 | Activity | BR Code | Description |
 | :---: | :---: | :--- |
-| (2)-(3) | BR1 | **Log Query:**<br>❖ System queries `Serilog`/`Seq` sink (or DB table `Logs`) with filtering (Level, Date, Source) (Step 2).<br>❖ Returns `List<LogEntry>` (Step 3). |
+| (2)-(3) | BR1 | **Log Query:**<br>❖ **Frontend**: `LogExplorer`. Calls `healthApi.getLogs({ level: 'Error' })`.<br>❖ **API**: `GET /api/health/logs?level=Error`.<br>❖ **Backend**: `SystemHealthController.GetLogs`.<br>❖ **Infrastructure**: Queries `Seq` or `ElasticSearch` via HTTP Client. |
 
 ### Diagrams
 
