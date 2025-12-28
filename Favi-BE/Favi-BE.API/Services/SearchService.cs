@@ -80,11 +80,14 @@ namespace Favi_BE.Services
             var posts = await _uow.Posts.GetAllAsync();
             var matchedPosts = new List<SearchPostDto>();
 
-            // Create score lookup for ordering
-            var scoreMap = vectorResults.ToDictionary(
-                r => Guid.TryParse(r.PostId, out var g) ? g : Guid.Empty,
-                r => r.Score
-            );
+            // Create score lookup for ordering (handle duplicates by taking highest score)
+            var scoreMap = vectorResults
+                .GroupBy(r => Guid.TryParse(r.PostId, out var g) ? g : Guid.Empty)
+                .Where(g => g.Key != Guid.Empty)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Max(r => r.Score)
+                );
 
             foreach (var postId in postIds)
             {

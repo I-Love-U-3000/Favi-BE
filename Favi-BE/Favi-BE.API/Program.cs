@@ -120,6 +120,7 @@ builder.Services.AddScoped<IUserModerationService, UserModerationService>();
 builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 // Add background services
 builder.Services.AddHostedService<PostCleanupService>();
@@ -134,7 +135,9 @@ builder.Services.AddHttpClient<IVectorIndexService, VectorIndexService>(client =
 {
     var vectorConfig = builder.Configuration.GetSection("VectorIndex");
     var baseUrl = vectorConfig["BaseUrl"] ?? "http://vector-index-api:8080";
+    var timeoutSeconds = int.Parse(vectorConfig["TimeoutSeconds"] ?? "60");
     client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
