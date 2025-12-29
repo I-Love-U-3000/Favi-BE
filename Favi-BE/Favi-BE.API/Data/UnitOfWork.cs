@@ -40,6 +40,10 @@ namespace Favi_BE.Data
             Follows = new FollowRepository(_context);
             Reactions = new ReactionRepository(_context);
             UserConversations = new UserConversationRepository(_context);
+
+            // Story entities
+            Stories = new StoryRepository(_context);
+            StoryViews = new StoryViewRepository(_context);
         }
 
         // Core entities
@@ -63,6 +67,10 @@ namespace Favi_BE.Data
         public IFollowRepository Follows { get; private set; }
         public IReactionRepository Reactions { get; private set; }
         public IUserConversationRepository UserConversations { get; private set; }
+
+        // Story entities
+        public IStoryRepository Stories { get; private set; }
+        public IStoryViewRepository StoryViews { get; private set; }
 
         public int Complete()
         {

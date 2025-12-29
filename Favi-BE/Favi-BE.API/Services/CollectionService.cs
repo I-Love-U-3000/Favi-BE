@@ -373,7 +373,7 @@ namespace Favi_BE.Services
         private const double W_View = 0.2;
         private const double Lambda = 0.1;
         private const double Beta = 0.5;
-        private const double MaxAgeHours = 72;
+        private const double MaxAgeHours = 720;
         private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
         private const int TrendingCandidateLimit = 500;
 

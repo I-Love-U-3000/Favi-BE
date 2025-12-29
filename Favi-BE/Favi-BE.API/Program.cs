@@ -121,9 +121,11 @@ builder.Services.AddScoped<IChatService, ChatService>();
 builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IStoryService, StoryService>();
 
 // Add background services
 builder.Services.AddHostedService<PostCleanupService>();
+builder.Services.AddHostedService<StoryExpirationService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -155,7 +157,21 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default"), npgsqlOptions =>
+    {
+        // Enable retry on failure for transient database errors
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorCodesToAdd: null
+        );
+    });
+
+    // Optional: Set command timeout for long-running queries
+    options.EnableSensitiveDataLogging(builder.Environment.IsDevelopment());
+    options.EnableDetailedErrors(builder.Environment.IsDevelopment());
+});
 
 var app = builder.Build();
 

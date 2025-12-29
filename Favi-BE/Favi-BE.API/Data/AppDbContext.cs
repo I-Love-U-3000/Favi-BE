@@ -28,6 +28,8 @@ namespace Favi_BE.Data
         public DbSet<Message> Messages { get; set; } = default!;
         public DbSet<UserConversation> UserConversations { get; set; } = default!;
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Story> Stories { get; set; }
+        public DbSet<StoryView> StoryViews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,6 +39,7 @@ namespace Favi_BE.Data
             modelBuilder.Entity<PostTag>().HasKey(pt => new { pt.PostId, pt.TagId });
             modelBuilder.Entity<PostCollection>().HasKey(pc => new { pc.PostId, pc.CollectionId });
             modelBuilder.Entity<Follow>().HasKey(f => new { f.FollowerId, f.FolloweeId });
+            modelBuilder.Entity<StoryView>().HasKey(sv => new { sv.StoryId, sv.ViewerProfileId });
 
             // ===== Post =====
             modelBuilder.Entity<Post>()
@@ -293,6 +296,41 @@ namespace Favi_BE.Data
 
                 // Index for faster queries
                 b.HasIndex(n => new { n.RecipientProfileId, n.CreatedAt });
+            });
+
+            // ===== Story =====
+            modelBuilder.Entity<Story>(b =>
+            {
+                b.HasKey(s => s.Id);
+
+                b.Property(s => s.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                b.Property(s => s.ExpiresAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.HasIndex(s => s.ExpiresAt); // For expiring stories query
+
+                b.HasOne(s => s.Profile)
+                    .WithMany(p => p.Stories)
+                    .HasForeignKey(s => s.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ===== StoryView =====
+            modelBuilder.Entity<StoryView>(b =>
+            {
+                b.Property(sv => sv.ViewedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.HasOne(sv => sv.Story)
+                    .WithMany(s => s.StoryViews)
+                    .HasForeignKey(sv => sv.StoryId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(sv => sv.Viewer)
+                    .WithMany()
+                    .HasForeignKey(sv => sv.ViewerProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

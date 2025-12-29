@@ -29,7 +29,7 @@ namespace Favi_BE.Services
 
         private const double Lambda = 0.1;            // e^{-λ * Δt}, Δt tính theo giờ
         private const double Beta = 0.5;              // hệ số khuếch đại velocity
-        private const double MaxAgeHours = 72;        // chỉ xét bài trong ~3 ngày
+        private const double MaxAgeHours = 720;        // chỉ xét bài trong ~3 ngày
         private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
         private const int TrendingCandidateLimit = 500; // tối đa ứng viên để tính trending
 

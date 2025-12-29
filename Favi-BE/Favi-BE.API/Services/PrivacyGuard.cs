@@ -97,6 +97,43 @@ namespace Favi_BE.Services
             };
         }
 
+        public async Task<bool> CanViewStoryAsync(Story story, Guid? viewerId, bool isAdmin = false)
+        {
+            if (story == null)
+                return false;
+
+            var (viewerIsAdmin, viewerIsBanned) = await ResolveViewerAsync(viewerId, isAdmin);
+            if (viewerIsBanned)
+                return false;
+            if (viewerIsAdmin)
+                return true;
+
+            if (await IsOwnerBannedAsync(story.Profile, story.ProfileId))
+                return false;
+
+            // Archived stories only visible to owner
+            if (story.IsArchived)
+                return viewerId.HasValue && viewerId.Value == story.ProfileId;
+
+            // Expired stories only visible to owner
+            if (story.ExpiresAt <= DateTime.UtcNow)
+                return viewerId.HasValue && viewerId.Value == story.ProfileId;
+
+            if (!viewerId.HasValue)
+                return story.Privacy == PrivacyLevel.Public;
+
+            if (viewerId.Value == story.ProfileId)
+                return true;
+
+            return story.Privacy switch
+            {
+                PrivacyLevel.Public => true,
+                PrivacyLevel.Followers => await _uow.Follows.IsFollowingAsync(viewerId.Value, story.ProfileId),
+                PrivacyLevel.Private => false,
+                _ => false
+            };
+        }
+
         public async Task<bool> CanViewCommentAsync(Post parentPost, Guid? viewerId, bool isAdmin = false)
         {
             if (parentPost == null)
