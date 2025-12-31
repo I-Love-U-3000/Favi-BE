@@ -374,6 +374,44 @@ namespace Favi_BE.Services
             return true;
         }
 
+        public async Task<bool> PermanentDeleteAsync(Guid postId, Guid requesterId)
+        {
+            var post = await _uow.Posts.GetPostWithAllAsync(postId);
+            if (post is null) return false;
+            if (post.ProfileId != requesterId) return false;
+
+            // Delete media from Cloudinary
+            if (post.PostMedias != null)
+            {
+                foreach (var media in post.PostMedias)
+                {
+                    if (!string.IsNullOrEmpty(media.PublicId))
+                    {
+                        _cloudinary.DeleteAsync(media.PublicId);
+                    }
+                }
+            }
+
+            // Remove from vector index
+            if (_vectorIndex.IsEnabled())
+            {
+                try
+                {
+                    await _vectorIndex.RemovePostAsync(postId);
+                }
+                catch
+                {
+                    // Swallow - errors logged in VectorIndexService
+                }
+            }
+
+            // Hard delete the post
+            _uow.Posts.Remove(post);
+            await _uow.CompleteAsync();
+
+            return true;
+        }
+
         public async Task<bool> ArchiveAsync(Guid postId, Guid requesterId)
         {
             var post = await _uow.Posts.GetByIdAsync(postId);

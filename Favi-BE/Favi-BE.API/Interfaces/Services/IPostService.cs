@@ -16,6 +16,7 @@ namespace Favi_BE.Interfaces.Services
         Task<bool> UpdateAsync(Guid postId, Guid requesterId, string? caption);
         Task<bool> DeleteAsync(Guid postId, Guid requesterId);
         Task<bool> RestoreAsync(Guid postId, Guid requesterId);
+        Task<bool> PermanentDeleteAsync(Guid postId, Guid requesterId);
         Task<bool> ArchiveAsync(Guid postId, Guid requesterId);
         Task<bool> UnarchiveAsync(Guid postId, Guid requesterId);
         Task<PagedResult<PostResponse>> GetRecycleBinAsync(Guid userId, int page, int pageSize);

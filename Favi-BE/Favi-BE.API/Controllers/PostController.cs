@@ -231,6 +231,20 @@ namespace Favi_BE.Controllers
         }
 
         // ======================
+        // 🔹 DELETE: Permanently delete post (hard delete)
+        // ======================
+        [Authorize]
+        [HttpDelete("{id:guid}/permanent")]
+        public async Task<IActionResult> PermanentDelete(Guid id)
+        {
+            var requesterId = User.GetUserIdFromMetadata();
+            var ok = await _posts.PermanentDeleteAsync(id, requesterId);
+            return ok
+                ? Ok(new { message = "Bài viết đã được xoá vĩnh viễn." })
+                : StatusCode(403, new { code = "POST_PERMANENT_DELETE_FAILED", message = "Không thể xoá vĩnh viễn bài viết (không tồn tại hoặc bạn không phải chủ sở hữu)." });
+        }
+
+        // ======================
         // 🔹 GET: Recycle bin posts
         // ======================
         [Authorize]
