@@ -143,6 +143,18 @@ builder.Services.AddHttpClient<IVectorIndexService, VectorIndexService>(client =
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
+// Configure NSFW detection service
+builder.Services.Configure<NSFWOptions>(builder.Configuration.GetSection("NSFW"));
+builder.Services.AddHttpClient<INSFWService, NSFWService>(client =>
+{
+    var nsfwConfig = builder.Configuration.GetSection("NSFW");
+    var baseUrl = nsfwConfig["BaseUrl"] ?? "http://vector-index-api:8080";
+    var timeoutSeconds = int.Parse(nsfwConfig["TimeoutSeconds"] ?? "30");
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers()

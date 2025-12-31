@@ -18,6 +18,7 @@ namespace Favi_BE.Services
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
         private readonly IVectorIndexService _vectorIndex;
+        private readonly INSFWService _nsfwService;
         private readonly INotificationService? _notificationService;
         private readonly IAuditService? _auditService;
 
@@ -33,12 +34,13 @@ namespace Favi_BE.Services
         private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
         private const int TrendingCandidateLimit = 500; // tối đa ứng viên để tính trending
 
-        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, IVectorIndexService vectorIndex, INotificationService? notificationService = null, IAuditService? auditService = null)
+        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, IVectorIndexService vectorIndex, INSFWService nsfwService, INotificationService? notificationService = null, IAuditService? auditService = null)
         {
             _uow = uow;
             _cloudinary = cloudinary;
             _privacy = privacy;
             _vectorIndex = vectorIndex;
+            _nsfwService = nsfwService;
             _notificationService = notificationService;
             _auditService = auditService;
         }
@@ -276,7 +278,7 @@ namespace Favi_BE.Services
             var full = await _uow.Posts.GetPostWithAllAsync(post.Id);
             if (full != null && _vectorIndex.IsEnabled())
             {
-                _ = Task.Run(async () =>
+                Task.Run(async () =>
                 {
                     try
                     {
@@ -289,12 +291,27 @@ namespace Favi_BE.Services
                 });
             }
 
+            // Check NSFW content
+            if (full != null && _nsfwService.IsEnabled())
+            {
+                try
+                {
+                    full.IsNSFW = await _nsfwService.CheckPostAsync(full);
+                    _uow.Posts.Update(full);
+                    await _uow.CompleteAsync();
+                }
+                catch
+                {
+                    // Swallow - errors logged in NSFWService
+                }
+            }
+
             return await MapPostToResponseAsync(full ?? post, authorId);
         }
 
         public async Task<bool> UpdateAsync(Guid postId, Guid requesterId, string? caption)
         {
-            var post = await _uow.Posts.GetByIdAsync(postId);
+            var post = await _uow.Posts.GetPostWithAllAsync(postId);
             if (post is null) return false;
             if (post.ProfileId != requesterId) return false;
 
@@ -305,6 +322,22 @@ namespace Favi_BE.Services
 
             _uow.Posts.Update(post);
             await _uow.CompleteAsync();
+
+            // Re-check NSFW content when caption is updated
+            if (_nsfwService.IsEnabled())
+            {
+                try
+                {
+                    post.IsNSFW = await _nsfwService.CheckPostAsync(post);
+                    _uow.Posts.Update(post);
+                    await _uow.CompleteAsync();
+                }
+                catch
+                {
+                    // Swallow - errors logged in NSFWService
+                }
+            }
+
             return true;
         }
 
@@ -428,7 +461,7 @@ namespace Favi_BE.Services
             IEnumerable<IFormFile> files,
             Guid requesterId)
         {
-            var post = await _uow.Posts.GetByIdAsync(postId);
+            var post = await _uow.Posts.GetPostWithAllAsync(postId);
             if (post is null || post.ProfileId != requesterId)
                 return Enumerable.Empty<PostMediaResponse>();
 
@@ -485,6 +518,26 @@ namespace Favi_BE.Services
             post.UpdatedAt = DateTime.UtcNow;
             _uow.Posts.Update(post);
             await _uow.CompleteAsync();
+
+            // Re-check NSFW content when media is uploaded
+            if (_nsfwService.IsEnabled())
+            {
+                try
+                {
+                    // Reload post with new media
+                    var updatedPost = await _uow.Posts.GetPostWithAllAsync(postId);
+                    if (updatedPost != null)
+                    {
+                        updatedPost.IsNSFW = await _nsfwService.CheckPostAsync(updatedPost);
+                        _uow.Posts.Update(updatedPost);
+                        await _uow.CompleteAsync();
+                    }
+                }
+                catch
+                {
+                    // Swallow - errors logged in NSFWService
+                }
+            }
 
             return responses.OrderBy(r => r.Position);
         }
@@ -589,6 +642,29 @@ namespace Favi_BE.Services
             return type;
         }
 
+        public async Task<IEnumerable<PostReactorResponse>> GetReactorsAsync(Guid postId, Guid requesterId)
+        {
+            var post = await _uow.Posts.GetByIdAsync(postId);
+            if (post == null)
+                throw new KeyNotFoundException("Post not found");
+
+            // Check if user can view this post's reactors using privacy guard
+            var canView = await _privacy.CanViewPostAsync(post, requesterId);
+            if (!canView)
+                throw new UnauthorizedAccessException("You don't have permission to view reactors for this post");
+
+            var reactions = await _uow.Reactions.GetReactionsByPostIdAsync(postId);
+
+            return reactions.Select(r => new PostReactorResponse(
+                r.Profile.Id,
+                r.Profile.Username,
+                r.Profile.DisplayName,
+                r.Profile.AvatarUrl,
+                r.Type,
+                r.CreatedAt
+            ));
+        }
+
         // --------------------------------------------------------------------
         // Helpers
         // --------------------------------------------------------------------
@@ -639,7 +715,8 @@ namespace Favi_BE.Services
                 Tags: tags,
                 Reactions: summary,
                 CommentsCount: post.Comments?.Count ?? 0,
-                Location: location
+                Location: location,
+                IsNSFW: post.IsNSFW
             );
         }
 

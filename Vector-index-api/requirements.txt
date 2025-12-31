@@ -7,3 +7,4 @@ Pillow==10.4.0
 requests==2.32.3
 open_clip_torch==2.24.0
 numpy==1.26.4
+torchvision==0.20.0

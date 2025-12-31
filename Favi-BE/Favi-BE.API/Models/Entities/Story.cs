@@ -16,6 +16,7 @@ namespace Favi_BE.Models.Entities
 
         public PrivacyLevel Privacy { get; set; }
         public bool IsArchived { get; set; }
+        public bool IsNSFW { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ExpiresAt { get; set; }
 

@@ -12,11 +12,13 @@ namespace Favi_BE.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
+        private readonly IPrivacyGuard _privacy;
 
-        public CollectionService(IUnitOfWork uow, ICloudinaryService cloudinary)
+        public CollectionService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy)
         {
             _uow = uow;
             _cloudinary = cloudinary;
+            _privacy = privacy;
         }
 
         public async Task<CollectionResponse> CreateAsync(Guid ownerId, CreateCollectionRequest dto, IFormFile? coverImage)
@@ -290,7 +292,8 @@ namespace Favi_BE.Services
                     tags,
                     reactionSummary,
                     p.Comments.Count,
-                    location
+                    location,
+                    p.IsNSFW
                 );
             });
 
@@ -343,6 +346,29 @@ namespace Favi_BE.Services
             _uow.Reactions.Update(existing);
             await _uow.CompleteAsync();
             return type;
+        }
+
+        public async Task<IEnumerable<CollectionReactorResponse>> GetReactorsAsync(Guid collectionId, Guid requesterId)
+        {
+            var collection = await _uow.Collections.GetByIdAsync(collectionId);
+            if (collection == null)
+                throw new KeyNotFoundException("Collection not found");
+
+            // Check if user can view this collection's reactors using privacy guard
+            var canView = await _privacy.CanViewCollectionAsync(collection, requesterId);
+            if (!canView)
+                throw new UnauthorizedAccessException("You don't have permission to view reactors for this collection");
+
+            var reactions = await _uow.Reactions.GetReactionsByCollectionIdAsync(collectionId);
+
+            return reactions.Select(r => new CollectionReactorResponse(
+                r.Profile.Id,
+                r.Profile.Username,
+                r.Profile.DisplayName,
+                r.Profile.AvatarUrl,
+                r.Type,
+                r.CreatedAt
+            ));
         }
 
         private async Task<ReactionSummaryDto> BuildReactionSummaryAsync(Guid collectionId, Guid? currentUserId)

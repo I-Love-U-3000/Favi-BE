@@ -32,6 +32,7 @@ namespace Favi_BE.Interfaces.Services
         // Reactions
         Task<ReactionSummaryDto> GetReactionsAsync(Guid postId, Guid? currentUserId);
         Task<ReactionType?> ToggleReactionAsync(Guid postId, Guid userId, ReactionType type);
+        Task<IEnumerable<PostReactorResponse>> GetReactorsAsync(Guid postId, Guid requesterId);
         Task<PagedResult<PostResponse>> GetByProfileAsync(Guid profileId, Guid? viewerId, int page, int pageSize);
         Task<PagedResult<PostResponse>> GetFeedAsync(Guid currentUserId, int page, int pageSize);
         Task<PagedResult<PostResponse>> GetGuestFeedAsync(int page, int pageSize);

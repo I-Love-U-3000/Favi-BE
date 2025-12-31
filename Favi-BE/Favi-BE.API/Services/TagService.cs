@@ -166,7 +166,8 @@ namespace Favi_BE.Services
                     tags,
                     reactionSummary,
                     p.Comments.Count,
-                    location
+                    location,
+                    p.IsNSFW
                 );
             });
 

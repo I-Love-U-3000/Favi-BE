@@ -20,6 +20,7 @@ namespace Favi_BE.Models.Entities
 
         public DateTime? DeletedDayExpiredAt { get; set; }
         public bool IsArchived { get; set; }
+        public bool IsNSFW { get; set; }
 
         public Profile Profile { get; set; } = null!;
         public ICollection<PostMedia> PostMedias { get; set; } = new List<PostMedia>();

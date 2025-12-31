@@ -335,5 +335,25 @@ namespace Favi_BE.Controllers
 
             return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
         }
+
+        // ======================
+        // 🔹 GET: Reactors (người đã react)
+        // ======================
+        [Authorize]
+        [HttpGet("{id:guid}/reactors")]
+        public async Task<ActionResult<IEnumerable<PostReactorResponse>>> GetReactors(Guid id)
+        {
+            var userId = User.GetUserIdFromMetadata();
+
+            try
+            {
+                var reactors = await _posts.GetReactorsAsync(id, userId);
+                return Ok(reactors);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
     }
 }

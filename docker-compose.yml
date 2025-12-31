@@ -29,6 +29,12 @@ services:
       #Vector Index Api
       VectorIndex__BaseUrl: http://vector-index-api:8080
       VectorIndex__Enabled: "true"
+
+      # NSFW Detection
+      NSFW__BaseUrl: http://vector-index-api:8080
+      NSFW__Enabled: "true"
+      NSFW__TimeoutSeconds: "30"
+      NSFW__Threshold: "0.7"
     depends_on:
       favi-postgres:
         condition: service_healthy

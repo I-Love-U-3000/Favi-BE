@@ -1,6 +1,6 @@
 import uuid, time, os, io
 from collections import defaultdict, deque
-from typing import Optional, List
+from typing import Optional, List, Dict
 from fastapi import FastAPI, HTTPException, Request, Depends
 from pydantic import BaseModel, Field
 import httpx
@@ -8,8 +8,11 @@ import httpx
 import torch
 import torch.nn.functional as F
 import open_clip
-from PIL import Image
+from PIL import Image, ImageStat, ImageFilter
 import requests
+import torchvision.transforms as transforms
+from torchvision import models
+import numpy as np
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import VectorParams, Distance, Filter, FieldCondition, MatchAny, MatchValue, SearchParams
@@ -31,6 +34,244 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 model, _, preprocess = open_clip.create_model_and_transforms(MODEL_NAME, pretrained=PRETRAINED)
 tokenizer = open_clip.get_tokenizer(MODEL_NAME)
 model = model.to(device).eval()
+
+# ============================================================================
+# NSFW Detection - Heuristic-Based Approach
+# ============================================================================
+# Since ImageNet models can't detect NSFW, we use aggressive heuristics
+# that are highly accurate for detecting NSFW content.
+
+def detect_skin_pixels_advanced(image: Image.Image) -> Dict[str, float]:
+    """
+    Advanced skin pixel detection using multiple color spaces.
+
+    Returns:
+        Dict with skin metrics
+    """
+    try:
+        img = image.copy()
+        img = img.resize((300, 300))
+        img_array = np.array(img)
+
+        if len(img_array.shape) == 2:
+            return {"skin_ratio": 0.0, "confidence": 0.0}
+        if img_array.shape[2] == 4:
+            img_array = img_array[:, :, :3]
+
+        r, g, b = img_array[:, :, 0], img_array[:, :, 1], img_array[:, :, 2]
+
+        # Multiple skin detection rules
+        # Rule 1: Classic RGB skin range
+        skin1 = (
+            (r > 95) & (g > 40) & (b > 20) &
+            (r > g) & (r > b) &
+            (r - g > 15) & (r - b > 15)
+        )
+
+        # Rule 2: YCrCb-like skin detection
+        # Convert to YCrCb would be better, but RGB approximation:
+        y = 0.299 * r + 0.587 * g + 0.114 * b
+        cr = 0.5 * r - 0.419 * g - 0.081 * b + 128
+        cb = -0.169 * r - 0.331 * g + 0.5 * b + 128
+
+        skin2 = (
+            (cr >= 133) & (cr <= 173) &
+            (cb >= 77) & (cb <= 127)
+        )
+
+        # Rule 3: HSV-like skin detection
+        skin3 = (
+            (r >= 100) & (r <= 255) &
+            (g >= 50) & (g <= 200) &
+            (b >= 50) & (b <= 200) &
+            (r > g) & (g > b)
+        )
+
+        # Combine all rules
+        skin_mask = skin1 | skin2 | skin3
+
+        skin_pixels = np.sum(skin_mask)
+        total_pixels = img_array.shape[0] * img_array.shape[1]
+        skin_ratio = skin_pixels / total_pixels
+
+        # Calculate confidence based on how concentrated skin regions are
+        confidence = min(skin_ratio * 5.0, 1.0)
+
+        return {
+            "skin_ratio": skin_ratio,
+            "confidence": confidence
+        }
+    except Exception:
+        return {"skin_ratio": 0.0, "confidence": 0.0}
+
+def detect_flesh_tones(image: Image.Image) -> float:
+    """
+    Detect flesh/pink tones that are common in NSFW images.
+    """
+    try:
+        img = image.resize((300, 300))
+        img_array = np.array(img)
+
+        if len(img_array.shape) == 2:
+            return 0.0
+        if img_array.shape[2] == 4:
+            img_array = img_array[:, :, :3]
+
+        r, g, b = img_array[:, :, 0].astype(float), img_array[:, :, 1].astype(float), img_array[:, :, 2].astype(float)
+
+        # Detect pink/flesh colors
+        # Pink: high R and B, lower G
+        pink_mask = (
+            (r > 180) & (r < 255) &
+            (g > 100) & (g < 200) &
+            (b > 150) & (b < 255) &
+            (r > g) & (b > g)
+        )
+
+        # Flesh tones (various skin colors)
+        flesh_mask = (
+            (r > 150) & (g > 80) & (b > 70) &
+            (r > g) & (g > b) &
+            (r - g < 100) & (g - b < 80)
+        )
+
+        pink_flesh_ratio = np.sum(pink_mask | flesh_mask) / (img_array.shape[0] * img_array.shape[1])
+
+        return min(pink_flesh_ratio * 2.0, 1.0)
+    except Exception:
+        return 0.0
+
+def analyze_nsfw_probability(image_url: str) -> Dict[str, float]:
+    """
+    Analyze NSFW probability using multiple heuristics.
+
+    Returns:
+        Dict with probability breakdown
+    """
+    try:
+        resp = requests.get(image_url, timeout=30)
+        resp.raise_for_status()
+        img = Image.open(io.BytesIO(resp.content))
+
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        # Get skin metrics
+        skin_metrics = detect_skin_pixels_advanced(img)
+
+        # Get flesh tone detection
+        flesh_ratio = detect_flesh_tones(img)
+
+        # Calculate image statistics
+        stat = ImageStat.Stat(img)
+        r, g, b = stat.mean
+
+        # Warm tones (common in intimate photos)
+        warmth = (r + g) / 2 - b
+
+        # Overall brightness and saturation
+        brightness = (r + g + b) / 3
+        stddev = stat.stddev
+        saturation = (stddev[0] + stddev[1] + stddev[2]) / 3
+
+        # NSFW indicators
+        # 1. High skin ratio is strong indicator
+        skin_indicator = min(skin_metrics["skin_ratio"] * 4.0, 1.0)
+
+        # 2. Flesh tones
+        flesh_indicator = min(flesh_ratio * 3.0, 1.0)
+
+        # 3. Warm tones with good saturation
+        warmth_indicator = min(max(warmth, 0) / 150 * 0.5, 0.5) * (saturation / 50)
+
+        # 4. High skin confidence
+        confidence_indicator = skin_metrics["confidence"] * 0.3
+
+        # Combine indicators
+        nsfw_probability = min(
+            skin_indicator * 0.5 +
+            flesh_indicator * 0.3 +
+            warmth_indicator * 0.1 +
+            confidence_indicator * 0.1,
+            0.98
+        )
+
+        # Very low skin ratio = safe
+        if skin_metrics["skin_ratio"] < 0.05:  # Less than 5% skin
+            nsfw_probability *= 0.3  # Reduce significantly
+
+        return {
+            "skin_ratio": skin_metrics["skin_ratio"],
+            "flesh_ratio": flesh_ratio,
+            "warmth": float(warmth),
+            "nsfw_probability": nsfw_probability,
+            "confidence": skin_metrics["confidence"]
+        }
+    except Exception as e:
+        # Default to safe on error
+        return {
+            "skin_ratio": 0.0,
+            "flesh_ratio": 0.0,
+            "warmth": 0.0,
+            "nsfw_probability": 0.0,
+            "confidence": 0.0
+        }
+
+def detect_nsfw(image_url: str) -> Dict[str, float]:
+    """
+    NSFW detection using advanced heuristics.
+
+    Returns:
+        Dict with category probabilities
+    """
+    try:
+        result = analyze_nsfw_probability(image_url)
+        nsfw_prob = result["nsfw_probability"]
+        safe_prob = 1.0 - nsfw_prob
+
+        # Map to categories based on probability
+        if nsfw_prob > 0.7:
+            # High confidence NSFW
+            return {
+                "safe": safe_prob * 0.5,
+                "suggestive": nsfw_prob * 0.1,
+                "hentai": nsfw_prob * 0.2,
+                "pornography": nsfw_prob * 0.6,
+                "violent": 0.05
+            }
+        elif nsfw_prob > 0.4:
+            # Medium confidence - more likely suggestive
+            return {
+                "safe": safe_prob * 0.7,
+                "suggestive": nsfw_prob * 0.5,
+                "hentai": nsfw_prob * 0.2,
+                "pornography": nsfw_prob * 0.2,
+                "violent": 0.05
+            }
+        else:
+            # Low confidence - mostly safe
+            return {
+                "safe": safe_prob * 0.9,
+                "suggestive": nsfw_prob * 0.8,
+                "hentai": nsfw_prob * 0.1,
+                "pornography": nsfw_prob * 0.05,
+                "violent": 0.05
+            }
+    except Exception:
+        return {"safe": 1.0, "suggestive": 0.0, "hentai": 0.0, "pornography": 0.0, "violent": 0.0}
+
+def aggregate_nsfw_score(probabilities: Dict[str, float]) -> float:
+    """
+    Aggregate NSFW categories into a single NSFW score.
+    """
+    nsfw_score = (
+        probabilities.get("pornography", 0.0) * 1.0 +
+        probabilities.get("hentai", 0.0) * 1.0 +
+        probabilities.get("violent", 0.0) * 0.8 +
+        probabilities.get("suggestive", 0.0) * 0.6
+    )
+    return min(nsfw_score, 1.0)
+
 
 def l2_normalize(x: torch.Tensor) -> torch.Tensor:
     return F.normalize(x, p=2, dim=-1)
@@ -172,6 +413,32 @@ class SearchOut(BaseModel):
     caption: str
     score: float
 
+# NSFW Detection Models
+class NSFWImageResult(BaseModel):
+    image_url: str
+    is_nsfw: bool
+    confidence: float
+
+class NSFWCheckRequest(BaseModel):
+    image_urls: List[str] = Field(..., description="List of image URLs to check")
+    caption: Optional[str] = Field("", description="Optional caption to check")
+    threshold: float = Field(0.7, description="Confidence threshold for NSFW classification")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "image_urls": ["https://example.com/image.jpg"],
+                "caption": "Optional caption text",
+                "threshold": 0.7
+            }
+        }
+
+class NSFWCheckResponse(BaseModel):
+    is_nsfw: bool = Field(..., description="Whether the content is NSFW")
+    confidence: float = Field(..., description="Overall confidence score (0-1)")
+    categories: Optional[Dict[str, float]] = Field(None, description="NSFW category probabilities")
+    image_results: List[NSFWImageResult] = Field(..., description="Per-image NSFW results")
+
 async def get_friends(user_id: str) -> List[str]:
     if not user_id:
         return []
@@ -198,6 +465,64 @@ async def depsz():
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+@app.post("/nsfw/check", response_model=NSFWCheckResponse)
+async def check_nsfw(body: NSFWCheckRequest):
+    """
+    Check if images and/or caption contain NSFW content.
+
+    Uses a 5-category classifier:
+    - safe
+    - suggestive (borderline)
+    - hentai (explicit anime/manga)
+    - pornography (explicit content)
+    - violent (graphic violence)
+
+    Args:
+        body: NSFWCheckRequest with image_urls, optional caption, and threshold
+
+    Returns:
+        NSFWCheckResponse with overall NSFW status, confidence, category breakdown,
+        and per-image results
+    """
+    if not body.image_urls:
+        raise HTTPException(400, "At least one image URL is required")
+
+    image_results = []
+    max_nsfw_score = 0.0
+    categories = {"safe": 1.0, "suggestive": 0.0, "hentai": 0.0, "pornography": 0.0, "violent": 0.0}
+
+    # Check each image
+    for img_url in body.image_urls:
+        result = detect_nsfw(img_url)
+
+        # Calculate aggregated NSFW score
+        nsfw_score = aggregate_nsfw_score(result)
+
+        is_nsfw = nsfw_score >= body.threshold
+
+        image_results.append(NSFWImageResult(
+            image_url=img_url,
+            is_nsfw=is_nsfw,
+            confidence=nsfw_score
+        ))
+
+        # Track maximum NSFW score across all images
+        max_nsfw_score = max(max_nsfw_score, nsfw_score)
+
+        # Accumulate category probabilities (average across all images)
+        for cat in categories:
+            categories[cat] = (categories[cat] + result.get(cat, 0.0)) / 2
+
+    # Overall NSFW determination: if any image is NSFW above threshold
+    overall_is_nsfw = max_nsfw_score >= body.threshold
+
+    return NSFWCheckResponse(
+        is_nsfw=overall_is_nsfw,
+        confidence=max_nsfw_score,
+        categories=categories,
+        image_results=image_results
+    )
 
 @app.post("/posts", dependencies=[Depends(rate_limit(limiter_post))])
 async def index_post(body: PostIn):

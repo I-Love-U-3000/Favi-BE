@@ -16,12 +16,14 @@ namespace Favi_BE.Services
         private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinary;
         private readonly IPrivacyGuard _privacy;
+        private readonly INSFWService _nsfwService;
 
-        public StoryService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy)
+        public StoryService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, INSFWService nsfwService)
         {
             _uow = uow;
             _cloudinary = cloudinary;
             _privacy = privacy;
+            _nsfwService = nsfwService;
         }
 
         public Task<Story?> GetEntityAsync(Guid storyId) => _uow.Stories.GetByIdAsync(storyId);
@@ -71,7 +73,49 @@ namespace Favi_BE.Services
             await _uow.Stories.AddAsync(story);
             await _uow.CompleteAsync();
 
-            return await MapToResponseAsync(story, profileId);
+            // Check NSFW content
+            if (_nsfwService.IsEnabled())
+            {
+                try
+                {
+                    // Reload story with all details for NSFW check
+                    var storyForNSFW = await _uow.Stories.GetActiveStoryWithDetailsAsync(story.Id);
+                    if (storyForNSFW != null)
+                    {
+                        var post = new Post
+                        {
+                            Id = Guid.NewGuid(), // Temp ID for NSFW check
+                            Caption = "", // Stories don't have captions
+                            PostMedias = new List<PostMedia>
+                            {
+                                new PostMedia
+                                {
+                                    Url = storyForNSFW.MediaUrl,
+                                    Position = 0
+                                }
+                            }
+                        };
+
+                        storyForNSFW.IsNSFW = await _nsfwService.CheckPostAsync(post);
+                        _uow.Stories.Update(storyForNSFW);
+                        await _uow.CompleteAsync();
+                    }
+                }
+                catch
+                {
+                    // Swallow - errors logged in NSFWService
+                }
+            }
+
+            // Reload story from database with Profile navigation property included
+            var storyWithProfile = await _uow.Stories.GetActiveStoryWithDetailsAsync(story.Id);
+            if (storyWithProfile == null)
+            {
+                // Fallback: use the original story if reload fails
+                storyWithProfile = story;
+            }
+
+            return await MapToResponseAsync(storyWithProfile, profileId);
         }
 
         public async Task<bool> ArchiveAsync(Guid storyId, Guid requesterId)
@@ -209,6 +253,7 @@ namespace Favi_BE.Services
                 ExpiresAt: story.ExpiresAt,
                 Privacy: story.Privacy,
                 IsArchived: story.IsArchived,
+                IsNSFW: story.IsNSFW,
                 ViewCount: viewCount,
                 HasViewed: hasViewed
             );

@@ -19,6 +19,7 @@ namespace Favi_BE.Models.Dtos
         DateTime ExpiresAt,
         PrivacyLevel Privacy,
         bool IsArchived,
+        bool IsNSFW,
         int ViewCount,
         bool HasViewed
     );

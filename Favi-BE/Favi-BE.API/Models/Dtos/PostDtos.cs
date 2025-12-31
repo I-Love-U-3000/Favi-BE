@@ -26,7 +26,8 @@ namespace Favi_BE.Models.Dtos
         IEnumerable<TagDto> Tags,
         ReactionSummaryDto Reactions,
         int CommentsCount,
-        LocationDto? Location
+        LocationDto? Location,
+        bool IsNSFW
     );
 
     public record PostMediaResponse(
@@ -62,5 +63,23 @@ namespace Favi_BE.Models.Dtos
         string? FullAddress,
         double? Latitude,
         double? Longitude
+    );
+
+    public record PostReactorResponse(
+        Guid ProfileId,
+        string Username,
+        string? DisplayName,
+        string? AvatarUrl,
+        ReactionType ReactionType,
+        DateTime CreatedAt
+    );
+
+    public record CollectionReactorResponse(
+        Guid ProfileId,
+        string Username,
+        string? DisplayName,
+        string? AvatarUrl,
+        ReactionType ReactionType,
+        DateTime CreatedAt
     );
 }

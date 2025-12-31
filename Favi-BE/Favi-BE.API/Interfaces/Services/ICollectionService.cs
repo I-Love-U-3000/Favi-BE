@@ -22,6 +22,7 @@ namespace Favi_BE.Interfaces.Services
 
         Task<ReactionSummaryDto> GetReactionsAsync(Guid collectionId, Guid? currentUserId);
         Task<ReactionType?> ToggleReactionAsync(Guid collectionId, Guid userId, ReactionType type);
+        Task<IEnumerable<CollectionReactorResponse>> GetReactorsAsync(Guid collectionId, Guid requesterId);
         Task<PagedResult<CollectionResponse>> GetTrendingCollectionsAsync(int page, int pageSize, Guid? currentUserId = null);
     }
 
