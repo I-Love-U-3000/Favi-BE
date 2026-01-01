@@ -1,0 +1,221 @@
+Project Favi {
+  database_type: 'PostgreSQL'
+  Note: 'Favi Social Network Database Schema'
+}
+
+Table USERS {
+  Id uuid [pk]
+  Email varchar
+  Role integer
+  CreatedAt timestamp
+  // Managed by Supabase Auth
+}
+
+Table PROFILES {
+  Id uuid [pk, ref: - USERS.Id]
+  Username varchar [not null]
+  DisplayName varchar
+  AvatarUrl varchar
+  CoverUrl varchar
+  Bio text
+  Role integer
+  CreatedAt timestamp
+  LastActiveAt timestamp
+  PrivacyLevel integer
+  FollowPrivacyLevel integer
+  IsBanned boolean
+  BannedUntil timestamp
+}
+
+Table POSTS {
+  Id uuid [pk]
+  ProfileId uuid [ref: > PROFILES.Id]
+  Caption text
+  Privacy integer
+  LocationName varchar
+  LocationFullAddress varchar
+  LocationLatitude double
+  LocationLongitude double
+  DeletedDayExpiredAt timestamp
+  IsArchived boolean
+  CreatedAt timestamp
+  UpdatedAt timestamp
+}
+
+Table POST_MEDIAS {
+  Id uuid [pk]
+  PostId uuid [ref: > POSTS.Id]
+  Url varchar
+  MediaType integer
+  OrderIndex integer
+  CreatedAt timestamp
+}
+
+Table COMMENTS {
+  Id uuid [pk]
+  PostId uuid [ref: > POSTS.Id]
+  ProfileId uuid [ref: > PROFILES.Id]
+  Content text
+  ParentCommentId uuid [ref: > COMMENTS.Id]
+  CreatedAt timestamp
+  UpdatedAt timestamp
+}
+
+Table COLLECTIONS {
+  Id uuid [pk]
+  ProfileId uuid [ref: > PROFILES.Id]
+  Name varchar
+  Description text
+  Privacy integer
+  CreatedAt timestamp
+  UpdatedAt timestamp
+}
+
+Table POST_COLLECTIONS {
+  PostId uuid [ref: > POSTS.Id]
+  CollectionId uuid [ref: > COLLECTIONS.Id]
+  AddedAt timestamp
+  
+  indexes {
+    (PostId, CollectionId) [pk]
+  }
+}
+
+Table TAGS {
+  Id uuid [pk]
+  Name varchar
+  CreatedAt timestamp
+}
+
+Table POST_TAGS {
+  PostId uuid [ref: > POSTS.Id]
+  TagId uuid [ref: > TAGS.Id]
+  
+  indexes {
+    (PostId, TagId) [pk]
+  }
+}
+
+Table REACTIONS {
+  Id uuid [pk]
+  ProfileId uuid [ref: > PROFILES.Id]
+  Type integer
+  PostId uuid [ref: > POSTS.Id]
+  CommentId uuid [ref: > COMMENTS.Id]
+  CollectionId uuid [ref: > COLLECTIONS.Id]
+  CreatedAt timestamp
+}
+
+Table SOCIAL_LINKS {
+  Id uuid [pk]
+  ProfileId uuid [ref: > PROFILES.Id]
+  Platform varchar
+  Url varchar
+}
+
+Table FOLLOWS {
+  FollowerId uuid [ref: > PROFILES.Id]
+  FolloweeId uuid [ref: > PROFILES.Id]
+  CreatedAt timestamp
+  
+  indexes {
+    (FollowerId, FolloweeId) [pk]
+  }
+}
+
+Table REPORTS {
+  Id uuid [pk]
+  ReporterId uuid [ref: > PROFILES.Id]
+  TargetType integer
+  TargetId uuid
+  Reason text
+  Status integer
+  AdminNote text
+  ResolvedAt timestamp
+  CreatedAt timestamp
+}
+
+Table USER_MODERATIONS {
+  Id uuid [pk]
+  ProfileId uuid [ref: > PROFILES.Id]
+  AdminId uuid [ref: > PROFILES.Id]
+  AdminActionId uuid
+  ActionType integer
+  Reason text
+  BannedUntil timestamp
+  CreatedAt timestamp
+}
+
+Table ADMIN_ACTIONS {
+  Id uuid [pk]
+  AdminId uuid [ref: > PROFILES.Id]
+  ActionType integer
+  TargetProfileId uuid
+  TargetEntityId uuid
+  TargetEntityType varchar
+  ReportId uuid
+  Notes text
+  CreatedAt timestamp
+}
+
+Table NOTIFICATIONS {
+  Id uuid [pk]
+  Type integer
+  RecipientProfileId uuid [ref: > PROFILES.Id]
+  ActorProfileId uuid [ref: > PROFILES.Id]
+  TargetPostId uuid [ref: > POSTS.Id]
+  TargetCommentId uuid [ref: > COMMENTS.Id]
+  Message text
+  IsRead boolean
+  CreatedAt timestamp
+}
+
+Table CONVERSATIONS {
+  Id uuid [pk]
+  Type integer
+  MutedUntil timestamp
+  LastMessageAt timestamp
+  CreatedAt timestamp
+}
+
+Table USER_CONVERSATIONS {
+  ConversationId uuid [ref: > CONVERSATIONS.Id]
+  ProfileId uuid [ref: > PROFILES.Id]
+  Role varchar
+  JoinedAt timestamp
+  LastReadMessageId uuid
+  
+  indexes {
+    (ConversationId, ProfileId) [pk]
+  }
+}
+
+Table MESSAGES {
+  Id uuid [pk]
+  ConversationId uuid [ref: > CONVERSATIONS.Id]
+  SenderId uuid [ref: > PROFILES.Id]
+  Content text
+  MediaUrl varchar
+  IsEdited boolean
+  CreatedAt timestamp
+  UpdatedAt timestamp
+}
+
+Table USER_BLOCKS {
+  BlockerId uuid [ref: > PROFILES.Id]
+  BlockedId uuid [ref: > PROFILES.Id]
+  CreatedAt timestamp
+  // Planned
+}
+
+Table SYSTEM_LOGS {
+  Id uuid [pk]
+  Level varchar
+  Message text
+  Exception text
+  Source varchar
+  CreatedAt timestamp
+  // Planned
+}
+
+Ref: USER_MODERATIONS.AdminActionId > ADMIN_ACTIONS.Id
