@@ -1,30 +1,55 @@
-# Phân tích chênh lệch hệ thống (Gap Analysis) - Admin Module
+# Phân tích chênh lệch hệ thống (Gap Analysis) - FINAL
 
-Tài liệu này ghi nhận các điểm khác biệt giữa **Đặc tả Use Case (3.2.2_admin.md)** và **Source Code hiện tại (BE)**. Các tính năng dưới đây cần được bổ sung hoặc nâng cấp để đạt tự động hóa và độ ổn định cao nhất (Target State).
+Tài liệu này xác nhận trạng thái **Code thực tế** so với **Đặc tả Use Case (3.2.2.x)**. Đây là bản phân tích cuối cùng để định hướng hoàn thiện sản phẩm.
 
-## 1. UC-AD-01 & 02: Moderation Actions (Ban User & Delete Content)
-| Tính năng | Trạng thái Code | Yêu cầu bổ sung |
-| :--- | :--- | :--- |
-| **Audit Log** | **Sơ khai**. Một số chỗ chưa ghi log đầy đủ hoặc ghi không chuẩn format. | - Đảm bảo mọi hành động (Ban, Unban, Delete Post) đều phải gọi `AuditService.LogAsync`.<br>- Log phải chứa đủ: `AdminId`, `ActionType`, `Reason`, `TargetId`. |
-| **AI Auto Blur** | **Chưa có**. | - Tích hợp AI Service (AWS/Azure) để check ảnh khi Upload.<br>- Thêm cờ `IsSensitive` va `BlurUrl` vào bảng Post.<br>- Logic FE hiển thị lớp phủ mờ. |
+## I. ADMIN MODULE (UC-AD)
 
-## 2. UC-AD-03: Manage User Reports (Transaction)
-| Tính năng | Trạng thái Code | Yêu cầu bổ sung |
-| :--- | :--- | :--- |
-| **Accept Report (Gộp)** | **Rời rạc**. Admin đang phải xóa bài thủ công rồi mới đổi status report. | - **Database Transaction**: Cần gói gọn 3 bước trong 1 Transaction:<br>  1. `PostService.Delete` (Soft delete)<br>  2. `ReportService.UpdateStatus` (Resolved)<br>  3. `NotificationService.Send` (Báo cho user)<br>- Nếu 1 bước lỗi -> Rollback toàn bộ. |
-| **Thông báo (Notify)** | **Chưa có**. | - Tự động bắn thông báo Realtime/System Notification cho người báo cáo khi Admin xử lý xong. |
+### 1. Kiểm duyệt & AI (UC-AD-01, 02)
+| Tính năng | Trạng thái Code | Đánh giá | Yêu cầu hành động (Target State) |
+| :--- | :--- | :--- | :--- |
+| **Audit Log** | **Có (Cơ bản)**. | Đã có `AuditService` và gọi trong `AdminDeleteAsync`. Tuy nhiên chưa phủ hết các hành động (VD: Unban, Resolve Report). | - Gọi `AuditService.LogAsync` cho **mọi** hành động thay đổi dữ liệu của Admin.<br>- Chuẩn hóa format `Notes` và `Reason`. |
+| **AI Auto Blur** | **Chưa có**. | Controller chỉ nhận file và lưu, không có bước check nội dung nhạy cảm. | - Tích hợp AI Service (AWS Rekognition/Azure Vision) để check ảnh khi Upload.<br>- Thêm cờ `IsSensitive` va `BlurUrl` vào bảng Post/Image. |
 
-## 3. UC-AD-05: Monitor System Logs & Health
-| Tính năng | Trạng thái Code | Yêu cầu bổ sung |
-| :--- | :--- | :--- |
-| **Health Check UI** | **Sơ khai** (`/health` JSON). | - Cài đặt `AspNetCore.HealthChecks.UI` để có giao diện trực quan.<br>- Config check sâu: DB Query Ping, Redis Ping, Disk Space. |
-| **System Logs API** | **Chưa có**. | - Viết API `GET /api/admin/logs`: Trả về log lỗi từ DB (`SystemLogs`) để Admin debug ngay trên Dashboard. |
+### 2. Xử lý báo cáo (UC-AD-03)
+| Tính năng | Trạng thái Code | Đánh giá | Yêu cầu hành động (Target State) |
+| :--- | :--- | :--- | :--- |
+| **Transaction** | **Rời rạc**. | Các bước "Xóa bài" và "Đổi trạng thái Report" là 2 API riêng biệt. | - **Database Transaction**: Gộp 3 bước (Xóa bài + Đổi Status Report + Bắn Notify) vào 1 API duy nhất.<br>- Đảm bảo tính nguyên vẹn dữ liệu (ACID). |
+| **Notify Reporter**| **Chưa có**. | Khi Admin xử lý xong, người báo cáo không nhận được thông báo gì. | - Thêm logic gửi Notification cho Reporter: "Cảm ơn bạn đã báo cáo, chúng tôi đã xử lý...". |
 
-## 4. Xử lý ngoại lệ chuẩn (Standardized Error Handling)
-- **Hiện tại**: Trả về `500 Internal Server Error` hoặc `400` tùy hứng.
-- **Yêu cầu theo Spec**:
-    - **Global Filter**: Bắt các lỗi cụ thể và trả về Mã lỗi chuẩn trong Body response:
-        - `ERR_DB_TIMEOUT` (Khi DB connection fail)
-        - `ERR_RECORD_NOT_FOUND` (Thay vì null)
-        - `ERR_UNAUTHORIZED_ACTION`
-    - Điều này giúp FE hiển thị thông báo lỗi chính xác (VD: "Mất kết nối CSDL" thay vì "Lỗi hệ thống").
+### 3. Giám sát hệ thống (UC-AD-05)
+| Tính năng | Trạng thái Code | Đánh giá | Yêu cầu hành động (Target State) |
+| :--- | :--- | :--- | :--- |
+| **System Check** | **Sơ khai**. | Chỉ có `/health` trả về string/json đơn giản. | - Cài đặt `AspNetCore.HealthChecks.UI` dashboard.<br>- Config check sâu: DB connection, Redis status, Disk space. |
+| **Logs API** | **Chưa có**. | Không có API để xem log lỗi hệ thống từ Admin Panel. | - Viết API `GET /api/admin/logs` truy xuất bảng SystemLogs. |
+
+---
+
+## II. USER MODULE (UC-US)
+
+### 1. Tương tác & Riêng tư (UC-US-05)
+| Tính năng | Trạng thái Code | Đánh giá | Yêu cầu hành động (Target State) |
+| :--- | :--- | :--- | :--- |
+| **Block User** | **MISSING (Nghiêm trọng)**. | Không tìm thấy bảng `UserBlocks` hay Controller xử lý Block. | - Tạo bảng `UserBlock` (BlockerId, BlockedId).<br>- Thêm API Block/Unblock.<br>- **QUAN TRỌNG**: Update toàn bộ các query `GetFeed`, `Search`, `GetComments` để loại trừ nội dung từ user bị block. |
+
+### 2. Bình luận (UC-US-04)
+| Tính năng | Trạng thái Code | Đánh giá | Yêu cầu hành động (Target State) |
+| :--- | :--- | :--- | :--- |
+| **Reply Comment**| **Logic chưa tối ưu**. | API hỗ trợ `ParentId`, nhưng `GetByPost` trả về danh sách phẳng (Flat List) phân trang. | - **Vấn đề**: Nếu Comment cha ở trang 1, Comment con ở trang 2 -> Frontend rất khó render cây comment.<br>- **Giải pháp**: 1. Chỉ load Comment cha (Root) khi phân trang. 2. Có API riêng `GET /comments/{id}/replies` để load comment con. |
+
+### 3. Tìm kiếm & Chat (UC-US-03, 08)
+| Tính năng | Trạng thái Code | Đánh giá | Yêu cầu hành động (Target State) |
+| :--- | :--- | :--- | :--- |
+| **Semantic Search**| **Đã có**. | `SearchService` đã gọi Vector DB. | - Cần verify cấu hình Vector DB (Pinecone/Chroma) có hoạt động thực tế không. |
+| **Chat** | **Đã có**. | `ChatService` và `ChatHub` (SignalR) đã implement đầy đủ DM/Group. | - (Đã hoàn thiện, chỉ cần test tích hợp). |
+
+---
+
+## III. TECHNICAL DEBT (NỢ KỸ THUẬT)
+
+### 1. Xử lý lỗi (Error Handling)
+- **Hiện tại**: Code thường catch exception và log, đôi khi nuốt lỗi hoặc trả về 500 chung chung.
+- **Mục tiêu**: Áp dụng `Global Exception Handler` để trả về Error Code chuẩn (VD: `ERR_USER_BLOCKED`, `ERR_RESOURCE_NOT_FOUND`) giúp FE hiển thị thông báo localized.
+
+### 2. Upload Media
+- **Hiện tại**: Upload trực tiếp trong Controller/Service của bài viết.
+- **Mục tiêu**: Tách ra `MediaService` riêng nếu muốn tái sử dụng cho Chat, Avatar, Cover photo, tránh lặp code.

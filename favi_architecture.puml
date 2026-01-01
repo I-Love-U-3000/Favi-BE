@@ -1,0 +1,98 @@
+@startuml
+!theme plain
+hide members
+hide circle
+skinparam linetype ortho
+skinparam nodesep 20
+skinparam ranksep 50
+skinparam packageStyle rectangle
+
+' --- PACKAGES ---
+
+package "Identity & Profile Module" {
+  entity USERS
+  entity PROFILES
+  entity SOCIAL_LINKS
+  entity USER_BLOCKS
+}
+
+package "Content Core Module" {
+  entity POSTS
+  entity POST_MEDIAS
+  entity COLLECTIONS
+  entity POST_COLLECTIONS
+  entity TAGS
+  entity POST_TAGS
+}
+
+package "Interaction Module" {
+  entity COMMENTS
+  entity REACTIONS
+  entity FOLLOWS
+}
+
+package "Communication Module" {
+  entity CONVERSATIONS
+  entity MESSAGES
+  entity USER_CONVERSATIONS
+  entity NOTIFICATIONS
+}
+
+package "Admin & Monitoring Module" {
+  entity REPORTS
+  entity USER_MODERATIONS
+  entity ADMIN_ACTIONS
+  entity SYSTEM_LOGS
+}
+
+' --- LAYOUT HINTS ---
+' Force Identity to be at the top
+PROFILES -[hidden]down- POSTS
+POSTS -[hidden]right- COMMENTS
+COMMENTS -[hidden]right- NOTIFICATIONS
+NOTIFICATIONS -[hidden]right- REPORTS
+
+' --- RELATIONSHIPS ---
+
+' Identity Internal
+USERS ||--|| PROFILES
+PROFILES ||--o{ SOCIAL_LINKS
+PROFILES ||--o{ USER_BLOCKS
+
+' Identity -> Content
+PROFILES ||--o{ POSTS
+PROFILES ||--o{ COLLECTIONS
+
+' Content Internal
+POSTS ||--o{ POST_MEDIAS
+POSTS ||--o{ POST_COLLECTIONS
+COLLECTIONS ||--o{ POST_COLLECTIONS
+POSTS ||--o{ POST_TAGS
+TAGS ||--o{ POST_TAGS
+
+' Identity -> Interaction
+PROFILES ||--o{ FOLLOWS
+PROFILES ||--o{ COMMENTS
+PROFILES ||--o{ REACTIONS
+
+' Content -> Interaction
+POSTS ||--o{ COMMENTS
+POSTS ||--o{ REACTIONS
+
+' Identity -> Communication
+PROFILES ||--o{ USER_CONVERSATIONS
+PROFILES ||--o{ MESSAGES
+PROFILES ||--o{ NOTIFICATIONS
+
+' Communication Internal
+CONVERSATIONS ||--o{ USER_CONVERSATIONS
+CONVERSATIONS ||--o{ MESSAGES
+
+' Identity -> Admin
+PROFILES ||--o{ REPORTS
+PROFILES ||--o{ ADMIN_ACTIONS
+
+' Admin Internal
+ADMIN_ACTIONS ||--o{ USER_MODERATIONS
+
+@enduml
