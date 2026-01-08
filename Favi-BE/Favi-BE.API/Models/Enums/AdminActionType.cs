@@ -7,6 +7,7 @@ namespace Favi_BE.Models.Enums
         UnbanUser,
         WarnUser,
         ResolveReport,
-        DeleteContent
+        DeleteContent,
+        ExportData
     }
 }

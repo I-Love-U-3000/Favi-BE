@@ -1,5 +1,6 @@
 using Favi_BE.Authorization;
-﻿using Favi_BE.API.Data.Repositories;
+using Favi_BE.API.Data.Repositories;
+using Favi_BE.API.HealthChecks;
 using Favi_BE.API.Hubs;
 using Favi_BE.API.Interfaces.Repositories;
 using Favi_BE.API.Interfaces.Services;
@@ -12,9 +13,12 @@ using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Services;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
@@ -122,6 +126,34 @@ builder.Services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<IStoryService, StoryService>();
+builder.Services.AddScoped<IBulkActionService, BulkActionService>();
+builder.Services.AddScoped<IExportService, ExportService>();
+
+// ============================================
+// SYSTEM METRICS SERVICE
+// ============================================
+builder.Services.AddSingleton<ISystemMetricsService, SystemMetricsService>();
+
+// ============================================
+// HEALTH CHECKS CONFIGURATION
+// ============================================
+builder.Services.Configure<MemoryHealthCheckOptions>(options =>
+{
+    options.ThresholdMB = 1024;      // 1GB - Unhealthy threshold
+    options.DegradedThresholdMB = 512; // 512MB - Degraded threshold
+});
+
+builder.Services.AddHealthChecks()
+    // Database health check
+    .AddCheck<DatabaseHealthCheck>(
+        "database",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["db", "postgresql", "ready"])
+    // Memory health check
+    .AddCheck<MemoryHealthCheck>(
+        "memory",
+        failureStatus: HealthStatus.Degraded,
+        tags: ["system", "memory"]);
 
 // Add background services
 builder.Services.AddHostedService<PostCleanupService>();
@@ -228,20 +260,53 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/health", () => Results.Ok(new
+// ============================================
+// HEALTH CHECK ENDPOINTS
+// ============================================
+
+// Basic health check - returns simple status (for load balancers, container orchestration)
+app.MapHealthChecks("/health", new HealthCheckOptions
 {
-    status = "ok",
-    timestamp = DateTime.UtcNow
-}))
-.WithName("GetHealthCheck")
-.AllowAnonymous();
-app.MapPost("/health", () => Results.Ok(new
+    Predicate = _ => false, // Don't run any checks, just return healthy if app is running
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = "ok",
+            timestamp = DateTime.UtcNow
+        });
+    }
+}).AllowAnonymous();
+
+// Liveness probe - is the application alive?
+app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
-    status = "ok",
-    timestamp = DateTime.UtcNow
-}))
-.WithName("PostHealthCheck")
-.AllowAnonymous();
+    Predicate = _ => false, // Don't run any checks
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = "alive",
+            timestamp = DateTime.UtcNow
+        });
+    }
+}).AllowAnonymous();
+
+// Readiness probe - is the application ready to accept traffic?
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).AllowAnonymous();
+
+// Detailed health check with UI response format (for debugging/monitoring)
+app.MapHealthChecks("/health/details", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).AllowAnonymous();
+
 // Map SignalR Hubs
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<NotificationHub>("/notificationHub");

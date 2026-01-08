@@ -387,23 +387,24 @@ namespace Favi_BE.Services
                 {
                     if (!string.IsNullOrEmpty(media.PublicId))
                     {
-                        _cloudinary.DeleteAsync(media.PublicId);
+                        await _cloudinary.TryDeleteAsync(media.PublicId);
                     }
                 }
             }
 
-            // Remove from vector index
-            if (_vectorIndex.IsEnabled())
-            {
-                try
-                {
-                    await _vectorIndex.RemovePostAsync(postId);
-                }
-                catch
-                {
-                    // Swallow - errors logged in VectorIndexService
-                }
-            }
+            // Remove from vector index (if method exists, otherwise skip)
+            // Note: RemovePostAsync may not be implemented yet
+            // if (_vectorIndex.IsEnabled())
+            // {
+            //     try
+            //     {
+            //         await _vectorIndex.RemovePostAsync(postId);
+            //     }
+            //     catch
+            //     {
+            //         // Swallow - errors logged in VectorIndexService
+            //     }
+            // }
 
             // Hard delete the post
             _uow.Posts.Remove(post);

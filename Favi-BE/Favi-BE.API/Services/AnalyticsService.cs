@@ -224,5 +224,448 @@ namespace Favi_BE.Services
                 throw;
             }
         }
+
+        // ============================================================
+        // CHART METHODS - Growth over time
+        // ============================================================
+
+        public async Task<GrowthChartResponse> GetGrowthChartAsync(DateTime? fromDate, DateTime? toDate, string interval = "day")
+        {
+            try
+            {
+                var (from, to) = NormalizeDateRange(fromDate, toDate);
+
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+                var allPosts = await _uow.Posts.GetAllAsync();
+                var allReports = await _uow.Reports.GetAllAsync();
+
+                var users = GroupByInterval(
+                    allProfiles.Where(p => p.CreatedAt >= from && p.CreatedAt <= to),
+                    p => p.CreatedAt,
+                    from, to, interval);
+
+                var posts = GroupByInterval(
+                    allPosts.Where(p => p.CreatedAt >= from && p.CreatedAt <= to),
+                    p => p.CreatedAt,
+                    from, to, interval);
+
+                var reports = GroupByInterval(
+                    allReports.Where(r => r.CreatedAt >= from && r.CreatedAt <= to),
+                    r => r.CreatedAt,
+                    from, to, interval);
+
+                return new GrowthChartResponse(users, posts, reports, from, to, interval);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting growth chart");
+                throw;
+            }
+        }
+
+        public async Task<UserActivityChartResponse> GetUserActivityChartAsync(DateTime? fromDate, DateTime? toDate, string interval = "day")
+        {
+            try
+            {
+                var (from, to) = NormalizeDateRange(fromDate, toDate);
+
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+
+                var newUsers = GroupByInterval(
+                    allProfiles.Where(p => p.CreatedAt >= from && p.CreatedAt <= to),
+                    p => p.CreatedAt,
+                    from, to, interval);
+
+                // Active users: users who had activity in the period (approximated by LastActiveAt)
+                var activeUsers = GroupByInterval(
+                    allProfiles.Where(p => p.LastActiveAt.HasValue && p.LastActiveAt.Value >= from && p.LastActiveAt.Value <= to && !p.IsBanned),
+                    p => p.LastActiveAt!.Value,
+                    from, to, interval);
+
+                // Banned users: count users banned in the period (approximated by current state)
+                // For accurate tracking, we would need a ban history table
+                var bannedProfiles = allProfiles.Where(p => p.IsBanned).ToList();
+                var bannedUsers = GenerateEmptyTimeSeries(from, to, interval)
+                    .Select(d => new TimeSeriesDataPoint(d, bannedProfiles.Count))
+                    .ToList();
+
+                return new UserActivityChartResponse(newUsers, activeUsers, bannedUsers, from, to, interval);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user activity chart");
+                throw;
+            }
+        }
+
+        public async Task<ContentActivityChartResponse> GetContentActivityChartAsync(DateTime? fromDate, DateTime? toDate, string interval = "day")
+        {
+            try
+            {
+                var (from, to) = NormalizeDateRange(fromDate, toDate);
+
+                var allPosts = await _uow.Posts.GetAllAsync();
+                var allComments = await _uow.Comments.GetAllAsync();
+                var allReactions = await _uow.Reactions.GetAllAsync();
+
+                var posts = GroupByInterval(
+                    allPosts.Where(p => p.CreatedAt >= from && p.CreatedAt <= to),
+                    p => p.CreatedAt,
+                    from, to, interval);
+
+                var comments = GroupByInterval(
+                    allComments.Where(c => c.CreatedAt >= from && c.CreatedAt <= to),
+                    c => c.CreatedAt,
+                    from, to, interval);
+
+                var reactions = GroupByInterval(
+                    allReactions.Where(r => r.CreatedAt >= from && r.CreatedAt <= to),
+                    r => r.CreatedAt,
+                    from, to, interval);
+
+                return new ContentActivityChartResponse(posts, comments, reactions, from, to, interval);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting content activity chart");
+                throw;
+            }
+        }
+
+        // ============================================================
+        // DISTRIBUTION CHARTS
+        // ============================================================
+
+        public async Task<UserRoleDistributionResponse> GetUserRoleDistributionAsync()
+        {
+            try
+            {
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+                var total = allProfiles.Count();
+
+                var roles = allProfiles
+                    .GroupBy(p => p.Role)
+                    .Select(g => new LabeledDataPoint(
+                        g.Key.ToString(),
+                        g.Count(),
+                        total > 0 ? Math.Round((double)g.Count() / total * 100, 2) : 0
+                    ))
+                    .OrderByDescending(r => r.Count)
+                    .ToList();
+
+                return new UserRoleDistributionResponse(roles, total);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user role distribution");
+                throw;
+            }
+        }
+
+        public async Task<UserStatusDistributionResponse> GetUserStatusDistributionAsync()
+        {
+            try
+            {
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+                var now = DateTime.UtcNow;
+                var inactiveThreshold = now.AddDays(-30);
+
+                var total = allProfiles.Count();
+                var banned = allProfiles.Count(p => p.IsBanned);
+                var inactive = allProfiles.Count(p => !p.IsBanned && (!p.LastActiveAt.HasValue || p.LastActiveAt.Value < inactiveThreshold));
+                var active = total - banned - inactive;
+
+                return new UserStatusDistributionResponse(active, banned, inactive, total);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user status distribution");
+                throw;
+            }
+        }
+
+        public async Task<PostPrivacyDistributionResponse> GetPostPrivacyDistributionAsync()
+        {
+            try
+            {
+                var allPosts = await _uow.Posts.GetAllAsync();
+                var activePosts = allPosts.Where(p => !p.DeletedDayExpiredAt.HasValue).ToList();
+                var total = activePosts.Count;
+
+                var privacyLevels = activePosts
+                    .GroupBy(p => p.Privacy)
+                    .Select(g => new LabeledDataPoint(
+                        g.Key.ToString(),
+                        g.Count(),
+                        total > 0 ? Math.Round((double)g.Count() / total * 100, 2) : 0
+                    ))
+                    .OrderByDescending(p => p.Count)
+                    .ToList();
+
+                return new PostPrivacyDistributionResponse(privacyLevels, total);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting post privacy distribution");
+                throw;
+            }
+        }
+
+        public async Task<ReportStatusDistributionResponse> GetReportStatusDistributionAsync()
+        {
+            try
+            {
+                var allReports = await _uow.Reports.GetAllAsync();
+                var total = allReports.Count();
+
+                var pending = allReports.Count(r => r.Status == ReportStatus.Pending);
+                var resolved = allReports.Count(r => r.Status == ReportStatus.Resolved);
+                var rejected = allReports.Count(r => r.Status == ReportStatus.Rejected);
+
+                return new ReportStatusDistributionResponse(pending, resolved, rejected, total);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting report status distribution");
+                throw;
+            }
+        }
+
+        // ============================================================
+        // TOP ENTITIES
+        // ============================================================
+
+        public async Task<IEnumerable<TopUserDto>> GetTopUsersAsync(int limit = 10)
+        {
+            try
+            {
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+                var allPosts = await _uow.Posts.GetAllAsync();
+                var allFollows = await _uow.Follows.GetAllAsync();
+                var allReactions = await _uow.Reactions.GetAllAsync();
+
+                var postsCountPerUser = allPosts
+                    .Where(p => !p.DeletedDayExpiredAt.HasValue)
+                    .GroupBy(p => p.ProfileId)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var followersCountPerUser = allFollows
+                    .GroupBy(f => f.FolloweeId)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                // Reactions received = reactions on user's posts
+                var postsByUser = allPosts
+                    .Where(p => !p.DeletedDayExpiredAt.HasValue)
+                    .GroupBy(p => p.ProfileId)
+                    .ToDictionary(g => g.Key, g => g.Select(p => p.Id).ToHashSet());
+
+                var reactionsPerUser = allProfiles.ToDictionary(
+                    p => p.Id,
+                    p => postsByUser.TryGetValue(p.Id, out var postIds)
+                        ? allReactions.Count(r => r.PostId.HasValue && postIds.Contains(r.PostId.Value))
+                        : 0
+                );
+
+                var topUsers = allProfiles
+                    .Where(p => !p.IsBanned)
+                    .Select(p => new TopUserDto(
+                        p.Id,
+                        p.Username,
+                        p.DisplayName,
+                        p.AvatarUrl,
+                        postsCountPerUser.GetValueOrDefault(p.Id, 0),
+                        followersCountPerUser.GetValueOrDefault(p.Id, 0),
+                        reactionsPerUser.GetValueOrDefault(p.Id, 0)
+                    ))
+                    .OrderByDescending(u => u.FollowersCount)
+                    .ThenByDescending(u => u.ReactionsReceived)
+                    .ThenByDescending(u => u.PostsCount)
+                    .Take(limit)
+                    .ToList();
+
+                return topUsers;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top users");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<TopPostDto>> GetTopPostsAsync(int limit = 10)
+        {
+            try
+            {
+                var allPosts = await _uow.Posts.GetAllAsync();
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+                var allComments = await _uow.Comments.GetAllAsync();
+                var allReactions = await _uow.Reactions.GetAllAsync();
+
+                var profileDict = allProfiles.ToDictionary(p => p.Id, p => p);
+
+                var commentsCountPerPost = allComments
+                    .GroupBy(c => c.PostId)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var reactionsCountPerPost = allReactions
+                    .Where(r => r.PostId.HasValue)
+                    .GroupBy(r => r.PostId!.Value)
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var topPosts = allPosts
+                    .Where(p => !p.DeletedDayExpiredAt.HasValue)
+                    .Select(p =>
+                    {
+                        profileDict.TryGetValue(p.ProfileId, out var author);
+                        return new TopPostDto(
+                            p.Id,
+                            p.ProfileId,
+                            author?.Username,
+                            p.Caption?.Length > 100 ? p.Caption.Substring(0, 100) + "..." : p.Caption,
+                            p.CreatedAt,
+                            reactionsCountPerPost.GetValueOrDefault(p.Id, 0),
+                            commentsCountPerPost.GetValueOrDefault(p.Id, 0)
+                        );
+                    })
+                    .OrderByDescending(p => p.ReactionsCount)
+                    .ThenByDescending(p => p.CommentsCount)
+                    .Take(limit)
+                    .ToList();
+
+                return topPosts;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting top posts");
+                throw;
+            }
+        }
+
+        // ============================================================
+        // PERIOD COMPARISON
+        // ============================================================
+
+        public async Task<PeriodComparisonResponse> GetPeriodComparisonAsync(DateTime? fromDate, DateTime? toDate)
+        {
+            try
+            {
+                var (currentFrom, currentTo) = NormalizeDateRange(fromDate, toDate);
+                var periodLength = (currentTo - currentFrom).Days;
+                var previousFrom = currentFrom.AddDays(-periodLength - 1);
+                var previousTo = currentFrom.AddDays(-1);
+
+                var allProfiles = await _uow.Profiles.GetAllAsync();
+                var allPosts = await _uow.Posts.GetAllAsync();
+                var allComments = await _uow.Comments.GetAllAsync();
+                var allReactions = await _uow.Reactions.GetAllAsync();
+                var allReports = await _uow.Reports.GetAllAsync();
+
+                var currentPeriod = new PeriodStats(
+                    allProfiles.Count(p => p.CreatedAt >= currentFrom && p.CreatedAt <= currentTo),
+                    allPosts.Count(p => p.CreatedAt >= currentFrom && p.CreatedAt <= currentTo),
+                    allComments.Count(c => c.CreatedAt >= currentFrom && c.CreatedAt <= currentTo),
+                    allReactions.Count(r => r.CreatedAt >= currentFrom && r.CreatedAt <= currentTo),
+                    allReports.Count(r => r.CreatedAt >= currentFrom && r.CreatedAt <= currentTo),
+                    currentFrom,
+                    currentTo
+                );
+
+                var previousPeriod = new PeriodStats(
+                    allProfiles.Count(p => p.CreatedAt >= previousFrom && p.CreatedAt <= previousTo),
+                    allPosts.Count(p => p.CreatedAt >= previousFrom && p.CreatedAt <= previousTo),
+                    allComments.Count(c => c.CreatedAt >= previousFrom && c.CreatedAt <= previousTo),
+                    allReactions.Count(r => r.CreatedAt >= previousFrom && r.CreatedAt <= previousTo),
+                    allReports.Count(r => r.CreatedAt >= previousFrom && r.CreatedAt <= previousTo),
+                    previousFrom,
+                    previousTo
+                );
+
+                var growth = new GrowthComparison(
+                    CalculateGrowthPercent(previousPeriod.NewUsers, currentPeriod.NewUsers),
+                    CalculateGrowthPercent(previousPeriod.NewPosts, currentPeriod.NewPosts),
+                    CalculateGrowthPercent(previousPeriod.NewComments, currentPeriod.NewComments),
+                    CalculateGrowthPercent(previousPeriod.NewReactions, currentPeriod.NewReactions),
+                    CalculateGrowthPercent(previousPeriod.NewReports, currentPeriod.NewReports)
+                );
+
+                return new PeriodComparisonResponse(currentPeriod, previousPeriod, growth);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting period comparison");
+                throw;
+            }
+        }
+
+        // ============================================================
+        // HELPER METHODS
+        // ============================================================
+
+        private static (DateTime from, DateTime to) NormalizeDateRange(DateTime? fromDate, DateTime? toDate)
+        {
+            var now = DateTime.UtcNow;
+            var to = toDate.HasValue 
+                ? DateTime.SpecifyKind(toDate.Value.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc)
+                : new DateTime(now.Year, now.Month, now.Day, 23, 59, 59, DateTimeKind.Utc);
+            var from = fromDate.HasValue 
+                ? DateTime.SpecifyKind(fromDate.Value.Date, DateTimeKind.Utc)
+                : to.AddDays(-30).Date;
+
+            return (from, to);
+        }
+
+        private static IEnumerable<TimeSeriesDataPoint> GroupByInterval<T>(
+            IEnumerable<T> items,
+            Func<T, DateTime> dateSelector,
+            DateTime from,
+            DateTime to,
+            string interval)
+        {
+            var dates = GenerateEmptyTimeSeries(from, to, interval);
+            var itemsList = items.ToList();
+
+            return dates.Select(date =>
+            {
+                var nextDate = GetNextDate(date, interval);
+                var count = itemsList.Count(item =>
+                {
+                    var itemDate = dateSelector(item);
+                    return itemDate >= date && itemDate < nextDate;
+                });
+                return new TimeSeriesDataPoint(date, count);
+            });
+        }
+
+        private static IEnumerable<DateTime> GenerateEmptyTimeSeries(DateTime from, DateTime to, string interval)
+        {
+            var dates = new List<DateTime>();
+            var current = from.Date;
+
+            while (current <= to)
+            {
+                dates.Add(current);
+                current = GetNextDate(current, interval);
+            }
+
+            return dates;
+        }
+
+        private static DateTime GetNextDate(DateTime current, string interval)
+        {
+            return interval.ToLower() switch
+            {
+                "week" => current.AddDays(7),
+                "month" => current.AddMonths(1),
+                _ => current.AddDays(1) // default: day
+            };
+        }
+
+        private static double CalculateGrowthPercent(int previous, int current)
+        {
+            if (previous == 0)
+                return current > 0 ? 100 : 0;
+
+            return Math.Round((double)(current - previous) / previous * 100, 2);
+        }
     }
 }
