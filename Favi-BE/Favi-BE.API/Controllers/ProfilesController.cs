@@ -258,5 +258,24 @@ namespace Favi_BE.Controllers
             var items = await _profiles.GetOnlineFriendsAsync(userId, withinLastMinutes);
             return Ok(items);
         }
+
+        // Heartbeat endpoint để update LastActiveAt định kỳ
+        [HttpPost("heartbeat")]
+        [Authorize]
+        public async Task<IActionResult> Heartbeat()
+        {
+            var userId = User.GetUserIdFromMetadata();
+
+            // Check if profile exists
+            var profile = await _profiles.GetEntityByIdAsync(userId);
+            if (profile is null)
+            {
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+            }
+
+            var lastActiveAt = await _profiles.UpdateLastActiveAsync(userId);
+
+            return Ok(new { message = "Heartbeat recorded.", lastActiveAt });
+        }
     }
 }

@@ -6,7 +6,8 @@ namespace Favi_BE.API.Models.Dtos
         Guid ProfileId,
         string Username,
         string? DisplayName,
-        string? AvatarUrl
+        string? AvatarUrl,
+        DateTime? LastActiveAt
     );
 
     public record ConversationSummaryDto(

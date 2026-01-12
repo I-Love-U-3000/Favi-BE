@@ -478,5 +478,26 @@ namespace Favi_BE.Services
             // Sort by last active (most recent first)
             return list.OrderByDescending(p => p.LastActiveAt);
         }
+
+        public async Task<DateTime> UpdateLastActiveAsync(Guid profileId)
+        {
+            try
+            {
+                var profile = await _uow.Profiles.GetByIdAsync(profileId);
+                if (profile is null)
+                    throw new ArgumentException("Profile not found");
+
+                profile.LastActiveAt = DateTime.UtcNow;
+                _uow.Profiles.Update(profile);
+                await _uow.CompleteAsync();
+
+                return profile.LastActiveAt.Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating last active time for profile {ProfileId}", profileId);
+                throw;
+            }
+        }
     }
 }

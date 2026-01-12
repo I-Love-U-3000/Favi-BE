@@ -26,5 +26,6 @@ namespace Favi_BE.Interfaces.Services
         Task<PostMediaResponse?> UploadPosterAsync(Guid profileId, IFormFile file);
         Task<IEnumerable<ProfileResponse>> GetRecommendedAsync(Guid viewerId, int skip = 0, int take = 20);
         Task<IEnumerable<ProfileResponse>> GetOnlineFriendsAsync(Guid profileId, int withinLastMinutes = 15);
+        Task<DateTime> UpdateLastActiveAsync(Guid profileId);
     }
 }

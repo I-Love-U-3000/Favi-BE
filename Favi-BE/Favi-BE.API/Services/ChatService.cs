@@ -319,7 +319,8 @@ namespace Favi_BE.API.Services
                     uc.ProfileId,
                     uc.Profile?.Username ?? "Unknown",
                     uc.Profile?.DisplayName,
-                    uc.Profile?.AvatarUrl
+                    uc.Profile?.AvatarUrl,
+                    uc.Profile?.LastActiveAt
                 )) ?? new List<ConversationMemberDto>();
 
             // Get last message for preview
