@@ -294,8 +294,13 @@ namespace Favi_BE.API.Services
                 if (message == null || message.ConversationId != conversationId)
                     throw new ArgumentException("Invalid message");
 
+                // Update LastReadMessageId in UserConversation
                 userConv.LastReadMessageId = lastMessageId;
                 _userConversations.Update(userConv);
+
+                // Mark the specific message as read in MessageRead table
+                await _messages.MarkAsReadAsync(lastMessageId, currentProfileId);
+
                 await _uow.CompleteAsync();
             }
             catch (Exception ex)
@@ -375,6 +380,9 @@ namespace Favi_BE.API.Services
 
         private MessageDto MapToMessageDto(Message message)
         {
+            // Get the profile IDs of users who have read this message
+            var readBy = message.ReadBy?.Select(mr => mr.ProfileId).ToArray() ?? Array.Empty<Guid>();
+
             return new MessageDto(
                 message.Id,
                 message.ConversationId,
@@ -386,7 +394,8 @@ namespace Favi_BE.API.Services
                 message.MediaUrl,
                 message.CreatedAt,
                 message.UpdatedAt,
-                message.IsEdited
+                message.IsEdited,
+                readBy
             );
         }
     }

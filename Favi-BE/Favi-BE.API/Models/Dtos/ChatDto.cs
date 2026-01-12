@@ -30,7 +30,8 @@ namespace Favi_BE.API.Models.Dtos
         string? MediaUrl,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
-        bool IsEdited
+        bool IsEdited,
+        Guid[] ReadBy // Array of profile IDs who have read this message
     );
 
     public record CreateDmConversationRequest(

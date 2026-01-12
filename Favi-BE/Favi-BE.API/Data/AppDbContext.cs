@@ -27,6 +27,7 @@ namespace Favi_BE.Data
         public DbSet<Conversation> Conversations { get; set; } = default!;
         public DbSet<Message> Messages { get; set; } = default!;
         public DbSet<UserConversation> UserConversations { get; set; } = default!;
+        public DbSet<MessageRead> MessageReads { get; set; } = default!;
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Story> Stories { get; set; }
         public DbSet<StoryView> StoryViews { get; set; }
@@ -331,6 +332,28 @@ namespace Favi_BE.Data
                     .WithMany()
                     .HasForeignKey(sv => sv.ViewerProfileId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ===== MessageRead =====
+            modelBuilder.Entity<MessageRead>(b =>
+            {
+                b.HasKey(mr => new { mr.MessageId, mr.ProfileId });
+
+                b.Property(mr => mr.ReadAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.HasOne(mr => mr.Message)
+                    .WithMany(m => m.ReadBy)
+                    .HasForeignKey(mr => mr.MessageId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(mr => mr.Profile)
+                    .WithMany()
+                    .HasForeignKey(mr => mr.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Index for queries
+                b.HasIndex(mr => new { mr.MessageId, mr.ReadAt });
             });
         }
     }
