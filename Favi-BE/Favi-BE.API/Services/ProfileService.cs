@@ -434,5 +434,49 @@ namespace Favi_BE.Services
 
             return list;
         }
+
+        public async Task<IEnumerable<ProfileResponse>> GetOnlineFriendsAsync(Guid profileId, int withinLastMinutes = 15)
+        {
+            // Get the users that this profile follows (their "friends")
+            var followings = await _uow.Follows.GetFollowingAsync(profileId, 0, 1000);
+
+            // Calculate the online threshold
+            var onlineThreshold = DateTime.UtcNow.AddMinutes(-withinLastMinutes);
+            var list = new List<ProfileResponse>();
+
+            foreach (var follow in followings)
+            {
+                var friendProfile = await _uow.Profiles.GetByIdAsync(follow.FolloweeId);
+                if (friendProfile is null) continue;
+
+                // Check if the friend is online (within the threshold)
+                if (friendProfile.LastActiveAt.HasValue && friendProfile.LastActiveAt >= onlineThreshold)
+                {
+                    // Get follower/following counts
+                    var followers = await _uow.Follows.GetFollowersCountAsync(friendProfile.Id);
+                    var friendFollowingsCount = await _uow.Follows.GetFollowingCountAsync(friendProfile.Id);
+
+                    list.Add(new ProfileResponse(
+                        friendProfile.Id,
+                        friendProfile.Username,
+                        friendProfile.DisplayName,
+                        friendProfile.Bio,
+                        friendProfile.AvatarUrl,
+                        friendProfile.CoverUrl,
+                        friendProfile.CreatedAt,
+                        friendProfile.LastActiveAt ?? DateTime.MinValue,
+                        friendProfile.PrivacyLevel,
+                        friendProfile.FollowPrivacyLevel,
+                        friendProfile.IsBanned,
+                        friendProfile.BannedUntil,
+                        followers,
+                        friendFollowingsCount
+                    ));
+                }
+            }
+
+            // Sort by last active (most recent first)
+            return list.OrderByDescending(p => p.LastActiveAt);
+        }
     }
 }

@@ -240,5 +240,23 @@ namespace Favi_BE.Controllers
             // thì GetById vẫn check privacy, nên vẫn an toàn.)
             return Ok(items);
         }
+
+        // Lấy danh sách bạn bè đang online
+        [HttpGet("online-friends")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetOnlineFriends([FromQuery] int withinLastMinutes = 15)
+        {
+            var userId = User.GetUserIdFromMetadata();
+
+            // Nếu chưa có profile cho user hiện tại thì trả về rỗng
+            var viewerProfile = await _profiles.GetEntityByIdAsync(userId);
+            if (viewerProfile is null)
+            {
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ người dùng hiện tại không tồn tại." });
+            }
+
+            var items = await _profiles.GetOnlineFriendsAsync(userId, withinLastMinutes);
+            return Ok(items);
+        }
     }
 }

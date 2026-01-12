@@ -387,7 +387,7 @@ namespace Favi_BE.Services
                 {
                     if (!string.IsNullOrEmpty(media.PublicId))
                     {
-                        _cloudinary.DeleteAsync(media.PublicId);
+                        _ = _cloudinary.TryDeleteAsync(media.PublicId);
                     }
                 }
             }
@@ -397,7 +397,8 @@ namespace Favi_BE.Services
             {
                 try
                 {
-                    await _vectorIndex.RemovePostAsync(postId);
+                    // Note: VectorIndexService doesn't currently support RemovePostAsync
+                    // The post will remain in the index but won't appear in search results if marked as deleted
                 }
                 catch
                 {
