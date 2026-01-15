@@ -46,4 +46,12 @@ namespace Favi_BE.API.Models.Dtos
         string? Content,
         string? MediaUrl
     );
+
+    public record ChatImageUploadResponse(
+        string Url,
+        string PublicId,
+        int Width,
+        int Height,
+        string Format
+    );
 }
