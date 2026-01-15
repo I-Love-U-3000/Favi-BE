@@ -8,6 +8,7 @@ namespace Favi_BE.Models.Entities
         public Guid PostId { get; set; }
         public Guid ProfileId { get; set; }
         public string Content { get; set; } = null!;
+        public string? MediaUrl { get; set; }
         public Guid? ParentCommentId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

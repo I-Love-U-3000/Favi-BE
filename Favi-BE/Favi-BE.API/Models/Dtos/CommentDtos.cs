@@ -6,6 +6,7 @@ namespace Favi_BE.Models.Dtos
         Guid PostId,
         Guid AuthorProfileId,
         string Content,
+        string? MediaUrl,
         Guid? ParentCommentId
     );
 
@@ -18,6 +19,7 @@ namespace Favi_BE.Models.Dtos
         Guid PostId,
         Guid AuthorProfileId,
         string Content,
+        string? MediaUrl,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         Guid? ParentCommentId,

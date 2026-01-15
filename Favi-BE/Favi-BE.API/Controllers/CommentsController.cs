@@ -1,4 +1,5 @@
-﻿using Favi_BE.Common;
+﻿using Favi_BE.API.Models.Dtos;
+using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
@@ -14,12 +15,14 @@ namespace Favi_BE.Controllers
         private readonly ICommentService _comments;
         private readonly IPostService _posts;
         private readonly IPrivacyGuard _privacy;
+        private readonly ICloudinaryService _cloudinary;
 
-        public CommentsController(ICommentService comments, IPostService posts, IPrivacyGuard privacy)
+        public CommentsController(ICommentService comments, IPostService posts, IPrivacyGuard privacy, ICloudinaryService cloudinary)
         {
             _comments = comments;
             _posts = posts;
             _privacy = privacy;
+            _cloudinary = cloudinary;
         }
 
         [Authorize]
@@ -27,7 +30,7 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<CommentResponse>> Create(CreateCommentRequest dto)
         {
             var userId = User.GetUserIdFromMetadata();
-            return Ok(await _comments.CreateAsync(dto.PostId, userId, dto.Content, dto.ParentCommentId));
+            return Ok(await _comments.CreateAsync(dto.PostId, userId, dto.Content, dto.ParentCommentId, dto.MediaUrl));
         }
 
         [Authorize]
@@ -86,6 +89,34 @@ namespace Favi_BE.Controllers
                 return Ok(new { removed = true, message = "Reaction đã được gỡ." });
 
             return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
+        }
+
+        [Authorize]
+        [HttpPost("upload-image")]
+        public async Task<ActionResult<ChatImageUploadResponse>> UploadImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No file uploaded" });
+
+            if (!file.ContentType.StartsWith("image/"))
+                return BadRequest(new { message = "Only image files are allowed" });
+
+            const long maxFileSize = 10 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+                return BadRequest(new { message = "File size must be less than 10MB" });
+
+            var uploadResult = await _cloudinary.TryUploadAsync(file, CancellationToken.None, "favi_comments");
+
+            if (uploadResult == null)
+                return StatusCode(500, new { message = "Failed to upload image" });
+
+            return Ok(new ChatImageUploadResponse(
+                uploadResult.Url,
+                uploadResult.PublicId,
+                uploadResult.Width,
+                uploadResult.Height,
+                uploadResult.Format
+            ));
         }
     }
 }

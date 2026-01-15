@@ -6,7 +6,7 @@ namespace Favi_BE.Interfaces.Services
     public interface ICommentService
     {
         Task<CommentResponse?> GetByIdAsync(Guid commentId, Guid? currentUserId);
-        Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId);
+        Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId, string? mediaUrl = null);
         Task<CommentResponse?> UpdateAsync(Guid commentId, Guid requesterId, string content);
         Task<bool> DeleteAsync(Guid commentId, Guid requesterId);
         Task<ReactionSummaryDto> GetReactionsAsync(Guid commentId, Guid? currentUserId);
