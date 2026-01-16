@@ -38,9 +38,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["SupabaseSecret"]!)),
             NameClaimType = "sub",
             RoleClaimType = "account_role"
-        }; 
+        };
+
+        // IMPORTANT: Configure SignalR to read token from query string
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                // SignalR sends access_token as a query parameter
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            },
             OnAuthenticationFailed = context =>
             {
                 Console.WriteLine("JWT auth failed: " + context.Exception.Message);
@@ -71,8 +83,10 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
-                "https://localhost:3000",   
-                "https://127.0.0.1:3000"
+                "https://localhost:3000",
+                "https://127.0.0.1:3000",
+                "http://localhost:5000",
+                "http://127.0.0.1:5000"
             )
             .AllowAnyHeader()                // cần cho Authorization, Content-Type
             .AllowAnyMethod()
@@ -245,6 +259,7 @@ app.MapPost("/health", () => Results.Ok(new
 // Map SignalR Hubs
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<CallHub>("/callHub");
 
 app.Run();
 
