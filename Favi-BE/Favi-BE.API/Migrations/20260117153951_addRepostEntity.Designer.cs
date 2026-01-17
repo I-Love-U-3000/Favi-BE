@@ -3,6 +3,7 @@ using System;
 using Favi_BE.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Favi_BE.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260117153951_addRepostEntity")]
+    partial class addRepostEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,9 +267,6 @@ namespace Favi_BE.Migrations
                     b.Property<Guid>("ProfileId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("RepostId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -277,8 +277,6 @@ namespace Favi_BE.Migrations
                     b.HasIndex("PostId");
 
                     b.HasIndex("ProfileId");
-
-                    b.HasIndex("RepostId");
 
                     b.ToTable("Comments");
                 });
@@ -352,17 +350,12 @@ namespace Favi_BE.Migrations
                     b.Property<Guid>("ProfileId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("RepostId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProfileId");
-
-                    b.HasIndex("RepostId");
 
                     b.HasIndex("CollectionId", "ProfileId")
                         .IsUnique();
@@ -882,18 +875,11 @@ namespace Favi_BE.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Favi_BE.API.Models.Entities.Repost", "Repost")
-                        .WithMany("Comments")
-                        .HasForeignKey("RepostId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.Navigation("ParentComment");
 
                     b.Navigation("Post");
 
                     b.Navigation("Profile");
-
-                    b.Navigation("Repost");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.Follow", b =>
@@ -976,11 +962,6 @@ namespace Favi_BE.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Favi_BE.API.Models.Entities.Repost", "Repost")
-                        .WithMany("Reactions")
-                        .HasForeignKey("RepostId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.Navigation("Collection");
 
                     b.Navigation("Comment");
@@ -988,8 +969,6 @@ namespace Favi_BE.Migrations
                     b.Navigation("Post");
 
                     b.Navigation("Profile");
-
-                    b.Navigation("Repost");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.StoryView", b =>
@@ -1135,13 +1114,6 @@ namespace Favi_BE.Migrations
             modelBuilder.Entity("Favi_BE.API.Models.Entities.Message", b =>
                 {
                     b.Navigation("ReadBy");
-                });
-
-            modelBuilder.Entity("Favi_BE.API.Models.Entities.Repost", b =>
-                {
-                    b.Navigation("Comments");
-
-                    b.Navigation("Reactions");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>

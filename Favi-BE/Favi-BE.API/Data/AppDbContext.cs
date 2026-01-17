@@ -31,6 +31,7 @@ namespace Favi_BE.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Story> Stories { get; set; }
         public DbSet<StoryView> StoryViews { get; set; }
+        public DbSet<Repost> Reposts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,6 +62,13 @@ namespace Favi_BE.Data
                 .HasOne(c => c.Post)
                 .WithMany(p => p.Comments)
                 .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Comment -> Repost (optional)
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Repost)
+                .WithMany(r => r.Comments)
+                .HasForeignKey(c => c.RepostId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Comment>()
@@ -118,6 +126,12 @@ namespace Favi_BE.Data
                     .HasForeignKey(r => r.PostId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Reaction -> Repost (optional)
+                entity.HasOne(r => r.Repost)
+                    .WithMany(r => r.Reactions)
+                    .HasForeignKey(r => r.RepostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
                 // Reaction -> Comment (optional)
                 entity.HasOne(r => r.Comment)
                     .WithMany(c => c.Reactions)
@@ -147,6 +161,9 @@ namespace Favi_BE.Data
                 // Mỗi profile chỉ được react 1 lần trên 1 collection
                 entity.HasIndex(r => new { r.CollectionId, r.ProfileId })
                     .IsUnique();
+
+                // Note: We don't enforce unique index for RepostId because PostgreSQL doesn't support
+                // filtered unique indexes easily. The application layer will handle duplicate prevention.
             });
 
             // ===== Follow (self-ref Profile) =====
@@ -354,6 +371,37 @@ namespace Favi_BE.Data
 
                 // Index for queries
                 b.HasIndex(mr => new { mr.MessageId, mr.ReadAt });
+            });
+
+            // ===== Repost =====
+            modelBuilder.Entity<Repost>(b =>
+            {
+                b.HasKey(r => r.Id);
+
+                b.Property(r => r.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                b.Property(r => r.UpdatedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                // Repost -> Profile (sharer)
+                b.HasOne(r => r.Profile)
+                    .WithMany(p => p.Reposts)
+                    .HasForeignKey(r => r.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Repost -> Post (original post)
+                b.HasOne(r => r.OriginalPost)
+                    .WithMany(p => p.Reposts)
+                    .HasForeignKey(r => r.OriginalPostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Each profile can only repost a specific post once
+                b.HasIndex(r => new { r.ProfileId, r.OriginalPostId })
+                    .IsUnique();
+
+                // Index for queries
+                b.HasIndex(r => new { r.ProfileId, r.CreatedAt });
+                b.HasIndex(r => r.OriginalPostId);
             });
         }
     }

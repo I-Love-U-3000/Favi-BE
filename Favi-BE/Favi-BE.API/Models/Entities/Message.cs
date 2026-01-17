@@ -15,6 +15,7 @@ namespace Favi_BE.API.Models.Entities
 
         public string? Content { get; set; }
         public string? MediaUrl { get; set; }
+        public Guid? PostId { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

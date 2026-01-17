@@ -41,6 +41,12 @@ namespace Favi_BE.Interfaces.Services
         Task<PagedResult<PostResponse>> GetLatestAsync(int page, int pageSize);
         Task<Post?> GetEntityAsync(Guid id);
         Task<bool> AdminDeleteAsync(Guid postId, Guid adminId, string reason);
+
+        // Repost/Share
+        Task<RepostResponse?> SharePostAsync(Guid postId, Guid sharerId, string? caption);
+        Task<bool> UnsharePostAsync(Guid postId, Guid sharerId);
+        Task<RepostResponse?> GetRepostAsync(Guid repostId, Guid? currentUserId);
+        Task<PagedResult<RepostResponse>> GetRepostsByProfileAsync(Guid profileId, Guid? currentUserId, int page, int pageSize);
     }
 
 }

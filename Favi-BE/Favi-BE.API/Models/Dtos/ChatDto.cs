@@ -31,7 +31,8 @@ namespace Favi_BE.API.Models.Dtos
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         bool IsEdited,
-        Guid[] ReadBy // Array of profile IDs who have read this message
+        Guid[] ReadBy, // Array of profile IDs who have read this message
+        PostPreviewDto? PostPreview // Post preview if this message contains a shared post
     );
 
     public record CreateDmConversationRequest(
@@ -44,7 +45,8 @@ namespace Favi_BE.API.Models.Dtos
 
     public record SendMessageRequest(
         string? Content,
-        string? MediaUrl
+        string? MediaUrl,
+        Guid? PostId
     );
 
     public record ChatImageUploadResponse(
@@ -53,5 +55,15 @@ namespace Favi_BE.API.Models.Dtos
         int Width,
         int Height,
         string Format
+    );
+
+    // Post preview data for shared posts in chat messages
+    public record PostPreviewDto(
+        Guid Id,
+        Guid AuthorProfileId,
+        string? Caption,
+        string? ThumbnailUrl,
+        int MediasCount,
+        DateTime CreatedAt
     );
 }

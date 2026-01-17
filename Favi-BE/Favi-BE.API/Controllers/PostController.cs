@@ -369,5 +369,67 @@ namespace Favi_BE.Controllers
                 return Forbid();
             }
         }
+
+        // ======================
+        // 🔹 POST: Share/Repost post to profile
+        // ======================
+        [Authorize]
+        [HttpPost("{id:guid}/share")]
+        public async Task<ActionResult<RepostResponse>> SharePost(Guid id, [FromBody] CreateRepostRequest dto)
+        {
+            var userId = User.GetUserIdFromMetadata();
+
+            // Check if post exists
+            var postEntity = await _posts.GetEntityAsync(id);
+            if (postEntity is null)
+                return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại." });
+
+            var result = await _posts.SharePostAsync(id, userId, dto.Caption);
+
+            if (result is null)
+                return StatusCode(403, new { code = "SHARE_FORBIDDEN", message = "Không thể chia sẻ bài viết này." });
+
+            return Ok(result);
+        }
+
+        // ======================
+        // 🔹 DELETE: Unshare/Remove repost from profile
+        // ======================
+        [Authorize]
+        [HttpDelete("{id:guid}/share")]
+        public async Task<IActionResult> UnsharePost(Guid id)
+        {
+            var userId = User.GetUserIdFromMetadata();
+            var ok = await _posts.UnsharePostAsync(id, userId);
+            return ok
+                ? Ok(new { message = "Đã bỏ chia sẻ bài viết." })
+                : NotFound(new { code = "SHARE_NOT_FOUND", message = "Bạn chưa chia sẻ bài viết này." });
+        }
+
+        // ======================
+        // 🔹 GET: Get reposts by profile
+        // ======================
+        [HttpGet("profile/{profileId:guid}/shares")]
+        public async Task<ActionResult<PagedResult<RepostResponse>>> GetProfileShares(Guid profileId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var currentUserId = TryGetUserId();
+            var result = await _posts.GetRepostsByProfileAsync(profileId, currentUserId, page, pageSize);
+            return Ok(result);
+        }
+
+        // ======================
+        // 🔹 GET: Get repost by ID (for viewing shared posts)
+        // ======================
+        [HttpGet("shares/{repostId:guid}")]
+        public async Task<ActionResult<RepostResponse>> GetRepost(Guid repostId)
+        {
+            var currentUserId = TryGetUserId();
+            var result = await _posts.GetRepostAsync(repostId, currentUserId);
+
+            if (result == null)
+                return NotFound(new { code = "REPOST_NOT_FOUND", message = "Bài chia sẻ không tồn tại." });
+
+            return Ok(result);
+        }
     }
 }

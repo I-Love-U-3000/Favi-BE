@@ -82,4 +82,31 @@ namespace Favi_BE.Models.Dtos
         ReactionType ReactionType,
         DateTime CreatedAt
     );
+
+    // Repost/Share related DTOs
+    public record CreateRepostRequest(
+        string? Caption  // Optional comment from the sharer
+    );
+
+    public record RepostResponse(
+        Guid Id,
+        Guid ProfileId,  // User who shared the post
+        string Username,
+        string? DisplayName,
+        string? AvatarUrl,
+        Guid OriginalPostId,
+        string? OriginalCaption,
+        Guid OriginalAuthorProfileId,
+        string OriginalAuthorUsername,
+        string? OriginalAuthorDisplayName,
+        string? OriginalAuthorAvatarUrl,
+        IEnumerable<PostMediaResponse> OriginalPostMedias,
+        string? Caption,  // Sharer's comment
+        DateTime CreatedAt,
+        DateTime UpdatedAt,
+        int CommentsCount,  // Comments on this repost (separate from original post)
+        ReactionSummaryDto Reactions,  // Reactions on this repost (separate from original post)
+        int RepostsCount,  // Total reposts of the original post
+        bool IsRepostedByCurrentUser  // Whether current user has also reposted this
+    );
 }

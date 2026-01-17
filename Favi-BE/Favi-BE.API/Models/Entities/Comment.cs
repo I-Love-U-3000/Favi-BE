@@ -1,4 +1,5 @@
-﻿using Favi_BE.Models.Entities.JoinTables;
+﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.Models.Entities.JoinTables;
 
 namespace Favi_BE.Models.Entities
 {
@@ -6,6 +7,7 @@ namespace Favi_BE.Models.Entities
     {
         public Guid Id { get; set; }
         public Guid PostId { get; set; }
+        public Guid? RepostId { get; set; }  // Can be null if comment is on a Post
         public Guid ProfileId { get; set; }
         public string Content { get; set; } = null!;
         public string? MediaUrl { get; set; }
@@ -14,6 +16,7 @@ namespace Favi_BE.Models.Entities
         public DateTime? UpdatedAt { get; set; }
 
         public Post Post { get; set; } = null!;
+        public Repost? Repost { get; set; }  // Optional: if comment is on a Repost
         public Profile Profile { get; set; } = null!;
         public Comment? ParentComment { get; set; }
         public ICollection<Comment> Replies { get; set; } = new List<Comment>();
