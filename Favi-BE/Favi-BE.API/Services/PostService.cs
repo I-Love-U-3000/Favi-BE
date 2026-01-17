@@ -121,6 +121,88 @@ namespace Favi_BE.Services
         }
 
         /// <summary>
+        /// Feed with Reposts cho user đã đăng nhập:
+        /// - Kết hợp bài viết từ bản thân + followees + reposts của những người theo dõi
+        /// - Trả về FeedItemDto để phân biệt Post và Repost
+        /// - Sắp xếp theo thời gian tạo (mới nhất trước)
+        /// </summary>
+        public async Task<PagedResult<FeedItemDto>> GetFeedWithRepostsAsync(Guid currentUserId, int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+
+            var skip = (page - 1) * pageSize;
+
+            // Get posts from repo
+            var (postCandidates, _) = await _uow.Posts.GetFeedPagedAsync(
+                currentUserId,
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            // Get reposts from followed users
+            var repostCandidates = await _uow.Reposts.GetFeedRepostsAsync(
+                currentUserId,
+                skip: 0,
+                take: TrendingCandidateLimit
+            );
+
+            var feedItems = new List<FeedItemDto>();
+
+            // Process posts
+            foreach (var post in postCandidates)
+            {
+                if (!await _privacy.CanViewPostAsync(post, currentUserId))
+                    continue;
+
+                var ageHours = (DateTime.UtcNow - post.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                var postResponse = await MapPostToResponseAsync(post, currentUserId);
+                feedItems.Add(new FeedItemDto(
+                    Type: FeedItemType.Post,
+                    Post: postResponse,
+                    Repost: null,
+                    CreatedAt: post.CreatedAt
+                ));
+            }
+
+            // Process reposts
+            foreach (var repost in repostCandidates)
+            {
+                // Check if original post is viewable
+                var originalPost = await _uow.Posts.GetPostWithAllAsync(repost.OriginalPostId);
+                if (originalPost == null || !await _privacy.CanViewPostAsync(originalPost, currentUserId))
+                    continue;
+
+                var ageHours = (DateTime.UtcNow - repost.CreatedAt).TotalHours;
+                if (ageHours > MaxAgeHours) continue;
+
+                var repostResponse = await MapRepostToResponseAsync(repost, currentUserId);
+                feedItems.Add(new FeedItemDto(
+                    Type: FeedItemType.Repost,
+                    Post: null,
+                    Repost: repostResponse,
+                    CreatedAt: repost.CreatedAt
+                ));
+            }
+
+            // Sort by CreatedAt descending
+            var ordered = feedItems
+                .OrderByDescending(x => x.CreatedAt)
+                .ToList();
+
+            var total = ordered.Count;
+
+            var pageItems = ordered
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
+            return new PagedResult<FeedItemDto>(pageItems, page, pageSize, total);
+        }
+
+        /// <summary>
         /// Feed cho guest (chưa đăng nhập):
         /// - Lấy các bài mới nhất toàn hệ thống (pool max 500).
         /// - Chỉ lấy bài mà guest có quyền xem (thường là Public).

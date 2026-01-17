@@ -2,6 +2,19 @@
 
 namespace Favi_BE.Models.Dtos
 {
+    public enum FeedItemType
+    {
+        Post,
+        Repost
+    }
+
+    public record FeedItemDto(
+        FeedItemType Type,
+        PostResponse? Post,
+        RepostResponse? Repost,
+        DateTime CreatedAt  // For sorting
+    );
+
     public record CreatePostRequest(
         // Guid AuthorProfileId lấy từ jwt claims tránh mạo danh đăng
         string? Caption,

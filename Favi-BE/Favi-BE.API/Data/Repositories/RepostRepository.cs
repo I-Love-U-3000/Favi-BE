@@ -44,5 +44,30 @@ namespace Favi_BE.Data.Repositories
             return await _dbSet
                 .AnyAsync(r => r.ProfileId == profileId && r.OriginalPostId == postId);
         }
+
+        public async Task<IEnumerable<Repost>> GetFeedRepostsAsync(Guid profileId, int skip, int take)
+        {
+            // Get reposts from the user themselves and users they follow
+            var followeeIds = await _context.Follows
+                .Where(f => f.FollowerId == profileId)
+                .Select(f => f.FolloweeId)
+                .ToListAsync();
+
+            var allProfileIds = followeeIds.Append(profileId);
+
+            return await _dbSet
+                .Where(r => allProfileIds.Contains(r.ProfileId))
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .Include(r => r.OriginalPost)
+                .ThenInclude(p => p.Profile)
+                .Include(r => r.OriginalPost)
+                .ThenInclude(p => p.PostMedias)
+                .Include(r => r.Profile)
+                .Include(r => r.Comments)
+                .Include(r => r.Reactions)
+                .ToListAsync();
+        }
     }
 }

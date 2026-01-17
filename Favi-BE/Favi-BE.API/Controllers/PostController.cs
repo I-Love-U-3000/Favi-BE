@@ -102,6 +102,18 @@ namespace Favi_BE.Controllers
         }
 
         // ======================
+        // 🔹 GET: Feed cá nhân với Reposts (posts + reposts)
+        // ======================
+        [Authorize]
+        [HttpGet("feed-with-reposts")]
+        public async Task<ActionResult<PagedResult<FeedItemDto>>> GetFeedWithReposts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var userId = User.GetUserIdFromMetadata();
+            var result = await _posts.GetFeedWithRepostsAsync(userId, page, pageSize);
+            return Ok(result);
+        }
+
+        // ======================
         // 🔹 GET: Feed cá nhân (cho Guest)
         // ======================
         [HttpGet("guest-feed")]
