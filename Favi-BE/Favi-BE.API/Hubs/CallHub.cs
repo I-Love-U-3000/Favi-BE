@@ -16,6 +16,9 @@ namespace Favi_BE.API.Hubs
         // Track active calls: conversationId -> (callerId, calleeId, startTime)
         private static readonly Dictionary<string, (string callerId, string calleeId, DateTime startTime)> _activeCalls = new();
 
+        // Track WebRTC offers: conversationId -> (fromUserId, sdpOffer)
+        private static readonly Dictionary<string, (string fromUserId, string sdpOffer)> _pendingOffers = new();
+
         public CallHub(ILogger<CallHub> logger, IChatService chatService, IServiceProvider serviceProvider)
         {
             _logger = logger;
@@ -175,6 +178,29 @@ namespace Favi_BE.API.Hubs
                     await Clients.User(callerId).SendAsync("JoinCallRoom", convId.ToString());
                     await Clients.Caller.SendAsync("JoinCallRoom", convId.ToString());
 
+                    // CRITICAL FIX: Forward the stored WebRTC offer to the callee
+                    var convIdStr = convId.ToString();
+                    if (_pendingOffers.TryGetValue(convIdStr, out var pendingOffer))
+                    {
+                        _logger.LogInformation($"[CallHub] Forwarding stored offer from {pendingOffer.fromUserId} to callee {calleeId}");
+
+                        await Clients.Caller.SendAsync("ReceiveOffer", new CallSignalDto(
+                            pendingOffer.fromUserId,
+                            callerId,
+                            convIdStr,
+                            "offer",
+                            "offer",
+                            pendingOffer.sdpOffer
+                        ));
+
+                        // Clean up the stored offer after forwarding
+                        _pendingOffers.Remove(convIdStr);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"[CallHub] No pending offer found for conversation {convIdStr}");
+                    }
+
                     _logger.LogInformation($"User {calleeId} accepted call from {callerId} in conversation {convId}");
                 }
                 catch (Exception ex)
@@ -195,11 +221,13 @@ namespace Favi_BE.API.Hubs
                 try
                 {
                     // Remove from active calls
-                    _activeCalls.Remove(convId.ToString());
+                    var convIdStr = convId.ToString();
+                    _activeCalls.Remove(convIdStr);
+                    _pendingOffers.Remove(convIdStr);
 
                     // Notify caller that call was rejected
                     await Clients.User(callerId).SendAsync("CallRejected", new CallResponseDto(
-                        convId.ToString(),
+                        convIdStr,
                         "reject",
                         reason ?? "Call declined"
                     ));
@@ -223,6 +251,9 @@ namespace Favi_BE.API.Hubs
             {
                 try
                 {
+                    // Store the offer so it can be sent to the callee when they accept
+                    _pendingOffers[convId.ToString()] = (fromUserId.ToString(), sdpOffer);
+
                     await Clients.User(targetUserId).SendAsync("ReceiveOffer", new CallSignalDto(
                         fromUserId.ToString(),
                         targetUserId,
@@ -317,6 +348,9 @@ namespace Favi_BE.API.Hubs
                         duration = (int)(DateTime.UtcNow - callInfo.startTime).TotalSeconds;
                         _activeCalls.Remove(convId.ToString());
                     }
+
+                    // Clean up pending offers
+                    _pendingOffers.Remove(convId.ToString());
 
                     // Notify all participants in the call
                     await Clients.Group(groupName).SendAsync("CallEnded", new CallEndedDto(
