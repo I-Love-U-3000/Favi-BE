@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,17 +28,21 @@ var jwtOpt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        //options.Authority = builder.Configuration["Supabase:Url"]; // https://<project>.supabase.co
+        var jwtOpt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOpt.Key));
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false, // Supabase tokens không có issuer chuẩn
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = jwtOpt.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOpt.Audience,
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true, // Supabase cung cấp JWKS để ASP.NET tự fetch
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["SupabaseSecret"]!)),
-            NameClaimType = "sub",
-            RoleClaimType = "account_role"
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key,
+            ClockSkew = TimeSpan.FromSeconds(30),
+            NameClaimType = ClaimTypes.NameIdentifier,
+            RoleClaimType = ClaimTypes.Role
         };
 
         // IMPORTANT: Configure SignalR to read token from query string
@@ -69,7 +74,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddSingleton<IAuthorizationHandler, RequireAdminHandler>();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireUser", policy => policy.RequireClaim("account_role", new[] { "user", "admin" }));
+    options.AddPolicy("RequireUser", policy => policy.RequireClaim(ClaimTypes.Role, new[] { "user", "moderator", "admin" }));
     options.AddPolicy(AdminPolicies.RequireAdmin, policy =>
         policy.Requirements.Add(new RequireAdminRequirement()));
 });
@@ -113,14 +118,11 @@ builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IUserConversationRepository, UserConversationRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IEmailAccountRepository, EmailAccountRepository>();
 
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-builder.Services.AddHttpClient<ISupabaseAuthService, SupabaseAuthService>(client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Supabase:Url"]);
-    client.DefaultRequestHeaders.Add("apikey", builder.Configuration["Supabase:ApiKey"]);
-});
 builder.Services.AddScoped<ICollectionService, CollectionService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IPostService, PostService>();
@@ -143,7 +145,6 @@ builder.Services.AddHostedService<StoryExpirationService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
-builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Supabase"));
 
 // Configure VectorIndex options and service
 builder.Services.Configure<VectorIndexOptions>(builder.Configuration.GetSection("VectorIndex"));

@@ -1,31 +1,31 @@
-﻿using System.Security.Claims;
-using System.Text.Json;
+using System.Security.Claims;
 
 namespace Favi_BE.Common
 {
     public static class ClaimsPrincipalExtensions
     {
-        public static Guid GetUserIdFromMetadata(this ClaimsPrincipal user)
+        public static Guid GetUserId(this ClaimsPrincipal user)
         {
-            // Lấy claim "user_metadata"
-            var meta = user.FindFirstValue("user_metadata");
-            if (string.IsNullOrWhiteSpace(meta))
-                throw new UnauthorizedAccessException("Missing user_metadata claim.");
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim))
+                throw new UnauthorizedAccessException("Missing NameIdentifier claim.");
 
-            try
-            {
-                using var doc = JsonDocument.Parse(meta);
-                var root = doc.RootElement;
-                var sub = root.GetProperty("sub").GetString();
-                if (string.IsNullOrWhiteSpace(sub))
-                    throw new UnauthorizedAccessException("Missing sub in user_metadata.");
+            if (!Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("Invalid user ID format.");
 
-                return Guid.Parse(sub);
-            }
-            catch (Exception ex)
-            {
-                throw new UnauthorizedAccessException($"Invalid user_metadata: {ex.Message}");
-            }
+            return userId;
+        }
+
+        public static Guid? GetUserIdOrNull(this ClaimsPrincipal user)
+        {
+            var userIdClaim = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userIdClaim))
+                return null;
+
+            if (!Guid.TryParse(userIdClaim, out var userId))
+                return null;
+
+            return userId;
         }
 
         public static bool IsAdmin(this ClaimsPrincipal user)
@@ -33,8 +33,17 @@ namespace Favi_BE.Common
             if (user?.Identity?.IsAuthenticated != true)
                 return false;
 
-            var role = user.FindFirstValue("account_role");
+            var role = user.FindFirstValue(ClaimTypes.Role);
             return string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static string GetUsername(this ClaimsPrincipal user)
+        {
+            var username = user.FindFirstValue(ClaimTypes.Name);
+            if (string.IsNullOrWhiteSpace(username))
+                throw new UnauthorizedAccessException("Missing username claim.");
+
+            return username;
         }
     }
 }

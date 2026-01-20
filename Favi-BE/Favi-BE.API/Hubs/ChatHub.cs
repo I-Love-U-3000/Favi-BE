@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Favi_BE.API.Models.Entities;
 using Favi_BE.API.Interfaces.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Favi_BE.API.Hubs
 {

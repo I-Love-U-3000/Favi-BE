@@ -25,7 +25,7 @@ namespace Favi_BE.API.Controllers
         [HttpPost("dm")]
         public async Task<ActionResult<ConversationSummaryDto>> GetOrCreateDm([FromBody] CreateDmConversationRequest dto)
         {
-            var currentUserId = User.GetUserIdFromMetadata();
+            var currentUserId = User.GetUserId();
             var result = await _chat.GetOrCreateDmAsync(currentUserId, dto.OtherProfileId);
             return Ok(result);
         }
@@ -33,7 +33,7 @@ namespace Favi_BE.API.Controllers
         [HttpPost("group")]
         public async Task<ActionResult<ConversationSummaryDto>> CreateGroup([FromBody] CreateGroupConversationRequest dto)
         {
-            var currentUserId = User.GetUserIdFromMetadata();
+            var currentUserId = User.GetUserId();
             var result = await _chat.CreateGroupAsync(currentUserId, dto);
             return Ok(result);
         }
@@ -45,7 +45,7 @@ namespace Favi_BE.API.Controllers
         {
             try
             {
-                var currentUserId = User.GetUserIdFromMetadata();
+                var currentUserId = User.GetUserId();
                 // Update user's last active time when they fetch conversations
                 await _chat.UpdateUserLastActiveAsync(currentUserId);
                 var result = await _chat.GetConversationsAsync(currentUserId, page, pageSize);
@@ -72,7 +72,7 @@ namespace Favi_BE.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 50)
         {
-            var currentUserId = User.GetUserIdFromMetadata();
+            var currentUserId = User.GetUserId();
             // Update user's last active time when they fetch messages
             await _chat.UpdateUserLastActiveAsync(currentUserId);
             var (items, total) = await _chat.GetMessagesAsync(currentUserId, conversationId, page, pageSize);
@@ -91,7 +91,7 @@ namespace Favi_BE.API.Controllers
             Guid conversationId,
             [FromBody] SendMessageRequest dto)
         {
-            var currentUserId = User.GetUserIdFromMetadata();
+            var currentUserId = User.GetUserId();
             // Update user's last active time when they send a message
             await _chat.UpdateUserLastActiveAsync(currentUserId);
             var result = await _chat.SendMessageAsync(currentUserId, conversationId, dto);
@@ -101,7 +101,7 @@ namespace Favi_BE.API.Controllers
         [HttpPost("{conversationId:guid}/read")]
         public async Task<IActionResult> MarkAsRead(Guid conversationId, [FromBody] Guid lastMessageId)
         {
-            var currentUserId = User.GetUserIdFromMetadata();
+            var currentUserId = User.GetUserId();
             // Update user's last active time when they mark messages as read
             await _chat.UpdateUserLastActiveAsync(currentUserId);
             await _chat.MarkAsReadAsync(currentUserId, conversationId, lastMessageId);

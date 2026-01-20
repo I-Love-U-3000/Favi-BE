@@ -29,7 +29,7 @@ namespace Favi_BE.Controllers
         [HttpPost]
         public async Task<ActionResult<CommentResponse>> Create(CreateCommentRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _comments.CreateAsync(dto.PostId, userId, dto.Content, dto.ParentCommentId, dto.MediaUrl));
         }
 
@@ -37,7 +37,7 @@ namespace Favi_BE.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, UpdateCommentRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _comments.UpdateAsync(id, userId, dto.Content);
             return result is null
                 ? NotFound(new { code = "COMMENT_NOT_FOUND_OR_FORBIDDEN", message = "Không tìm thấy bình luận hoặc bạn không có quyền sửa." })
@@ -47,7 +47,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _comments.DeleteAsync(id, userId);
             return ok
                 ? Ok(new { message = "Đã xoá bình luận." })
@@ -57,7 +57,7 @@ namespace Favi_BE.Controllers
         [HttpGet("post/{postId}")]
         public async Task<ActionResult<PagedResult<CommentResponse>>> GetByPost(Guid postId, int page = 1, int pageSize = 20)
         {
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             var post = await _posts.GetEntityAsync(postId);
 
             if (post == null)
@@ -73,7 +73,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/reactions")]
         public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             if (!Enum.TryParse<ReactionType>(type, true, out var reactionType))
                 return BadRequest(new { code = "INVALID_REACTION_TYPE", message = $"Giá trị reaction '{type}' không hợp lệ." });

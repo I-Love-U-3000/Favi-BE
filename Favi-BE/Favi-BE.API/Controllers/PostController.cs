@@ -30,7 +30,7 @@ namespace Favi_BE.Controllers
         private Guid? TryGetUserId()
         {
             if (User?.Identity?.IsAuthenticated != true) return null;
-            try { return User.GetUserIdFromMetadata(); }
+            try { return User.GetUserId(); }
             catch { return null; }
         }
 
@@ -86,7 +86,7 @@ namespace Favi_BE.Controllers
         [HttpGet("feed")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetPersonalFeed([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _posts.GetFeedAsync(userId, page, pageSize);
 
             // ✅ Lọc những post mà người xem không được phép xem (ví dụ private)
@@ -108,7 +108,7 @@ namespace Favi_BE.Controllers
         [HttpGet("feed-with-reposts")]
         public async Task<ActionResult<PagedResult<FeedItemDto>>> GetFeedWithReposts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _posts.GetFeedWithRepostsAsync(userId, page, pageSize);
             return Ok(result);
         }
@@ -132,7 +132,7 @@ namespace Favi_BE.Controllers
         [HttpGet("explore")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetExplore([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            return Ok(await _posts.GetExploreAsync(User.GetUserIdFromMetadata(), page, pageSize));
+            return Ok(await _posts.GetExploreAsync(User.GetUserId(), page, pageSize));
         }
 
         // ======================
@@ -172,7 +172,7 @@ namespace Favi_BE.Controllers
         [HttpPost]
         public async Task<ActionResult<PostResponse>> Create([FromForm] CreatePostRequest dto, [FromForm] List<IFormFile>? mediaFiles)
         {
-            var authorId = User.GetUserIdFromMetadata();
+            var authorId = User.GetUserId();
             if (string.IsNullOrWhiteSpace(dto.Caption) && (dto.Tags == null || !dto.Tags.Any()))
                 return BadRequest(new { code = "EMPTY_POST", message = "Bài viết trống. Cần có caption hoặc ít nhất 1 tag." });
 
@@ -207,7 +207,7 @@ namespace Favi_BE.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, UpdatePostRequest dto)
         {
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
             var ok = await _posts.UpdateAsync(id, requesterId, dto.Caption);
             return ok
                 ? Ok(new { message = "Đã cập nhật bài viết." })
@@ -221,7 +221,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
             var ok = await _posts.DeleteAsync(id, requesterId);
             return ok
                 ? Ok(new { message = "Bài viết đã được chuyển vào thùng rác." })
@@ -235,7 +235,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/restore")]
         public async Task<IActionResult> Restore(Guid id)
         {
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
             var ok = await _posts.RestoreAsync(id, requesterId);
             return ok
                 ? Ok(new { message = "Bài viết đã được khôi phục." })
@@ -249,7 +249,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id:guid}/permanent")]
         public async Task<IActionResult> PermanentDelete(Guid id)
         {
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
             var ok = await _posts.PermanentDeleteAsync(id, requesterId);
             return ok
                 ? Ok(new { message = "Bài viết đã được xoá vĩnh viễn." })
@@ -263,7 +263,7 @@ namespace Favi_BE.Controllers
         [HttpGet("recycle-bin")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetRecycleBin([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _posts.GetRecycleBinAsync(userId, page, pageSize);
             return Ok(result);
         }
@@ -275,7 +275,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/archive")]
         public async Task<IActionResult> Archive(Guid id)
         {
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
             var ok = await _posts.ArchiveAsync(id, requesterId);
             return ok
                 ? Ok(new { message = "Bài viết đã được lưu trữ." })
@@ -289,7 +289,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/unarchive")]
         public async Task<IActionResult> Unarchive(Guid id)
         {
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
             var ok = await _posts.UnarchiveAsync(id, requesterId);
             return ok
                 ? Ok(new { message = "Bài viết đã được bỏ lưu trữ." })
@@ -303,7 +303,7 @@ namespace Favi_BE.Controllers
         [HttpGet("archived")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetArchived([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _posts.GetArchivedAsync(userId, page, pageSize);
             return Ok(result);
         }
@@ -318,7 +318,7 @@ namespace Favi_BE.Controllers
             if (files == null || files.Count == 0)
                 return BadRequest(new { code = "NO_FILE", message = "Không có file nào được gửi." });
 
-            var requesterId = User.GetUserIdFromMetadata();
+            var requesterId = User.GetUserId();
 
             // Vì service trả empty cho 'không phải owner' hoặc 'không có post',
             // controller nên phân biệt trước để trả message rõ ràng.
@@ -344,7 +344,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/reactions")]
         public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             if (!Enum.TryParse<ReactionType>(type, true, out var reactionType))
                 return BadRequest(new { code = "INVALID_REACTION_TYPE", message = $"Giá trị reaction '{type}' không hợp lệ." });
@@ -369,7 +369,7 @@ namespace Favi_BE.Controllers
         [HttpGet("{id:guid}/reactors")]
         public async Task<ActionResult<IEnumerable<PostReactorResponse>>> GetReactors(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             try
             {
@@ -389,7 +389,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/share")]
         public async Task<ActionResult<RepostResponse>> SharePost(Guid id, [FromBody] CreateRepostRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             // Check if post exists
             var postEntity = await _posts.GetEntityAsync(id);
@@ -411,7 +411,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id:guid}/share")]
         public async Task<IActionResult> UnsharePost(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _posts.UnsharePostAsync(id, userId);
             return ok
                 ? Ok(new { message = "Đã bỏ chia sẻ bài viết." })

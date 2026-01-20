@@ -23,7 +23,7 @@ namespace Favi_BE.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _notifications.GetNotificationsAsync(userId, page, pageSize));
         }
 
@@ -31,7 +31,7 @@ namespace Favi_BE.Controllers
         [HttpGet("unread-count")]
         public async Task<ActionResult<int>> GetUnreadCount()
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _notifications.GetUnreadCountAsync(userId));
         }
 
@@ -39,7 +39,7 @@ namespace Favi_BE.Controllers
         [HttpPut("{id}/read")]
         public async Task<IActionResult> MarkAsRead(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var success = await _notifications.MarkAsReadAsync(id, userId);
 
             return success
@@ -51,7 +51,7 @@ namespace Favi_BE.Controllers
         [HttpPut("read-all")]
         public async Task<IActionResult> MarkAllAsRead()
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             await _notifications.MarkAllAsReadAsync(userId);
             return Ok(new { message = "All notifications marked as read." });
         }

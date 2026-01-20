@@ -19,7 +19,7 @@ namespace Favi_BE.Controllers
         [HttpPost]
         public async Task<ActionResult<CollectionResponse>> Create([FromForm] CreateCollectionRequest dto, [FromForm] IFormFile? coverImage)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _collections.CreateAsync(userId, dto, coverImage));
         }
 
@@ -27,7 +27,7 @@ namespace Favi_BE.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<CollectionResponse>> Update(Guid id, [FromForm] UpdateCollectionRequest dto, [FromForm] IFormFile? coverImage)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var updated = await _collections.UpdateAsync(id, userId, dto, coverImage);
             return updated is null
                 ? NotFound(new { code = "COLLECTION_NOT_FOUND_OR_FORBIDDEN", message = "Không tìm thấy hoặc bạn không có quyền sửa bộ sưu tập này." })
@@ -41,7 +41,7 @@ namespace Favi_BE.Controllers
             if (collection is null)
                 return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
 
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
                 return StatusCode(403, new { code = "COLLECTION_FORBIDDEN", message = "Bạn không có quyền xem bộ sưu tập này." });
 
@@ -52,7 +52,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _collections.DeleteAsync(id, userId);
             return ok
                 ? NoContent()
@@ -62,7 +62,7 @@ namespace Favi_BE.Controllers
         [HttpGet("owner/{ownerId}")]
         public async Task<ActionResult<PagedResult<CollectionResponse>>> GetByOwner(Guid ownerId, int page = 1, int pageSize = 20)
         {
-            var currentUserId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var currentUserId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             return Ok(await _collections.GetByOwnerAsync(ownerId, page, pageSize, currentUserId));
         }
 
@@ -73,7 +73,7 @@ namespace Favi_BE.Controllers
             if (collection is null)
                 return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
 
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             if (!await _privacy.CanViewCollectionAsync(collection, viewerId))
                 return StatusCode(403, new { code = "COLLECTION_FORBIDDEN", message = "Bạn không có quyền xem bộ sưu tập này." });
 
@@ -83,7 +83,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id}/posts/{postId}")]
         public async Task<IActionResult> AddPost(Guid id, Guid postId)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _collections.AddPostAsync(id, postId, userId);
             return ok
                 ? Ok(new { message = "Đã thêm bài viết vào bộ sưu tập." })
@@ -94,7 +94,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id}/posts/{postId}")]
         public async Task<IActionResult> RemovePost(Guid id, Guid postId)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _collections.RemovePostAsync(id, postId, userId);
             return ok
                 ? NoContent()
@@ -105,7 +105,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id}/reactions")]
         public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             if (!Enum.TryParse<Models.Enums.ReactionType>(type, true, out var reactionType))
                 return BadRequest(new { code = "INVALID_REACTION_TYPE", message = "Loại reaction không hợp lệ." });
@@ -126,7 +126,7 @@ namespace Favi_BE.Controllers
         [HttpGet("{id:guid}/reactors")]
         public async Task<ActionResult<IEnumerable<CollectionReactorResponse>>> GetReactors(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             try
             {
@@ -142,7 +142,7 @@ namespace Favi_BE.Controllers
         [HttpGet("trending")]
         public async Task<ActionResult<PagedResult<CollectionResponse>>> GetTrending(int page = 1, int pageSize = 20)
         {
-            var currentUserId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var currentUserId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             return Ok(await _collections.GetTrendingCollectionsAsync(page, pageSize, currentUserId));
         }
     }

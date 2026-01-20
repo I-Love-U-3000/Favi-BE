@@ -30,7 +30,7 @@ namespace Favi_BE.Controllers
         private Guid? TryGetUserId()
         {
             if (User?.Identity?.IsAuthenticated != true) return null;
-            try { return User.GetUserIdFromMetadata(); }
+            try { return User.GetUserId(); }
             catch { return null; }
         }
 
@@ -66,7 +66,7 @@ namespace Favi_BE.Controllers
         [HttpGet("feed")]
         public async Task<ActionResult<IEnumerable<StoryFeedResponse>>> GetFeed()
         {
-            var viewerId = User.GetUserIdFromMetadata();
+            var viewerId = User.GetUserId();
             var stories = await _stories.GetViewableStoriesAsync(viewerId);
 
             // Group by profile for feed display
@@ -88,7 +88,7 @@ namespace Favi_BE.Controllers
         [HttpGet("archived")]
         public async Task<ActionResult<IEnumerable<StoryResponse>>> GetArchived()
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var stories = await _stories.GetArchivedStoriesAsync(userId);
             return Ok(stories);
         }
@@ -98,7 +98,7 @@ namespace Favi_BE.Controllers
         [HttpPost]
         public async Task<ActionResult<StoryResponse>> Create([FromForm] CreateStoryRequest request, [FromForm] IFormFile media)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             try
             {
@@ -120,7 +120,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/archive")]
         public async Task<IActionResult> Archive(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var success = await _stories.ArchiveAsync(id, userId);
 
             return success
@@ -133,7 +133,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var success = await _stories.DeleteAsync(id, userId);
 
             return success
@@ -146,7 +146,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/view")]
         public async Task<IActionResult> RecordView(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             await _stories.RecordViewAsync(id, userId);
             return Ok(new { message = "View recorded." });
         }
@@ -156,7 +156,7 @@ namespace Favi_BE.Controllers
         [HttpGet("{id:guid}/viewers")]
         public async Task<ActionResult<IEnumerable<StoryViewerResponse>>> GetViewers(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             try
             {

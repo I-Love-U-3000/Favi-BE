@@ -26,7 +26,7 @@ public class AdminContentController : ControllerBase
     [HttpDelete("posts/{id:guid}")]
     public async Task<IActionResult> DeletePost(Guid id, AdminDeleteContentRequest request)
     {
-        var adminId = User.GetUserIdFromMetadata();
+        var adminId = User.GetUserId();
         var ok = await _postService.AdminDeleteAsync(id, adminId, request.Reason);
         return ok
             ? Ok(new { message = "Bài viết đã được xóa bởi Admin." })
@@ -39,7 +39,7 @@ public class AdminContentController : ControllerBase
     [HttpDelete("comments/{id:guid}")]
     public async Task<IActionResult> DeleteComment(Guid id, AdminDeleteContentRequest request)
     {
-        var adminId = User.GetUserIdFromMetadata();
+        var adminId = User.GetUserId();
         var ok = await _commentService.AdminDeleteAsync(id, adminId, request.Reason);
         return ok
             ? Ok(new { message = "Bình luận đã được xóa bởi Admin." })

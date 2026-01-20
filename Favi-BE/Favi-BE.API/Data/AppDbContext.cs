@@ -32,6 +32,7 @@ namespace Favi_BE.Data
         public DbSet<Story> Stories { get; set; }
         public DbSet<StoryView> StoryViews { get; set; }
         public DbSet<Repost> Reposts { get; set; }
+        public DbSet<EmailAccount> EmailAccounts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -402,6 +403,36 @@ namespace Favi_BE.Data
                 // Index for queries
                 b.HasIndex(r => new { r.ProfileId, r.CreatedAt });
                 b.HasIndex(r => r.OriginalPostId);
+            });
+
+            // ===== EmailAccount =====
+            modelBuilder.Entity<EmailAccount>(b =>
+            {
+                b.HasKey(ea => ea.Id);
+
+                b.Property(ea => ea.Email)
+                    .IsRequired()
+                    .HasMaxLength(256);
+
+                b.Property(ea => ea.PasswordHash)
+                    .IsRequired()
+                    .HasMaxLength(512);
+
+                b.Property(ea => ea.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property(ea => ea.EmailVerifiedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                // One-to-one relationship with Profile
+                b.HasOne(ea => ea.Profile)
+                    .WithOne()
+                    .HasForeignKey<EmailAccount>(ea => ea.Id)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Unique index on email
+                b.HasIndex(ea => ea.Email)
+                    .IsUnique();
             });
         }
     }
