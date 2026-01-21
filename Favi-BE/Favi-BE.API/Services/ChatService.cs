@@ -6,6 +6,7 @@ using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.API.Models.Enums;
 using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Repositories;
+using Favi_BE.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -22,8 +23,9 @@ namespace Favi_BE.API.Services
         private readonly IUserConversationRepository _userConversations;
         private readonly IProfileRepository _profiles;
         private readonly ILogger<ChatService> _logger;
+        private readonly IPostService _postService;
 
-        public ChatService(IUnitOfWork uow, ILogger<ChatService> logger)
+        public ChatService(IUnitOfWork uow, ILogger<ChatService> logger, IPostService postService)
         {
             _uow = uow;
             _conversations = uow.Conversations;
@@ -31,6 +33,7 @@ namespace Favi_BE.API.Services
             _userConversations = uow.UserConversations;
             _profiles = uow.Profiles;
             _logger = logger;
+            _postService = postService;
         }
 
         public async Task UpdateUserLastActiveAsync(Guid userId)
@@ -212,7 +215,11 @@ namespace Favi_BE.API.Services
             var skip = (page - 1) * pageSize;
             var (messages, total) = await _messages.GetMessagesForConversationAsync(conversationId, skip, pageSize);
 
-            var messageDtos = messages.Select(m => MapToMessageDto(m)).ToList();
+            var messageDtos = new List<MessageDto>();
+            foreach (var m in messages)
+            {
+                messageDtos.Add(await MapToMessageDtoAsync(m));
+            }
             
             // Update last read message
             if (messages.Any())
@@ -244,8 +251,8 @@ namespace Favi_BE.API.Services
                 if (userConv == null)
                     throw new UnauthorizedAccessException("Access denied to conversation");
 
-                if (string.IsNullOrWhiteSpace(dto.Content) && string.IsNullOrWhiteSpace(dto.MediaUrl))
-                    throw new ArgumentException("Message must have content or media");
+                if (string.IsNullOrWhiteSpace(dto.Content) && string.IsNullOrWhiteSpace(dto.MediaUrl) && dto.PostId == null)
+                    throw new ArgumentException("Message must have content, media, or post");
 
                 var message = new Message
                 {
@@ -254,6 +261,7 @@ namespace Favi_BE.API.Services
                     SenderId = currentProfileId,
                     Content = dto.Content?.Trim(),
                     MediaUrl = dto.MediaUrl?.Trim(),
+                    PostId = dto.PostId,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = null,
                     IsEdited = false
@@ -271,7 +279,7 @@ namespace Favi_BE.API.Services
 
                 await _uow.CompleteAsync();
 
-                return MapToMessageDto(message);
+                return await MapToMessageDtoAsync(message);
             }
             catch (Exception ex)
             {
@@ -294,8 +302,13 @@ namespace Favi_BE.API.Services
                 if (message == null || message.ConversationId != conversationId)
                     throw new ArgumentException("Invalid message");
 
+                // Update LastReadMessageId in UserConversation
                 userConv.LastReadMessageId = lastMessageId;
                 _userConversations.Update(userConv);
+
+                // Mark the specific message as read in MessageRead table
+                await _messages.MarkAsReadAsync(lastMessageId, currentProfileId);
+
                 await _uow.CompleteAsync();
             }
             catch (Exception ex)
@@ -319,7 +332,8 @@ namespace Favi_BE.API.Services
                     uc.ProfileId,
                     uc.Profile?.Username ?? "Unknown",
                     uc.Profile?.DisplayName,
-                    uc.Profile?.AvatarUrl
+                    uc.Profile?.AvatarUrl,
+                    uc.Profile?.LastActiveAt
                 )) ?? new List<ConversationMemberDto>();
 
             // Get last message for preview
@@ -327,11 +341,20 @@ namespace Favi_BE.API.Services
             string? lastMessagePreview = null;
             if (lastMessage != null)
             {
-                lastMessagePreview = !string.IsNullOrWhiteSpace(lastMessage.Content)
-                    ? (lastMessage.Content.Length > 50 
+                if (lastMessage.PostId.HasValue)
+                {
+                    lastMessagePreview = "[Post]";
+                }
+                else if (!string.IsNullOrWhiteSpace(lastMessage.Content))
+                {
+                    lastMessagePreview = lastMessage.Content.Length > 50
                         ? lastMessage.Content.Substring(0, 47) + "..."
-                        : lastMessage.Content)
-                    : "[Media]";
+                        : lastMessage.Content;
+                }
+                else
+                {
+                    lastMessagePreview = "[Media]";
+                }
             }
 
             // Get unread count
@@ -372,8 +395,41 @@ namespace Favi_BE.API.Services
             );
         }
 
-        private MessageDto MapToMessageDto(Message message)
+        private async Task<MessageDto> MapToMessageDtoAsync(Message message)
         {
+            // Get the profile IDs of users who have read this message
+            var readBy = message.ReadBy?.Select(mr => mr.ProfileId).ToArray() ?? Array.Empty<Guid>();
+
+            // Fetch post preview data if this message contains a shared post
+            PostPreviewDto? postPreview = null;
+            if (message.PostId.HasValue)
+            {
+                try
+                {
+                    var post = await _postService.GetByIdAsync(message.PostId.Value, null);
+                    if (post != null)
+                    {
+                        // Get the first media as thumbnail, or null if no media
+                        var thumbnailUrl = post.Medias?.FirstOrDefault()?.ThumbnailUrl ?? post.Medias?.FirstOrDefault()?.Url;
+                        var mediasCount = post.Medias?.Count() ?? 0;
+
+                        postPreview = new PostPreviewDto(
+                            post.Id,
+                            post.AuthorProfileId,
+                            post.Caption,
+                            thumbnailUrl,
+                            mediasCount,
+                            post.CreatedAt
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error fetching post preview for message {MessageId}, post {PostId}", message.Id, message.PostId);
+                    // Continue without post preview if fetch fails
+                }
+            }
+
             return new MessageDto(
                 message.Id,
                 message.ConversationId,
@@ -385,7 +441,9 @@ namespace Favi_BE.API.Services
                 message.MediaUrl,
                 message.CreatedAt,
                 message.UpdatedAt,
-                message.IsEdited
+                message.IsEdited,
+                readBy,
+                postPreview
             );
         }
     }

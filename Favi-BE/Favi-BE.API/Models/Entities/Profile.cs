@@ -34,5 +34,6 @@ namespace Favi_BE.Models.Entities
         public ICollection<Message> Messages { get; set; } = new List<Message>();
         public ICollection<UserConversation> UserConversations { get; set; } = new List<UserConversation>();
         public ICollection<Story> Stories { get; set; } = new List<Story>();
+        public ICollection<Repost> Reposts { get; set; } = new List<Repost>();
     }
 }

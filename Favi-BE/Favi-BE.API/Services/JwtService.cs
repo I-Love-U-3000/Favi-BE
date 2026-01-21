@@ -9,9 +9,9 @@ namespace Favi_BE.Services
 {
     public interface IJwtService
     {
-        string CreateAccessToken(int accountId, string role);
-        string CreateRefreshToken(int accountId, string role);
-        ClaimsPrincipal? ValidateRefresh(string token); 
+        string CreateAccessToken(Guid profileId, string username, string role);
+        string CreateRefreshToken(Guid profileId, string username, string role);
+        ClaimsPrincipal? ValidateRefresh(string token);
     }
 
     public class JwtService : IJwtService
@@ -39,23 +39,31 @@ namespace Favi_BE.Services
             };
         }
 
-        public string CreateAccessToken(int accountId, string role)
-            => CreateToken(accountId, role, "access", TimeSpan.FromMinutes(_opt.AccessMinutes));
+        public string CreateAccessToken(Guid profileId, string username, string role)
+            => CreateToken(profileId, username, role, "access", TimeSpan.FromMinutes(_opt.AccessMinutes));
 
-        public string CreateRefreshToken(int accountId, string role)
-            => CreateToken(accountId, role, "refresh", TimeSpan.FromDays(_opt.RefreshDays));
+        public string CreateRefreshToken(Guid profileId, string username, string role)
+            => CreateToken(profileId, username, role, "refresh", TimeSpan.FromDays(_opt.RefreshDays));
 
-        private string CreateToken(int accountId, string role, string type, TimeSpan ttl)
+        private string CreateToken(Guid profileId, string username, string role, string type, TimeSpan ttl)
         {
             var now = DateTime.UtcNow;
+            var jti = Guid.NewGuid().ToString();
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, profileId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, jti),
+                new Claim(JwtRegisteredClaimNames.UniqueName, username),
+                new Claim(ClaimTypes.NameIdentifier, profileId.ToString()),
+                new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.Role, role),
+                new Claim("type", type)
+            };
+
             var jwt = new JwtSecurityToken(
                 issuer: _opt.Issuer,
                 audience: _opt.Audience,
-                claims: new[] {
-                new Claim(JwtRegisteredClaimNames.Sub, accountId.ToString()),
-                new Claim(ClaimTypes.Role, role),
-                new Claim("type", type)
-                },
+                claims: claims,
                 notBefore: now,
                 expires: now.Add(ttl),
                 signingCredentials: _cred

@@ -21,7 +21,7 @@ namespace Favi_BE.Controllers
         [HttpPost("semantic")]
         public async Task<ActionResult<SearchResult>> SemanticSearch(SemanticSearchRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _search.SemanticSearchAsync(dto, userId);
             return Ok(result);
         }

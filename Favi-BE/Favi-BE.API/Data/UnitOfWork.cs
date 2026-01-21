@@ -1,4 +1,4 @@
-﻿using Favi_BE.Data.Repositories;
+using Favi_BE.Data.Repositories;
 using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -44,6 +44,9 @@ namespace Favi_BE.Data
             // Story entities
             Stories = new StoryRepository(_context);
             StoryViews = new StoryViewRepository(_context);
+
+            // Repost entities
+            Reposts = new RepostRepository(_context);
         }
 
         // Core entities
@@ -71,6 +74,7 @@ namespace Favi_BE.Data
         // Story entities
         public IStoryRepository Stories { get; private set; }
         public IStoryViewRepository StoryViews { get; private set; }
+        public IRepostRepository Reposts { get; private set; }
 
         public int Complete()
         {

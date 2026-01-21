@@ -26,7 +26,7 @@ namespace Favi_BE.Controllers
             if (profile is null)
                 return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
 
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             if (!await _privacy.CanViewProfileAsync(profile, viewerId))
                 return StatusCode(403, new { code = "PROFILE_FORBIDDEN", message = "Bạn không có quyền xem hồ sơ này." });
 
@@ -39,7 +39,7 @@ namespace Favi_BE.Controllers
         [HttpPut]
         public async Task<ActionResult<ProfileResponse>> Update(ProfileUpdateRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var updated = await _profiles.UpdateAsync(userId, dto);
             return updated is null
                 ? NotFound(new { code = "PROFILE_NOT_FOUND", message = "Không tìm thấy hồ sơ để cập nhật." })
@@ -51,7 +51,7 @@ namespace Favi_BE.Controllers
         [HttpPost("follow/{targetId}")]
         public async Task<IActionResult> Follow(Guid targetId)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var profile = await _profiles.GetEntityByIdAsync(targetId);
             if (profile is null)
                 return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ mục tiêu không tồn tại." });
@@ -68,7 +68,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("follow/{targetId}")]
         public async Task<IActionResult> Unfollow(Guid targetId)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _profiles.UnfollowAsync(userId, targetId);
             return ok ? Ok(new { message = "Đã bỏ theo dõi." }) : BadRequest(new { code = "UNFOLLOW_FAILED", message = "Bỏ theo dõi thất bại." });
         }
@@ -81,7 +81,7 @@ namespace Favi_BE.Controllers
             if (profile is null)
                 return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
 
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
                 return StatusCode(403, new { code = "FOLLOW_LIST_FORBIDDEN", message = "Bạn không có quyền xem danh sách người theo dõi." });
 
@@ -99,7 +99,7 @@ namespace Favi_BE.Controllers
             if (profile is null)
                 return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
 
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
                 return StatusCode(403, new { code = "FOLLOW_LIST_FORBIDDEN", message = "Bạn không có quyền xem danh sách đang theo dõi." });
 
@@ -121,7 +121,7 @@ namespace Favi_BE.Controllers
         [HttpGet("me/links")]
         public async Task<IActionResult> GetLinks()
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _profiles.GetSocialLinksAsync(userId));
         }
 
@@ -130,7 +130,7 @@ namespace Favi_BE.Controllers
         [HttpPost("links")]
         public async Task<IActionResult> AddLink(SocialLinkDto dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _profiles.AddSocialLinkAsync(userId, dto));
         }
 
@@ -139,7 +139,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("links/{linkId}")]
         public async Task<IActionResult> RemoveLink(Guid linkId)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _profiles.RemoveSocialLinkAsync(userId, linkId);
             return ok
                 ? Ok(new { message = "Đã xoá liên kết mạng xã hội." })
@@ -151,7 +151,7 @@ namespace Favi_BE.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete()
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return await _profiles.DeleteAsync(userId)
                 ? Ok(new { message = "Đã xoá tài khoản." })
                 : BadRequest(new { code = "DELETE_PROFILE_FAILED", message = "Không thể xoá tài khoản." });
@@ -185,7 +185,7 @@ namespace Favi_BE.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { code = "NO_FILE", message = "Không có file nào được gửi." });
 
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             // Đảm bảo profile tồn tại
             var profile = await _profiles.GetEntityByIdAsync(userId);
@@ -207,7 +207,7 @@ namespace Favi_BE.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { code = "NO_FILE", message = "Không có file nào được gửi." });
 
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             var profile = await _profiles.GetEntityByIdAsync(userId);
             if (profile is null)
@@ -225,7 +225,7 @@ namespace Favi_BE.Controllers
         [Authorize] // phải đăng nhập mới xem danh sách gợi ý
         public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetRecommendations([FromQuery] int skip = 0, [FromQuery] int take = 20)
         {
-            var viewerId = User.GetUserIdFromMetadata();
+            var viewerId = User.GetUserId();
 
             // Nếu chưa có profile cho user hiện tại thì trả về rỗng / 404 tuỳ bạn chọn
             var viewerProfile = await _profiles.GetEntityByIdAsync(viewerId);
@@ -239,6 +239,43 @@ namespace Favi_BE.Controllers
             // (Tạm thời chưa filter thêm theo privacy; khi user click vào từng profile
             // thì GetById vẫn check privacy, nên vẫn an toàn.)
             return Ok(items);
+        }
+
+        // Lấy danh sách bạn bè đang online
+        [HttpGet("online-friends")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetOnlineFriends([FromQuery] int withinLastMinutes = 15)
+        {
+            var userId = User.GetUserId();
+
+            // Nếu chưa có profile cho user hiện tại thì trả về rỗng
+            var viewerProfile = await _profiles.GetEntityByIdAsync(userId);
+            if (viewerProfile is null)
+            {
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ người dùng hiện tại không tồn tại." });
+            }
+
+            var items = await _profiles.GetOnlineFriendsAsync(userId, withinLastMinutes);
+            return Ok(items);
+        }
+
+        // Heartbeat endpoint để update LastActiveAt định kỳ
+        [HttpPost("heartbeat")]
+        [Authorize]
+        public async Task<IActionResult> Heartbeat()
+        {
+            var userId = User.GetUserId();
+
+            // Check if profile exists
+            var profile = await _profiles.GetEntityByIdAsync(userId);
+            if (profile is null)
+            {
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+            }
+
+            var lastActiveAt = await _profiles.UpdateLastActiveAsync(userId);
+
+            return Ok(new { message = "Heartbeat recorded.", lastActiveAt });
         }
     }
 }

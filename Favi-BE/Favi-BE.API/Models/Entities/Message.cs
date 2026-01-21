@@ -1,4 +1,5 @@
-﻿using Favi_BE.Models.Entities;
+﻿using Favi_BE.API.Models.Entities.JoinTables;
+using Favi_BE.Models.Entities;
 
 namespace Favi_BE.API.Models.Entities
 {
@@ -14,9 +15,13 @@ namespace Favi_BE.API.Models.Entities
 
         public string? Content { get; set; }
         public string? MediaUrl { get; set; }
+        public Guid? PostId { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public bool IsEdited { get; set; }
+
+        // Navigation property for message reads
+        public ICollection<MessageRead> ReadBy { get; set; } = new List<MessageRead>();
     }
 }

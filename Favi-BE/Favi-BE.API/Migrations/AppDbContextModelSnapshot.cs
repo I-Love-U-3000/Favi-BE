@@ -45,6 +45,26 @@ namespace Favi_BE.Migrations
                     b.ToTable("Conversations");
                 });
 
+            modelBuilder.Entity("Favi_BE.API.Models.Entities.JoinTables.MessageRead", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("MessageId", "ProfileId");
+
+                    b.HasIndex("ProfileId");
+
+                    b.HasIndex("MessageId", "ReadAt");
+
+                    b.ToTable("MessageReads");
+                });
+
             modelBuilder.Entity("Favi_BE.API.Models.Entities.JoinTables.UserConversation", b =>
                 {
                     b.Property<Guid>("ConversationId")
@@ -93,6 +113,9 @@ namespace Favi_BE.Migrations
                     b.Property<string>("MediaUrl")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("PostId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("SenderId")
                         .HasColumnType("uuid");
 
@@ -106,6 +129,39 @@ namespace Favi_BE.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("Favi_BE.API.Models.Entities.Repost", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Caption")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OriginalPostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OriginalPostId");
+
+                    b.HasIndex("ProfileId", "CreatedAt");
+
+                    b.HasIndex("ProfileId", "OriginalPostId")
+                        .IsUnique();
+
+                    b.ToTable("Reposts");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>
@@ -196,6 +252,9 @@ namespace Favi_BE.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("MediaUrl")
+                        .HasColumnType("text");
+
                     b.Property<Guid?>("ParentCommentId")
                         .HasColumnType("uuid");
 
@@ -203,6 +262,9 @@ namespace Favi_BE.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RepostId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -216,7 +278,38 @@ namespace Favi_BE.Migrations
 
                     b.HasIndex("ProfileId");
 
+                    b.HasIndex("RepostId");
+
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("Favi_BE.Models.Entities.EmailAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("EmailVerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("EmailAccounts");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.Follow", b =>
@@ -288,12 +381,17 @@ namespace Favi_BE.Migrations
                     b.Property<Guid>("ProfileId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("RepostId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProfileId");
+
+                    b.HasIndex("RepostId");
 
                     b.HasIndex("CollectionId", "ProfileId")
                         .IsUnique();
@@ -689,6 +787,25 @@ namespace Favi_BE.Migrations
                     b.ToTable("UserModerations");
                 });
 
+            modelBuilder.Entity("Favi_BE.API.Models.Entities.JoinTables.MessageRead", b =>
+                {
+                    b.HasOne("Favi_BE.API.Models.Entities.Message", "Message")
+                        .WithMany("ReadBy")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Favi_BE.Models.Entities.Profile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("Profile");
+                });
+
             modelBuilder.Entity("Favi_BE.API.Models.Entities.JoinTables.UserConversation", b =>
                 {
                     b.HasOne("Favi_BE.API.Models.Entities.Conversation", "Conversation")
@@ -734,6 +851,25 @@ namespace Favi_BE.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("Favi_BE.API.Models.Entities.Repost", b =>
+                {
+                    b.HasOne("Favi_BE.Models.Entities.Post", "OriginalPost")
+                        .WithMany("Reposts")
+                        .HasForeignKey("OriginalPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Favi_BE.Models.Entities.Profile", "Profile")
+                        .WithMany("Reposts")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OriginalPost");
+
+                    b.Navigation("Profile");
+                });
+
             modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>
                 {
                     b.HasOne("Favi_BE.Models.Entities.Profile", "Admin")
@@ -775,9 +911,27 @@ namespace Favi_BE.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Favi_BE.API.Models.Entities.Repost", "Repost")
+                        .WithMany("Comments")
+                        .HasForeignKey("RepostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.Navigation("ParentComment");
 
                     b.Navigation("Post");
+
+                    b.Navigation("Profile");
+
+                    b.Navigation("Repost");
+                });
+
+            modelBuilder.Entity("Favi_BE.Models.Entities.EmailAccount", b =>
+                {
+                    b.HasOne("Favi_BE.Models.Entities.Profile", "Profile")
+                        .WithOne()
+                        .HasForeignKey("Favi_BE.Models.Entities.EmailAccount", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Profile");
                 });
@@ -862,6 +1016,11 @@ namespace Favi_BE.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Favi_BE.API.Models.Entities.Repost", "Repost")
+                        .WithMany("Reactions")
+                        .HasForeignKey("RepostId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.Navigation("Collection");
 
                     b.Navigation("Comment");
@@ -869,6 +1028,8 @@ namespace Favi_BE.Migrations
                     b.Navigation("Post");
 
                     b.Navigation("Profile");
+
+                    b.Navigation("Repost");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.JoinTables.StoryView", b =>
@@ -1011,6 +1172,18 @@ namespace Favi_BE.Migrations
                     b.Navigation("UserConversations");
                 });
 
+            modelBuilder.Entity("Favi_BE.API.Models.Entities.Message", b =>
+                {
+                    b.Navigation("ReadBy");
+                });
+
+            modelBuilder.Entity("Favi_BE.API.Models.Entities.Repost", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Reactions");
+                });
+
             modelBuilder.Entity("Favi_BE.Models.Entities.AdminAction", b =>
                 {
                     b.Navigation("UserModerations");
@@ -1041,6 +1214,8 @@ namespace Favi_BE.Migrations
                     b.Navigation("PostTags");
 
                     b.Navigation("Reactions");
+
+                    b.Navigation("Reposts");
                 });
 
             modelBuilder.Entity("Favi_BE.Models.Entities.Profile", b =>
@@ -1058,6 +1233,8 @@ namespace Favi_BE.Migrations
                     b.Navigation("Reactions");
 
                     b.Navigation("Reports");
+
+                    b.Navigation("Reposts");
 
                     b.Navigation("SocialLinks");
 

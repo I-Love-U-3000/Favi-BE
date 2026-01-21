@@ -434,5 +434,70 @@ namespace Favi_BE.Services
 
             return list;
         }
+
+        public async Task<IEnumerable<ProfileResponse>> GetOnlineFriendsAsync(Guid profileId, int withinLastMinutes = 15)
+        {
+            // Get the users that this profile follows (their "friends")
+            var followings = await _uow.Follows.GetFollowingAsync(profileId, 0, 1000);
+
+            // Calculate the online threshold
+            var onlineThreshold = DateTime.UtcNow.AddMinutes(-withinLastMinutes);
+            var list = new List<ProfileResponse>();
+
+            foreach (var follow in followings)
+            {
+                var friendProfile = await _uow.Profiles.GetByIdAsync(follow.FolloweeId);
+                if (friendProfile is null) continue;
+
+                // Check if the friend is online (within the threshold)
+                if (friendProfile.LastActiveAt.HasValue && friendProfile.LastActiveAt >= onlineThreshold)
+                {
+                    // Get follower/following counts
+                    var followers = await _uow.Follows.GetFollowersCountAsync(friendProfile.Id);
+                    var friendFollowingsCount = await _uow.Follows.GetFollowingCountAsync(friendProfile.Id);
+
+                    list.Add(new ProfileResponse(
+                        friendProfile.Id,
+                        friendProfile.Username,
+                        friendProfile.DisplayName,
+                        friendProfile.Bio,
+                        friendProfile.AvatarUrl,
+                        friendProfile.CoverUrl,
+                        friendProfile.CreatedAt,
+                        friendProfile.LastActiveAt ?? DateTime.MinValue,
+                        friendProfile.PrivacyLevel,
+                        friendProfile.FollowPrivacyLevel,
+                        friendProfile.IsBanned,
+                        friendProfile.BannedUntil,
+                        followers,
+                        friendFollowingsCount
+                    ));
+                }
+            }
+
+            // Sort by last active (most recent first)
+            return list.OrderByDescending(p => p.LastActiveAt);
+        }
+
+        public async Task<DateTime> UpdateLastActiveAsync(Guid profileId)
+        {
+            try
+            {
+                var profile = await _uow.Profiles.GetByIdAsync(profileId);
+                if (profile is null)
+                    throw new ArgumentException("Profile not found");
+
+                profile.LastActiveAt = DateTime.UtcNow;
+                _uow.Profiles.Update(profile);
+                await _uow.CompleteAsync();
+
+                return profile.LastActiveAt.Value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating last active time for profile {ProfileId}", profileId);
+                throw;
+            }
+        }
     }
 }

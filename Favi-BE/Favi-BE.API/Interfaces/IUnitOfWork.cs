@@ -30,6 +30,7 @@ namespace Favi_BE.Interfaces
         IUserConversationRepository UserConversations { get; }
         IStoryRepository Stories { get; }
         IStoryViewRepository StoryViews { get; }
+        IRepostRepository Reposts { get; }
 
         // Transaction management
         int Complete();

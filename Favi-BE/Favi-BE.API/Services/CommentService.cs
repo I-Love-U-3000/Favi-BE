@@ -21,7 +21,7 @@ namespace Favi_BE.Services
             _auditService = auditService;
         }
 
-        public async Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId)
+        public async Task<CommentResponse> CreateAsync(Guid postId, Guid authorId, string content, Guid? parentId, string? mediaUrl = null)
         {
             var comment = new Comment
             {
@@ -29,6 +29,7 @@ namespace Favi_BE.Services
                 PostId = postId,
                 ProfileId = authorId,
                 Content = content,
+                MediaUrl = mediaUrl,
                 ParentCommentId = parentId,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -46,6 +47,7 @@ namespace Favi_BE.Services
                 comment.PostId,
                 comment.ProfileId,
                 comment.Content,
+                comment.MediaUrl,
                 comment.CreatedAt,
                 comment.UpdatedAt,
                 comment.ParentCommentId,
@@ -65,12 +67,13 @@ namespace Favi_BE.Services
 
             var summary = await BuildReactionSummaryAsync(comment.Id, requesterId);
 
-            return new CommentResponse(comment.Id, 
-                comment.PostId, 
-                comment.ProfileId, 
-                comment.Content, 
-                comment.CreatedAt, 
-                comment.UpdatedAt, 
+            return new CommentResponse(comment.Id,
+                comment.PostId,
+                comment.ProfileId,
+                comment.Content,
+                comment.MediaUrl,
+                comment.CreatedAt,
+                comment.UpdatedAt,
                 comment.ParentCommentId,
                 Reactions: summary);
         }
@@ -104,6 +107,7 @@ namespace Favi_BE.Services
                     c.PostId,
                     c.ProfileId,
                     c.Content,
+                    c.MediaUrl,
                     c.CreatedAt,
                     c.UpdatedAt,
                     c.ParentCommentId,
@@ -150,12 +154,13 @@ namespace Favi_BE.Services
             var comment = await _uow.Comments.GetByIdAsync(commentId);
             if (comment is null) return null;
             var summary = await BuildReactionSummaryAsync(comment.Id, currentUserId);
-            return new CommentResponse(comment.Id, 
-                comment.PostId, 
-                comment.ProfileId, 
-                comment.Content, 
-                comment.CreatedAt, 
-                comment.UpdatedAt, 
+            return new CommentResponse(comment.Id,
+                comment.PostId,
+                comment.ProfileId,
+                comment.Content,
+                comment.MediaUrl,
+                comment.CreatedAt,
+                comment.UpdatedAt,
                 comment.ParentCommentId,
                 Reactions: summary);
         }

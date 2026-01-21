@@ -1,4 +1,5 @@
-﻿using Favi_BE.Common;
+﻿using Favi_BE.API.Models.Dtos;
+using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
@@ -14,27 +15,29 @@ namespace Favi_BE.Controllers
         private readonly ICommentService _comments;
         private readonly IPostService _posts;
         private readonly IPrivacyGuard _privacy;
+        private readonly ICloudinaryService _cloudinary;
 
-        public CommentsController(ICommentService comments, IPostService posts, IPrivacyGuard privacy)
+        public CommentsController(ICommentService comments, IPostService posts, IPrivacyGuard privacy, ICloudinaryService cloudinary)
         {
             _comments = comments;
             _posts = posts;
             _privacy = privacy;
+            _cloudinary = cloudinary;
         }
 
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<CommentResponse>> Create(CreateCommentRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
-            return Ok(await _comments.CreateAsync(dto.PostId, userId, dto.Content, dto.ParentCommentId));
+            var userId = User.GetUserId();
+            return Ok(await _comments.CreateAsync(dto.PostId, userId, dto.Content, dto.ParentCommentId, dto.MediaUrl));
         }
 
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, UpdateCommentRequest dto)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var result = await _comments.UpdateAsync(id, userId, dto.Content);
             return result is null
                 ? NotFound(new { code = "COMMENT_NOT_FOUND_OR_FORBIDDEN", message = "Không tìm thấy bình luận hoặc bạn không có quyền sửa." })
@@ -44,7 +47,7 @@ namespace Favi_BE.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             var ok = await _comments.DeleteAsync(id, userId);
             return ok
                 ? Ok(new { message = "Đã xoá bình luận." })
@@ -54,7 +57,7 @@ namespace Favi_BE.Controllers
         [HttpGet("post/{postId}")]
         public async Task<ActionResult<PagedResult<CommentResponse>>> GetByPost(Guid postId, int page = 1, int pageSize = 20)
         {
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserIdFromMetadata() : (Guid?)null;
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             var post = await _posts.GetEntityAsync(postId);
 
             if (post == null)
@@ -70,7 +73,7 @@ namespace Favi_BE.Controllers
         [HttpPost("{id:guid}/reactions")]
         public async Task<ActionResult> ToggleReaction(Guid id, [FromQuery] string type)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
 
             if (!Enum.TryParse<ReactionType>(type, true, out var reactionType))
                 return BadRequest(new { code = "INVALID_REACTION_TYPE", message = $"Giá trị reaction '{type}' không hợp lệ." });
@@ -86,6 +89,34 @@ namespace Favi_BE.Controllers
                 return Ok(new { removed = true, message = "Reaction đã được gỡ." });
 
             return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
+        }
+
+        [Authorize]
+        [HttpPost("upload-image")]
+        public async Task<ActionResult<ChatImageUploadResponse>> UploadImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No file uploaded" });
+
+            if (!file.ContentType.StartsWith("image/"))
+                return BadRequest(new { message = "Only image files are allowed" });
+
+            const long maxFileSize = 10 * 1024 * 1024;
+            if (file.Length > maxFileSize)
+                return BadRequest(new { message = "File size must be less than 10MB" });
+
+            var uploadResult = await _cloudinary.TryUploadAsync(file, CancellationToken.None, "favi_comments");
+
+            if (uploadResult == null)
+                return StatusCode(500, new { message = "Failed to upload image" });
+
+            return Ok(new ChatImageUploadResponse(
+                uploadResult.Url,
+                uploadResult.PublicId,
+                uploadResult.Width,
+                uploadResult.Height,
+                uploadResult.Format
+            ));
         }
     }
 }

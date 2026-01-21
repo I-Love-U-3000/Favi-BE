@@ -38,7 +38,7 @@ public class AdminUsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserModerationResponse>> Ban(Guid profileId, BanUserRequest request)
     {
-        var adminId = User.GetUserIdFromMetadata();
+        var adminId = User.GetUserId();
         var response = await _moderationService.BanAsync(profileId, adminId, request);
         if (response is null)
             return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Không tìm thấy hồ sơ." });
@@ -54,7 +54,7 @@ public class AdminUsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Unban(Guid profileId, [FromBody] UnbanUserRequest? request = null)
     {
-        var adminId = User.GetUserIdFromMetadata();
+        var adminId = User.GetUserId();
         var ok = await _moderationService.UnbanAsync(profileId, adminId, request?.Reason);
         if (!ok)
             return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Không tìm thấy hồ sơ hoặc người dùng không bị ban." });
@@ -70,7 +70,7 @@ public class AdminUsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserModerationResponse>> Warn(Guid profileId, WarnUserRequest request)
     {
-        var adminId = User.GetUserIdFromMetadata();
+        var adminId = User.GetUserId();
         var response = await _moderationService.WarnAsync(profileId, adminId, request);
         if (response is null)
             return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Không tìm thấy hồ sơ." });

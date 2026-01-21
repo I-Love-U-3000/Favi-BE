@@ -1,4 +1,5 @@
-﻿using Favi_BE.Models.Entities.JoinTables;
+﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
 using System.Xml.Linq;
 
@@ -28,5 +29,6 @@ namespace Favi_BE.Models.Entities
         public ICollection<PostCollection> PostCollections { get; set; } = new List<PostCollection>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public ICollection<Reaction> Reactions { get; set; } = new List<Reaction>();
+        public ICollection<Repost> Reposts { get; set; } = new List<Repost>();
     }
 }

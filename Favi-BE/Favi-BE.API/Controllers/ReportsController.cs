@@ -27,7 +27,7 @@ namespace Favi_BE.Controllers
         [HttpPost]
         public async Task<ActionResult<ReportResponse>> Create(CreateReportRequest dto)
         {
-            var reporterId = User.GetUserIdFromMetadata();
+            var reporterId = User.GetUserId();
             if (!await _privacy.CanReportAsync(dto.TargetType, dto.TargetId, reporterId))
                 return StatusCode(403, new { code = "REPORT_FORBIDDEN", message = "Bạn không thể báo cáo nội dung này." });
 
@@ -42,7 +42,7 @@ namespace Favi_BE.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStatus(Guid id, UpdateReportStatusRequest dto)
         {
-            var adminId = User.GetUserIdFromMetadata();
+            var adminId = User.GetUserId();
             var ok = await _reports.UpdateStatusAsync(id, dto, adminId);
             return ok
                 ? Ok(new { message = "Đã cập nhật trạng thái báo cáo." })
@@ -53,7 +53,7 @@ namespace Favi_BE.Controllers
         [HttpGet("my")]
         public async Task<ActionResult<PagedResult<ReportResponse>>> GetMyReports(int page = 1, int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             return Ok(await _reports.GetReportsByReporterIdAsync(userId, page, pageSize));
         }
 
@@ -62,7 +62,7 @@ namespace Favi_BE.Controllers
         [HttpGet("target/{targetId}")]
         public async Task<ActionResult<PagedResult<ReportResponse>>> GetReportsByTarget(Guid targetId, int page = 1, int pageSize = 20)
         {
-            var userId = User.GetUserIdFromMetadata();
+            var userId = User.GetUserId();
             if (userId != targetId && !User.IsInRole("admin"))
                 return StatusCode(403, new { code = "REPORT_LIST_FORBIDDEN", message = "Bạn không có quyền xem báo cáo cho mục tiêu này." });
 

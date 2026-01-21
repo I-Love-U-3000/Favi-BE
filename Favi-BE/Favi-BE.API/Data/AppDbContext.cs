@@ -27,9 +27,12 @@ namespace Favi_BE.Data
         public DbSet<Conversation> Conversations { get; set; } = default!;
         public DbSet<Message> Messages { get; set; } = default!;
         public DbSet<UserConversation> UserConversations { get; set; } = default!;
+        public DbSet<MessageRead> MessageReads { get; set; } = default!;
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Story> Stories { get; set; }
         public DbSet<StoryView> StoryViews { get; set; }
+        public DbSet<Repost> Reposts { get; set; }
+        public DbSet<EmailAccount> EmailAccounts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -60,6 +63,13 @@ namespace Favi_BE.Data
                 .HasOne(c => c.Post)
                 .WithMany(p => p.Comments)
                 .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Comment -> Repost (optional)
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Repost)
+                .WithMany(r => r.Comments)
+                .HasForeignKey(c => c.RepostId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Comment>()
@@ -117,6 +127,12 @@ namespace Favi_BE.Data
                     .HasForeignKey(r => r.PostId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Reaction -> Repost (optional)
+                entity.HasOne(r => r.Repost)
+                    .WithMany(r => r.Reactions)
+                    .HasForeignKey(r => r.RepostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
                 // Reaction -> Comment (optional)
                 entity.HasOne(r => r.Comment)
                     .WithMany(c => c.Reactions)
@@ -146,6 +162,9 @@ namespace Favi_BE.Data
                 // Mỗi profile chỉ được react 1 lần trên 1 collection
                 entity.HasIndex(r => new { r.CollectionId, r.ProfileId })
                     .IsUnique();
+
+                // Note: We don't enforce unique index for RepostId because PostgreSQL doesn't support
+                // filtered unique indexes easily. The application layer will handle duplicate prevention.
             });
 
             // ===== Follow (self-ref Profile) =====
@@ -331,6 +350,89 @@ namespace Favi_BE.Data
                     .WithMany()
                     .HasForeignKey(sv => sv.ViewerProfileId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ===== MessageRead =====
+            modelBuilder.Entity<MessageRead>(b =>
+            {
+                b.HasKey(mr => new { mr.MessageId, mr.ProfileId });
+
+                b.Property(mr => mr.ReadAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.HasOne(mr => mr.Message)
+                    .WithMany(m => m.ReadBy)
+                    .HasForeignKey(mr => mr.MessageId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                b.HasOne(mr => mr.Profile)
+                    .WithMany()
+                    .HasForeignKey(mr => mr.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Index for queries
+                b.HasIndex(mr => new { mr.MessageId, mr.ReadAt });
+            });
+
+            // ===== Repost =====
+            modelBuilder.Entity<Repost>(b =>
+            {
+                b.HasKey(r => r.Id);
+
+                b.Property(r => r.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+                b.Property(r => r.UpdatedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                // Repost -> Profile (sharer)
+                b.HasOne(r => r.Profile)
+                    .WithMany(p => p.Reposts)
+                    .HasForeignKey(r => r.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Repost -> Post (original post)
+                b.HasOne(r => r.OriginalPost)
+                    .WithMany(p => p.Reposts)
+                    .HasForeignKey(r => r.OriginalPostId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Each profile can only repost a specific post once
+                b.HasIndex(r => new { r.ProfileId, r.OriginalPostId })
+                    .IsUnique();
+
+                // Index for queries
+                b.HasIndex(r => new { r.ProfileId, r.CreatedAt });
+                b.HasIndex(r => r.OriginalPostId);
+            });
+
+            // ===== EmailAccount =====
+            modelBuilder.Entity<EmailAccount>(b =>
+            {
+                b.HasKey(ea => ea.Id);
+
+                b.Property(ea => ea.Email)
+                    .IsRequired()
+                    .HasMaxLength(256);
+
+                b.Property(ea => ea.PasswordHash)
+                    .IsRequired()
+                    .HasMaxLength(512);
+
+                b.Property(ea => ea.CreatedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                b.Property(ea => ea.EmailVerifiedAt)
+                    .HasColumnType("timestamp with time zone");
+
+                // One-to-one relationship with Profile
+                b.HasOne(ea => ea.Profile)
+                    .WithOne()
+                    .HasForeignKey<EmailAccount>(ea => ea.Id)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Unique index on email
+                b.HasIndex(ea => ea.Email)
+                    .IsUnique();
             });
         }
     }
