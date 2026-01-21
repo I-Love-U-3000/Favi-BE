@@ -206,6 +206,30 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+    // Check for inconsistent database state (tables exist but no migration history)
+    var appliedMigrations = await db.Database.GetAppliedMigrationsAsync();
+    var hasMigrationHistory = appliedMigrations.Any();
+    var hasTables = false;
+    try
+    {
+        // Try to query the Profiles table to see if tables exist
+        await db.Profiles.Take(1).ToListAsync();
+        hasTables = true;
+    }
+    catch
+    {
+        hasTables = false;
+    }
+
+    // If tables exist but no migration history, we need to reset
+    if (hasTables && !hasMigrationHistory)
+    {
+        Console.WriteLine("[Migrate] Database is in inconsistent state (tables exist but no migration history).");
+        Console.WriteLine("[Migrate] Dropping and recreating database...");
+        await db.Database.EnsureDeletedAsync();
+        Console.WriteLine("[Migrate] Database dropped. Creating fresh schema...");
+    }
+
     // (Khuyến nghị) chờ Postgres sẵn sàng + retry vài lần
     var retries = 0;
     const int maxRetries = 10;
@@ -223,6 +247,9 @@ using (var scope = app.Services.CreateScope())
             await Task.Delay(2000);
         }
     }
+
+    // Seed data if database is empty
+    await Favi_BE.API.Data.SeedData.InitializeAsync(app.Services);
 }
 
 // Configure the HTTP request pipeline.
