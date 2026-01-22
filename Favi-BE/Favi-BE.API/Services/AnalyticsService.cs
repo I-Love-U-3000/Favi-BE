@@ -188,7 +188,10 @@ namespace Favi_BE.Services
                 var commentsCountPerPost = allComments.GroupBy(c => c.PostId).ToDictionary(g => g.Key, g => g.Count());
 
                 var allReactions = await _uow.Reactions.GetAllAsync();
-                var reactionsCountPerPost = allReactions.GroupBy(r => r.PostId).ToDictionary(g => g.Key, g => g.Count());
+                var reactionsCountPerPost = allReactions
+                    .Where(r => r.PostId.HasValue)
+                    .GroupBy(r => r.PostId!.Value)
+                    .ToDictionary(g => g.Key, g => g.Count());
 
                 var dtos = items.Select(p => profileDict.TryGetValue(p.ProfileId, out var profile)
                     ? new AnalyticsPostDto(

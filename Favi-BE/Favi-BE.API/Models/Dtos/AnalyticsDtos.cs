@@ -48,4 +48,30 @@ namespace Favi_BE.Models.Dtos
         int Page = 1,
         int PageSize = 20
     );
+
+    public record AnalyticsCommentDto(
+        Guid Id,
+        string Content,
+        Guid PostId,
+        AnalyticsCommentPostDto? Post,
+        AnalyticsCommentAuthorDto Author,
+        Guid? ParentId,
+        int LikeCount,
+        int ReplyCount,
+        string Status,
+        DateTime CreatedAt
+    );
+
+    public record AnalyticsCommentPostDto(
+        Guid Id,
+        string? Caption,
+        AnalyticsCommentAuthorDto? Author
+    );
+
+    public record AnalyticsCommentAuthorDto(
+        Guid Id,
+        string Username,
+        string? DisplayName,
+        string? Avatar
+    );
 }

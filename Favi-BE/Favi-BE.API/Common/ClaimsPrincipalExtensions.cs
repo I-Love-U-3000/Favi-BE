@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Favi_BE.Common;
 
 namespace Favi_BE.Common
 {
@@ -44,6 +45,14 @@ namespace Favi_BE.Common
                 throw new UnauthorizedAccessException("Missing username claim.");
 
             return username;
+        }
+
+        public static Guid GetUserIdFromMetadata(this ClaimsPrincipal user)
+        {
+            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier) ?? user.FindFirst("sub");
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+                throw new InvalidOperationException("User ID claim is missing or invalid.");
+            return userId;
         }
     }
 }

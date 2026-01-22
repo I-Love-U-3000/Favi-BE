@@ -200,6 +200,7 @@ namespace Favi_BE.API.Data
             await SeedSocialLinksAsync(context, profiles);
             await SeedConversationsAsync(context, profiles);
             await SeedNotificationsAsync(context, profiles, posts, comments);
+            await SeedReportsAsync(context, profiles, posts, comments);
 
             Console.WriteLine("[SeedData] Database seeded successfully!");
         }
@@ -209,6 +210,7 @@ namespace Favi_BE.API.Data
             Console.WriteLine("[SeedData] Clearing existing data...");
 
             // Order matters - delete children first, then parents
+            await context.Reports.ExecuteDeleteAsync();
             await context.Notifications.ExecuteDeleteAsync();
             await context.MessageReads.ExecuteDeleteAsync();
             await context.Messages.ExecuteDeleteAsync();
@@ -908,6 +910,82 @@ namespace Favi_BE.API.Data
             await context.Notifications.AddRangeAsync(notifications);
             await context.SaveChangesAsync();
             Console.WriteLine($"[SeedData] Created {notifications.Count} notifications.");
+        }
+
+        private static async Task SeedReportsAsync(AppDbContext context, List<Profile> profiles, List<Post> posts, List<Comment> comments)
+        {
+            Console.WriteLine("[SeedData] Seeding Reports...");
+            var reports = new List<Report>();
+            var now = DateTime.UtcNow;
+
+            var reportReasons = new[] {
+                "Spam or misleading",
+                "Violence or sensitive content",
+                "Harassment",
+                "Intellectual property violation",
+                "Hate speech",
+                "Inappropriate images"
+            };
+
+            // 1. Report Posts (10 reports)
+            for (int i = 0; i < 10; i++)
+            {
+                var target = posts[_random.Next(posts.Count)];
+                var reporter = profiles.Where(p => p.Id != target.ProfileId).OrderBy(x => _random.Next()).First();
+
+                reports.Add(new Report
+                {
+                    Id = Guid.NewGuid(),
+                    ReporterId = reporter.Id,
+                    TargetType = ReportTarget.Post,
+                    TargetId = target.Id,
+                    Reason = reportReasons[_random.Next(reportReasons.Length)],
+                    Status = (ReportStatus)_random.Next(0, 3), // Pending, Resolved, Rejected
+                    CreatedAt = target.CreatedAt.AddHours(_random.Next(1, 72)),
+                    ActedAt = null
+                });
+            }
+
+            // 2. Report Comments (5 reports)
+            for (int i = 0; i < 5; i++)
+            {
+                if (!comments.Any()) break;
+                var target = comments[_random.Next(comments.Count)];
+                var reporter = profiles.Where(p => p.Id != target.ProfileId).OrderBy(x => _random.Next()).First();
+
+                reports.Add(new Report
+                {
+                    Id = Guid.NewGuid(),
+                    ReporterId = reporter.Id,
+                    TargetType = ReportTarget.Comment,
+                    TargetId = target.Id,
+                    Reason = reportReasons[_random.Next(reportReasons.Length)],
+                    Status = ReportStatus.Pending,
+                    CreatedAt = target.CreatedAt.AddHours(_random.Next(1, 24))
+                });
+            }
+
+            // 3. Report Users (5 reports)
+            for (int i = 0; i < 5; i++)
+            {
+                var target = profiles[_random.Next(profiles.Count)];
+                var reporter = profiles.Where(p => p.Id != target.Id).OrderBy(x => _random.Next()).First();
+
+                reports.Add(new Report
+                {
+                    Id = Guid.NewGuid(),
+                    ReporterId = reporter.Id,
+                    TargetType = ReportTarget.User,
+                    TargetId = target.Id,
+                    Reason = "Suspicious activity or bot behavior",
+                    Status = ReportStatus.Pending,
+                    CreatedAt = now.AddDays(-_random.Next(1, 7))
+                });
+            }
+
+            await context.Reports.AddRangeAsync(reports);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"[SeedData] Created {reports.Count} reports.");
         }
     }
 }

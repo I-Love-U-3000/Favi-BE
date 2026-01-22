@@ -279,5 +279,110 @@ namespace Favi_BE.Services
             await _uow.CompleteAsync();
             return true;
         }
+        
+        public async Task<PagedResult<AnalyticsCommentDto>> GetAllAsync(
+            string? search, 
+            Guid? postId, 
+            Guid? authorId, 
+            string? status, 
+            DateTime? startDate, 
+            DateTime? endDate, 
+            int page, 
+            int pageSize)
+        {
+            var query = await _uow.Comments.GetAllAsync();
+            var queryable = query.AsQueryable();
+
+            // Filter by search
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                queryable = queryable.Where(c => c.Content != null && c.Content.ToLower().Contains(searchLower));
+            }
+
+            // Filter by postId
+            if (postId.HasValue)
+            {
+                queryable = queryable.Where(c => c.PostId == postId.Value);
+            }
+
+            // Filter by authorId
+            if (authorId.HasValue)
+            {
+                queryable = queryable.Where(c => c.ProfileId == authorId.Value);
+            }
+
+            // Filter by date range
+            if (startDate.HasValue)
+            {
+                queryable = queryable.Where(c => c.CreatedAt >= startDate.Value);
+            }
+            if (endDate.HasValue)
+            {
+                queryable = queryable.Where(c => c.CreatedAt <= endDate.Value);
+            }
+
+            var total = queryable.Count();
+            var skip = (page - 1) * pageSize;
+            var items = queryable
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToList();
+
+            var allProfiles = await _uow.Profiles.GetAllAsync();
+            var profileDict = allProfiles.ToDictionary(p => p.Id, p => p);
+            
+            var allPosts = await _uow.Posts.GetAllAsync();
+            var postDict = allPosts.ToDictionary(p => p.Id, p => p);
+
+            var allReactions = await _uow.Reactions.GetAllAsync();
+            var reactionsPerComment = allReactions
+                .Where(r => r.CommentId.HasValue)
+                .GroupBy(r => r.CommentId!.Value)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var allComments = await _uow.Comments.GetAllAsync();
+            var repliesPerComment = allComments
+                .Where(c => c.ParentCommentId.HasValue)
+                .GroupBy(c => c.ParentCommentId!.Value)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var dtos = items.Select(c => {
+                profileDict.TryGetValue(c.ProfileId, out var author);
+                postDict.TryGetValue(c.PostId, out var post);
+                Profile? postAuthor = null;
+                if (post != null) profileDict.TryGetValue(post.ProfileId, out postAuthor);
+
+                return new AnalyticsCommentDto(
+                    c.Id,
+                    c.Content,
+                    c.PostId,
+                    post != null ? new AnalyticsCommentPostDto(
+                        post.Id,
+                        post.Caption,
+                        postAuthor != null ? new AnalyticsCommentAuthorDto(
+                            postAuthor.Id,
+                            postAuthor.Username,
+                            postAuthor.DisplayName,
+                            postAuthor.AvatarUrl
+                        ) : null
+                    ) : null,
+                    new AnalyticsCommentAuthorDto(
+                        author?.Id ?? Guid.Empty,
+                        author?.Username ?? "N/A",
+                        author?.DisplayName,
+                        author?.AvatarUrl
+                    ),
+                    c.ParentCommentId,
+                    reactionsPerComment.GetValueOrDefault(c.Id, 0),
+                    repliesPerComment.GetValueOrDefault(c.Id, 0),
+                    "active", // Default status
+                    c.CreatedAt
+                );
+            }).ToList();
+
+            return new PagedResult<AnalyticsCommentDto>(dtos, page, pageSize, total);
+        }
     }
 }
