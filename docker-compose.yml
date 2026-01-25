@@ -92,6 +92,8 @@ services:
   redis:
     image: redis:7-alpine
     command: [ "redis-server", "--save", "", "--appendonly", "no" ]
+    ports:
+      - "6379:6379"
 
 volumes:
   favi_pgdata:

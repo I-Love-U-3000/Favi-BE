@@ -169,7 +169,22 @@ builder.Services.AddHealthChecks()
     .AddCheck<MemoryHealthCheck>(
         "memory",
         failureStatus: HealthStatus.Degraded,
-        tags: ["system", "memory"]);
+        tags: ["system", "memory"])
+    // Vector Index API health check
+    .AddCheck<VectorIndexHealthCheck>(
+        "vector-index-api",
+        failureStatus: HealthStatus.Degraded,
+        tags: ["external", "vector", "ai"])
+    // Qdrant health check
+    .AddCheck<QdrantHealthCheck>(
+        "qdrant",
+        failureStatus: HealthStatus.Degraded,
+        tags: ["external", "vector", "database"])
+    // Redis health check
+    .AddCheck<RedisHealthCheck>(
+        "redis",
+        failureStatus: HealthStatus.Degraded,
+        tags: ["external", "cache"]);
 
 // Add background services
 builder.Services.AddHostedService<PostCleanupService>();

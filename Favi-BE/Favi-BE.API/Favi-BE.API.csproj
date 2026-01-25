@@ -36,9 +36,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
     
     <!-- Health Checks Packages -->
-    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
-  </ItemGroup>
+      <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+      <PackageReference Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
+      <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+      <PackageReference Include="StackExchange.Redis" Version="2.8.41" />
+    </ItemGroup>
 
 </Project>
