@@ -55,5 +55,15 @@ namespace Favi_BE.Controllers
             await _notifications.MarkAllAsReadAsync(userId);
             return Ok(new { message = "All notifications marked as read." });
         }
+
+        [Authorize]
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteNotification(Guid id)
+        {
+            var userId = User.GetUserId();
+            var success = await _notifications.DeleteNotificationAsync(id, userId);
+            if (!success) return NotFound();
+            return NoContent();
+        }
     }
 }

@@ -224,6 +224,11 @@ namespace Favi_BE.Services
             }
         }
 
+        public async Task<bool> DeleteNotificationAsync(Guid notificationId, Guid userId)
+        {
+            return await _uow.Notifications.DeleteAsync(notificationId, userId);
+        }
+
         public async Task SendNotificationAsync(Guid recipientId, NotificationDto notification)
         {
             try
