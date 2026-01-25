@@ -28,4 +28,13 @@ namespace Favi_BE.Models.Dtos
     {
         public List<CommentResponse> Replies { get; init; } = new();
     }
+
+    public record CommentReactorResponse(
+        Guid ProfileId,
+        string Username,
+        string? DisplayName,
+        string? AvatarUrl,
+        ReactionType ReactionType,
+        DateTime CreatedAt
+    );
 }
