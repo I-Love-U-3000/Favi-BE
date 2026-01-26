@@ -78,16 +78,16 @@ public class AdminCommentsController : ControllerBase
     /// Get comment statistics
     /// </summary>
     [HttpGet("stats")]
+    [ProducesResponseType(typeof(CommentStatsDto), StatusCodes.Status200OK)]
     public async Task<ActionResult> GetStats()
     {
-        // Mocking stats for now as requested by frontend hooks
-        // In a real scenario, this would come from a service
+        var stats = await _commentService.GetStatsAsync();
         return Ok(new
         {
-            total = 100, // Placeholder
-            deleted = 5,
-            hidden = 2,
-            active = 93
+            total = stats.Total,
+            deleted = stats.Deleted,
+            hidden = stats.Hidden,
+            active = stats.Active
         });
     }
 }

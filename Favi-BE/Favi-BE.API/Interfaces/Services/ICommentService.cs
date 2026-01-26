@@ -23,5 +23,6 @@ namespace Favi_BE.Interfaces.Services
             DateTime? endDate,
             int page,
             int pageSize);
+        Task<CommentStatsDto> GetStatsAsync();
     }
 }

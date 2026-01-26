@@ -75,4 +75,11 @@ namespace Favi_BE.Models.Dtos
         string? DisplayName,
         string? Avatar
     );
+
+    public record CommentStatsDto(
+        int Total,
+        int Deleted,
+        int Hidden,
+        int Active
+    );
 }

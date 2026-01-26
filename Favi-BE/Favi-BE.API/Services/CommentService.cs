@@ -411,5 +411,21 @@ namespace Favi_BE.Services
 
             return new PagedResult<AnalyticsCommentDto>(dtos, page, pageSize, total);
         }
+
+        public async Task<CommentStatsDto> GetStatsAsync()
+        {
+            var allComments = await _uow.Comments.GetAllAsync();
+            var total = allComments.Count();
+
+            // For now, we don't have soft delete or hidden flags in Comment entity
+            // So all comments are considered "active"
+            // If you add IsDeleted or IsHidden properties to Comment entity later,
+            // you can calculate these properly here
+            var deleted = 0;
+            var hidden = 0;
+            var active = total;
+
+            return new CommentStatsDto(total, deleted, hidden, active);
+        }
     }
 }
