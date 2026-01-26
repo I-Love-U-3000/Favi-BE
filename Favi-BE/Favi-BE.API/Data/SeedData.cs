@@ -201,6 +201,7 @@ namespace Favi_BE.API.Data
             await SeedConversationsAsync(context, profiles);
             await SeedNotificationsAsync(context, profiles, posts, comments);
             await SeedReportsAsync(context, profiles, posts, comments);
+            await SeedUserModerationsAsync(context, profiles);
 
             Console.WriteLine("[SeedData] Database seeded successfully!");
         }
@@ -210,6 +211,8 @@ namespace Favi_BE.API.Data
             Console.WriteLine("[SeedData] Clearing existing data...");
 
             // Order matters - delete children first, then parents
+            await context.UserModerations.ExecuteDeleteAsync();
+            await context.AdminActions.ExecuteDeleteAsync();
             await context.Reports.ExecuteDeleteAsync();
             await context.Notifications.ExecuteDeleteAsync();
             await context.MessageReads.ExecuteDeleteAsync();
@@ -986,6 +989,205 @@ namespace Favi_BE.API.Data
             await context.Reports.AddRangeAsync(reports);
             await context.SaveChangesAsync();
             Console.WriteLine($"[SeedData] Created {reports.Count} reports.");
+        }
+
+        private static async Task SeedUserModerationsAsync(AppDbContext context, List<Profile> profiles)
+        {
+            Console.WriteLine("[SeedData] Seeding UserModerations...");
+            var adminActions = new List<AdminAction>();
+            var userModerations = new List<UserModeration>();
+            var now = DateTime.UtcNow;
+
+            // Get admin and moderator profiles
+            var adminProfile = profiles.FirstOrDefault(p => p.Role == UserRole.Admin);
+            var moderatorProfiles = profiles.Where(p => p.Role == UserRole.Moderator).ToList();
+            var regularUsers = profiles.Where(p => p.Role == UserRole.User).ToList();
+
+            if (adminProfile == null)
+                return;
+
+            var allModerators = new List<Profile> { adminProfile };
+            allModerators.AddRange(moderatorProfiles);
+
+            // 1. Create Warnings (15 warnings)
+            var warnReasons = new[]
+            {
+                "Spam nội dung không phù hợp",
+                "Sử dụng ngôn từ không phù hợp",
+                "Đăng nội dung vi phạm quy định cộng đồng",
+                "Quảng cáo không được phép",
+                "Bình luận gây tranh cãi"
+            };
+
+            for (int i = 0; i < 15; i++)
+            {
+                var targetUser = regularUsers[i % regularUsers.Count];
+                var moderator = allModerators[i % allModerators.Count];
+                var createdAt = now.AddDays(-_random.Next(1, 90)).AddHours(-_random.Next(0, 24));
+
+                var adminAction = new AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = moderator.Id,
+                    ActionType = AdminActionType.WarnUser,
+                    TargetProfileId = targetUser.Id,
+                    Notes = warnReasons[i % warnReasons.Length],
+                    CreatedAt = createdAt
+                };
+                adminActions.Add(adminAction);
+
+                var moderation = new UserModeration
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = targetUser.Id,
+                    AdminId = moderator.Id,
+                    AdminActionId = adminAction.Id,
+                    ActionType = ModerationActionType.Warn,
+                    Reason = warnReasons[i % warnReasons.Length],
+                    CreatedAt = createdAt,
+                    Active = true
+                };
+                userModerations.Add(moderation);
+            }
+
+            // 2. Create Active Bans (5 currently active bans)
+            var banReasons = new[]
+            {
+                "Vi phạm nghiêm trọng quy định cộng đồng",
+                "Đăng nội dung bạo lực",
+                "Quấy rối người dùng khác",
+                "Spam liên tục sau cảnh cáo",
+                "Sử dụng nhiều tài khoản để spam"
+            };
+
+            for (int i = 0; i < 5; i++)
+            {
+                var targetUser = regularUsers[(i + 5) % regularUsers.Count];
+                var moderator = allModerators[i % allModerators.Count];
+                var createdAt = now.AddDays(-_random.Next(1, 30));
+                var durationDays = _random.Next(7, 30);
+                var expiresAt = createdAt.AddDays(durationDays);
+
+                var adminAction = new AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = moderator.Id,
+                    ActionType = AdminActionType.BanUser,
+                    TargetProfileId = targetUser.Id,
+                    Notes = banReasons[i % banReasons.Length],
+                    CreatedAt = createdAt
+                };
+                adminActions.Add(adminAction);
+
+                var moderation = new UserModeration
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = targetUser.Id,
+                    AdminId = moderator.Id,
+                    AdminActionId = adminAction.Id,
+                    ActionType = ModerationActionType.Ban,
+                    Reason = banReasons[i % banReasons.Length],
+                    CreatedAt = createdAt,
+                    ExpiresAt = expiresAt,
+                    Active = true
+                };
+                userModerations.Add(moderation);
+
+                // Update profile to reflect ban status
+                targetUser.IsBanned = true;
+                targetUser.BannedUntil = expiresAt;
+            }
+
+            // 3. Create Permanent Bans (2 permanent bans)
+            for (int i = 0; i < 2; i++)
+            {
+                var targetUser = regularUsers[(i + 10) % regularUsers.Count];
+                var moderator = adminProfile; // Only admin for permanent bans
+                var createdAt = now.AddDays(-_random.Next(30, 180));
+
+                var adminAction = new AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = moderator.Id,
+                    ActionType = AdminActionType.BanUser,
+                    TargetProfileId = targetUser.Id,
+                    Notes = "Ban vĩnh viễn do vi phạm nghiêm trọng và lặp lại",
+                    CreatedAt = createdAt
+                };
+                adminActions.Add(adminAction);
+
+                var moderation = new UserModeration
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = targetUser.Id,
+                    AdminId = moderator.Id,
+                    AdminActionId = adminAction.Id,
+                    ActionType = ModerationActionType.Ban,
+                    Reason = "Vi phạm nghiêm trọng và lặp lại - Ban vĩnh viễn",
+                    CreatedAt = createdAt,
+                    ExpiresAt = null, // Permanent ban
+                    Active = true
+                };
+                userModerations.Add(moderation);
+
+                // Update profile to reflect permanent ban
+                targetUser.IsBanned = true;
+                targetUser.BannedUntil = null;
+            }
+
+            // 4. Create Expired/Revoked Bans (3 historical bans)
+            for (int i = 0; i < 3; i++)
+            {
+                var targetUser = regularUsers[(i + 12) % regularUsers.Count];
+                var moderator = allModerators[i % allModerators.Count];
+                var createdAt = now.AddDays(-_random.Next(60, 120));
+                var expiresAt = createdAt.AddDays(7);
+                var revokedAt = createdAt.AddDays(_random.Next(3, 6));
+
+                var adminAction = new AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = moderator.Id,
+                    ActionType = AdminActionType.BanUser,
+                    TargetProfileId = targetUser.Id,
+                    Notes = "Ban tạm thời đã được gỡ bỏ",
+                    CreatedAt = createdAt
+                };
+                adminActions.Add(adminAction);
+
+                var moderation = new UserModeration
+                {
+                    Id = Guid.NewGuid(),
+                    ProfileId = targetUser.Id,
+                    AdminId = moderator.Id,
+                    AdminActionId = adminAction.Id,
+                    ActionType = ModerationActionType.Ban,
+                    Reason = "Ban tạm thời - Đã được gỡ sau khi cải thiện",
+                    CreatedAt = createdAt,
+                    ExpiresAt = expiresAt,
+                    RevokedAt = revokedAt,
+                    Active = false
+                };
+                userModerations.Add(moderation);
+
+                // Create unban admin action
+                var unbanAction = new AdminAction
+                {
+                    Id = Guid.NewGuid(),
+                    AdminId = moderator.Id,
+                    ActionType = AdminActionType.UnbanUser,
+                    TargetProfileId = targetUser.Id,
+                    Notes = "Người dùng đã cải thiện hành vi",
+                    CreatedAt = revokedAt
+                };
+                adminActions.Add(unbanAction);
+            }
+
+            await context.AdminActions.AddRangeAsync(adminActions);
+            await context.UserModerations.AddRangeAsync(userModerations);
+            await context.SaveChangesAsync();
+
+            Console.WriteLine($"[SeedData] Created {adminActions.Count} admin actions and {userModerations.Count} user moderations.");
         }
     }
 }

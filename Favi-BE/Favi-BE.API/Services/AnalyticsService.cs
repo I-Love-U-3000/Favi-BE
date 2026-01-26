@@ -115,11 +115,16 @@ namespace Favi_BE.Services
                 var allFollows = await _uow.Follows.GetAllAsync();
                 var followersCountPerUser = allFollows.GroupBy(f => f.FolloweeId).ToDictionary(g => g.Key, g => g.Count());
 
+                // Get email accounts
+                var allEmailAccounts = await _uow.EmailAccounts.GetAllAsync();
+                var emailDict = allEmailAccounts.ToDictionary(e => e.Id, e => e.Email);
+
                 var dtos = items.Select(p => new AnalyticsUserDto(
                     p.Id,
                     p.Username,
                     p.DisplayName,
                     p.AvatarUrl,
+                    emailDict.GetValueOrDefault(p.Id), // Add email
                     p.CreatedAt,
                     p.LastActiveAt ?? DateTime.MinValue,
                     p.IsBanned,

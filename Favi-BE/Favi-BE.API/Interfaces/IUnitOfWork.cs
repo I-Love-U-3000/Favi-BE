@@ -9,6 +9,7 @@ namespace Favi_BE.Interfaces
     {
         // Core entities
         IProfileRepository Profiles { get; }
+        IEmailAccountRepository EmailAccounts { get; }
         IPostRepository Posts { get; }
         IPostMediaRepository PostMedia { get; }
         ICollectionRepository Collections { get; }

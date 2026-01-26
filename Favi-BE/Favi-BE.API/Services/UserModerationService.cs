@@ -145,6 +145,84 @@ public class UserModerationService : IUserModerationService
         return profile.BannedUntil > DateTime.UtcNow;
     }
 
+    public async Task<UserWarningsResponse> GetWarningsAsync(Guid profileId, int page = 1, int pageSize = 20)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 20;
+        if (pageSize > 100) pageSize = 100;
+
+        var skip = (page - 1) * pageSize;
+        
+        // Count total warnings
+        var totalCount = await _uow.UserModerations
+            .CountAsync(m => m.ProfileId == profileId && m.ActionType == ModerationActionType.Warn);
+        
+        // Get paginated warnings
+        var warningsData = await _uow.UserModerations
+            .FindAsync(m => m.ProfileId == profileId && m.ActionType == ModerationActionType.Warn);
+        
+        var warnings = warningsData
+            .OrderByDescending(m => m.CreatedAt)
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(m => {
+                // 🔍 DEBUG LOG
+                _logger.LogInformation("Mapping warning: Id={Id}, Reason={Reason}, AdminActionId={AdminActionId}", 
+                    m.Id, m.Reason, m.AdminActionId);
+                return MapToResponse(m);
+            })
+            .ToList();
+
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return new UserWarningsResponse(
+            warnings,
+            totalCount,
+            page,
+            pageSize,
+            totalPages
+        );
+    }
+
+    public async Task<UserBanHistoryResponse> GetBanHistoryAsync(Guid profileId, int page = 1, int pageSize = 20)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 20;
+        if (pageSize > 100) pageSize = 100;
+
+        var skip = (page - 1) * pageSize;
+        
+        // Count total bans
+        var totalCount = await _uow.UserModerations
+            .CountAsync(m => m.ProfileId == profileId && m.ActionType == ModerationActionType.Ban);
+        
+        // Get paginated bans
+        var bansData = await _uow.UserModerations
+            .FindAsync(m => m.ProfileId == profileId && m.ActionType == ModerationActionType.Ban);
+        
+        var bans = bansData
+            .OrderByDescending(m => m.CreatedAt)
+            .Skip(skip)
+            .Take(pageSize)
+            .Select(MapToResponse)
+            .ToList();
+
+        // Get active ban separately
+        var activeBan = await _uow.UserModerations.GetActiveModerationAsync(profileId, ModerationActionType.Ban);
+        var activeBanResponse = activeBan != null ? MapToResponse(activeBan) : null;
+
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+        return new UserBanHistoryResponse(
+            bans,
+            totalCount,
+            page,
+            pageSize,
+            totalPages,
+            activeBanResponse
+        );
+    }
+
     private static UserModerationResponse MapToResponse(UserModeration moderation) =>
         new(
             moderation.Id,

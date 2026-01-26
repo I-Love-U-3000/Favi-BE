@@ -17,6 +17,7 @@ namespace Favi_BE.Models.Dtos
         string Username,
         string? DisplayName,
         string? AvatarUrl,
+        string? Email,
         DateTime CreatedAt,
         DateTime LastActiveAt,
         bool IsBanned,

@@ -21,6 +21,7 @@ namespace Favi_BE.Data
 
             // Initialize repositories
             Profiles = new ProfileRepository(_context);
+            EmailAccounts = new EmailAccountRepository(_context);
             Posts = new PostRepository(_context);
             PostMedia = new PostMediaRepository(_context);
             Collections = new CollectionRepository(_context);
@@ -51,6 +52,7 @@ namespace Favi_BE.Data
 
         // Core entities
         public IProfileRepository Profiles { get; private set; }
+        public IEmailAccountRepository EmailAccounts { get; private set; }
         public IPostRepository Posts { get; private set; }
         public IPostMediaRepository PostMedia { get; private set; }
         public ICollectionRepository Collections { get; private set; }

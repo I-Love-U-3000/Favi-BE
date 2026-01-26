@@ -27,6 +27,10 @@ namespace Favi_BE.Services
 
             var followers = await _uow.Follows.GetFollowersCountAsync(profileId);
             var followings = await _uow.Follows.GetFollowingCountAsync(profileId);
+            
+            // Get email from EmailAccount
+            var emailAccount = await _uow.EmailAccounts.GetByIdAsync(profileId);
+            var email = emailAccount?.Email;
 
             return new ProfileResponse(
                 profile.Id,
@@ -35,6 +39,7 @@ namespace Favi_BE.Services
                 profile.Bio,
                 profile.AvatarUrl,
                 profile.CoverUrl,
+                email,
                 profile.CreatedAt,
                 profile.LastActiveAt ?? DateTime.MinValue,
                 profile.PrivacyLevel,
@@ -421,6 +426,7 @@ namespace Favi_BE.Services
                     profile.Bio,
                     profile.AvatarUrl,
                     profile.CoverUrl,
+                    null,
                     profile.CreatedAt,
                     profile.LastActiveAt ?? DateTime.MinValue,
                     profile.PrivacyLevel,
@@ -463,6 +469,7 @@ namespace Favi_BE.Services
                         friendProfile.Bio,
                         friendProfile.AvatarUrl,
                         friendProfile.CoverUrl,
+                        null,
                         friendProfile.CreatedAt,
                         friendProfile.LastActiveAt ?? DateTime.MinValue,
                         friendProfile.PrivacyLevel,

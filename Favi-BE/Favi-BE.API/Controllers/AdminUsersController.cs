@@ -78,6 +78,34 @@ public class AdminUsersController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Get warning history for a user
+    /// </summary>
+    [HttpGet("{profileId:guid}/warnings")]
+    [ProducesResponseType(typeof(UserWarningsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<UserWarningsResponse>> GetWarnings(
+        Guid profileId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var response = await _moderationService.GetWarningsAsync(profileId, page, pageSize);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Get ban history for a user
+    /// </summary>
+    [HttpGet("{profileId:guid}/ban-history")]
+    [ProducesResponseType(typeof(UserBanHistoryResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<UserBanHistoryResponse>> GetBanHistory(
+        Guid profileId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var response = await _moderationService.GetBanHistoryAsync(profileId, page, pageSize);
+        return Ok(response);
+    }
+
     // ============================================================
     // BULK USER ACTIONS
     // ============================================================

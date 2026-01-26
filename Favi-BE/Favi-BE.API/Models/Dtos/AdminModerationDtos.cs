@@ -30,4 +30,21 @@ namespace Favi_BE.Models.Dtos
     public record AdminDeleteContentRequest(
         [Required(ErrorMessage = "Lý do là bắt buộc.")] string Reason
     );
+
+    public record UserWarningsResponse(
+        List<UserModerationResponse> Warnings,
+        int TotalCount,
+        int Page,
+        int PageSize,
+        int TotalPages
+    );
+
+    public record UserBanHistoryResponse(
+        List<UserModerationResponse> Bans,
+        int TotalCount,
+        int Page,
+        int PageSize,
+        int TotalPages,
+        UserModerationResponse? ActiveBan
+    );
 }

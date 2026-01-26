@@ -9,6 +9,7 @@ namespace Favi_BE.Models.Dtos
         string? Bio,
         string? AvatarUrl,
         string? CoverUrl,
+        string? Email,
         DateTime CreatedAt,
         DateTime LastActiveAt,
         PrivacyLevel PrivacyLevel,
