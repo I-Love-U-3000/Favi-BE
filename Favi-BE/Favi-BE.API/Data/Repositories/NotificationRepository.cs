@@ -28,5 +28,16 @@ namespace Favi_BE.Data.Repositories
             return await _dbSet
                 .CountAsync(n => n.RecipientProfileId == recipientId && !n.IsRead);
         }
+
+        public async Task<bool> DeleteAsync(Guid notificationId, Guid userId)
+        {
+            var notification = await _dbSet
+                .FirstOrDefaultAsync(n => n.Id == notificationId && n.RecipientProfileId == userId);
+
+            if (notification == null) return false;
+
+            _dbSet.Remove(notification);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

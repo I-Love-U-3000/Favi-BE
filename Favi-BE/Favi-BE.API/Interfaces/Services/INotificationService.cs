@@ -19,6 +19,9 @@ namespace Favi_BE.Interfaces.Services
         Task<bool> MarkAsReadAsync(Guid notificationId, Guid recipientId);
         Task<bool> MarkAllAsReadAsync(Guid recipientId);
 
+        // Delete notifications
+        Task<bool> DeleteNotificationAsync(Guid notificationId, Guid userId);
+
         // Send real-time notification (via SignalR)
         Task SendNotificationAsync(Guid recipientId, NotificationDto notification);
     }

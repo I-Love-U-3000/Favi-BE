@@ -1,9 +1,17 @@
 ﻿namespace Favi_BE.Models.Dtos
 {
+    public enum SearchMode
+    {
+        Keyword,
+        Tag,
+        Semantic
+    }
+
     public record SearchRequest(
         string Query,
-        int Page,
-        int PageSize
+        SearchMode Mode = SearchMode.Keyword,
+        int Page = 1,
+        int PageSize = 20
     );
 
     public record SearchResult(

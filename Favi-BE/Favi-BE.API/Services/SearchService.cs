@@ -1,6 +1,7 @@
 ﻿using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using System.Linq;
 
 namespace Favi_BE.Services
 {
@@ -21,21 +22,70 @@ namespace Favi_BE.Services
         {
             var query = dto.Query.Trim().ToLowerInvariant();
 
-            // Search posts (caption contains)
-            var posts = await _uow.Posts.GetAllAsync();
-            var matchedPosts = posts
-                .Where(p => p.Caption != null && p.Caption.ToLower().Contains(query))
-                .Skip((dto.Page - 1) * dto.PageSize)
-                .Take(dto.PageSize)
-                .Select(p => new SearchPostDto(p.Id, p.Caption ?? string.Empty, p.PostMedias?.FirstOrDefault()?.Url ?? string.Empty));
+            switch (dto.Mode)
+            {
+                case SearchMode.Keyword:
+                    return await KeywordSearchAsync(dto, query);
+                case SearchMode.Tag:
+                    return await TagSearchAsync(dto, query);
+                case SearchMode.Semantic:
+                    // Semantic search should use the semantic endpoint
+                    throw new InvalidOperationException("Use SemanticSearchAsync for semantic search");
+                default:
+                    throw new ArgumentException("Invalid search mode");
+            }
+        }
+
+        private async Task<SearchResult> KeywordSearchAsync(SearchRequest dto, string query)
+        {
+            // Search posts (caption contains) - using efficient database query
+            var matchedPosts = (await _uow.Posts.SearchPostsByCaptionAsync(query, (dto.Page - 1) * dto.PageSize, dto.PageSize))
+                .Select(p => new SearchPostDto(p.Id, p.Caption ?? string.Empty, p.PostMedias?.FirstOrDefault()?.Url ?? string.Empty))
+                .ToList();
 
             // Search tags (name contains)
             var tags = await _uow.Tags.GetAllAsync();
             var matchedTags = tags
-                .Where(t => t.Name.Contains(query))
-                .Select(t => new SearchTagDto(t.Id, t.Name, 0));
+                .Where(t => t.Name.ToLower().Contains(query))
+                .Select(t => new SearchTagDto(t.Id, t.Name, 0))
+                .ToList();
 
             return new SearchResult(matchedPosts, matchedTags);
+        }
+
+        private async Task<SearchResult> TagSearchAsync(SearchRequest dto, string query)
+        {
+            // Search for tags that match the query
+            var tags = await _uow.Tags.GetAllAsync();
+            var matchedTags = tags
+                .Where(t => t.Name.ToLower().Contains(query))
+                .ToList();
+
+            if (!matchedTags.Any())
+            {
+                return new SearchResult(Enumerable.Empty<SearchPostDto>(), Enumerable.Empty<SearchTagDto>());
+            }
+
+            // Get all tag IDs that match
+            var tagIds = matchedTags.Select(t => t.Id).ToList();
+
+            // Get posts that have these tags
+            var posts = await _uow.Posts.GetPostsByTagIdsPagedAsync(tagIds, dto.Page, dto.PageSize);
+
+            var matchedPosts = posts
+                .Select(p => new SearchPostDto(
+                    p.Id,
+                    p.Caption ?? string.Empty,
+                    p.PostMedias?.FirstOrDefault()?.Url ?? string.Empty
+                ))
+                .ToList();
+
+            // Return the tags with post counts
+            var tagsWithCounts = matchedTags.Select(t =>
+                new SearchTagDto(t.Id, t.Name, t.PostTags?.Count ?? 0)
+            );
+
+            return new SearchResult(matchedPosts, tagsWithCounts);
         }
 
         public async Task<SearchResult> SemanticSearchAsync(SemanticSearchRequest dto, Guid userId)

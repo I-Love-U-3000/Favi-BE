@@ -8,5 +8,6 @@ namespace Favi_BE.API.Interfaces.Repositories
     {
         Task<IEnumerable<Notification>> GetNotificationsByRecipientIdAsync(Guid recipientId, int skip, int take);
         Task<int> GetUnreadCountAsync(Guid recipientId);
+        Task<bool> DeleteAsync(Guid notificationId, Guid userId);
     }
 }

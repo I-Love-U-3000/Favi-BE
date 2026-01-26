@@ -193,5 +193,39 @@ namespace Favi_BE.Data.Repositories
 
             return (items, total);
         }
+
+        public async Task<IEnumerable<Post>> GetPostsByTagIdsPagedAsync(List<Guid> tagIds, int page, int pageSize)
+        {
+            if (!tagIds.Any())
+                return Enumerable.Empty<Post>();
+
+            var skip = (page - 1) * pageSize;
+
+            return await _dbSet
+                .Where(p => p.PostTags.Any(pt => tagIds.Contains(pt.TagId)) && p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.Tag)
+                .Include(p => p.Comments)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Post>> SearchPostsByCaptionAsync(string query, int skip, int take)
+        {
+            return await _dbSet
+                .Where(p => p.Caption != null && p.Caption.ToLower().Contains(query.ToLower()))
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
     }
 }

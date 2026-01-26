@@ -92,6 +92,27 @@ namespace Favi_BE.Controllers
         }
 
         [Authorize]
+        [HttpGet("{id:guid}/reactors")]
+        public async Task<ActionResult<IEnumerable<CommentReactorResponse>>> GetReactors(Guid id)
+        {
+            var userId = User.GetUserId();
+
+            try
+            {
+                var reactors = await _comments.GetReactorsAsync(id, userId);
+                return Ok(reactors);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { code = "COMMENT_NOT_FOUND", message = "Bình luận không tồn tại." });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+        }
+
+        [Authorize]
         [HttpPost("upload-image")]
         public async Task<ActionResult<ChatImageUploadResponse>> UploadImage([FromForm] IFormFile file)
         {
