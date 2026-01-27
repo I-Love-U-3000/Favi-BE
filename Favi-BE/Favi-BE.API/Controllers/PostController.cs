@@ -16,12 +16,14 @@ namespace Favi_BE.Controllers
         private readonly ITagService _tags;
         private readonly IPrivacyGuard _privacy;
         private readonly IProfileService _profileService;
-        public PostsController(IPostService posts, ITagService tags, IPrivacyGuard privacy, IProfileService profileService)
+        private readonly ISearchService _search;
+        public PostsController(IPostService posts, ITagService tags, IPrivacyGuard privacy, IProfileService profileService, ISearchService search)
         {
             _posts = posts;
             _tags = tags;
             _privacy = privacy;
             _profileService = profileService;
+            _search = search;
         }
 
         // ======================
@@ -163,6 +165,82 @@ namespace Favi_BE.Controllers
             }
 
             return Ok(new PagedResult<PostResponse>(visiblePosts, page, pageSize, result.TotalCount));
+        }
+
+        // ======================
+        // 🔹 GET: Related posts (tags + semantic similarity)
+        // ======================
+        [HttpGet("{id:guid}/related")]
+        public async Task<ActionResult<PagedResult<PostResponse>>> GetRelated(Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            var userId = TryGetUserId();
+            var post = await _posts.GetEntityAsync(id);
+            if (post == null)
+                return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại hoặc đã bị xoá." });
+
+            var relatedPosts = new List<PostResponse>();
+
+            // Strategy 1: Get posts with same tags
+            var tagIds = post.PostTags?.Select(t => t.TagId).ToList() ?? new List<Guid>();
+
+            if (tagIds.Any())
+            {
+                foreach (var tagId in tagIds)
+                {
+                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, 1, pageSize * 2);
+                    foreach (var p in tagPosts.Items.Where(p => p.Id != id))
+                    {
+                        if (!relatedPosts.Any(rp => rp.Id == p.Id))
+                        {
+                            var entity = await _posts.GetEntityAsync(p.Id);
+                            if (await _privacy.CanViewPostAsync(entity, userId))
+                            {
+                                relatedPosts.Add(p);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Strategy 2: If not enough posts from tags, use semantic search with caption
+            if (relatedPosts.Count < pageSize && !string.IsNullOrEmpty(post.Caption))
+            {
+                var semanticResult = await _search.SemanticSearchAsync(
+                    new SemanticSearchRequest(post.Caption, 1, pageSize, 50),
+                    userId ?? Guid.Empty);
+
+                foreach (var searchPost in semanticResult.Posts.Where(p => p.Id != id))
+                {
+                    if (!relatedPosts.Any(rp => rp.Id == searchPost.Id))
+                    {
+                        var entity = await _posts.GetEntityAsync(searchPost.Id);
+                        if (await _privacy.CanViewPostAsync(entity, userId))
+                        {
+                            var postResponse = await _posts.GetByIdAsync(searchPost.Id, userId);
+                            if (postResponse != null)
+                            {
+                                relatedPosts.Add(postResponse);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Remove the original post
+            relatedPosts.RemoveAll(p => p.Id == id);
+
+            // Paginate results
+            var paginated = relatedPosts
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return Ok(new PagedResult<PostResponse>(
+                paginated,
+                page,
+                pageSize,
+                relatedPosts.Count
+            ));
         }
 
         // ======================
