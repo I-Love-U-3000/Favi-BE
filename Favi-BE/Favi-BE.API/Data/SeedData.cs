@@ -123,7 +123,7 @@ namespace Favi_BE.API.Data
         private static readonly string[] _avatarUrls = [
             "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
             "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop",
-            "https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=200&h=200&fit=crop",
+            "https://images.stockcake.com/public/8/7/c/87cc3b74-63de-41ab-9955-334e9488c1e0_large/handsome-model-posing-stockcake.jpg",
             "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&h=200&fit=crop",
             "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
             "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop",
@@ -146,7 +146,7 @@ namespace Favi_BE.API.Data
             "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800&h=600&fit=crop", // Art
             "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop", // Nature2
             "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&h=600&fit=crop", // Beach
-            "https://images.unsplash.com/photo-1556912173-3db996ea0642?w=800&h=600&fit=crop", // Tech
+            "https://i2-vnexpress.vnecdn.net/2024/10/20/12crop16980600b757dc24bb094c14-4058-9002-1729390207.jpg?w=1200&h=0&q=100&dpr=1&fit=crop&s=VfnZlCyr20JrY8gbpSXZIA", // Dream Cars cover
             "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&h=600&fit=crop", // City
             "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&h=600&fit=crop", // Movie
             "https://images.unsplash.com/photo-1511884642898-4c92249e20b6?w=800&h=600&fit=crop", // Music
@@ -1050,22 +1050,35 @@ namespace Favi_BE.API.Data
                 userModerations.Add(moderation);
             }
 
-            // 2. Create Active Bans (5 currently active bans)
+            // 2. Create Active Bans (7 currently active bans with varying durations)
+            // All bans have expiration dates - no permanent bans
+            // Admin can freely ban/unban anyone
             var banReasons = new[]
             {
                 "Vi phạm nghiêm trọng quy định cộng đồng",
                 "Đăng nội dung bạo lực",
                 "Quấy rối người dùng khác",
                 "Spam liên tục sau cảnh cáo",
-                "Sử dụng nhiều tài khoản để spam"
+                "Sử dụng nhiều tài khoản để spam",
+                "Đăng nội dung sai lệch thông tin",
+                "Vi phạm bản quyền"
             };
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 7; i++)
             {
                 var targetUser = regularUsers[(i + 5) % regularUsers.Count];
                 var moderator = allModerators[i % allModerators.Count];
                 var createdAt = now.AddDays(-_random.Next(1, 30));
-                var durationDays = _random.Next(7, 30);
+                
+                // Vary ban durations: short (7-14 days), medium (15-30 days), long (31-90 days)
+                int durationDays;
+                if (i < 3)
+                    durationDays = _random.Next(7, 15);      // Short bans
+                else if (i < 5)
+                    durationDays = _random.Next(15, 31);     // Medium bans
+                else
+                    durationDays = _random.Next(31, 91);     // Long bans (but still temporary)
+                
                 var expiresAt = createdAt.AddDays(durationDays);
 
                 var adminAction = new AdminAction
@@ -1088,7 +1101,7 @@ namespace Favi_BE.API.Data
                     ActionType = ModerationActionType.Ban,
                     Reason = banReasons[i % banReasons.Length],
                     CreatedAt = createdAt,
-                    ExpiresAt = expiresAt,
+                    ExpiresAt = expiresAt, // All bans have expiration dates
                     Active = true
                 };
                 userModerations.Add(moderation);
@@ -1098,44 +1111,7 @@ namespace Favi_BE.API.Data
                 targetUser.BannedUntil = expiresAt;
             }
 
-            // 3. Create Permanent Bans (2 permanent bans)
-            for (int i = 0; i < 2; i++)
-            {
-                var targetUser = regularUsers[(i + 10) % regularUsers.Count];
-                var moderator = adminProfile; // Only admin for permanent bans
-                var createdAt = now.AddDays(-_random.Next(30, 180));
-
-                var adminAction = new AdminAction
-                {
-                    Id = Guid.NewGuid(),
-                    AdminId = moderator.Id,
-                    ActionType = AdminActionType.BanUser,
-                    TargetProfileId = targetUser.Id,
-                    Notes = "Ban vĩnh viễn do vi phạm nghiêm trọng và lặp lại",
-                    CreatedAt = createdAt
-                };
-                adminActions.Add(adminAction);
-
-                var moderation = new UserModeration
-                {
-                    Id = Guid.NewGuid(),
-                    ProfileId = targetUser.Id,
-                    AdminId = moderator.Id,
-                    AdminActionId = adminAction.Id,
-                    ActionType = ModerationActionType.Ban,
-                    Reason = "Vi phạm nghiêm trọng và lặp lại - Ban vĩnh viễn",
-                    CreatedAt = createdAt,
-                    ExpiresAt = null, // Permanent ban
-                    Active = true
-                };
-                userModerations.Add(moderation);
-
-                // Update profile to reflect permanent ban
-                targetUser.IsBanned = true;
-                targetUser.BannedUntil = null;
-            }
-
-            // 4. Create Expired/Revoked Bans (3 historical bans)
+            // 3. Create Expired/Revoked Bans (3 historical bans)
             for (int i = 0; i < 3; i++)
             {
                 var targetUser = regularUsers[(i + 12) % regularUsers.Count];

@@ -198,13 +198,21 @@ namespace Favi_BE.Services
                     .GroupBy(r => r.PostId!.Value)
                     .ToDictionary(g => g.Key, g => g.Count());
 
+                // Get first media (thumbnail) for each post
+                var allPostMedias = await _uow.PostMedia.GetAllAsync();
+                var firstMediaPerPost = allPostMedias
+                    .GroupBy(m => m.PostId)
+                    .ToDictionary(g => g.Key, g => g.OrderBy(m => m.Position).FirstOrDefault());
+
                 var dtos = items.Select(p => profileDict.TryGetValue(p.ProfileId, out var profile)
                     ? new AnalyticsPostDto(
                         p.Id,
                         p.ProfileId,
                         profile.Username,
                         profile.DisplayName,
+                        profile.AvatarUrl,
                         p.Caption,
+                        firstMediaPerPost.GetValueOrDefault(p.Id)?.ThumbnailUrl ?? firstMediaPerPost.GetValueOrDefault(p.Id)?.Url,
                         p.CreatedAt,
                         p.Privacy,
                         commentsCountPerPost.GetValueOrDefault(p.Id, 0),
@@ -216,7 +224,9 @@ namespace Favi_BE.Services
                         p.ProfileId,
                         null,
                         null,
+                        null,
                         p.Caption,
+                        firstMediaPerPost.GetValueOrDefault(p.Id)?.ThumbnailUrl ?? firstMediaPerPost.GetValueOrDefault(p.Id)?.Url,
                         p.CreatedAt,
                         p.Privacy,
                         commentsCountPerPost.GetValueOrDefault(p.Id, 0),
