@@ -1,6 +1,7 @@
 ﻿using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Entities;
 using System.Linq;
 
 namespace Favi_BE.Services
@@ -18,16 +19,16 @@ namespace Favi_BE.Services
             _privacy = privacy;
         }
 
-        public async Task<SearchResult> SearchAsync(SearchRequest dto)
+        public async Task<SearchResult> SearchAsync(SearchRequest dto, Guid? userId = null)
         {
             var query = dto.Query.Trim().ToLowerInvariant();
 
             switch (dto.Mode)
             {
                 case SearchMode.Keyword:
-                    return await KeywordSearchAsync(dto, query);
+                    return await KeywordSearchAsync(dto, query, userId);
                 case SearchMode.Tag:
-                    return await TagSearchAsync(dto, query);
+                    return await TagSearchAsync(dto, query, userId);
                 case SearchMode.Semantic:
                     // Semantic search should use the semantic endpoint
                     throw new InvalidOperationException("Use SemanticSearchAsync for semantic search");
@@ -36,10 +37,42 @@ namespace Favi_BE.Services
             }
         }
 
-        private async Task<SearchResult> KeywordSearchAsync(SearchRequest dto, string query)
+        private async Task<SearchResult> KeywordSearchAsync(SearchRequest dto, string query, Guid? userId = null)
         {
-            // Search posts (caption contains) - using efficient database query
-            var matchedPosts = (await _uow.Posts.SearchPostsByCaptionAsync(query, (dto.Page - 1) * dto.PageSize, dto.PageSize))
+            // Fetch more results to account for privacy filtering
+            // Use a multiplier to ensure we get enough viewable posts after filtering
+            var fetchMultiplier = 3;
+            var fetchSize = dto.PageSize * fetchMultiplier;
+            var skip = 0;
+            var allFilteredPosts = new List<Post>();
+            var maxIterations = 10; // Prevent infinite loops
+            var iterations = 0;
+
+            // Keep fetching until we have enough filtered posts or no more results
+            while (allFilteredPosts.Count < (dto.Page * dto.PageSize) && iterations < maxIterations)
+            {
+                var posts = await _uow.Posts.SearchPostsByCaptionAsync(query, skip, fetchSize);
+
+                if (!posts.Any())
+                    break;
+
+                // Apply privacy filtering
+                foreach (var post in posts)
+                {
+                    if (await _privacy.CanViewPostAsync(post, userId))
+                    {
+                        allFilteredPosts.Add(post);
+                    }
+                }
+
+                skip += fetchSize;
+                iterations++;
+            }
+
+            // Paginate the filtered results
+            var paginatedPosts = allFilteredPosts
+                .Skip((dto.Page - 1) * dto.PageSize)
+                .Take(dto.PageSize)
                 .Select(p => new SearchPostDto(p.Id, p.Caption ?? string.Empty, p.PostMedias?.FirstOrDefault()?.Url ?? string.Empty))
                 .ToList();
 
@@ -50,10 +83,10 @@ namespace Favi_BE.Services
                 .Select(t => new SearchTagDto(t.Id, t.Name, 0))
                 .ToList();
 
-            return new SearchResult(matchedPosts, matchedTags);
+            return new SearchResult(paginatedPosts, matchedTags);
         }
 
-        private async Task<SearchResult> TagSearchAsync(SearchRequest dto, string query)
+        private async Task<SearchResult> TagSearchAsync(SearchRequest dto, string query, Guid? userId = null)
         {
             // Search for tags that match the query
             var tags = await _uow.Tags.GetAllAsync();
@@ -69,10 +102,39 @@ namespace Favi_BE.Services
             // Get all tag IDs that match
             var tagIds = matchedTags.Select(t => t.Id).ToList();
 
-            // Get posts that have these tags
-            var posts = await _uow.Posts.GetPostsByTagIdsPagedAsync(tagIds, dto.Page, dto.PageSize);
+            // Fetch more results to account for privacy filtering
+            var fetchMultiplier = 3;
+            var fetchSize = dto.PageSize * fetchMultiplier;
+            var allFilteredPosts = new List<Post>();
+            var maxIterations = 10;
+            var iterations = 0;
+            var page = 1;
 
-            var matchedPosts = posts
+            // Keep fetching until we have enough filtered posts or no more results
+            while (allFilteredPosts.Count < (dto.Page * dto.PageSize) && iterations < maxIterations)
+            {
+                var posts = await _uow.Posts.GetPostsByTagIdsPagedAsync(tagIds, page, fetchSize);
+
+                if (!posts.Any())
+                    break;
+
+                // Apply privacy filtering
+                foreach (var post in posts)
+                {
+                    if (await _privacy.CanViewPostAsync(post, userId))
+                    {
+                        allFilteredPosts.Add(post);
+                    }
+                }
+
+                page++;
+                iterations++;
+            }
+
+            // Paginate the filtered results
+            var paginatedPosts = allFilteredPosts
+                .Skip((dto.Page - 1) * dto.PageSize)
+                .Take(dto.PageSize)
                 .Select(p => new SearchPostDto(
                     p.Id,
                     p.Caption ?? string.Empty,
@@ -85,7 +147,7 @@ namespace Favi_BE.Services
                 new SearchTagDto(t.Id, t.Name, t.PostTags?.Count ?? 0)
             );
 
-            return new SearchResult(matchedPosts, tagsWithCounts);
+            return new SearchResult(paginatedPosts, tagsWithCounts);
         }
 
         public async Task<SearchResult> SemanticSearchAsync(SemanticSearchRequest dto, Guid userId)

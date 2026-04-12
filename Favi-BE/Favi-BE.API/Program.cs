@@ -295,8 +295,8 @@ using (var scope = app.Services.CreateScope())
         }
     }
 
-    // Seed data if database is empty
-    await Favi_BE.API.Data.SeedData.InitializeAsync(app.Services);
+    // New deterministic seed pipeline
+    await Favi_BE.API.Seed.SeedPipeline.InitializeAsync(app.Services);
 }
 
 // Configure the HTTP request pipeline.

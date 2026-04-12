@@ -14,8 +14,15 @@ namespace Favi_BE.Controllers
         public SearchController(ISearchService search) => _search = search;
 
         [HttpPost]
-        public async Task<ActionResult<SearchResult>> Search(SearchRequest dto) =>
-            Ok(await _search.SearchAsync(dto));
+        public async Task<ActionResult<SearchResult>> Search(SearchRequest dto)
+        {
+            Guid? userId = null;
+            if (User?.Identity?.IsAuthenticated == true)
+            {
+                userId = User.GetUserId();
+            }
+            return Ok(await _search.SearchAsync(dto, userId));
+        }
 
         [Authorize]
         [HttpPost("semantic")]

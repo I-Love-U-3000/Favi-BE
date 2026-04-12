@@ -5,7 +5,7 @@ namespace Favi_BE.Interfaces.Services
 {
     public interface ISearchService
     {
-        Task<SearchResult> SearchAsync(SearchRequest dto);
+        Task<SearchResult> SearchAsync(SearchRequest dto, Guid? userId = null);
         Task<SearchResult> SemanticSearchAsync(SemanticSearchRequest dto, Guid userId);
     }
 }

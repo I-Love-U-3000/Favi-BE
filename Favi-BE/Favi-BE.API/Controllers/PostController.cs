@@ -91,16 +91,7 @@ namespace Favi_BE.Controllers
             var userId = User.GetUserId();
             var result = await _posts.GetFeedAsync(userId, page, pageSize);
 
-            // ✅ Lọc những post mà người xem không được phép xem (ví dụ private)
-            var visiblePosts = new List<PostResponse>();
-            foreach (var p in result.Items)
-            {
-                var entity = await _posts.GetEntityAsync(p.Id);
-                if (await _privacy.CanViewPostAsync(entity, userId))
-                    visiblePosts.Add(p);
-            }
-
-            return Ok(new PagedResult<PostResponse>(visiblePosts, page, pageSize, result.TotalCount));
+            return Ok(result);
         }
 
         // ======================
@@ -153,18 +144,9 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<PagedResult<PostResponse>>> GetByTag(Guid tagId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var viewerId = TryGetUserId();
-            var result = await _tags.GetPostsByTagAsync(tagId, page, pageSize);
+            var result = await _tags.GetPostsByTagAsync(tagId, viewerId, page, pageSize);
 
-            // ✅ Lọc quyền xem
-            var visiblePosts = new List<PostResponse>();
-            foreach (var p in result.Items)
-            {
-                var entity = await _posts.GetEntityAsync(p.Id);
-                if (await _privacy.CanViewPostAsync(entity, viewerId))
-                    visiblePosts.Add(p);
-            }
-
-            return Ok(new PagedResult<PostResponse>(visiblePosts, page, pageSize, result.TotalCount));
+            return Ok(result);
         }
 
         // ======================
@@ -187,16 +169,13 @@ namespace Favi_BE.Controllers
             {
                 foreach (var tagId in tagIds)
                 {
-                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, 1, pageSize * 2);
+                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, userId, 1, pageSize * 2);
                     foreach (var p in tagPosts.Items.Where(p => p.Id != id))
                     {
                         if (!relatedPosts.Any(rp => rp.Id == p.Id))
                         {
-                            var entity = await _posts.GetEntityAsync(p.Id);
-                            if (await _privacy.CanViewPostAsync(entity, userId))
-                            {
-                                relatedPosts.Add(p);
-                            }
+                            // Privacy is already filtered in TagService
+                            relatedPosts.Add(p);
                         }
                     }
                 }

@@ -1,6 +1,8 @@
 using Favi_BE.API.Models.Entities;
 using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.API.Models.Enums;
+using Favi_BE.API.Seed;
+using Favi_BE.API.Seed.Steps;
 using Favi_BE.Data;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
@@ -705,32 +707,12 @@ namespace Favi_BE.API.Data
         private static async Task SeedFollowsAsync(AppDbContext context, List<Profile> profiles)
         {
             Console.WriteLine("[SeedData] Seeding Follows...");
-            var follows = new List<Follow>();
-            var now = DateTime.UtcNow;
+            var seedContext = new SeedContext(SeedConfig.SeedKey);
+            var step = new SeedFollowsStep();
+            var result = await step.ExecuteAsync(context, profiles, seedContext);
 
-            // Create follow relationships
-            // Each user follows 3-10 other users
-            foreach (var follower in profiles)
-            {
-                var numFollows = _random.Next(3, 11);
-                var potentialFollowees = profiles.Where(p => p.Id != follower.Id).ToList();
-                var followees = potentialFollowees.OrderBy(x => _random.Next()).Take(numFollows);
-
-                foreach (var followee in followees)
-                {
-                    var follow = new Follow
-                    {
-                        FollowerId = follower.Id,
-                        FolloweeId = followee.Id,
-                        CreatedAt = now.AddDays(-_random.Next(1, 365))
-                    };
-                    follows.Add(follow);
-                }
-            }
-
-            await context.Follows.AddRangeAsync(follows);
-            await context.SaveChangesAsync();
-            Console.WriteLine($"[SeedData] Created {follows.Count} follows.");
+            Console.WriteLine($"[SeedData] Created {result.CreatedCount} follows.");
+            Console.WriteLine($"[SeedData] Follows exported to {result.ExportPath}.");
         }
 
         private static async Task SeedSocialLinksAsync(AppDbContext context, List<Profile> profiles)

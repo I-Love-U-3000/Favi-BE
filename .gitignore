@@ -420,3 +420,4 @@ FodyWeavers.xsd
 # secrets / local configs
 appsettings.*.json
 !appsettings.json
+*.csv

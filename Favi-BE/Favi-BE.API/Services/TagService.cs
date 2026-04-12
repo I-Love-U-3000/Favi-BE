@@ -10,10 +10,12 @@ namespace Favi_BE.Services
     public class TagService : ITagService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IPrivacyGuard _privacy;
 
-        public TagService(IUnitOfWork uow)
+        public TagService(IUnitOfWork uow, IPrivacyGuard privacy)
         {
             _uow = uow;
+            _privacy = privacy;
         }
 
         // ------------------------------------------------------
@@ -88,7 +90,7 @@ namespace Favi_BE.Services
         // ------------------------------------------------------
         // Posts by Tag
         // ------------------------------------------------------
-        public async Task<PagedResult<PostResponse>> GetPostsByTagAsync(Guid tagId, int page, int pageSize)
+        public async Task<PagedResult<PostResponse>> GetPostsByTagAsync(Guid tagId, Guid? viewerId, int page, int pageSize)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
@@ -98,7 +100,16 @@ namespace Favi_BE.Services
             // Lấy danh sách bài viết và tổng số bài
             var (posts, total) = await _uow.Posts.GetPostsByTagPagedAsync(tagId, skip, pageSize);
 
-            var dtos = posts.Select(p =>
+            var visiblePosts = new List<Post>();
+            foreach (var p in posts)
+            {
+                if (await _privacy.CanViewPostAsync(p, viewerId))
+                {
+                    visiblePosts.Add(p);
+                }
+            }
+
+            var dtos = visiblePosts.Select(p =>
             {
                 // Media
                 var medias = p.PostMedias?.Select(m =>

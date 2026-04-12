@@ -1,0 +1,27 @@
+👑 1. Tài khoản Admin (Quản trị viên)
+1.	Email: alex_photo@example.com | Display Name: Alex Johnson
+🛡️ 2. Tài khoản Moderator (Người kiểm duyệt)
+2.	Email: sarah_art@example.com | Display Name: Sarah Williams
+3.	Email: mike_travel@example.com | Display Name: Mike Brown
+👤 3. Tài khoản User (Người dùng bình thường)
+4.	Email: emma_food@example.com | Display Name: Emma Davis
+5.	Email: david_tech@example.com | Display Name: David Miller
+6.	Email: lisa_fitness@example.com | Display Name: Lisa Wilson
+7.	Email: john_music@example.com | Display Name: John Taylor
+8.	Email: anna_style@example.com | Display Name: Anderson Moore
+9.	Email: chris_gaming@example.com | Display Name: Chris Jackson
+10.	Email: nina_books@example.com | Display Name: Nina White
+11.	Email: tom_films@example.com | Display Name: Tom Harris
+12.	Email: kate_science@example.com | Display Name: Kate Martin
+13.	Email: steve_cars@example.com | Display Name: Steve Thompson
+14.	Email: amy_design@example.com | Display Name: Amy Garcia
+15.	Email: pete_sports@example.com | Display Name: Peter Martinez
+16.	Email: julia_coffee@example.com | Display Name: Julia Robinson
+17.	Email: mark_pizza@example.com | Display Name: Mark Clark
+18.	Email: rachel_comedy@example.com | Display Name: Rachel Lewis
+19.	Email: dan_history@example.com | Display Name: Dan Lee
+20.	Email: zoe_nature@example.com | Display Name: Zoe Walker
+Lưu ý:
+•	Mật khẩu cho tất cả 20 tài khoản: Password123!
+•	15 user đầu là profile Public, 5 user cuối (từ số 16 đến 20) là profile Private.
+•	Một số user thường (bị seed ngẫu nhiên) sẽ ở trạng thái bị cảnh cáo (warned) hoặc cấm tạm thời (banned) để phục vụ test tính năng Moderation.

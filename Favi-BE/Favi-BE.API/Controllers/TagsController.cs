@@ -40,6 +40,6 @@ namespace Favi_BE.Controllers
 
         [HttpGet("{id}/posts")]
         public async Task<ActionResult<PagedResult<PostResponse>>> GetPosts(Guid id, int page = 1, int pageSize = 20) =>
-            Ok(await _tags.GetPostsByTagAsync(id, page, pageSize));
+            Ok(await _tags.GetPostsByTagAsync(id, null, page, pageSize));
     }
 }

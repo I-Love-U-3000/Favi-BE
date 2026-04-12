@@ -1,0 +1,65 @@
+services:
+  # ====== Favi-backend api ======
+  favi-api:
+    cpus: 2
+    mem_limit: 2.5g
+    logging: 
+      driver: json-file
+      options: 
+        max-size: "10m"
+        max-file: "3"
+        mode: non-blocking
+        max-buffer-size: "4m"
+  
+  #PostgreSQL 
+  favi-postgres:
+    cpus: 2
+    mem_limit: 2.5g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        mode: non-blocking
+        max-buffer-size: "4m"
+  
+  #Vector Api 
+  vector-index-api:
+    cpus: 1.5
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        mode: non-blocking
+        max-buffer-size: "4m"
+  
+  #Qdrant vector database
+  qdrant:
+    cpus: 0.75
+    mem_limit: 1g
+    logging:  
+      driver: json-file
+      options: 
+        max-size: "5m"
+        max-file: "2"
+        mode: non-blocking
+        max-buffer-size: "1m"
+  
+  redis: 
+    cpus: 0.5
+    mem_limit: 512m
+    command: >
+      redis-server
+      --save 900 1 
+      --save 300 10 
+      --maxmemory 400mb 
+      --maxmemory-policy allkeys-lru 
+    logging: 
+      driver: json-file
+      options: 
+        max-size: "5m"
+        max-file: "2"
+        mode: non-blocking
+        max-buffer-size: "2m"

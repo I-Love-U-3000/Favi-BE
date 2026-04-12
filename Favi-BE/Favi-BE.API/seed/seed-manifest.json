@@ -1,0 +1,32 @@
+{
+  "seedKey": "favi_v1",
+  "generatedAt": "<set-at-runtime>",
+  "counts": {
+    "users": { "min": 5000, "max": 5000 },
+    "posts": { "min": 10000, "max": 12000 },
+    "follows": { "min": 50000, "max": 70000 },
+    "reactions": { "min": 80000, "max": 120000 },
+    "comments": { "min": 15000, "max": 30000 },
+    "reposts": { "min": 1000, "max": 2000 },
+    "tags": { "min": 50, "max": 120 },
+    "vectorizedPosts": { "min": 3000, "max": 5000 }
+  },
+  "distribution": {
+    "roles": {
+      "lurker": 0.7,
+      "casual": 0.25,
+      "power": 0.05
+    }
+  },
+  "images": {
+    "provider": "loremflickr",
+    "catalogFile": "seed-output/image-catalog.json",
+    "runImageSetFile": "seed-output/run-image-set.json",
+    "catalogMinSize": 1000,
+    "deterministicSelection": true,
+    "freezeRunImageSet": true
+  },
+  "output": {
+    "root": "seed-output"
+  }
+}
