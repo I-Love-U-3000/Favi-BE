@@ -43,7 +43,11 @@
     </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Docs\migration\diagrams\" />
+    <Folder Include="test-results\load\" />
     <Folder Include="test-results\sanity\" />
+    <Folder Include="test-results\smoke\" />
+    <Folder Include="test-results\stress-spike-soak\" />
   </ItemGroup>
 
 </Project>
