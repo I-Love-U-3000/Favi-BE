@@ -30,6 +30,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
+      <PackageReference Include="MediatR" Version="12.4.1" />
+
 	  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 	  <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 
@@ -50,4 +52,9 @@
     <Folder Include="test-results\stress-spike-soak\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Favi-BE.BuildingBlocks\Favi-BE.BuildingBlocks.csproj" />
+  </ItemGroup>
+
+  
 </Project>

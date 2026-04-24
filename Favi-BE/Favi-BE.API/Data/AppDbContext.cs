@@ -1,12 +1,13 @@
 ﻿using Favi_BE.API.Models.Entities;
 using Favi_BE.API.Models.Entities.JoinTables;
+using Favi_BE.BuildingBlocks.Application.Data;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 using Microsoft.EntityFrameworkCore;
 
 namespace Favi_BE.Data
 {
-    public class AppDbContext: DbContext
+    public class AppDbContext: DbContext, IBuildingBlocksDbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -33,6 +34,8 @@ namespace Favi_BE.Data
         public DbSet<StoryView> StoryViews { get; set; }
         public DbSet<Repost> Reposts { get; set; }
         public DbSet<EmailAccount> EmailAccounts { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<InboxMessage> InboxMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -433,6 +436,36 @@ namespace Favi_BE.Data
                 // Unique index on email
                 b.HasIndex(ea => ea.Email)
                     .IsUnique();
+            });
+
+            // ===== Outbox =====
+            modelBuilder.Entity<OutboxMessage>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Type).IsRequired();
+                b.Property(x => x.Payload).IsRequired();
+                b.Property(x => x.Status).HasConversion<string>();
+                b.Property(x => x.OccurredOnUtc).HasColumnType("timestamp with time zone");
+                b.Property(x => x.ProcessedOnUtc).HasColumnType("timestamp with time zone");
+
+                b.HasIndex(x => new { x.Status, x.OccurredOnUtc });
+                b.HasIndex(x => x.ProcessedOnUtc);
+            });
+
+            // ===== Inbox =====
+            modelBuilder.Entity<InboxMessage>(b =>
+            {
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Type).IsRequired();
+                b.Property(x => x.Payload).IsRequired();
+                b.Property(x => x.MessageId).IsRequired();
+                b.Property(x => x.Consumer).IsRequired();
+                b.Property(x => x.Status).HasConversion<string>();
+                b.Property(x => x.ReceivedOnUtc).HasColumnType("timestamp with time zone");
+                b.Property(x => x.ProcessedOnUtc).HasColumnType("timestamp with time zone");
+
+                b.HasIndex(x => new { x.MessageId, x.Consumer }).IsUnique();
+                b.HasIndex(x => new { x.Status, x.ReceivedOnUtc });
             });
         }
     }

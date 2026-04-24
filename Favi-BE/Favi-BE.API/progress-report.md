@@ -1,3 +1,5 @@
+# Các seed và test trong này thì chuẩn, nhưng các kế hoạch triển khai nâng cấp đã lỗi thời, tôi đã có plan khác. 
+
 #  Favi-BE 
 
 ## 1. Giới Thiệu Dự Án

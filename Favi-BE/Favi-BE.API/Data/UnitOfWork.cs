@@ -6,18 +6,27 @@ using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Interfaces;
 using Favi_BE.API.Interfaces.Repositories;
 using Favi_BE.API.Data.Repositories;
+using Favi_BE.BuildingBlocks.Application;
+using Favi_BE.BuildingBlocks.Application.Events;
 
 namespace Favi_BE.Data
 {
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
+        private readonly IDomainEventsDispatcher _domainEventsDispatcher;
+        private readonly IExecutionContextAccessor _executionContextAccessor;
         private IDbContextTransaction _transaction;
         private bool _disposed = false;
 
-        public UnitOfWork(AppDbContext context)
+        public UnitOfWork(
+            AppDbContext context,
+            IDomainEventsDispatcher domainEventsDispatcher,
+            IExecutionContextAccessor executionContextAccessor)
         {
             _context = context;
+            _domainEventsDispatcher = domainEventsDispatcher;
+            _executionContextAccessor = executionContextAccessor;
 
             // Initialize repositories
             Profiles = new ProfileRepository(_context);
@@ -80,11 +89,13 @@ namespace Favi_BE.Data
 
         public int Complete()
         {
-            return _context.SaveChanges();
+            return CompleteAsync().GetAwaiter().GetResult();
         }
 
         public async Task<int> CompleteAsync()
         {
+            await _domainEventsDispatcher.DispatchEventsAsync(_executionContextAccessor.CorrelationId);
+
             return await _context.SaveChangesAsync();
         }
 

@@ -78,6 +78,7 @@ Define target architecture using these slices:
 
 ### Mandates
 - All use-cases go through MediatR handlers.
+- Dependency Injection must be modularized via `IServiceCollection` extension methods (no raw registrations in `Program.cs`); group by responsibility (for example `AddInfrastructure`, `AddAuthModule`).
 - Domain invariants live in domain model via `IBusinessRule`; application validation only handles input/contract shape.
 - Domain events are collected from tracked aggregates and dispatched in-process before outbox enqueue.
 - Outbox is for cross-boundary delivery; Inbox is for idempotent consumption.
@@ -161,7 +162,7 @@ Require explicit mapping per module:
 
 ## 8) Folder Restructure Plan (detailed)
 Propose and apply an incremental folder structure like:
-- `src/Favi-BE.BuildingBlocks/`
+- `Favi-BE.BuildingBlocks/`
   - `Domain/`
     - `Entity.cs`, `ValueObject.cs`, `IBusinessRule.cs`, `IDomainEvent.cs`, `TypedIdValueBase.cs`
   - `Application/`
@@ -174,20 +175,11 @@ Propose and apply an incremental folder structure like:
     - `Outbox/`
     - `Inbox/`
     - `InternalCommands/` (optional)
-- `src/Favi-BE.<Module>.Domain/`
-- `src/Favi-BE.<Module>.Application/`
-  - `Abstractions/Commands/...` (write interfaces)
-  - `Abstractions/Queries/...` (read interfaces)
-  - `Commands/...`
-  - `Queries/...`
-  - `Notifications/...`
-  - `Behaviors/...`
-- `src/Favi-BE.<Module>.Infrastructure/`
-  - `Persistence/Write/...` (EF Core tracking)
-  - `Persistence/Read/...` (EF Core `AsNoTracking`, later Dapper)
-  - `Repositories/...`
-  - `Integration/...`
-- `src/Favi-BE.API/`
+- `Favi-BE.Modules.<ModuleName>/`
+  - `Domain/`
+  - `Application/`
+  - `Infrastructure/`
+- `Favi-BE.API/`
   - `Controllers/...`
   - `Hubs/...`
   - `DependencyInjection/...`
@@ -329,22 +321,22 @@ For every phase/slice, enforce:
 
 ## 16) Final Required Deliverables
 Produce these artifacts:
-1. `Architecture-BoundedContexts.md`
-2. `Aggregate-Inventory.md`
-3. `CQRS-CommandQuery-Catalog.md`
-4. `Schema-Transition-Plan.md`
-5. `Folder-Restructure-Mapping.md`
-6. `BuildingBlocks-Design.md`
-7. `Outbox-Implementation-Guide.md`
-8. `Inbox-Implementation-Guide.md`
-9. `Notification-Refactor-SignalR-MediatR.md`
-10. `Module-Boundary-Enforcement.md`
-11. `Strangler-Rollout-Plan.md`
+1. `Favi-BE.API/Docs/CQRS-Modernization/Architecture-BoundedContexts.md`
+2. `Favi-BE.API/Docs/CQRS-Modernization/Aggregate-Inventory.md`
+3. `Favi-BE.API/Docs/CQRS-Modernization/CQRS-CommandQuery-Catalog.md`
+4. `Favi-BE.API/Docs/CQRS-Modernization/Schema-Transition-Plan.md`
+5. `Favi-BE.API/Docs/CQRS-Modernization/Folder-Restructure-Mapping.md`
+6. `Favi-BE.API/Docs/CQRS-Modernization/BuildingBlocks-Design.md`
+7. `Favi-BE.API/Docs/CQRS-Modernization/Outbox-Implementation-Guide.md`
+8. `Favi-BE.API/Docs/CQRS-Modernization/Inbox-Implementation-Guide.md`
+9. `Favi-BE.API/Docs/CQRS-Modernization/Notification-Refactor-SignalR-MediatR.md`
+10. `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md`
+11. `Favi-BE.API/Docs/CQRS-Modernization/Strangler-Rollout-Plan.md`
 12. `Execution-Checklist.md`
-13. `InternalCommands-Decision-Log.md`
-14. `Auth-CQRS-Catalog.md`
-15. `Favi-Concrete-Module-Aggregate-Matrix.md`
-16. `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`
+13. `Favi-BE.API/Docs/CQRS-Modernization/InternalCommands-Decision-Log.md`
+14. `Favi-BE.API/Docs/CQRS-Modernization/Auth-CQRS-Catalog.md`
+15. `Favi-BE.API/Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md`
+16. `Favi-BE.API/Docs/CQRS-Modernization/ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`
 
 Each document must be complete and end-to-end (no partial numbering, no duplicate step numbering).
 
@@ -390,10 +382,10 @@ Use the current codebase as baseline and produce concrete module mapping below.
 ### 19.2 Mandatory concrete command/query list by aggregate
 1. **Identity & Access**
    - Commands: `RegisterCommand`, `LoginCommand`, `RefreshTokenCommand`, `LogoutCommand`, `ChangePasswordCommand`, `UpdateProfileCommand`
-   - Queries: `GetCurrentUserQuery`, `GetProfileByIdQuery`, `GetFollowersQuery`, `GetFollowingsQuery`, `GetRecommendedProfilesQuery`, `GetOnlineFriendsQuery`
+   - Queries: `GetCurrentUserQuery`, `GetProfileByIdQuery`, `GetRecommendedProfilesQuery`, `GetOnlineFriendsQuery`
 2. **Social Graph**
    - Commands: `FollowUserCommand`, `UnfollowUserCommand`, `AddSocialLinkCommand`, `RemoveSocialLinkCommand`
-   - Queries: `GetSocialLinksQuery`, `GetFollowSuggestionsQuery`
+   - Queries: `GetFollowersQuery`, `GetFollowingsQuery`, `GetSocialLinksQuery`, `GetFollowSuggestionsQuery`
 3. **Content Publishing**
    - Commands: `CreatePostCommand`, `UpdatePostCommand`, `DeletePostCommand`, `ArchivePostCommand`, `AddPostMediaCommand`, `ReorderPostMediaCommand`, `AddPostTagsCommand`, `RemovePostTagCommand`, `CreateCollectionCommand`, `UpdateCollectionCommand`, `DeleteCollectionCommand`, `AddPostToCollectionCommand`, `RemovePostFromCollectionCommand`, `SharePostCommand`, `UnsharePostCommand`
    - Queries: `GetPostByIdQuery`, `GetNewsFeedQuery`, `GetProfilePostsQuery`, `SearchPostsQuery`, `GetCollectionByIdQuery`, `GetCollectionsQuery`, `GetRepostsByProfileQuery`
@@ -471,3 +463,42 @@ For every slice:
 - Rollback: `git revert` to previous stable commit.
 - Mandatory rollback trigger: error rate delta > agreed threshold, duplicated side effects, data mismatch.
 - Mandatory comparison: old vs new command result parity and key read-model metrics.
+
+---
+
+## 22) Mandatory Reference Matrix (must-read by section and slice)
+
+### 22.1 Rule of use
+- Không được implement bất kỳ section/slice nào nếu chưa đọc đủ nhóm `Priority-1`.
+- `Priority-2` là bắt buộc để validate design consistency.
+- `Priority-3` đọc khi có thay đổi chạm boundary/query schema/performance.
+
+### 22.2 Section -> Required references
+| Plan Section | Priority-1 (read first) | Priority-2 (read before finalize) | Priority-3 (conditional) |
+|---|---|---|---|
+| `3) Discovery and Baseline` | `Favi-BE.API/Execution-Checklist.md` (Section 1), `Favi-BE.API/Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md` | `Favi-BE.API/Docs/CQRS-Modernization/Architecture-BoundedContexts.md`, `Favi-BE.API/Docs/CQRS-Modernization/Aggregate-Inventory.md` | `Favi-BE.API/Docs/CQRS-Modernization/Notification-Refactor-SignalR-MediatR.md` |
+| `4) Target Architecture Definition` | `Favi-BE.API/Docs/CQRS-Modernization/Architecture-BoundedContexts.md`, `Favi-BE.API/Docs/CQRS-Modernization/BuildingBlocks-Design.md` | `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md`, `Favi-BE.API/Docs/CQRS-Modernization/ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/Folder-Restructure-Mapping.md` |
+| `5) Domain Decomposition Tasks` | `Favi-BE.API/Docs/CQRS-Modernization/Aggregate-Inventory.md`, `Favi-BE.API/Docs/CQRS-Modernization/Architecture-BoundedContexts.md` | `Favi-BE.API/Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md` | `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md` |
+| `6) Command/Query Catalog` | `Favi-BE.API/Docs/CQRS-Modernization/CQRS-CommandQuery-Catalog.md`, `Favi-BE.API/Docs/CQRS-Modernization/Auth-CQRS-Catalog.md` | `Favi-BE.API/Docs/CQRS-Modernization/Aggregate-Inventory.md` | `Favi-BE.API/Docs/CQRS-Modernization/ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` |
+| `7) Schema Evolution and Data Strategy` | `Favi-BE.API/Docs/CQRS-Modernization/Schema-Transition-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/Outbox-Implementation-Guide.md`, `Favi-BE.API/Docs/CQRS-Modernization/Inbox-Implementation-Guide.md` | `Favi-BE.API/Docs/CQRS-Modernization/Notification-Refactor-SignalR-MediatR.md` |
+| `8) Folder Restructure Plan` | `Favi-BE.API/Docs/CQRS-Modernization/Folder-Restructure-Mapping.md` | `Favi-BE.API/Docs/CQRS-Modernization/Architecture-BoundedContexts.md`, `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md` | `Favi-BE.API/Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md` |
+| `9) Domain Events + Outbox` | `Favi-BE.API/Docs/CQRS-Modernization/Outbox-Implementation-Guide.md`, `Favi-BE.API/Docs/CQRS-Modernization/BuildingBlocks-Design.md` | `Favi-BE.API/Docs/CQRS-Modernization/Notification-Refactor-SignalR-MediatR.md`, `Favi-BE.API/Docs/CQRS-Modernization/Schema-Transition-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/InternalCommands-Decision-Log.md` |
+| `10) Inbox + InternalCommands` | `Favi-BE.API/Docs/CQRS-Modernization/Inbox-Implementation-Guide.md`, `Favi-BE.API/Docs/CQRS-Modernization/InternalCommands-Decision-Log.md` | `Favi-BE.API/Docs/CQRS-Modernization/Schema-Transition-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/Outbox-Implementation-Guide.md` |
+| `11) MediatR Adoption` | `Favi-BE.API/Docs/CQRS-Modernization/BuildingBlocks-Design.md`, `Favi-BE.API/Docs/CQRS-Modernization/CQRS-CommandQuery-Catalog.md` | `Favi-BE.API/Docs/CQRS-Modernization/Auth-CQRS-Catalog.md`, `Favi-BE.API/Docs/CQRS-Modernization/ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md` |
+| `12) Notification Refactor` | `Favi-BE.API/Docs/CQRS-Modernization/Notification-Refactor-SignalR-MediatR.md` | `Favi-BE.API/Docs/CQRS-Modernization/Outbox-Implementation-Guide.md`, `Favi-BE.API/Docs/CQRS-Modernization/Inbox-Implementation-Guide.md` | `Favi-BE.API/Docs/CQRS-Modernization/CQRS-CommandQuery-Catalog.md` |
+| `13) Module Boundary Enforcement` | `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md` | `Favi-BE.API/Docs/CQRS-Modernization/Architecture-BoundedContexts.md`, `Favi-BE.API/Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md` | `Favi-BE.API/Docs/CQRS-Modernization/Folder-Restructure-Mapping.md` |
+| `14) Strangler Migration Plan` | `Favi-BE.API/Docs/CQRS-Modernization/Strangler-Rollout-Plan.md`, `Favi-BE.API/Execution-Checklist.md` | `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md`, `Favi-BE.API/Docs/CQRS-Modernization/ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/Schema-Transition-Plan.md` |
+| `20) Read/Write Segregation Strategy` | `Favi-BE.API/Docs/CQRS-Modernization/ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` | `Favi-BE.API/Docs/CQRS-Modernization/CQRS-CommandQuery-Catalog.md`, `Favi-BE.API/Docs/CQRS-Modernization/Module-Boundary-Enforcement.md` | `Favi-BE.API/Docs/CQRS-Modernization/Schema-Transition-Plan.md` |
+
+### 22.3 Slice -> Required references
+| Slice | Priority-1 (must-read before code) | Priority-2 (must-read before merge) |
+|---|---|---|
+| `Foundation.CQRSOutbox` | `BuildingBlocks-Design.md`, `Outbox-Implementation-Guide.md`, `Inbox-Implementation-Guide.md`, `Schema-Transition-Plan.md` | `Module-Boundary-Enforcement.md`, `Strangler-Rollout-Plan.md` |
+| `Auth.LoginCQRS` | `Auth-CQRS-Catalog.md`, `CQRS-CommandQuery-Catalog.md`, `Aggregate-Inventory.md` | `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`, `Execution-Checklist.md` |
+| `Notification.EventDriven` | `Notification-Refactor-SignalR-MediatR.md`, `Outbox-Implementation-Guide.md`, `Inbox-Implementation-Guide.md` | `Schema-Transition-Plan.md`, `Execution-Checklist.md` |
+| `Engagement.Commands` | `CQRS-CommandQuery-Catalog.md`, `Aggregate-Inventory.md`, `Favi-Concrete-Module-Aggregate-Matrix.md` | `Notification-Refactor-SignalR-MediatR.md`, `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` |
+| `SocialGraph.Commands` | `CQRS-CommandQuery-Catalog.md`, `Architecture-BoundedContexts.md`, `Favi-Concrete-Module-Aggregate-Matrix.md` | `Module-Boundary-Enforcement.md`, `Execution-Checklist.md` |
+| `ContentPublishing.Commands` | `CQRS-CommandQuery-Catalog.md`, `Aggregate-Inventory.md`, `Schema-Transition-Plan.md` | `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`, `Module-Boundary-Enforcement.md` |
+| `Stories.CommandsAndExpiry` | `CQRS-CommandQuery-Catalog.md`, `Aggregate-Inventory.md` | `Schema-Transition-Plan.md`, `Strangler-Rollout-Plan.md` |
+| `Messaging.CQRS` | `CQRS-CommandQuery-Catalog.md`, `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`, `Module-Boundary-Enforcement.md` | `Schema-Transition-Plan.md`, `Execution-Checklist.md` |
+| `Moderation.BackofficeCQRS` | `CQRS-CommandQuery-Catalog.md`, `Aggregate-Inventory.md`, `Module-Boundary-Enforcement.md` | `Strangler-Rollout-Plan.md`, `Execution-Checklist.md` |
