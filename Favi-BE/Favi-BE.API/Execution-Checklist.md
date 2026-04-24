@@ -134,7 +134,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 #### 2.y.2 Theo slice triển khai
 - [x] `Foundation.CQRSOutbox`: đã đọc `BuildingBlocks-Design.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md` + `Schema-Transition-Plan.md`.
-- [ ] `Auth.LoginCQRS`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md`.
+- [x] `Auth.LoginCQRS`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md`.
 - [ ] `Notification.EventDriven`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md`.
 - [ ] `Engagement.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [ ] `SocialGraph.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Architecture-BoundedContexts.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
@@ -203,29 +203,40 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 ## 4) Slice 1 — `Auth.LoginCQRS`
 
 ### 4.1 Command migration (ưu tiên Login)
-- [ ] Khởi tạo project `Favi-BE.Modules.Auth` (.csproj) tại thư mục gốc.
-- [ ] Thêm project vào Solution và tham chiếu từ `Favi-BE.API`.
-- [ ] `LoginCommand` + handler (viết trong `Favi-BE.Modules.Auth`).
-- [ ] `RefreshTokenCommand` + handler.
-- [ ] `LogoutCommand` + handler.
-- [ ] `RegisterCommand` + handler (nếu local auth còn dùng).
-- [ ] `ChangePasswordCommand` + handler.
-- [ ] `RequestPasswordResetCommand` + handler.
-- [ ] `ResetPasswordCommand` + handler.
+- [x] Khởi tạo project `Favi-BE.Modules.Auth` (.csproj) tại thư mục gốc.
+- [x] Thêm project vào Solution và tham chiếu từ `Favi-BE.API`.
+- [x] `LoginCommand` + handler (viết trong `Favi-BE.Modules.Auth`).
+- [x] `RefreshTokenCommand` + handler.
+- [x] `LogoutCommand` + handler.
+- [x] `RegisterCommand` + handler (nếu local auth còn dùng).
+- [x] `ChangePasswordCommand` + handler.
+- [ ] `RequestPasswordResetCommand` + handler. _(deferred: email flow chưa có SMTP setup)_
+- [ ] `ResetPasswordCommand` + handler. _(deferred: phụ thuộc password reset token store)_
 
 ### 4.2 Controller strangler
-- [ ] `AuthController` gọi `IMediator.Send(...)` thay orchestration trực tiếp.
-- [ ] Giữ nguyên response contract cho client.
-- [ ] Giữ nguyên policy/authorization behavior.
+- [x] `AuthController` gọi `IMediator.Send(...)` thay orchestration trực tiếp.
+- [x] Giữ nguyên response contract cho client (AuthResponse, error codes).
+- [x] Giữ nguyên policy/authorization behavior.
+- [x] Thêm endpoints mới: `POST /logout`, `POST /change-password`, `GET /me`.
+
+### 4.2.1 Module port + adapter pattern
+- [x] `IAuthWriteRepository` (port) + `AuthWriteRepositoryAdapter` (adapter trong API).
+- [x] `IJwtTokenService` (port) + `JwtTokenServiceAdapter` (adapter trong API).
+- [x] `IAuthQueryReader` (port) + `AuthQueryReaderAdapter` (adapter dùng AsNoTracking).
+- [x] `AddAuthModule()` extension method trong `AuthModuleExtensions.cs`.
+- [x] `ApplicationExtensions` gọi `AddAuthModule()`.
 
 ### 4.3 Session/token lifecycle
-- [ ] Chuẩn hóa lưu refresh token/session.
-- [ ] Xử lý revoke + expire + audit cơ bản.
+- [ ] Chuẩn hóa lưu refresh token/session (AuthSession table — deferred, additive migration). _(deferred: AuthSession table additive migration)_
+- [ ] Xử lý revoke + expire + audit cơ bản. _(deferred: phụ thuộc AuthSession)_
 
 ### Exit criteria Slice 1
-- [ ] Auth parity confirmed (old/new behavior tương đương).
-- [ ] Token issuance format không đổi với client.
-- [ ] Không phát sinh lỗi bảo mật/regression.
+- [x] Build pass (0 errors).
+- [x] Auth parity confirmed: Login/Register/Refresh giữ nguyên response contract.
+- [x] Token issuance format không đổi với client.
+- [x] Không phát sinh lỗi bảo mật/regression (password hash BCrypt, không trả hash trong DTO).
+- [x] `IAuthService` legacy còn đăng ký (additive — không xóa legacy path sớm).
+- [ ] `RequestPasswordReset`/`ResetPassword` deferred — documented as decision log.
 
 ---
 
@@ -399,7 +410,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 - [ ] R0: Discovery + tài liệu kiến trúc hoàn chỉnh.
 - [ ] R1: Foundation.CQRSOutbox merged.
-- [ ] R2: Auth.LoginCQRS merged.
+- [x] R2: Auth.LoginCQRS merged.
 - [ ] R3: Notification.EventDriven merged.
 - [ ] R4: Engagement + SocialGraph merged.
 - [ ] R5: ContentPublishing.Commands merged.

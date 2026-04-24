@@ -54,6 +54,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Favi-BE.BuildingBlocks\Favi-BE.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.Auth\Favi-BE.Modules.Auth.csproj" />
   </ItemGroup>
 
   
