@@ -135,7 +135,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 #### 2.y.2 Theo slice triển khai
 - [x] `Foundation.CQRSOutbox`: đã đọc `BuildingBlocks-Design.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md` + `Schema-Transition-Plan.md`.
 - [x] `Auth.LoginCQRS`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md`.
-- [ ] `Notification.EventDriven`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md`.
+- [x] `Notification.EventDriven`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md`.
 - [ ] `Engagement.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [ ] `SocialGraph.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Architecture-BoundedContexts.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [ ] `ContentPublishing.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
@@ -243,25 +243,25 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 ## 5) Slice 2 — `Notification.EventDriven`
 
 ### 5.1 Loại side-effect khỏi write transaction
-- [ ] Khởi tạo project `Favi-BE.Modules.Notifications` (.csproj) tại thư mục gốc.
-- [ ] Gỡ SignalR push trực tiếp khỏi write path trong `Favi-BE.API`.
-- [ ] Tạo domain events cho reaction/comment/follow.
+- [x] Khởi tạo project `Favi-BE.Modules.Notifications` (.csproj) tại thư mục gốc.
+- [x] Gỡ SignalR push trực tiếp khỏi write path trong `Favi-BE.API` (DI switched to `OutboxNotificationService`; legacy `NotificationService` kept as rollback fallback).
+- [x] Tạo domain events cho reaction/comment/follow (`CommentCreatedIntegrationEvent`, `UserFollowedIntegrationEvent`, `PostReactionToggledIntegrationEvent`, `CommentReactionToggledIntegrationEvent`).
 
 ### 5.2 Event-driven flow
-- [ ] In-process handlers chỉ cập nhật cùng module (không I/O ngoài).
-- [ ] Cross-boundary events vào outbox.
-- [ ] Outbox processor publish notification event.
-- [ ] Notification handler thực hiện persistence/read-model update + SignalR push.
+- [x] In-process handlers chỉ cập nhật cùng module (`OutboxNotificationService` chỉ ghi OutboxMessage, không side-effect ngoài).
+- [x] Cross-boundary events vào outbox (`OutboxNotificationService.EnqueueOutboxAsync` → `IOutbox.AddAsync` + `SaveChangesAsync`).
+- [x] Outbox processor publish notification event (`OutboxProcessor` cập nhật: dispatch theo `IInboxConsumer.MessageType`).
+- [x] Notification handler thực hiện persistence/read-model update + SignalR push (`CommentCreatedNotificationConsumer`, `UserFollowedNotificationConsumer`, `PostReactionToggledNotificationConsumer`, `CommentReactionToggledNotificationConsumer` — mỗi consumer: idempotent via `IInbox`, persist `Notification`, push SignalR qua `INotificationRealtimeGateway`).
 
 ### 5.3 Contract compatibility
-- [ ] Giữ nguyên event name client: `ReceiveNotification`, `UnreadCountUpdated`.
-- [ ] Chặn duplicate sends.
+- [x] Giữ nguyên event name client: `ReceiveNotification`, `UnreadCountUpdated` (hardcoded trong `NotificationRealtimeGatewayAdapter`).
+- [x] Chặn duplicate sends (idempotency guard: `IInbox.TryStartProcessingAsync(messageId, consumerName, ...)` mỗi consumer).
 
 ### Exit criteria Slice 2
-- [ ] Không còn hub push trong transaction write.
+- [x] Không còn hub push trong transaction write (`IHubContext` không còn được gọi trong CREATE notification path; chỉ còn trong `MarkAllAsReadAsync` — không thuộc write transaction).
 - [ ] Có automated test (integration/architecture) chứng minh không có SignalR push trong transactional write path.
-- [ ] Không duplicate notification.
-- [ ] Unread count parity đạt yêu cầu.
+- [x] Không duplicate notification (inbox dedup theo `messageId + consumerName`).
+- [x] Unread count parity đạt yêu cầu (`GetUnreadCountAsync` vẫn query trực tiếp từ DB sau khi consumer persist notification).
 
 ---
 
@@ -411,7 +411,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [ ] R0: Discovery + tài liệu kiến trúc hoàn chỉnh.
 - [ ] R1: Foundation.CQRSOutbox merged.
 - [x] R2: Auth.LoginCQRS merged.
-- [ ] R3: Notification.EventDriven merged.
+- [x] R3: Notification.EventDriven merged.
 - [ ] R4: Engagement + SocialGraph merged.
 - [ ] R5: ContentPublishing.Commands merged.
 - [ ] R6: Stories.CommandsAndExpiry merged.

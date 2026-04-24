@@ -1,6 +1,7 @@
 using Favi_BE.API.Data.Repositories;
 using Favi_BE.API.Interfaces.Repositories;
 using Favi_BE.API.Interfaces.Services;
+using Favi_BE.API.Modules.Notifications;
 using Favi_BE.API.Services;
 using Favi_BE.BuildingBlocks.Application;
 using Favi_BE.BuildingBlocks.Application.Data;
@@ -17,6 +18,8 @@ using Favi_BE.Data.Repositories;
 using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Interfaces.Services;
+using Favi_BE.Modules.Notifications;
+using Favi_BE.Modules.Notifications.Application.Contracts;
 using Favi_BE.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +48,11 @@ public static class ApplicationExtensions
 
         // Auth module: CQRS handlers + port adapters
         services.AddAuthModule();
+
+        // Notifications module: port adapters (API-layer) + inbox consumers (module-layer)
+        services.AddScoped<INotificationWriteRepository, NotificationWriteRepositoryAdapter>();
+        services.AddScoped<INotificationRealtimeGateway, NotificationRealtimeGatewayAdapter>();
+        services.AddNotificationsModule();
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
@@ -86,7 +94,9 @@ public static class ApplicationExtensions
         services.AddScoped<IUserModerationService, UserModerationService>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IChatRealtimeService, ChatRealtimeService>();
-        services.AddScoped<INotificationService, NotificationService>();
+        // OutboxNotificationService replaces NotificationService for write side effects.
+        // Legacy NotificationService.cs is kept in codebase as rollback fallback (git revert).
+        services.AddScoped<INotificationService, OutboxNotificationService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IStoryService, StoryService>();
         services.AddScoped<IBulkActionService, BulkActionService>();

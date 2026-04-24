@@ -67,7 +67,7 @@ public sealed class InboxProcessor : BackgroundService
 
             try
             {
-                await consumer.HandleAsync(message.Payload, cancellationToken);
+                await consumer.HandleAsync(message.MessageId, message.Payload, cancellationToken);
                 message.Status = InboxMessageStatus.Processed;
                 message.ProcessedOnUtc = DateTime.UtcNow;
                 message.Error = null;
