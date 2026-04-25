@@ -2,9 +2,13 @@
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Engagement.Application.Commands.TogglePostReaction;
+using Favi_BE.Modules.Engagement.Application.Queries.GetPostReactors;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using EngagementReactionType = Favi_BE.Modules.Engagement.Domain.ReactionType;
 
 namespace Favi_BE.Controllers
 {
@@ -17,13 +21,15 @@ namespace Favi_BE.Controllers
         private readonly IPrivacyGuard _privacy;
         private readonly IProfileService _profileService;
         private readonly ISearchService _search;
-        public PostsController(IPostService posts, ITagService tags, IPrivacyGuard privacy, IProfileService profileService, ISearchService search)
+        private readonly IMediator _mediator;
+        public PostsController(IPostService posts, ITagService tags, IPrivacyGuard privacy, IProfileService profileService, ISearchService search, IMediator mediator)
         {
             _posts = posts;
             _tags = tags;
             _privacy = privacy;
             _profileService = profileService;
             _search = search;
+            _mediator = mediator;
         }
 
         // ======================
@@ -403,20 +409,19 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserId();
 
-            if (!Enum.TryParse<ReactionType>(type, true, out var reactionType))
+            if (!Enum.TryParse<ReactionType>(type, true, out var legacyType))
                 return BadRequest(new { code = "INVALID_REACTION_TYPE", message = $"Giá trị reaction '{type}' không hợp lệ." });
 
-            var postEntity = await _posts.GetEntityAsync(id);
-            if (postEntity is null)
-                return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại." });
+            var result = await _mediator.Send(new TogglePostReactionCommand(
+                id, userId, (EngagementReactionType)(int)legacyType));
 
-            var newState = await _posts.ToggleReactionAsync(id, userId, reactionType);
+            if (!result.IsSuccess)
+                return NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
 
-            // Service trả null khi: 1) post không có (đã check ở trên) hoặc 2) reaction bị gỡ
-            if (newState is null)
+            if (result.Removed)
                 return Ok(new { removed = true, message = "Reaction đã được gỡ." });
 
-            return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
+            return Ok(new { type = result.Type!.ToString(), message = "Reaction đã được cập nhật." });
         }
 
         // ======================
@@ -426,17 +431,14 @@ namespace Favi_BE.Controllers
         [HttpGet("{id:guid}/reactors")]
         public async Task<ActionResult<IEnumerable<PostReactorResponse>>> GetReactors(Guid id)
         {
-            var userId = User.GetUserId();
-
-            try
-            {
-                var reactors = await _posts.GetReactorsAsync(id, userId);
-                return Ok(reactors);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Forbid();
-            }
+            var reactors = await _mediator.Send(new GetPostReactorsQuery(id));
+            return Ok(reactors.Select(r => new PostReactorResponse(
+                r.ProfileId,
+                r.Username,
+                r.DisplayName,
+                r.AvatarUrl,
+                (ReactionType)(int)r.ReactionType,
+                r.ReactedAt)));
         }
 
         // ======================

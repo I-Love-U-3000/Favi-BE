@@ -1,9 +1,13 @@
 ﻿using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Engagement.Application.Commands.ToggleCollectionReaction;
 using Favi_BE.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EngagementReactionType = Favi_BE.Modules.Engagement.Domain.ReactionType;
 
 namespace Favi_BE.Controllers
 {
@@ -13,7 +17,13 @@ namespace Favi_BE.Controllers
     {
         private readonly ICollectionService _collections;
         private readonly IPrivacyGuard _privacy;
-        public CollectionsController(ICollectionService collections, IPrivacyGuard privacyGuard) { _collections = collections; _privacy = privacyGuard; }
+        private readonly IMediator _mediator;
+        public CollectionsController(ICollectionService collections, IPrivacyGuard privacyGuard, IMediator mediator)
+        {
+            _collections = collections;
+            _privacy = privacyGuard;
+            _mediator = mediator;
+        }
 
         [Authorize]
         [HttpPost]
@@ -107,19 +117,19 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserId();
 
-            if (!Enum.TryParse<Models.Enums.ReactionType>(type, true, out var reactionType))
+            if (!Enum.TryParse<ReactionType>(type, true, out var legacyType))
                 return BadRequest(new { code = "INVALID_REACTION_TYPE", message = "Loại reaction không hợp lệ." });
 
-            var collection = await _collections.GetEntityByIdAsync(id);
-            if (collection is null)
-                return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
+            var result = await _mediator.Send(new ToggleCollectionReactionCommand(
+                id, userId, (EngagementReactionType)(int)legacyType));
 
-            var newState = await _collections.ToggleReactionAsync(id, userId, reactionType);
+            if (!result.IsSuccess)
+                return NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
 
-            if (newState is null)
+            if (result.Removed)
                 return Ok(new { removed = true, message = "Reaction đã được gỡ." });
 
-            return Ok(new { type = newState.ToString(), message = "Reaction đã được cập nhật." });
+            return Ok(new { type = result.Type!.ToString(), message = "Reaction đã được cập nhật." });
         }
 
         [Authorize]

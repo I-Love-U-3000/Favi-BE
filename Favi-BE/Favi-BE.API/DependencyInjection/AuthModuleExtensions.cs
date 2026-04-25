@@ -22,7 +22,7 @@ public static class AuthModuleExtensions
         // Scan the Auth module assembly for MediatR handlers
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssembly(AssemblyReference.Assembly);
+            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Auth.AssemblyReference.Assembly);
         });
 
         return services;

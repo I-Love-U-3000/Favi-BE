@@ -3,6 +3,7 @@ using Favi_BE.BuildingBlocks.Application.Messaging;
 using Favi_BE.BuildingBlocks.Application.Events;
 using Favi_BE.BuildingBlocks.Application;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Favi_BE.BuildingBlocks.Infrastructure.Pipeline;
 
@@ -33,21 +34,26 @@ public sealed class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior
             return await next();
         }
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var response = await next();
+        var strategy = _dbContext.Database.CreateExecutionStrategy();
 
-            // Dispatch domain events (Phase A + Phase B) before committing
-            await _domainEventsDispatcher.DispatchEventsAsync(_executionContextAccessor.CorrelationId, null, cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
-            return response;
-        }
-        catch
+        return await strategy.ExecuteAsync(async (ct) =>
         {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var response = await next();
+
+                // Dispatch domain events (Phase A + Phase B) before committing
+                await _domainEventsDispatcher.DispatchEventsAsync(_executionContextAccessor.CorrelationId, null, ct);
+
+                await transaction.CommitAsync(ct);
+                return response;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(ct);
+                throw;
+            }
+        }, cancellationToken);
     }
 }

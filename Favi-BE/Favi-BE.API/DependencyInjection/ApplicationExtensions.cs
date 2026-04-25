@@ -49,6 +49,9 @@ public static class ApplicationExtensions
         // Auth module: CQRS handlers + port adapters
         services.AddAuthModule();
 
+        // Engagement module: CQRS handlers + port adapters
+        services.AddEngagementModule();
+
         // Notifications module: port adapters (API-layer) + inbox consumers (module-layer)
         services.AddScoped<INotificationWriteRepository, NotificationWriteRepositoryAdapter>();
         services.AddScoped<INotificationRealtimeGateway, NotificationRealtimeGatewayAdapter>();

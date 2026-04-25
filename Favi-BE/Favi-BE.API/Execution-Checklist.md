@@ -136,7 +136,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [x] `Foundation.CQRSOutbox`: đã đọc `BuildingBlocks-Design.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md` + `Schema-Transition-Plan.md`.
 - [x] `Auth.LoginCQRS`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md`.
 - [x] `Notification.EventDriven`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md`.
-- [ ] `Engagement.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
+- [x] `Engagement.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [ ] `SocialGraph.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Architecture-BoundedContexts.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [ ] `ContentPublishing.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
 - [ ] `Stories.CommandsAndExpiry`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
@@ -267,17 +267,17 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 ## 6) Slice 3 — `Engagement.Commands`
 
-- [ ] `CreateCommentCommand`.
-- [ ] `TogglePostReactionCommand`.
-- [ ] `ToggleCommentReactionCommand`.
-- [ ] `ToggleCollectionReactionCommand`.
-- [ ] `ToggleRepostReactionCommand`.
-- [ ] Áp dụng domain rules + idempotency.
-- [ ] Bổ sung integration events cần thiết cho Notifications.
+- [x] `CreateCommentCommand`.
+- [x] `TogglePostReactionCommand`.
+- [x] `ToggleCommentReactionCommand`.
+- [x] `ToggleCollectionReactionCommand`.
+- [x] `ToggleRepostReactionCommand`.
+- [x] Áp dụng domain rules + idempotency.
+- [x] Bổ sung integration events cần thiết cho Notifications.
 
 ### Exit criteria Slice 3
-- [ ] Reaction/comment correctness parity.
-- [ ] Idempotency checks pass.
+- [x] Reaction/comment correctness parity.
+- [x] Idempotency checks pass.
 
 ---
 
