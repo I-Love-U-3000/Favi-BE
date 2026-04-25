@@ -1,10 +1,17 @@
 ﻿using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Modules.SocialGraph.Application.Commands.AddSocialLink;
+using Favi_BE.Modules.SocialGraph.Application.Commands.FollowUser;
+using Favi_BE.Modules.SocialGraph.Application.Commands.RemoveSocialLink;
+using Favi_BE.Modules.SocialGraph.Application.Commands.UnfollowUser;
+using Favi_BE.Modules.SocialGraph.Application.Queries.GetFollowers;
+using Favi_BE.Modules.SocialGraph.Application.Queries.GetFollowings;
+using Favi_BE.Modules.SocialGraph.Application.Queries.GetSocialLinks;
+using Favi_BE.Modules.SocialGraph.Domain;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics.Contracts;
-using System.Text.RegularExpressions;
 
 namespace Favi_BE.Controllers
 {
@@ -14,9 +21,10 @@ namespace Favi_BE.Controllers
     {
         private readonly IProfileService _profiles;
         private readonly IPrivacyGuard _privacy;
+        private readonly IMediator _mediator;
 
-        public ProfilesController(IProfileService profiles, IPrivacyGuard privacy)
-        { _profiles = profiles; _privacy = privacy; }
+        public ProfilesController(IProfileService profiles, IPrivacyGuard privacy, IMediator mediator)
+        { _profiles = profiles; _privacy = privacy; _mediator = mediator; }
 
         // Ai cũng xem được profile người khác
         [HttpGet("{id}")]
@@ -59,8 +67,10 @@ namespace Favi_BE.Controllers
             if (!await _privacy.CanFollowAsync(profile, userId))
                 return StatusCode(403, new { code = "FOLLOW_FORBIDDEN", message = "Bạn không thể theo dõi hồ sơ này." });
 
-            var ok = await _profiles.FollowAsync(userId, targetId);
-            return ok ? Ok(new { message = "Đã theo dõi." }) : BadRequest(new { code = "FOLLOW_FAILED", message = "Theo dõi thất bại." });
+            var result = await _mediator.Send(new FollowUserCommand(userId, targetId));
+            return result.Succeeded
+                ? Ok(new { message = "Đã theo dõi." })
+                : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
         // Unfollow người khác
@@ -69,8 +79,10 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Unfollow(Guid targetId)
         {
             var userId = User.GetUserId();
-            var ok = await _profiles.UnfollowAsync(userId, targetId);
-            return ok ? Ok(new { message = "Đã bỏ theo dõi." }) : BadRequest(new { code = "UNFOLLOW_FAILED", message = "Bỏ theo dõi thất bại." });
+            var result = await _mediator.Send(new UnfollowUserCommand(userId, targetId));
+            return result.Succeeded
+                ? Ok(new { message = "Đã bỏ theo dõi." })
+                : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
         // Xem followers của người khác
@@ -85,9 +97,7 @@ namespace Favi_BE.Controllers
             if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
                 return StatusCode(403, new { code = "FOLLOW_LIST_FORBIDDEN", message = "Bạn không có quyền xem danh sách người theo dõi." });
 
-            int s = skip ?? 0;
-            int t = take ?? 1000;
-            var result = await _profiles.GetFollowersAsync(id, s, t);
+            var result = await _mediator.Send(new GetFollowersQuery(id, skip ?? 0, take ?? 1000));
             return Ok(result);
         }
 
@@ -103,17 +113,15 @@ namespace Favi_BE.Controllers
             if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
                 return StatusCode(403, new { code = "FOLLOW_LIST_FORBIDDEN", message = "Bạn không có quyền xem danh sách đang theo dõi." });
 
-            int s = skip ?? 0;
-            int t = take ?? 1000;
-            var result = await _profiles.GetFollowingsAsync(id, s, t);
+            var result = await _mediator.Send(new GetFollowingsQuery(id, skip ?? 0, take ?? 1000));
             return Ok(result);
         }
 
         [HttpGet("{id}/links")]
         public async Task<IActionResult> GetLinks(Guid id)
         {
-            var links = await _profiles.GetSocialLinksAsync(id);
-            return Ok(links);
+            var result = await _mediator.Send(new GetSocialLinksQuery(id));
+            return Ok(result);
         }
 
         // Lấy social links của chính mình
@@ -122,7 +130,8 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> GetLinks()
         {
             var userId = User.GetUserId();
-            return Ok(await _profiles.GetSocialLinksAsync(userId));
+            var result = await _mediator.Send(new GetSocialLinksQuery(userId));
+            return Ok(result);
         }
 
         // Thêm social link cho chính mình
@@ -131,7 +140,10 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> AddLink(SocialLinkDto dto)
         {
             var userId = User.GetUserId();
-            return Ok(await _profiles.AddSocialLinkAsync(userId, dto));
+            var result = await _mediator.Send(new AddSocialLinkCommand(userId, (SocialKind)(int)dto.SocialKind, dto.Url));
+            return result.Succeeded
+                ? Ok(result.Data)
+                : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
         // Xoá social link của chính mình
@@ -140,10 +152,10 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> RemoveLink(Guid linkId)
         {
             var userId = User.GetUserId();
-            var ok = await _profiles.RemoveSocialLinkAsync(userId, linkId);
-            return ok
+            var result = await _mediator.Send(new RemoveSocialLinkCommand(userId, linkId));
+            return result.Succeeded
                 ? Ok(new { message = "Đã xoá liên kết mạng xã hội." })
-                : NotFound(new { code = "SOCIAL_LINK_NOT_FOUND", message = "Không tìm thấy liên kết để xoá." });
+                : NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
         // Xoá tài khoản chính mình

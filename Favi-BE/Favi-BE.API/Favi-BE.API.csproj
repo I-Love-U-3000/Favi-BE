@@ -57,6 +57,7 @@
     <ProjectReference Include="..\Favi-BE.Modules.Auth\Favi-BE.Modules.Auth.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Notifications\Favi-BE.Modules.Notifications.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Engagement\Favi-BE.Modules.Engagement.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.SocialGraph\Favi-BE.Modules.SocialGraph.csproj" />
   </ItemGroup>
 
   
