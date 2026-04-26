@@ -10,11 +10,12 @@ namespace Favi_BE.ArchitectureTests;
 /// </summary>
 public class ApiLayerArchitectureTests
 {
-    private static readonly Assembly ApiAssembly           = Favi_BE.API.AssemblyReference.Assembly;
-    private static readonly Assembly AuthAssembly          = Favi_BE.Modules.Auth.AssemblyReference.Assembly;
-    private static readonly Assembly EngagementAssembly    = Favi_BE.Modules.Engagement.AssemblyReference.Assembly;
-    private static readonly Assembly NotificationsAssembly = Favi_BE.Modules.Notifications.AssemblyReference.Assembly;
-    private static readonly Assembly SocialGraphAssembly   = Favi_BE.Modules.SocialGraph.AssemblyReference.Assembly;
+    private static readonly Assembly ApiAssembly               = Favi_BE.API.AssemblyReference.Assembly;
+    private static readonly Assembly AuthAssembly              = Favi_BE.Modules.Auth.AssemblyReference.Assembly;
+    private static readonly Assembly EngagementAssembly        = Favi_BE.Modules.Engagement.AssemblyReference.Assembly;
+    private static readonly Assembly NotificationsAssembly     = Favi_BE.Modules.Notifications.AssemblyReference.Assembly;
+    private static readonly Assembly SocialGraphAssembly       = Favi_BE.Modules.SocialGraph.AssemblyReference.Assembly;
+    private static readonly Assembly ContentPublishingAssembly = Favi_BE.Modules.ContentPublishing.AssemblyReference.Assembly;
 
     // -- API Layer --
 
@@ -158,6 +159,66 @@ public class ApiLayerArchitectureTests
 
         result.IsSuccessful.Should().BeTrue(
             because: $"Engagement must not import Social Graph application namespace. " +
+                     $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
+
+    // MOD-05a: Content Publishing must not know about Auth application internals.
+    [Fact]
+    public void ContentPublishing_Should_Not_Depend_On_AuthApplication()
+    {
+        var result = Types
+            .InAssembly(ContentPublishingAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Favi_BE.Modules.Auth.Application")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            because: $"Content Publishing must not import Auth application namespace. " +
+                     $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
+
+    // MOD-05b: Content Publishing must not know about Engagement application internals.
+    [Fact]
+    public void ContentPublishing_Should_Not_Depend_On_EngagementApplication()
+    {
+        var result = Types
+            .InAssembly(ContentPublishingAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Favi_BE.Modules.Engagement.Application")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            because: $"Content Publishing must not import Engagement application namespace. " +
+                     $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
+
+    // MOD-05c: Content Publishing must not know about Notifications application internals.
+    [Fact]
+    public void ContentPublishing_Should_Not_Depend_On_NotificationsApplication()
+    {
+        var result = Types
+            .InAssembly(ContentPublishingAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Favi_BE.Modules.Notifications.Application")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            because: $"Content Publishing must not import Notifications application namespace. " +
+                     $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
+
+    // MOD-05d: Content Publishing must not know about Social Graph application internals.
+    [Fact]
+    public void ContentPublishing_Should_Not_Depend_On_SocialGraphApplication()
+    {
+        var result = Types
+            .InAssembly(ContentPublishingAssembly)
+            .ShouldNot()
+            .HaveDependencyOn("Favi_BE.Modules.SocialGraph.Application")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            because: $"Content Publishing must not import Social Graph application namespace. " +
                      $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
     }
 }
