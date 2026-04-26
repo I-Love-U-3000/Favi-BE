@@ -15,6 +15,7 @@ Phase 1: Architecture Tests (static)
         ├── Auth module CQRS rules
         ├── Engagement module CQRS rules
         ├── Notifications module isolation rules
+        ├── SocialGraph module CQRS rules
         └── API layer controller rules
 
 Phase 2: K6 Parity Tests (dynamic — user runs)
@@ -22,6 +23,7 @@ Phase 2: K6 Parity Tests (dynamic — user runs)
         ├── smoke-auth-login.js          → Auth.LoginCQRS parity
         ├── smoke-comment-create.js      → Engagement.CreateComment parity
         ├── smoke-reaction-like.js       → Engagement.ToggleReaction parity
+        ├── smoke-socialgraph-follow.js  → SocialGraph.FollowUser parity
         └── scenario-6-notification-*   → Notification side-effect parity
 ```
 
@@ -178,6 +180,7 @@ Phase 1 — Architecture Tests
 [ ] Viết EngagementModuleArchitectureTests.cs (ENG-01, ENG-02, ENG-03)
 [ ] Viết AuthModuleArchitectureTests.cs (AUTH-01, AUTH-02)
 [ ] Viết NotificationsModuleArchitectureTests.cs (MOD-03)
+[ ] Viết SocialGraphModuleArchitectureTests.cs (SG-01 -> SG-06)
 [ ] Viết ApiLayerArchitectureTests.cs (API-01) + module boundary rules (MOD-01, MOD-02)
 [ ] dotnet test Favi-BE.ArchitectureTests → All GREEN
 
@@ -186,6 +189,7 @@ Phase 2 — K6 Parity Tests (user runs)
 [ ] k6 run smoke/smoke-auth-login.js → All checks PASS
 [ ] k6 run smoke/smoke-comment-create.js → All checks PASS (kể cả read-after-write)
 [ ] k6 run smoke/smoke-reaction-like.js → All checks PASS
+[ ] k6 run smoke/smoke-socialgraph-follow.js → All checks PASS
 [ ] k6 run functional/scenario-6-notification-sideeffects-functional.js → endpoint 200
 [ ] Verify Outbox table có records status=Processed (thủ công hoặc query)
 ```

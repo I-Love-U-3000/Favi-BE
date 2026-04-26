@@ -37,7 +37,14 @@ namespace Favi_BE.Services
                     _logger.LogError(ex, "Error occurred while cleaning up expired posts.");
                 }
 
-                await Task.Delay(_checkInterval, stoppingToken);
+                try
+                {
+                    await Task.Delay(_checkInterval, stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
 
             _logger.LogInformation("PostCleanupService is stopping.");
