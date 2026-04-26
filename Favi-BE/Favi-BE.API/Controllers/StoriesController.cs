@@ -2,6 +2,12 @@ using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Stories.Application.Commands.ArchiveStory;
+using Favi_BE.Modules.Stories.Application.Commands.CreateStory;
+using Favi_BE.Modules.Stories.Application.Commands.DeleteStory;
+using Favi_BE.Modules.Stories.Application.Commands.RecordStoryView;
+using Favi_BE.Modules.Stories.Domain;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,12 +25,21 @@ namespace Favi_BE.Controllers
         private readonly IStoryService _stories;
         private readonly IPrivacyGuard _privacy;
         private readonly IProfileService _profileService;
+        private readonly IMediator _mediator;
+        private readonly ICloudinaryService _cloudinary;
 
-        public StoriesController(IStoryService stories, IPrivacyGuard privacy, IProfileService profileService)
+        public StoriesController(
+            IStoryService stories,
+            IPrivacyGuard privacy,
+            IProfileService profileService,
+            IMediator mediator,
+            ICloudinaryService cloudinary)
         {
             _stories = stories;
             _privacy = privacy;
             _profileService = profileService;
+            _mediator = mediator;
+            _cloudinary = cloudinary;
         }
 
         private Guid? TryGetUserId()
@@ -69,7 +84,6 @@ namespace Favi_BE.Controllers
             var viewerId = User.GetUserId();
             var stories = await _stories.GetViewableStoriesAsync(viewerId);
 
-            // Group by profile for feed display
             var grouped = stories
                 .GroupBy(s => new { s.ProfileId, s.ProfileUsername, s.ProfileAvatarUrl })
                 .Select(g => new StoryFeedResponse(
@@ -100,10 +114,32 @@ namespace Favi_BE.Controllers
         {
             var userId = User.GetUserId();
 
+            if (media == null || media.Length == 0)
+                return BadRequest(new { code = "INVALID_MEDIA", message = "Media file is required." });
+
+            if (!media.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { code = "INVALID_MEDIA", message = "Only image files are supported for stories." });
+
             try
             {
-                var created = await _stories.CreateAsync(userId, media, request.PrivacyLevel);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+                var uploaded = await _cloudinary.UploadAsyncOrThrow(media, folder: "favi_stories");
+
+                var result = await _mediator.Send(new CreateStoryCommand(
+                    AuthorId: userId,
+                    MediaUrl: uploaded.Url,
+                    MediaPublicId: uploaded.PublicId,
+                    MediaWidth: uploaded.Width,
+                    MediaHeight: uploaded.Height,
+                    MediaFormat: uploaded.Format,
+                    ThumbnailUrl: uploaded.ThumbnailUrl,
+                    Privacy: MapPrivacy(request.PrivacyLevel)
+                ));
+
+                var created = await _stories.GetByIdAsync(result.StoryId, userId);
+                if (created is null)
+                    return StatusCode(500, new { code = "STORY_CREATION_FAILED", message = "Failed to reload created story." });
+
+                return CreatedAtAction(nameof(GetById), new { id = result.StoryId }, created);
             }
             catch (ArgumentException ex)
             {
@@ -121,11 +157,11 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Archive(Guid id)
         {
             var userId = User.GetUserId();
-            var success = await _stories.ArchiveAsync(id, userId);
+            var result = await _mediator.Send(new ArchiveStoryCommand(id, userId));
 
-            return success
+            return result.Success
                 ? Ok(new { message = "Story archived successfully." })
-                : NotFound(new { code = "STORY_NOT_FOUND", message = "Story not found or you're not the owner." });
+                : NotFound(new { code = result.ErrorCode, message = "Story not found or you're not the owner." });
         }
 
         // DELETE: api/stories/{id}
@@ -134,11 +170,15 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Delete(Guid id)
         {
             var userId = User.GetUserId();
-            var success = await _stories.DeleteAsync(id, userId);
+            var result = await _mediator.Send(new DeleteStoryCommand(id, userId));
 
-            return success
-                ? Ok(new { message = "Story deleted permanently." })
-                : NotFound(new { code = "STORY_NOT_FOUND", message = "Story not found or you're not the owner." });
+            if (!result.Success)
+                return NotFound(new { code = result.ErrorCode, message = "Story not found or you're not the owner." });
+
+            if (!string.IsNullOrWhiteSpace(result.MediaPublicId))
+                await _cloudinary.TryDeleteAsync(result.MediaPublicId);
+
+            return Ok(new { message = "Story deleted permanently." });
         }
 
         // POST: api/stories/{id}/view
@@ -147,7 +187,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> RecordView(Guid id)
         {
             var userId = User.GetUserId();
-            await _stories.RecordViewAsync(id, userId);
+            await _mediator.Send(new RecordStoryViewCommand(id, userId));
             return Ok(new { message = "View recorded." });
         }
 
@@ -176,5 +216,7 @@ namespace Favi_BE.Controllers
             var count = await _stories.GetActiveStoryCountAsync(profileId);
             return Ok(count);
         }
+
+        private static StoryPrivacy MapPrivacy(PrivacyLevel p) => (StoryPrivacy)(int)p;
     }
 }

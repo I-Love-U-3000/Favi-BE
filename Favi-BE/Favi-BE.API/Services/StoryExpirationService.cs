@@ -1,5 +1,7 @@
 using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Services;
+using Favi_BE.Modules.Stories.Application.Commands.ExpireStory;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,7 +16,7 @@ namespace Favi_BE.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<StoryExpirationService> _logger;
-        private readonly TimeSpan _checkInterval = TimeSpan.FromHours(1); // Check every hour
+        private readonly TimeSpan _checkInterval = TimeSpan.FromHours(1);
 
         public StoryExpirationService(IServiceProvider serviceProvider, ILogger<StoryExpirationService> logger)
         {
@@ -30,7 +32,7 @@ namespace Favi_BE.Services
             {
                 try
                 {
-                    await CleanupExpiredStoriesAsync();
+                    await CleanupExpiredStoriesAsync(stoppingToken);
                 }
                 catch (Exception ex)
                 {
@@ -43,10 +45,11 @@ namespace Favi_BE.Services
             _logger.LogInformation("StoryExpirationService is stopping.");
         }
 
-        private async Task CleanupExpiredStoriesAsync()
+        private async Task CleanupExpiredStoriesAsync(CancellationToken ct)
         {
             using var scope = _serviceProvider.CreateScope();
             var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var cloudinary = scope.ServiceProvider.GetRequiredService<ICloudinaryService>();
 
             var expiredStories = await uow.Stories.GetExpiredStoriesAsync();
@@ -57,31 +60,24 @@ namespace Favi_BE.Services
                 return;
             }
 
-            _logger.LogInformation($"Found {expiredStories.Count()} expired stories to delete.");
+            _logger.LogInformation("Found {Count} expired stories to delete.", expiredStories.Count());
 
             foreach (var story in expiredStories)
             {
                 try
                 {
-                    // Delete from Cloudinary
-                    if (!string.IsNullOrWhiteSpace(story.MediaPublicId))
-                    {
-                        await cloudinary.TryDeleteAsync(story.MediaPublicId);
-                    }
+                    var result = await mediator.Send(new ExpireStoryCommand(story.Id), ct);
 
-                    // Delete from database (cascade will delete StoryViews)
-                    uow.Stories.Remove(story);
-                    await uow.CompleteAsync();
+                    if (result.Success && !string.IsNullOrWhiteSpace(result.MediaPublicId))
+                        await cloudinary.TryDeleteAsync(result.MediaPublicId, ct);
 
-                    _logger.LogInformation($"Successfully deleted expired story {story.Id}.");
+                    _logger.LogInformation("Successfully expired story {StoryId}.", story.Id);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Error deleting expired story {story.Id}.");
+                    _logger.LogError(ex, "Error expiring story {StoryId}.", story.Id);
                 }
             }
-
-            _logger.LogInformation($"Story cleanup completed. Deleted {expiredStories.Count()} expired stories.");
         }
     }
 }
