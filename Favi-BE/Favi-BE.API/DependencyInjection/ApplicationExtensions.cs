@@ -1,7 +1,6 @@
 using Favi_BE.API.Data.Repositories;
 using Favi_BE.API.Interfaces.Repositories;
 using Favi_BE.API.Interfaces.Services;
-using Favi_BE.API.Modules.Notifications;
 using Favi_BE.API.Services;
 using Favi_BE.BuildingBlocks.Application;
 using Favi_BE.BuildingBlocks.Application.Data;
@@ -18,8 +17,6 @@ using Favi_BE.Data.Repositories;
 using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Interfaces.Services;
-using Favi_BE.Modules.Notifications;
-using Favi_BE.Modules.Notifications.Application.Contracts;
 using Favi_BE.Services;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -46,18 +43,22 @@ public static class ApplicationExtensions
             cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
         });
 
-        // Auth module: CQRS handlers + port adapters
+        // Auth module
         services.AddAuthModule();
 
-        // Engagement module: CQRS handlers + port adapters
+        // Engagement module
         services.AddEngagementModule();
 
-        // Social Graph module: CQRS handlers + port adapters
+        // Social Graph module
         services.AddSocialGraphModule();
 
-        // Notifications module: port adapters (API-layer) + inbox consumers (module-layer)
-        services.AddScoped<INotificationWriteRepository, NotificationWriteRepositoryAdapter>();
-        services.AddScoped<INotificationRealtimeGateway, NotificationRealtimeGatewayAdapter>();
+        // Content Publishing module
+        services.AddContentPublishingModule();
+
+        // Stories module
+        services.AddStoriesModule();
+
+        // Notifications module
         services.AddNotificationsModule();
 
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));

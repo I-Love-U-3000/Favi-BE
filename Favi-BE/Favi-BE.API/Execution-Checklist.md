@@ -137,9 +137,9 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [x] `Auth.LoginCQRS`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md`.
 - [x] `Notification.EventDriven`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `Inbox-Implementation-Guide.md`.
 - [x] `Engagement.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
-- [ ] `SocialGraph.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Architecture-BoundedContexts.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
-- [ ] `ContentPublishing.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
-- [ ] `Stories.CommandsAndExpiry`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
+- [x] `SocialGraph.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Architecture-BoundedContexts.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
+- [x] `ContentPublishing.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
+- [x] `Stories.CommandsAndExpiry`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
 - [ ] `Messaging.CQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Module-Boundary-Enforcement.md`.
 - [ ] `Moderation.BackofficeCQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Module-Boundary-Enforcement.md`.
 
@@ -283,42 +283,42 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 ## 7) Slice 4 — `SocialGraph.Commands`
 
-- [ ] `FollowUserCommand`.
-- [ ] `UnfollowUserCommand`.
-- [ ] `AddSocialLinkCommand`.
-- [ ] `RemoveSocialLinkCommand`.
-- [ ] Tách cross-module interaction qua integration events.
+- [x] `FollowUserCommand`.
+- [x] `UnfollowUserCommand`.
+- [x] `AddSocialLinkCommand`.
+- [x] `RemoveSocialLinkCommand`.
+- [x] Tách cross-module interaction qua integration events.
 
 ### Exit criteria Slice 4
-- [ ] Follow graph parity.
-- [ ] Notification parity cho follow/unfollow.
+- [x] Follow graph parity.
+- [x] Notification parity cho follow/unfollow.
 
 ---
 
 ## 8) Slice 5 — `ContentPublishing.Commands`
 
-- [ ] `CreatePostCommand`, `UpdatePostCommand`, `DeletePostCommand`, `ArchivePostCommand`.
-- [ ] Nhóm media/tag commands (`AddPostMedia`, `ReorderPostMedia`, `AddPostTags`, `RemovePostTag`).
-- [ ] Nhóm collection commands: `CreateCollectionCommand`, `UpdateCollectionCommand`, `DeleteCollectionCommand`, `AddPostToCollectionCommand`, `RemovePostFromCollectionCommand`.
-- [ ] Nhóm repost commands: `SharePostCommand`, `UnsharePostCommand`.
-- [ ] Đảm bảo transaction boundary trong aggregate.
+- [x] `CreatePostCommand`, `UpdatePostCommand`, `DeletePostCommand`, `ArchivePostCommand`.
+- [x] Nhóm media/tag commands (`AddPostMedia`, `ReorderPostMedia`, `AddPostTags`, `RemovePostTag`).
+- [x] Nhóm collection commands: `CreateCollectionCommand`, `UpdateCollectionCommand`, `DeleteCollectionCommand`, `AddPostToCollectionCommand`, `RemovePostFromCollectionCommand`.
+- [x] Nhóm repost commands: `SharePostCommand`, `UnsharePostCommand`.
+- [x] Đảm bảo transaction boundary trong aggregate (1 SaveAsync per command, NSFW/Vector tách ra ngoài transaction).
 
 ### Exit criteria Slice 5
-- [ ] Content mutation parity.
-- [ ] Không regression ở media/tag paths.
+- [x] Content mutation parity.
+- [x] Không regression ở media/tag paths.
 
 ---
 
 ## 9) Slice 6 — `Stories.CommandsAndExpiry`
 
-- [ ] `CreateStoryCommand`, `ArchiveStoryCommand`, `DeleteStoryCommand`.
-- [ ] `RecordStoryViewCommand`.
-- [ ] `ExpireStoryCommand` (internal/background).
-- [ ] Căn chỉnh background expiration + cleanup.
+- [x] `CreateStoryCommand`, `ArchiveStoryCommand`, `DeleteStoryCommand`.
+- [x] `RecordStoryViewCommand`.
+- [x] `ExpireStoryCommand` (internal/background).
+- [x] Căn chỉnh background expiration + cleanup.
 
 ### Exit criteria Slice 6
-- [ ] Expiration reliability parity.
-- [ ] Media cleanup parity.
+- [x] Expiration reliability parity.
+- [x] Media cleanup parity.
 
 ---
 
@@ -412,9 +412,9 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [ ] R1: Foundation.CQRSOutbox merged.
 - [x] R2: Auth.LoginCQRS merged.
 - [x] R3: Notification.EventDriven merged.
-- [ ] R4: Engagement + SocialGraph merged.
-- [ ] R5: ContentPublishing.Commands merged.
-- [ ] R6: Stories.CommandsAndExpiry merged.
+- [x] R4: Engagement + SocialGraph merged.
+- [x] R5: ContentPublishing.Commands merged.
+- [x] R6: Stories.CommandsAndExpiry merged.
 - [ ] R7: Messaging.CQRS merged.
 - [ ] R8: Moderation.BackofficeCQRS merged.
 - [ ] R9: Hardening + cleanup + final parity signoff.
