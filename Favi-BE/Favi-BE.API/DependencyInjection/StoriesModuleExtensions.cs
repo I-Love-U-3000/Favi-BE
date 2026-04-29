@@ -13,7 +13,7 @@ public static class StoriesModuleDiExtensions
 
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssembly(AssemblyReference.Assembly);
+            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Stories.AssemblyReference.Assembly);
         });
 
         return services;

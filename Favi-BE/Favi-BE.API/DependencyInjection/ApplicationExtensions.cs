@@ -58,6 +58,9 @@ public static class ApplicationExtensions
         // Stories module
         services.AddStoriesModule();
 
+        // Messaging module
+        services.AddMessagingModule();
+
         // Notifications module
         services.AddNotificationsModule();
 

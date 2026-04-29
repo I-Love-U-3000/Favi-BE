@@ -31,6 +31,9 @@ public interface IAuthWriteRepository
     /// <summary>Updates the password hash for an existing account.</summary>
     Task UpdatePasswordHashAsync(Guid profileId, string newPasswordHash, CancellationToken ct = default);
 
+    /// <summary>Stamps LastActiveAt = UtcNow for the given profile.</summary>
+    Task UpdateLastActiveAsync(Guid profileId, CancellationToken ct = default);
+
     /// <summary>Commits pending changes to the store.</summary>
     Task SaveAsync(CancellationToken ct = default);
 }

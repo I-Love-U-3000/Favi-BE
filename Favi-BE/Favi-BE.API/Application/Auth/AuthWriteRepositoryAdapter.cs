@@ -99,6 +99,15 @@ internal sealed class AuthWriteRepositoryAdapter : IAuthWriteRepository
         _uow.EmailAccounts.Update(emailAccount);
     }
 
+    public async Task UpdateLastActiveAsync(Guid profileId, CancellationToken ct = default)
+    {
+        var profile = await _uow.Profiles.GetByIdAsync(profileId);
+        if (profile is null) return;
+
+        profile.LastActiveAt = DateTime.UtcNow;
+        _uow.Profiles.Update(profile);
+    }
+
     public async Task SaveAsync(CancellationToken ct = default)
         => await _uow.CompleteAsync();
 
