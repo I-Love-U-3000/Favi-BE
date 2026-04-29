@@ -61,6 +61,9 @@ public static class ApplicationExtensions
         // Messaging module
         services.AddMessagingModule();
 
+        // Moderation module
+        services.AddModerationModule();
+
         // Notifications module
         services.AddNotificationsModule();
 

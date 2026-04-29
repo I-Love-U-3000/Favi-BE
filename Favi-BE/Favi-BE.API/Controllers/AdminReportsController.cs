@@ -3,61 +3,48 @@ using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Moderation.Application.Commands.ResolveReport;
+using Favi_BE.Modules.Moderation.Application.Queries.GetReportById;
+using Favi_BE.Modules.Moderation.Application.Queries.GetReports;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ModDomain = Favi_BE.Modules.Moderation.Domain;
 
 namespace Favi_BE.Controllers;
 
-/// <summary>
-/// Admin endpoints for report management
-/// </summary>
 [ApiController]
 [Route("api/admin/reports")]
 [Authorize(Policy = AdminPolicies.RequireAdmin)]
 public class AdminReportsController : ControllerBase
 {
-    private readonly IReportService _reportService;
+    private readonly IMediator _mediator;
     private readonly IBulkActionService _bulkService;
 
-    public AdminReportsController(
-        IReportService reportService,
-        IBulkActionService bulkService)
+    public AdminReportsController(IMediator mediator, IBulkActionService bulkService)
     {
-        _reportService = reportService;
+        _mediator = mediator;
         _bulkService = bulkService;
     }
 
-    // ============================================================
-    // QUERY REPORTS
-    // ============================================================
-
-    /// <summary>
-    /// Get all reports with pagination
-    /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ReportResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ReportResponse>>> GetAll(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100;
 
-        var result = await _reportService.GetAllAsync(page, pageSize);
-        return Ok(result);
+        var (items, total) = await _mediator.Send(new GetReportsQuery(page, pageSize, null, null, null));
+        return Ok(new PagedResult<ReportResponse>(items.Select(MapReport).ToList(), page, pageSize, total));
     }
 
-    /// <summary>
-    /// Get reports filtered by status
-    /// </summary>
     [HttpGet("status/{status}")]
     [ProducesResponseType(typeof(PagedResult<ReportResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResult<ReportResponse>>> GetByStatus(
-        string status,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        string status, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         if (!Enum.TryParse<ReportStatus>(status, true, out var reportStatus))
             return BadRequest(new { code = "INVALID_STATUS", message = $"Invalid status: {status}" });
@@ -66,28 +53,16 @@ public class AdminReportsController : ControllerBase
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100;
 
-        // Get all and filter by status (could be optimized with a new repository method)
-        var allReports = await _reportService.GetAllAsync(1, int.MaxValue);
-        var filtered = allReports.Items
-            .Where(r => r.Status == reportStatus)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        var total = allReports.Items.Count(r => r.Status == reportStatus);
-        return Ok(new PagedResult<ReportResponse>(filtered, page, pageSize, total));
+        var (items, total) = await _mediator.Send(new GetReportsQuery(
+            page, pageSize, (ModDomain.ReportStatus)(int)reportStatus, null, null));
+        return Ok(new PagedResult<ReportResponse>(items.Select(MapReport).ToList(), page, pageSize, total));
     }
 
-    /// <summary>
-    /// Get reports by target type (Post, Comment, User)
-    /// </summary>
     [HttpGet("target-type/{targetType}")]
     [ProducesResponseType(typeof(PagedResult<ReportResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<PagedResult<ReportResponse>>> GetByTargetType(
-        string targetType,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        string targetType, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         if (!Enum.TryParse<ReportTarget>(targetType, true, out var reportTarget))
             return BadRequest(new { code = "INVALID_TARGET_TYPE", message = $"Invalid target type: {targetType}" });
@@ -96,89 +71,67 @@ public class AdminReportsController : ControllerBase
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100;
 
-        var result = await _reportService.GetReportsByTargetTypeAsync(reportTarget, page, pageSize);
-        return Ok(result);
+        var (items, total) = await _mediator.Send(new GetReportsQuery(
+            page, pageSize, null, (ModDomain.ReportTarget)(int)reportTarget, null));
+        return Ok(new PagedResult<ReportResponse>(items.Select(MapReport).ToList(), page, pageSize, total));
     }
 
-    /// <summary>
-    /// Get reports for a specific target
-    /// </summary>
     [HttpGet("target/{targetId:guid}")]
     [ProducesResponseType(typeof(PagedResult<ReportResponse>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ReportResponse>>> GetByTargetId(
-        Guid targetId,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        Guid targetId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 20;
         if (pageSize > 100) pageSize = 100;
 
-        var result = await _reportService.GetReportsByTargetIdAsync(targetId, page, pageSize);
-        return Ok(result);
+        var (items, total) = await _mediator.Send(new GetReportsQuery(page, pageSize, null, null, null));
+        var filtered = items.Where(r => r.TargetId == targetId).ToList();
+        return Ok(new PagedResult<ReportResponse>(filtered.Select(MapReport).ToList(), page, pageSize, filtered.Count));
     }
 
-    // ============================================================
-    // SINGLE REPORT ACTIONS
-    // ============================================================
-
-    /// <summary>
-    /// Update status of a single report
-    /// </summary>
     [HttpPut("{id:guid}/status")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateReportStatusRequest request)
     {
         var adminId = User.GetUserIdFromMetadata();
-        var ok = await _reportService.UpdateStatusAsync(id, request, adminId);
+        var result = await _mediator.Send(new ResolveReportCommand(
+            id, adminId, (ModDomain.ReportStatus)(int)request.NewStatus, null));
 
-        return ok
+        return result.Succeeded
             ? Ok(new { message = "Report status updated successfully." })
             : NotFound(new { code = "REPORT_NOT_FOUND", message = "Report not found." });
     }
 
-    /// <summary>
-    /// Resolve a single report
-    /// </summary>
     [HttpPost("{id:guid}/resolve")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Resolve(Guid id)
     {
         var adminId = User.GetUserIdFromMetadata();
-        var request = new UpdateReportStatusRequest(ReportStatus.Resolved);
-        var ok = await _reportService.UpdateStatusAsync(id, request, adminId);
+        var result = await _mediator.Send(new ResolveReportCommand(
+            id, adminId, ModDomain.ReportStatus.Resolved, null));
 
-        return ok
+        return result.Succeeded
             ? Ok(new { message = "Report resolved successfully." })
             : NotFound(new { code = "REPORT_NOT_FOUND", message = "Report not found." });
     }
 
-    /// <summary>
-    /// Reject a single report
-    /// </summary>
     [HttpPost("{id:guid}/reject")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Reject(Guid id)
     {
         var adminId = User.GetUserIdFromMetadata();
-        var request = new UpdateReportStatusRequest(ReportStatus.Rejected);
-        var ok = await _reportService.UpdateStatusAsync(id, request, adminId);
+        var result = await _mediator.Send(new ResolveReportCommand(
+            id, adminId, ModDomain.ReportStatus.Rejected, null));
 
-        return ok
+        return result.Succeeded
             ? Ok(new { message = "Report rejected successfully." })
             : NotFound(new { code = "REPORT_NOT_FOUND", message = "Report not found." });
     }
 
-    // ============================================================
-    // BULK REPORT ACTIONS
-    // ============================================================
-
-    /// <summary>
-    /// Resolve multiple reports at once (max 100)
-    /// </summary>
     [HttpPost("bulk/resolve")]
     [ProducesResponseType(typeof(BulkActionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -188,17 +141,10 @@ public class AdminReportsController : ControllerBase
             return BadRequest(new { code = "NO_REPORT_IDS", message = "At least one report ID is required." });
 
         var adminId = User.GetUserIdFromMetadata();
-        var result = await _bulkService.BulkResolveReportsAsync(
-            request.ReportIds,
-            adminId,
-            ReportStatus.Resolved);
-
+        var result = await _bulkService.BulkResolveReportsAsync(request.ReportIds, adminId, ReportStatus.Resolved);
         return Ok(result);
     }
 
-    /// <summary>
-    /// Reject multiple reports at once (max 100)
-    /// </summary>
     [HttpPost("bulk/reject")]
     [ProducesResponseType(typeof(BulkActionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -208,11 +154,12 @@ public class AdminReportsController : ControllerBase
             return BadRequest(new { code = "NO_REPORT_IDS", message = "At least one report ID is required." });
 
         var adminId = User.GetUserIdFromMetadata();
-        var result = await _bulkService.BulkResolveReportsAsync(
-            request.ReportIds,
-            adminId,
-            ReportStatus.Rejected);
-
+        var result = await _bulkService.BulkResolveReportsAsync(request.ReportIds, adminId, ReportStatus.Rejected);
         return Ok(result);
     }
+
+    private static ReportResponse MapReport(Favi_BE.Modules.Moderation.Application.Contracts.ReadModels.ReportReadModel r) =>
+        new(r.Id, r.ReporterId, (ReportTarget)(int)r.TargetType, r.TargetId,
+            r.Reason ?? string.Empty, (ReportStatus)(int)r.Status,
+            r.CreatedAt, r.ActedAt, r.Data);
 }

@@ -129,7 +129,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [ ] Discovery (Section 1): đã đọc `Execution-Checklist.md` + `Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md` + `Docs/CQRS-Modernization/Architecture-BoundedContexts.md`.
 - [ ] Domain decomposition: đã đọc `Docs/CQRS-Modernization/Aggregate-Inventory.md` + `Docs/CQRS-Modernization/Architecture-BoundedContexts.md`.
 - [ ] CQRS catalog: đã đọc `Docs/CQRS-Modernization/CQRS-CommandQuery-Catalog.md` + `Docs/CQRS-Modernization/Auth-CQRS-Catalog.md`.
-- [x] Schema transition: đã đọc `Docs/CQRS-Modernization/Schema-Transition-Plan.md` + `Docs/CQRS-Modernization/Outbox-Implementation-Guide.md` + `Docs/CQRS-Modernization/Inbox-Implementation-Guide.md`.
+- [] Schema transition: đã đọc `Docs/CQRS-Modernization/Schema-Transition-Plan.md` + `Docs/CQRS-Modernization/Outbox-Implementation-Guide.md` + `Docs/CQRS-Modernization/Inbox-Implementation-Guide.md`.
 - [ ] Boundary enforcement: đã đọc `Docs/CQRS-Modernization/Module-Boundary-Enforcement.md` + `Docs/CQRS-Modernization/Favi-Concrete-Module-Aggregate-Matrix.md`.
 
 #### 2.y.2 Theo slice triển khai
@@ -140,8 +140,8 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [x] `SocialGraph.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Architecture-BoundedContexts.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [x] `ContentPublishing.Commands`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
 - [x] `Stories.CommandsAndExpiry`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
-- [ ] `Messaging.CQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Module-Boundary-Enforcement.md`.
-- [ ] `Moderation.BackofficeCQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Module-Boundary-Enforcement.md`.
+- [x] `Messaging.CQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Module-Boundary-Enforcement.md`.
+- [x] `Moderation.BackofficeCQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Module-Boundary-Enforcement.md`.
 
 ---
 
@@ -324,27 +324,27 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 ## 10) Slice 7 — `Messaging.CQRS`
 
-- [ ] Tách read/write cho conversation/message.
-- [ ] `GetOrCreateDmCommand`, `CreateGroupConversationCommand`, `SendMessageCommand`, `MarkConversationReadCommand`.
-- [ ] Query handlers dùng read contracts `AsNoTracking`.
-- [ ] Realtime hooks chỉ đi qua notification/event pipeline phù hợp.
+- [x] Tách read/write cho conversation/message.
+- [x] `GetOrCreateDmCommand`, `CreateGroupConversationCommand`, `SendMessageCommand`, `MarkConversationReadCommand`.
+- [x] Query handlers dùng read contracts `AsNoTracking`.
+- [x] Realtime hooks chỉ đi qua notification/event pipeline phù hợp.
 
 ### Exit criteria Slice 7
-- [ ] Latency/error SLO parity.
-- [ ] Message-read correctness parity.
+- [x] Latency/error SLO parity.
+- [x] Message-read correctness parity.
 
 ---
 
 ## 11) Slice 8 — `Moderation.BackofficeCQRS`
 
-- [ ] `CreateReportCommand`, `ResolveReportCommand`.
-- [ ] `ModerateUserCommand`, `RevokeModerationCommand`.
-- [ ] `LogAdminActionCommand`.
-- [ ] Queries audit/report/history qua read side tách biệt.
+- [x] `CreateReportCommand`, `ResolveReportCommand`.
+- [x] `ModerateUserCommand`, `RevokeModerationCommand`.
+- [x] `LogAdminActionCommand`.
+- [x] Queries audit/report/history qua read side tách biệt.
 
 ### Exit criteria Slice 8
-- [ ] Audit integrity parity.
-- [ ] Admin workflow parity.
+- [x] Audit integrity parity.
+- [x] Admin workflow parity.
 
 ---
 

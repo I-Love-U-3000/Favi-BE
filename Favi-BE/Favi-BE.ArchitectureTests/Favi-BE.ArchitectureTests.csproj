@@ -31,6 +31,7 @@
     <ProjectReference Include="..\Favi-BE.Modules.ContentPublishing\Favi-BE.Modules.ContentPublishing.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Stories\Favi-BE.Modules.Stories.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Messaging\Favi-BE.Modules.Messaging.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.Moderation\Favi-BE.Modules.Moderation.csproj" />
   </ItemGroup>
 
 </Project>
