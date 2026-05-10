@@ -32,8 +32,8 @@
 |---|---|
 | `AuthService` | Identity & Access |
 | `ProfileService` | Identity & Access + Social Graph split |
-| `PostService` | Content Publishing + Engagement split |
-| `CollectionService` | Content Publishing + Engagement split |
+| `PostService` | Content Publishing (write commands) + Content Discovery (read queries) + Engagement split |
+| `CollectionService` | Content Publishing (write commands) + Content Discovery (read queries) + Engagement split |
 | `CommentService` | Engagement |
 | `NotificationService` | Notifications |
 | `StoryService` | Stories |
@@ -48,9 +48,9 @@
 |---|---|
 | `AuthController` | Identity & Access |
 | `ProfilesController` | Identity & Access + Social Graph |
-| `PostsController` | Content Publishing + Engagement |
+| `PostsController` | Content Publishing (write) + Content Discovery (read) + Engagement |
 | `CommentsController` | Engagement |
-| `CollectionsController` | Content Publishing + Engagement |
+| `CollectionsController` | Content Publishing (write) + Content Discovery (read) + Engagement |
 | `NotificationsController` | Notifications |
 | `StoriesController` | Stories |
 | `ChatController` | Messaging |
@@ -60,3 +60,7 @@
 - `GetFollowersQuery` -> Social Graph (`FollowRelationship`).
 - `GetFollowingsQuery` -> Social Graph (`FollowRelationship`).
 - `GetProfileByIdQuery` -> Identity & Access (`Profile`).
+- `GetPostByIdQuery`, `GetNewsFeedQuery`, `GetGuestFeedQuery`, `GetExploreFeedQuery`, `GetLatestFeedQuery`, `GetProfilePostsQuery`, `GetArchivedPostsQuery`, `GetRecycleBinQuery`, `GetFeedWithRepostsQuery` -> Content Discovery.
+- `GetRepostByIdQuery`, `GetRepostsByProfileQuery` -> Content Discovery.
+- `GetCollectionByIdQuery`, `GetCollectionsQuery`, `GetCollectionPostsQuery`, `GetTrendingCollectionsQuery` -> Content Discovery.
+- `SearchPostsQuery` -> Content Discovery (cross-cuts ContentPublishing data + VectorIndex).

@@ -9,6 +9,8 @@ public interface IContentPublishingCommandRepository
     Task<PostWriteData?> GetPostForWriteAsync(Guid postId, CancellationToken ct = default);
     Task UpdatePostAsync(PostWriteData data, CancellationToken ct = default);
     Task SoftDeletePostAsync(Guid postId, DateTime expiredAt, CancellationToken ct = default);
+    Task RestorePostAsync(Guid postId, CancellationToken ct = default);
+    Task PermanentDeletePostAsync(Guid postId, CancellationToken ct = default);
     Task SetPostArchivedAsync(Guid postId, bool isArchived, CancellationToken ct = default);
 
     // PostMedia

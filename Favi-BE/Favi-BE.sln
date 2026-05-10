@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Favi-BE.Modules.SocialGraph
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Favi-BE.Modules.ContentPublishing", "Favi-BE.Modules.ContentPublishing\Favi-BE.Modules.ContentPublishing.csproj", "{C643A84C-3900-4152-B260-B80F96F5D098}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Favi-BE.Modules.ContentDiscovery", "Favi-BE.Modules.ContentDiscovery\Favi-BE.Modules.ContentDiscovery.csproj", "{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Favi-BE.Modules.Stories", "Favi-BE.Modules.Stories\Favi-BE.Modules.Stories.csproj", "{D4E5F6A7-B8C9-0123-DEF0-234567890123}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Favi-BE.Modules.Messaging", "Favi-BE.Modules.Messaging\Favi-BE.Modules.Messaging.csproj", "{E5F6A7B8-C9D0-1234-EF01-345678901234}"
@@ -167,6 +169,18 @@ Global
 		{F6A7B8C9-D0E1-2345-F012-456789012345}.Release|x64.Build.0 = Release|Any CPU
 		{F6A7B8C9-D0E1-2345-F012-456789012345}.Release|x86.ActiveCfg = Release|Any CPU
 		{F6A7B8C9-D0E1-2345-F012-456789012345}.Release|x86.Build.0 = Release|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Debug|x64.Build.0 = Debug|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Debug|x86.Build.0 = Debug|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Release|x64.ActiveCfg = Release|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Release|x64.Build.0 = Release|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Release|x86.ActiveCfg = Release|Any CPU
+		{A7B8C9D0-E1F2-3456-0123-567890ABCDEF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

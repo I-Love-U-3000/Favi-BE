@@ -68,6 +68,23 @@ internal sealed class ContentPublishingCommandRepositoryAdapter : IContentPublis
         _uow.Posts.Update(post);
     }
 
+    public async Task RestorePostAsync(Guid postId, CancellationToken ct = default)
+    {
+        var post = await _uow.Posts.GetByIdAsync(postId);
+        if (post is null) return;
+
+        post.DeletedDayExpiredAt = null;
+        post.UpdatedAt = DateTime.UtcNow;
+        _uow.Posts.Update(post);
+    }
+
+    public async Task PermanentDeletePostAsync(Guid postId, CancellationToken ct = default)
+    {
+        var post = await _uow.Posts.GetByIdAsync(postId);
+        if (post is not null)
+            _uow.Posts.Remove(post);
+    }
+
     public async Task SetPostArchivedAsync(Guid postId, bool isArchived, CancellationToken ct = default)
     {
         var post = await _uow.Posts.GetByIdAsync(postId);

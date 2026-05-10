@@ -3,6 +3,7 @@ using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
+using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetPostById;
 using Favi_BE.Modules.Engagement.Application.Commands.CreateComment;
 using Favi_BE.Modules.Engagement.Application.Commands.DeleteComment;
 using Favi_BE.Modules.Engagement.Application.Commands.ToggleCommentReaction;
@@ -24,15 +25,11 @@ namespace Favi_BE.Controllers
     public class CommentsController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IPostService _posts;
-        private readonly IPrivacyGuard _privacy;
         private readonly ICloudinaryService _cloudinary;
 
-        public CommentsController(IMediator mediator, IPostService posts, IPrivacyGuard privacy, ICloudinaryService cloudinary)
+        public CommentsController(IMediator mediator, ICloudinaryService cloudinary)
         {
             _mediator = mediator;
-            _posts = posts;
-            _privacy = privacy;
             _cloudinary = cloudinary;
         }
 
@@ -86,13 +83,10 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<PagedResult<CommentResponse>>> GetByPost(Guid postId, int page = 1, int pageSize = 20)
         {
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            var post = await _posts.GetEntityAsync(postId);
+            var post = await _mediator.Send(new GetPostByIdQuery(postId, viewerId));
 
-            if (post == null)
+            if (post is null)
                 return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại." });
-
-            if (!await _privacy.CanViewPostAsync(post, viewerId))
-                return StatusCode(403, new { code = "POST_FORBIDDEN", message = "Bạn không có quyền xem bình luận của bài viết này." });
 
             var (items, total) = await _mediator.Send(new GetCommentsByPostQuery(postId, viewerId, page, pageSize));
             var dtos = items.Select(MapToCommentResponse).ToList();

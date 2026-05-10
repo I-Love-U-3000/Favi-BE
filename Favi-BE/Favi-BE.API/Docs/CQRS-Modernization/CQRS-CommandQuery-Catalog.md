@@ -92,7 +92,13 @@
 | `SharePostCommand` | ✅ Implemented | |
 | `UnsharePostCommand` | ✅ Implemented | |
 
-**Queries**
+---
+
+### 3.4 Content Discovery (`Favi-BE.Modules.ContentDiscovery`)
+
+> Pure read context. Không có commands. Aggregates data từ ContentPublishing tables, Engagement query reader, SocialGraph query reader. Adapter trong API layer được phép query nhiều nguồn.
+
+**Queries — Post & Feed**
 
 | Query | Status | Notes |
 |---|---|---|
@@ -101,21 +107,31 @@
 | `GetGuestFeedQuery` | ⏳ Pending — Slice 10 | |
 | `GetExploreFeedQuery` | ⏳ Pending — Slice 10 | |
 | `GetLatestFeedQuery` | ⏳ Pending — Slice 10 | |
-| `GetProfilePostsQuery` | ⏳ Pending — Slice 10 | |
-| `SearchPostsQuery` | ⏳ Pending — Slice 10 | EFCore + vector merge — Dapper candidate |
+| `GetProfilePostsQuery` | ⏳ Pending — Slice 10 | Absorbs profile-exists guard; không cần inject IProfileService vào controller |
 | `GetArchivedPostsQuery` | ⏳ Pending — Slice 10 | |
 | `GetRecycleBinQuery` | ⏳ Pending — Slice 10 | |
-| `GetRepostsByProfileQuery` | ⏳ Pending — Slice 10 | |
+| `GetFeedWithRepostsQuery` | ⏳ Pending — Slice 10 | Feed combining posts + reposts — Dapper candidate |
+| `SearchPostsQuery` | ⏳ Pending — Slice 10 | EFCore + vector merge — Dapper candidate |
+
+**Queries — Repost**
+
+| Query | Status | Notes |
+|---|---|---|
 | `GetRepostByIdQuery` | ⏳ Pending — Slice 10 | |
+| `GetRepostsByProfileQuery` | ⏳ Pending — Slice 10 | |
+
+**Queries — Collection**
+
+| Query | Status | Notes |
+|---|---|---|
 | `GetCollectionByIdQuery` | ⏳ Pending — Slice 10 | CollectionsController `GET /collections/{id}` |
 | `GetCollectionsQuery` | ⏳ Pending — Slice 10 | CollectionsController `GET /collections/owner/{ownerId}` |
 | `GetCollectionPostsQuery` | ⏳ Pending — Slice 10 | CollectionsController `GET /collections/{id}/posts` |
 | `GetTrendingCollectionsQuery` | ⏳ Pending — Slice 10 | CollectionsController `GET /collections/trending` |
-| `GetFeedWithRepostsQuery` | ⏳ Pending — Slice 10 | Feed combining posts + reposts — Dapper candidate |
 
 ---
 
-### 3.4 Engagement (`Favi-BE.Modules.Engagement`)
+### 3.5 Engagement (`Favi-BE.Modules.Engagement`)
 
 **Commands**
 
@@ -144,7 +160,7 @@
 
 ---
 
-### 3.5 Notifications (`Favi-BE.Modules.Notifications`)
+### 3.6 Notifications (`Favi-BE.Modules.Notifications`)
 
 **Commands**
 
@@ -164,7 +180,7 @@
 
 ---
 
-### 3.6 Stories (`Favi-BE.Modules.Stories`)
+### 3.7 Stories (`Favi-BE.Modules.Stories`)
 
 **Commands**
 
@@ -189,7 +205,7 @@
 
 ---
 
-### 3.7 Messaging (`Favi-BE.Modules.Messaging`)
+### 3.8 Messaging (`Favi-BE.Modules.Messaging`)
 
 **Commands**
 
@@ -211,7 +227,7 @@
 
 ---
 
-### 3.8 Moderation & Trust (`Favi-BE.Modules.Moderation`)
+### 3.9 Moderation & Trust (`Favi-BE.Modules.Moderation`)
 
 **Commands**
 

@@ -29,6 +29,7 @@
     <ProjectReference Include="..\Favi-BE.Modules.Engagement\Favi-BE.Modules.Engagement.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.SocialGraph\Favi-BE.Modules.SocialGraph.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.ContentPublishing\Favi-BE.Modules.ContentPublishing.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.ContentDiscovery\Favi-BE.Modules.ContentDiscovery.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Stories\Favi-BE.Modules.Stories.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Messaging\Favi-BE.Modules.Messaging.csproj" />
     <ProjectReference Include="..\Favi-BE.Modules.Moderation\Favi-BE.Modules.Moderation.csproj" />

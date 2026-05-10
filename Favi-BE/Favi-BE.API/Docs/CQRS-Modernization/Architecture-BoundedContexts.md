@@ -8,7 +8,8 @@ Tài liệu này chốt ranh giới domain cho lộ trình CQRS + Outbox + Media
 |---|---|---|---|---|---|
 | Identity & Access | Đăng nhập, token, profile cơ bản, session | `Profile`, `EmailAccount`, `AuthSession` (new) | `profiles`, `email_accounts`, `auth_sessions` (new) | `UserRegistered`, `UserLoggedIn`, `UserLoggedOut`, `ProfileUpdated` | `UserModerated`, `UserUnbanned` |
 | Social Graph | Quan hệ follow và social links | `FollowRelationship`, `SocialLink` | `follows`, `social_links` | `UserFollowed`, `UserUnfollowed`, `SocialLinkAdded`, `SocialLinkRemoved` | `UserDeleted` |
-| Content Publishing | Post, media, tag, collection, repost | `Post`, `Collection`, `Repost`, `TagCatalog` | `posts`, `post_media`, `post_tags`, `collections`, `post_collections`, `reposts`, `tags` | `PostCreated`, `PostUpdated`, `PostDeleted`, `CollectionUpdated`, `RepostShared` | `UserModerated` |
+| Content Publishing | Post, media, tag, collection, repost — **write only** (commands) | `Post`, `Collection`, `Repost`, `TagCatalog` | `posts`, `post_media`, `post_tags`, `collections`, `post_collections`, `reposts`, `tags` | `PostCreated`, `PostUpdated`, `PostDeleted`, `CollectionUpdated`, `RepostShared` | `UserModerated` |
+| Content Discovery | Feed aggregation, post/collection/repost read projections — **read only** (queries). Không có aggregate, không có write path. Aggregates data từ ContentPublishing + Engagement + SocialGraph qua read-only projections. | None (pure projection) | Không own table — reads từ `posts`, `post_media`, `post_tags`, `collections`, `post_collections`, `reposts`, `tags`, `reactions`, `comments`, `follows` | None | `PostCreated`, `PostUpdated`, `PostDeleted` (future: cache invalidation) |
 | Engagement | Comment + reaction cho post/comment/collection/repost | `CommentThread`, `Reaction` | `comments`, `reactions` | `CommentCreated`, `CommentUpdated`, `CommentDeleted`, `ReactionToggled` | `PostDeleted`, `CollectionDeleted`, `RepostDeleted` |
 | Notifications | Notification persistence + unread projection + realtime dispatch adapter | `Notification` | `notifications` | `NotificationCreated`, `NotificationRead`, `UnreadCountChanged` | `UserFollowed`, `CommentCreated`, `ReactionToggled`, `PostCreated` |
 | Stories | Story lifecycle + views + expiry | `Story` | `stories`, `story_views` | `StoryCreated`, `StoryArchived`, `StoryExpired`, `StoryViewed` | `UserModerated` |
@@ -24,13 +25,16 @@ Tài liệu này chốt ranh giới domain cho lộ trình CQRS + Outbox + Media
 ## 4. Decision đã chốt
 - `GetFollowersQuery` và `GetFollowingsQuery` thuộc `Social Graph` (`FollowRelationship`), không thuộc `Identity & Access`.
 - `Identity & Access` chỉ giữ profile/auth/session concerns.
+- `Content Publishing` chỉ giữ write path (commands). Toàn bộ query/read path (feed, post detail, collection listing, repost listing) thuộc `Content Discovery`.
+- `Content Discovery` là pure read context: không có aggregate, không có write, không publish events. Adapter trong API layer được phép query từ nhiều nguồn (ContentPublishing tables, Engagement query reader, SocialGraph query reader) để assemble read projections.
 
 ## 5. Upstream/Downstream dependency
 | Context | Upstream dependencies | Downstream consumers |
 |---|---|---|
 | Identity & Access | None | Social Graph, Messaging, Moderation |
 | Social Graph | Identity & Access | Notifications, Feed/Content ranking |
-| Content Publishing | Identity & Access | Engagement, Notifications, Search |
+| Content Publishing | Identity & Access | Content Discovery, Engagement, Notifications, Search |
+| Content Discovery | Content Publishing, Engagement, Social Graph, Identity & Access | API clients (feed, post detail, collection listing) |
 | Engagement | Content Publishing, Identity & Access | Notifications |
 | Notifications | Social Graph, Engagement, Content Publishing | SignalR clients |
 | Stories | Identity & Access | Notifications |

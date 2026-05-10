@@ -47,7 +47,6 @@ namespace Favi_BE.Data.Repositories
 
         public async Task<IEnumerable<Repost>> GetFeedRepostsAsync(Guid profileId, int skip, int take)
         {
-            // Get reposts from the user themselves and users they follow
             var followeeIds = await _context.Follows
                 .Where(f => f.FollowerId == profileId)
                 .Select(f => f.FolloweeId)
@@ -68,6 +67,40 @@ namespace Favi_BE.Data.Repositories
                 .Include(r => r.Comments)
                 .Include(r => r.Reactions)
                 .ToListAsync();
+        }
+
+        public async Task<Repost?> GetRepostByIdAsync(Guid repostId)
+        {
+            return await _dbSet
+                .Where(r => r.Id == repostId)
+                .Include(r => r.Profile)
+                .Include(r => r.OriginalPost).ThenInclude(p => p.Profile)
+                .Include(r => r.OriginalPost).ThenInclude(p => p.PostMedias)
+                .Include(r => r.OriginalPost).ThenInclude(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Include(r => r.Comments)
+                .Include(r => r.Reactions)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<(IEnumerable<Repost> Items, int Total)> GetRepostsByProfilePagedAsync(
+            Guid profileId, int skip, int take)
+        {
+            var query = _dbSet
+                .Where(r => r.ProfileId == profileId)
+                .OrderByDescending(r => r.CreatedAt);
+
+            var total = await query.CountAsync();
+
+            var items = await query
+                .Include(r => r.Profile)
+                .Include(r => r.OriginalPost).ThenInclude(p => p.Profile)
+                .Include(r => r.OriginalPost).ThenInclude(p => p.PostMedias)
+                .Include(r => r.Comments)
+                .Include(r => r.Reactions)
+                .Skip(skip).Take(take)
+                .ToListAsync();
+
+            return (items, total);
         }
     }
 }

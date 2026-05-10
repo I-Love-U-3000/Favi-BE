@@ -21,6 +21,7 @@ Sẽ implement trong **Slice 16 — Facade.ModuleContracts** (sau khi R9–R14 h
 | `IAuthFacade` | `Favi-BE.Modules.Auth/Application/IAuthFacade.cs` | 🗓 Planned — Slice 16 |
 | `ISocialGraphFacade` | `Favi-BE.Modules.SocialGraph/Application/ISocialGraphFacade.cs` | 🗓 Planned — Slice 16 |
 | `IContentPublishingFacade` | `Favi-BE.Modules.ContentPublishing/Application/IContentPublishingFacade.cs` | 🗓 Planned — Slice 16 |
+| `IContentDiscoveryFacade` | `Favi-BE.Modules.ContentDiscovery/Application/IContentDiscoveryFacade.cs` | 🗓 Planned — Slice 16 |
 | `IEngagementFacade` | `Favi-BE.Modules.Engagement/Application/IEngagementFacade.cs` | 🗓 Planned — Slice 16 |
 | `INotificationsFacade` | `Favi-BE.Modules.Notifications/Application/INotificationsFacade.cs` | 🗓 Planned — Slice 16 |
 | `IStoriesFacade` | `Favi-BE.Modules.Stories/Application/IStoriesFacade.cs` | 🗓 Planned — Slice 16 |
@@ -43,16 +44,19 @@ Sẽ implement trong **Slice 16 — Facade.ModuleContracts** (sau khi R9–R14 h
 
 Ký hiệu: ✅ allowed and correctly wired | ⚠️ intermediate state — via adapter, target is domain events | ❌ direct cross-module reference — forbidden | — not applicable
 
-| From \ To | Identity | SocialGraph | Content | Engagement | Notifications | Stories | Messaging | Moderation |
-|---|---|---|---|---|---|---|---|---|
-| Identity | ✅ | — | — | — | — | — | — | ✅ via contracts |
-| SocialGraph | ✅ contract | ✅ | — | — | ⚠️ via adapter (→ Slice 13: domain events) | — | — | — |
-| Content | ✅ contract | — | ✅ | ✅ via events | ✅ via events | — | — | — |
-| Engagement | ✅ contract | — | ✅ contract | ✅ | ⚠️ via adapter (→ Slice 13: domain events) | — | — | ✅ via events |
-| Notifications | ✅ contract | ✅ via events | ✅ via events | ✅ via events | ✅ | ✅ via events | ✅ via events | ✅ via events |
-| Stories | ✅ contract | — | — | — | ✅ via events | ✅ | — | — |
-| Messaging | ✅ contract | — | — | — | ✅ via events | — | ✅ | — |
-| Moderation | ✅ contract | ✅ via events | ✅ via events | ✅ via events | ✅ via events | ✅ via events | ✅ via events | ✅ |
+> **ContentDiscovery** là pure read context. Adapter trong API layer được phép aggregate data từ ContentPublishing tables, IEngagementQueryReader, và IUnitOfWork (follows). Đây là acceptable vì adapter nằm trong API layer, không phải module internal.
+
+| From \ To | Identity | SocialGraph | ContentPublishing | ContentDiscovery | Engagement | Notifications | Stories | Messaging | Moderation |
+|---|---|---|---|---|---|---|---|---|---|
+| Identity | ✅ | — | — | — | — | — | — | — | ✅ via contracts |
+| SocialGraph | ✅ contract | ✅ | — | — | — | ⚠️ via adapter (→ Slice 13: domain events) | — | — | — |
+| ContentPublishing | ✅ contract | — | ✅ | — | ✅ via events | ✅ via events | — | — | — |
+| ContentDiscovery | ✅ contract (read profile) | ✅ contract (read follows) | ✅ reads tables | ✅ | ✅ contract (read reactions/comments) | — | — | — | — |
+| Engagement | ✅ contract | — | ✅ contract | — | ✅ | ⚠️ via adapter (→ Slice 13: domain events) | — | — | ✅ via events |
+| Notifications | ✅ contract | ✅ via events | ✅ via events | — | ✅ via events | ✅ | ✅ via events | ✅ via events | ✅ via events |
+| Stories | ✅ contract | — | — | — | — | ✅ via events | ✅ | — | — |
+| Messaging | ✅ contract | — | — | — | — | ✅ via events | — | ✅ | — |
+| Moderation | ✅ contract | ✅ via events | ✅ via events | — | ✅ via events | ✅ via events | ✅ via events | ✅ via events | ✅ |
 
 ---
 
@@ -80,6 +84,7 @@ Ký hiệu: ✅ allowed and correctly wired | ⚠️ intermediate state — via 
 |---|---|---|
 | Stories CommandHandlers không depend on Queries namespace | `StoriesModuleArchitectureTests.cs` | Slice 14 (sau Slice 9) |
 | ContentPublishing CommandHandlers không depend on Queries namespace | `ContentPublishingModuleArchitectureTests.cs` | Slice 14 (sau Slice 10) |
+| ContentDiscovery không depend on module internal namespaces của ContentPublishing/Engagement | `ContentDiscoveryModuleArchitectureTests.cs` | Slice 14 (sau Slice 10) |
 | Notifications CommandHandlers không depend on Queries namespace | `NotificationsModuleArchitectureTests.cs` | Slice 14 (sau Slice 11) |
 | Auth CommandHandlers không depend on Queries namespace | `AuthModuleArchitectureTests.cs` | Slice 14 (sau Slice 12) |
 | Engagement CommandHandlers không depend on Queries namespace | `EngagementModuleArchitectureTests.cs` | Slice 14 |

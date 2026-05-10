@@ -9,5 +9,7 @@ namespace Favi_BE.Interfaces.Repositories
         Task<int> GetRepostCountAsync(Guid postId);
         Task<bool> HasRepostedAsync(Guid profileId, Guid postId);
         Task<IEnumerable<Repost>> GetFeedRepostsAsync(Guid profileId, int skip, int take);
+        Task<Repost?> GetRepostByIdAsync(Guid repostId);
+        Task<(IEnumerable<Repost> Items, int Total)> GetRepostsByProfilePagedAsync(Guid profileId, int skip, int take);
     }
 }

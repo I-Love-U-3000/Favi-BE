@@ -55,6 +55,9 @@ public static class ApplicationExtensions
         // Content Publishing module
         services.AddContentPublishingModule();
 
+        // Content Discovery module
+        services.AddContentDiscoveryModule();
+
         // Stories module
         services.AddStoriesModule();
 

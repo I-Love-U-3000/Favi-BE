@@ -29,5 +29,13 @@ namespace Favi_BE.Interfaces.Repositories
 
         // Search posts by caption (case-insensitive)
         Task<IEnumerable<Post>> SearchPostsByCaptionAsync(string query, int skip, int take);
+
+        // ContentDiscovery paged queries
+        Task<(IEnumerable<Post> Items, int Total)> GetProfilePostsPagedAsync(Guid profileId, int skip, int take);
+        Task<(IEnumerable<Post> Items, int Total)> GetLatestPostsPagedAsync(int skip, int take);
+        Task<(IEnumerable<Post> Items, int Total)> GetExploreFeedPagedAsync(Guid profileId, int skip, int take);
+        Task<(IEnumerable<Post> Items, int Total)> GetGuestFeedPagedAsync(int skip, int take);
+        Task<(IEnumerable<Post> Items, int Total)> GetArchivedByProfilePagedAsync(Guid profileId, int skip, int take);
+        Task<(IEnumerable<Post> Items, int Total)> GetRecycleBinByProfilePagedAsync(Guid profileId, int skip, int take);
     }
 }
