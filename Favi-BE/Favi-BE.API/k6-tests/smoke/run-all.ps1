@@ -27,7 +27,8 @@ $scenarios = @(
     "smoke-post-create-delete.js",
     "smoke-reaction-like.js",
     "smoke-comment-create.js",
-    "smoke-profile-privacy-read.js"
+    "smoke-profile-privacy-read.js",
+    "smoke-stories.js"
 )
 
 $passed = 0

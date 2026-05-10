@@ -142,6 +142,15 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [x] `Stories.CommandsAndExpiry`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Schema-Transition-Plan.md`.
 - [x] `Messaging.CQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Module-Boundary-Enforcement.md`.
 - [x] `Moderation.BackofficeCQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Module-Boundary-Enforcement.md`.
+- [x] `Stories.Queries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Module-Boundary-Enforcement.md`.
+- [ ] `ContentPublishing.Queries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
+- [ ] `Notifications.CommandsAndQueries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Notification-Refactor-SignalR-MediatR.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`.
+- [ ] `Auth.ProfileQueries`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
+- [ ] `Integration.DomainEvents`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `BuildingBlocks-Design.md`.
+- [ ] `ArchTests.ReadWriteSegregation`: đã đọc `Module-Boundary-Enforcement.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`.
+- [ ] `Domain.AggregateRoots`: đã đọc `Aggregate-Inventory.md` + `Architecture-BoundedContexts.md` + `BuildingBlocks-Design.md`.
+- [ ] `Facade.ModuleContracts`: đã đọc `Module-Boundary-Enforcement.md` + `CQRS-CommandQuery-Catalog.md`.
+- [ ] `Infrastructure.ModuleDbContexts` (optional): đã đọc `Architecture-BoundedContexts.md` + `Schema-Transition-Plan.md` + `Module-Boundary-Enforcement.md`.
 
 ---
 
@@ -348,41 +357,455 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 ---
 
-## 12) Read/Write segregation rollout checklist
+## 12) Slice 9 — `Stories.Queries`
 
-### 13.1 Contract level
+### 12.1 Query port + read models
+- [x] `IStoriesQueryReader` (port trong `Favi-BE.Modules.Stories/Application/Contracts`).
+- [x] `StoryReadModel` (ReadModel trong `Contracts/ReadModels`).
+- [x] `StoryViewerReadModel` (ReadModel trong `Contracts/ReadModels`).
+
+### 12.2 Query handlers
+- [x] `GetStoryByIdQuery` + `GetStoryByIdQueryHandler`.
+- [x] `GetActiveStoriesByProfileQuery` + `GetActiveStoriesByProfileQueryHandler` — handler absorbs `IProfileService.GetEntityByIdAsync(profileId)` guard (validate profile exists internally, không cần inject IProfileService vào controller).
+- [x] `GetViewableStoriesQuery` + `GetViewableStoriesQueryHandler`.
+- [x] `GetArchivedStoriesQuery` + `GetArchivedStoriesQueryHandler`.
+- [x] `GetStoryViewersQuery` + `GetStoryViewersQueryHandler`.
+- [x] `GetActiveStoryCountQuery` + `GetActiveStoryCountQueryHandler`.
+
+### 12.3 Adapter
+- [x] `StoriesQueryReaderAdapter` trong `Favi-BE.API/Application/Stories` (inject `IPrivacyGuard` để giữ parity privacy logic với legacy `StoryService`).
+- [x] `AddStoriesModule()` cập nhật để đăng ký `IStoriesQueryReader`.
+
+### 12.4 Controller strangler
+- [x] `StoriesController`: `GET /stories/{id}` — thay `_stories.GetByIdAsync` bằng `_mediator.Send(new GetStoryByIdQuery(...))`.
+- [x] `StoriesController`: `GET /stories/profile/{profileId}` — thay `_stories.GetActiveStoriesByProfileAsync` bằng `_mediator.Send(new GetActiveStoriesByProfileQuery(...))`.
+- [x] `StoriesController`: `GET /stories/feed` — thay `_stories.GetViewableStoriesAsync` bằng `_mediator.Send(new GetViewableStoriesQuery(...))`.
+- [x] `StoriesController`: `GET /stories/archived` — thay `_stories.GetArchivedStoriesAsync` bằng `_mediator.Send(new GetArchivedStoriesQuery(...))`.
+- [x] `StoriesController`: `GET /stories/{id}/viewers` — thay `_stories.GetViewersAsync` bằng `_mediator.Send(new GetStoryViewersQuery(...))`.
+- [x] `StoriesController`: `GET /stories/profile/{profileId}/count` — thay `_stories.GetActiveStoryCountAsync` bằng `_mediator.Send(new GetActiveStoryCountQuery(...))`.
+- [x] `StoriesController`: `POST /stories` (Create) — thay reload `_stories.GetByIdAsync` bằng `_mediator.Send(new GetStoryByIdQuery(...))`.
+- [x] `StoriesController`: bỏ inject `IStoryService` khỏi constructor.
+
+### 12.5 Architecture tests
+- [x] `StoriesModuleArchitectureTests`: thêm STR-01..STR-06 — CQRS segregation (CMD/QRY isolation, WriteModels, handler internals) + cross-module boundary enforcement. 53/53 tests pass.
+
+### Exit criteria Slice 9
+- [x] Build pass (0 errors, 0 warnings mới).
+- [x] `IStoryService` không còn trong `StoriesController` constructor.
+- [x] `IProfileService` không còn trong `StoriesController` constructor (guard absorbed vào `GetActiveStoriesByProfileQueryHandler`).
+- [x] Architecture tests pass (STR-01..STR-06, 53/53 total).
+- [ ] Read parity: kết quả giống legacy `IStoryService` calls cho tất cả 6 endpoints.
+
+---
+
+## 13) Slice 10 — `ContentPublishing.Queries`
+
+### 13.1 Query port + read models
+- [ ] `IContentPublishingQueryReader` (port trong `Favi-BE.Modules.ContentPublishing/Application/Contracts`).
+- [ ] `PostReadModel` (ReadModel trong `Contracts/ReadModels`).
+- [ ] `CollectionReadModel` (ReadModel trong `Contracts/ReadModels`).
+- [ ] `RepostReadModel` (ReadModel trong `Contracts/ReadModels`).
+- [ ] `FeedItemReadModel` (ReadModel trong `Contracts/ReadModels`).
+
+### 13.2 Query handlers — Post/Feed/Repost
+- [ ] `GetPostByIdQuery` + `GetPostByIdQueryHandler`.
+- [ ] `GetNewsFeedQuery` + `GetNewsFeedQueryHandler`.
+- [ ] `GetGuestFeedQuery` + `GetGuestFeedQueryHandler`.
+- [ ] `GetExploreFeedQuery` + `GetExploreFeedQueryHandler`.
+- [ ] `GetLatestFeedQuery` + `GetLatestFeedQueryHandler`.
+- [ ] `GetProfilePostsQuery` + `GetProfilePostsQueryHandler`.
+- [ ] `SearchPostsQuery` + `SearchPostsQueryHandler`.
+- [ ] `GetArchivedPostsQuery` + `GetArchivedPostsQueryHandler`.
+- [ ] `GetRecycleBinQuery` + `GetRecycleBinQueryHandler`.
+- [ ] `GetRepostsByProfileQuery` + `GetRepostsByProfileQueryHandler`.
+- [ ] `GetRepostByIdQuery` + `GetRepostByIdQueryHandler`.
+- [ ] `GetFeedWithRepostsQuery` + `GetFeedWithRepostsQueryHandler`.
+
+### 13.3 Query handlers — Collection
+- [ ] `GetCollectionByIdQuery` + `GetCollectionByIdQueryHandler`.
+- [ ] `GetCollectionsQuery` + `GetCollectionsQueryHandler` (GET /collections/owner/{ownerId}).
+- [ ] `GetCollectionPostsQuery` + `GetCollectionPostsQueryHandler` (GET /collections/{id}/posts).
+- [ ] `GetTrendingCollectionsQuery` + `GetTrendingCollectionsQueryHandler` (GET /collections/trending).
+
+### 13.4 Adapter
+- [ ] `ContentPublishingQueryReaderAdapter` trong `Favi-BE.API/Application/ContentPublishing` (dùng AsNoTracking).
+- [ ] `AddContentPublishingModule()` cập nhật để đăng ký `IContentPublishingQueryReader`.
+
+### 13.5 Controller strangler — PostController
+> **Lưu ý**: Slice 5 chỉ implement command handlers trong module, PostController CHƯA được strangled cho command calls. Slice 10 phải thay cả command lẫn query calls.
+- [ ] `PostController`: thay tất cả write calls (`_posts.CreateAsync`, `UpdateAsync`, `DeleteAsync`, `RestoreAsync`, `PermanentDeleteAsync`, `ArchiveAsync`, `UnarchiveAsync`, `SharePostAsync`, `UnsharePostAsync`, `UploadMediaAsync`) bằng `_mediator.Send(...)` tương ứng.
+- [ ] `PostController`: thay tất cả read calls (`_posts.GetByIdAsync`, `GetByProfileAsync`, `GetFeedAsync`, `GetFeedWithRepostsAsync`, `GetGuestFeedAsync`, `GetExploreAsync`, `GetLatestAsync`, `GetRecycleBinAsync`, `GetArchivedAsync`, `GetRepostsByProfileAsync`, `GetRepostAsync`, `GetEntityAsync`) bằng `_mediator.Send(...)` tương ứng (GetEntityAsync absorbed vào các query handlers).
+- [ ] `PostController`: `GetByProfile` action — guard `_profileService.GetEntityByIdAsync(profileId)` absorbed vào `GetProfilePostsQueryHandler`; bỏ inject `IProfileService` khỏi `PostController` constructor.
+- [ ] `PostController`: bỏ inject `IPostService` khỏi constructor.
+
+### 13.6 Controller strangler — CommentsController
+> `CommentsController` đã strangled toàn bộ comment commands + queries từ Slice 3. Chỉ còn 1 `_posts.GetEntityAsync(postId)` guard tại `GetCommentsByPost` — phụ thuộc vào `GetPostByIdQuery` được tạo trong Slice 10.
+- [ ] `CommentsController`: `GetCommentsByPost` action — thay `_posts.GetEntityAsync(postId)` guard bằng `_mediator.Send(new GetPostByIdQuery(postId, viewerId))` (handler trả `null` nếu không tồn tại → controller trả 404).
+- [ ] `CommentsController`: bỏ inject `IPostService` khỏi constructor.
+
+### 13.7 Controller strangler — CollectionsController
+> **Lưu ý**: Tương tự PostController, CollectionsController chưa được strangled dù command handlers đã có từ Slice 5.
+- [ ] `CollectionsController`: thay write calls (`_collections.CreateAsync`, `UpdateAsync`, `DeleteAsync`, `AddPostAsync`, `RemovePostAsync`) bằng `_mediator.Send(...)` tương ứng.
+- [ ] `CollectionsController`: thay read calls (`_collections.GetByIdAsync`, `GetByOwnerAsync`, `GetPostsAsync`, `GetTrendingCollectionsAsync`, `GetEntityByIdAsync`) bằng `_mediator.Send(...)` tương ứng (GetEntityByIdAsync absorbed vào query handlers).
+- [ ] `CollectionsController`: `GetReactorsAsync` đã có `GetCollectionReactorsQuery` từ Engagement module — thay bằng `_mediator.Send(new GetCollectionReactorsQuery(...))`.
+- [ ] `CollectionsController`: bỏ inject `ICollectionService` khỏi constructor.
+
+### 13.8 Architecture tests
+- [ ] `ContentPublishingModuleArchitectureTests`: thêm test `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+
+### Exit criteria Slice 10
+- [ ] Build pass (0 errors, 0 warnings mới).
+- [ ] `IPostService` không còn trong `PostController` constructor.
+- [ ] `IProfileService` không còn trong `PostController` constructor.
+- [ ] `IPostService` không còn trong `CommentsController` constructor.
+- [ ] `ICollectionService` không còn trong `CollectionsController` constructor.
+- [ ] Architecture tests pass.
+- [ ] Read parity cho tất cả feed/post/collection/repost/search endpoints.
+
+---
+
+## 14) Slice 11 — `Notifications.CommandsAndQueries`
+
+### 14.1 Query port + read model
+- [ ] `INotificationQueryReader` (port trong `Favi-BE.Modules.Notifications/Application/Contracts`).
+- [ ] `NotificationReadModel` (ReadModel trong `Contracts/ReadModels`).
+
+### 14.2 Query handlers
+- [ ] `GetNotificationsQuery` + `GetNotificationsQueryHandler`.
+- [ ] `GetUnreadNotificationCountQuery` + `GetUnreadNotificationCountQueryHandler`.
+
+### 14.3 Command handlers
+- [ ] `MarkNotificationAsReadCommand` + `MarkNotificationAsReadCommandHandler`.
+- [ ] `MarkAllNotificationsAsReadCommand` + `MarkAllNotificationsAsReadCommandHandler`.
+- [ ] `DeleteNotificationCommand` + `DeleteNotificationCommandHandler`.
+
+### 14.4 Adapters
+- [ ] `NotificationQueryReaderAdapter` trong `Favi-BE.API/Application/Notifications` (dùng AsNoTracking).
+- [ ] `NotificationCommandRepositoryAdapter` trong `Favi-BE.API/Application/Notifications`.
+- [ ] `AddNotificationsModule()` cập nhật để đăng ký `INotificationQueryReader` + command repository.
+
+### 14.5 Controller strangler
+- [ ] `NotificationsController`: `GET /notifications` — thay `_notifications.GetNotificationsAsync` bằng `_mediator.Send(new GetNotificationsQuery(...))`.
+- [ ] `NotificationsController`: `GET /notifications/unread-count` — thay `_notifications.GetUnreadCountAsync` bằng `_mediator.Send(new GetUnreadNotificationCountQuery(...))`.
+- [ ] `NotificationsController`: `PUT /notifications/{id}/read` — thay `_notifications.MarkAsReadAsync` bằng `_mediator.Send(new MarkNotificationAsReadCommand(...))`.
+- [ ] `NotificationsController`: `PUT /notifications/read-all` — thay `_notifications.MarkAllAsReadAsync` bằng `_mediator.Send(new MarkAllNotificationsAsReadCommand(...))`.
+- [ ] `NotificationsController`: `DELETE /notifications/{id}` — thay `_notifications.DeleteNotificationAsync` bằng `_mediator.Send(new DeleteNotificationCommand(...))`.
+- [ ] `NotificationsController`: bỏ inject `INotificationService` khỏi constructor.
+
+### 14.6 Architecture tests
+- [ ] `NotificationsModuleArchitectureTests`: thêm test `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+
+### Exit criteria Slice 11
+- [ ] Build pass (0 errors, 0 warnings mới).
+- [ ] `INotificationService` không còn trong `NotificationsController` constructor.
+- [ ] Architecture tests pass.
+- [ ] Read/write parity cho tất cả 5 notification endpoints.
+
+---
+
+## 15) Slice 12 — `Auth.ProfileQueries`
+
+### 15.1 Query handlers
+- [ ] `GetProfileByIdQuery` + `GetProfileByIdQueryHandler` (theo `Auth-CQRS-Catalog.md`).
+- [ ] `GetRecommendedProfilesQuery` + `GetRecommendedProfilesQueryHandler`.
+- [ ] `GetOnlineFriendsQuery` + `GetOnlineFriendsQueryHandler`.
+- [ ] `GetProfileAvatarQuery` + `GetProfileAvatarQueryHandler` (GET /profiles/avatar/{profileId}).
+- [ ] `GetProfilePosterQuery` + `GetProfilePosterQueryHandler` (GET /profiles/poster/{profileId}).
+
+### 15.2 Command handlers
+- [ ] `UpdateProfileCommand` + `UpdateProfileCommandHandler`.
+- [ ] `DeleteProfileCommand` + `DeleteProfileCommandHandler`.
+- [ ] `UploadAvatarCommand` + `UploadAvatarCommandHandler` — file bytes resolved bởi API layer adapter trước khi dispatch; handler nhận stream/URL, không nhận `IFormFile`.
+- [ ] `UploadPosterCommand` + `UploadPosterCommandHandler` — tương tự `UploadAvatarCommand`.
+- [ ] `SyncProfileCommand` + `SyncProfileCommandHandler` — idempotent upsert từ Supabase webhook: no-op nếu profile đã tồn tại, create nếu chưa có.
+- [ ] `UpdateLastActiveCommand` — **đã implement trong Auth module** (ChatController đang dùng); chỉ cần gọi `_mediator.Send(new UpdateLastActiveCommand(userId))` trong ProfilesController heartbeat endpoint.
+
+### 15.3 Adapter
+- [ ] Bổ sung `GetProfileByIdAsync`, `GetRecommendedAsync`, `GetOnlineFriendsAsync`, `GetAvatarAsync`, `GetPosterAsync` vào `AuthQueryReaderAdapter`.
+- [ ] `AddAuthModule()` cập nhật để đăng ký các handler mới.
+
+### 15.4 Controller strangler
+> **Lưu ý**: SocialGraph commands (Follow/Unfollow/AddLink/RemoveLink) và queries (GetFollowers/GetFollowings/GetSocialLinks) đã được strangled từ Slice 4 — chỉ cần thay các `_profiles.*` calls còn lại.
+- [ ] `ProfilesController`: `GET /profiles/{id}` — thay `_profiles.GetByIdAsync` + `GetEntityByIdAsync` guard bằng `_mediator.Send(new GetProfileByIdQuery(...))`.
+- [ ] `ProfilesController`: `PUT /profiles` — thay `_profiles.UpdateAsync` bằng `_mediator.Send(new UpdateProfileCommand(...))`.
+- [ ] `ProfilesController`: `DELETE /profiles` — thay `_profiles.DeleteAsync` bằng `_mediator.Send(new DeleteProfileCommand(...))`.
+- [ ] `ProfilesController`: `GET /profiles/avatar/{profileId}` — thay `_profiles.GetAvatar` bằng `_mediator.Send(new GetProfileAvatarQuery(...))`.
+- [ ] `ProfilesController`: `GET /profiles/poster/{profileId}` — thay `_profiles.GetPoster` bằng `_mediator.Send(new GetProfilePosterQuery(...))`.
+- [ ] `ProfilesController`: `POST /profiles/avatar` — thay `_profiles.UploadAvatarAsync` bằng `_mediator.Send(new UploadAvatarCommand(...))` (resolve file trước, send command với stream/URL).
+- [ ] `ProfilesController`: `POST /profiles/poster` — thay `_profiles.UploadPosterAsync` bằng `_mediator.Send(new UploadPosterCommand(...))`.
+- [ ] `ProfilesController`: `GET /profiles/recommendations` — thay `_profiles.GetRecommendedAsync` + `GetEntityByIdAsync` guard bằng `_mediator.Send(new GetRecommendedProfilesQuery(...))`.
+- [ ] `ProfilesController`: `GET /profiles/online-friends` — thay `_profiles.GetOnlineFriendsAsync` + `GetEntityByIdAsync` guard bằng `_mediator.Send(new GetOnlineFriendsQuery(...))`.
+- [ ] `ProfilesController`: `POST /profiles/heartbeat` — thay `_profiles.UpdateLastActiveAsync` bằng `_mediator.Send(new UpdateLastActiveCommand(userId))` (handler đã có trong Auth module).
+- [ ] Guard calls `_profiles.GetEntityByIdAsync(...)` rải rác (Follow, Followers, Followings, UploadAvatar, UploadPoster, heartbeat) — absorbed vào từng query/command handler; xóa khỏi controller sau khi strangled.
+- [ ] `ProfilesController`: bỏ inject `IProfileService` khỏi constructor.
+
+### 15.5 Controller strangler — ProfileSyncController
+> `ProfilesSyncController` là Supabase auth webhook (`POST /api/ProfilesSync/sync`, AllowAnonymous). Không có mediator hiện tại.
+- [ ] `ProfilesSyncController`: thay `_profiles.GetByIdAsync(dto.user_id)` bằng `_mediator.Send(new GetProfileByIdQuery(dto.user_id))`.
+- [ ] `ProfilesSyncController`: thay `_profiles.CreateProfileAsync(...)` bằng `_mediator.Send(new SyncProfileCommand(dto.user_id, username, displayName))`.
+- [ ] `ProfilesSyncController`: inject `IMediator`; bỏ inject `IProfileService` khỏi constructor.
+
+### 15.7 Architecture tests
+- [ ] `AuthModuleArchitectureTests`: thêm test `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+
+### Exit criteria Slice 12
+- [ ] Build pass (0 errors, 0 warnings mới).
+- [ ] `IProfileService` không còn trong `ProfilesController` constructor.
+- [ ] `IProfileService` không còn trong `ProfilesSyncController` constructor.
+- [ ] Architecture tests pass.
+- [ ] Read parity cho profile/avatar/poster/recommended/online-friends endpoints.
+- [ ] Heartbeat endpoint vẫn hoạt động qua `UpdateLastActiveCommand`.
+- [ ] Supabase sync endpoint vẫn idempotent qua `SyncProfileCommand`.
+
+---
+
+## 16) Slice 13 — `Integration.DomainEvents`
+
+### 16.1 Domain events trong SocialGraph module
+- [ ] Tạo `UserFollowedDomainEvent` trong `Favi-BE.Modules.SocialGraph/Domain/Events`.
+- [ ] `FollowUserCommandHandler`: raise `UserFollowedDomainEvent` trên aggregate thay vì gọi `ISocialGraphNotificationService`.
+- [ ] Bỏ inject `ISocialGraphNotificationService` khỏi `FollowUserCommandHandler`.
+
+### 16.2 Domain events trong Engagement module
+- [ ] Tạo `CommentCreatedDomainEvent` trong `Favi-BE.Modules.Engagement/Domain/Events`.
+- [ ] Tạo `ReactionToggledDomainEvent` trong `Favi-BE.Modules.Engagement/Domain/Events`.
+- [ ] `CreateCommentCommandHandler`: raise `CommentCreatedDomainEvent` thay vì gọi `IEngagementNotificationService`.
+- [ ] `TogglePostReactionCommandHandler`: raise `ReactionToggledDomainEvent` thay vì gọi `IEngagementNotificationService`.
+- [ ] `ToggleCommentReactionCommandHandler`: raise `ReactionToggledDomainEvent` thay vì gọi `IEngagementNotificationService`.
+- [ ] Bỏ inject `IEngagementNotificationService` khỏi tất cả handlers.
+
+### 16.3 Domain notifications mappers
+- [ ] `SocialGraphDomainNotificationsMapper` trong `Favi-BE.API/Application/SocialGraph`: map `UserFollowedDomainEvent` → `UserFollowedIntegrationEvent` → outbox.
+- [ ] `EngagementDomainNotificationsMapper` trong `Favi-BE.API/Application/Engagement`: map `CommentCreatedDomainEvent` → `CommentCreatedIntegrationEvent`, `ReactionToggledDomainEvent` → `PostReactionToggledIntegrationEvent` hoặc `CommentReactionToggledIntegrationEvent` tùy target.
+- [ ] Đăng ký mappers vào `IDomainNotificationsMapper` pipeline trong DI.
+
+### 16.4 Cleanup (sau khi parity validated)
+- [ ] Xóa `ISocialGraphNotificationService` + `SocialGraphNotificationServiceAdapter`.
+- [ ] Xóa `IEngagementNotificationService` + `EngagementNotificationServiceAdapter`.
+
+### Exit criteria Slice 13
+- [ ] Build pass (0 errors, 0 warnings mới).
+- [ ] `ISocialGraphNotificationService` và `IEngagementNotificationService` không còn trong handlers.
+- [ ] `TransactionBehavior` dispatch domain events → outbox trong cùng transaction.
+- [ ] Notification parity: follow/comment/reaction notifications vẫn hoạt động đúng qua domain event path.
+- [ ] Architecture tests pass.
+- [ ] `SocialGraphNotificationServiceAdapter` và `EngagementNotificationServiceAdapter` đã bị xóa.
+
+---
+
+## 17) Slice 14 — `ArchTests.ReadWriteSegregation`
+
+### 17.1 CQRS segregation tests cho tất cả modules có đủ Commands + Queries
+- [ ] `StoriesModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace` (sau Slice 9).
+- [ ] `ContentPublishingModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace` (sau Slice 10).
+- [ ] `NotificationsModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace` (sau Slice 11).
+- [ ] `AuthModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace` (sau Slice 12).
+- [ ] `EngagementModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+- [ ] `SocialGraphModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+- [ ] `ModerationModuleArchitectureTests`: `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+
+### 17.2 Controller boundary tests
+- [ ] `ApiLayerArchitectureTests`: Controllers không inject `IStoryService` trực tiếp (sau Slice 9).
+- [ ] `ApiLayerArchitectureTests`: Controllers không inject `IPostService` trực tiếp — covers `PostController` + `CommentsController` (sau Slice 10).
+- [ ] `ApiLayerArchitectureTests`: Controllers không inject `ICollectionService` trực tiếp (sau Slice 10).
+- [ ] `ApiLayerArchitectureTests`: Controllers không inject `INotificationService` trực tiếp (sau Slice 11).
+- [ ] `ApiLayerArchitectureTests`: Controllers không inject `IProfileService` trực tiếp — covers `ProfilesController` + `PostController` + `StoriesController` + `ProfilesSyncController` (sau Slice 12).
+
+### 17.3 Handler isolation tests
+- [ ] Architecture test: không handler nào inject `INotificationService` trực tiếp (sau Slice 13).
+- [ ] Architecture test: không handler nào inject `ISocialGraphNotificationService` hoặc `IEngagementNotificationService` (sau Slice 13).
+
+### Exit criteria Slice 14
+- [ ] Tất cả architecture tests pass.
+- [ ] CI gate fail-fast khi vi phạm boundary.
+
+---
+
+## 18) Slice 15 — `Domain.AggregateRoots`
+
+Mục tiêu: Business logic và invariants rời khỏi command handlers vào aggregate domain model. Handler chỉ còn orchestration (load aggregate → gọi domain method → save).
+
+> **Prerequisite:** BuildingBlocks đã có `AggregateRoot<TId>`, `IBusinessRule`, `BusinessRuleValidationException` — không cần thêm gì ở tầng này.
+
+### 18.1 Identity & Access
+- [ ] `Profile` aggregate root — domain methods: `Update()`, `Ban()`, `Unban()`, `Delete()`.
+- [ ] `EmailAccount` aggregate root — domain methods: `ChangePassword()`, `ValidateCredentials()`.
+- [ ] Business rules: `UsernameUniquenessRule`, `PasswordHashRequiredRule`.
+- [ ] Refactor `UpdateProfileCommandHandler`, `ChangePasswordCommandHandler` dùng aggregate methods.
+
+### 18.2 Social Graph
+- [ ] `FollowRelationship` aggregate root — domain methods: `Create()`, `Remove()`.
+- [ ] Business rules: `CannotSelfFollowRule`, `DuplicateFollowRule`.
+- [ ] `SocialLink` aggregate root — domain methods: `Add()`, `Remove()`.
+- [ ] Business rules: `DuplicateProviderPerProfileRule`.
+- [ ] Refactor `FollowUserCommandHandler`, `UnfollowUserCommandHandler`, `AddSocialLinkCommandHandler`, `RemoveSocialLinkCommandHandler`.
+
+### 18.3 Content Publishing
+- [ ] `Post` aggregate root — domain methods: `Create()`, `Update()`, `Archive()`, `Delete()`, `Restore()`, `AddMedia()`, `ReorderMedia()`, `AddTag()`, `RemoveTag()`.
+- [ ] `Collection` aggregate root — domain methods: `Create()`, `Update()`, `Delete()`, `AddPost()`, `RemovePost()`.
+- [ ] `Repost` aggregate root — domain methods: `Share()`, `Unshare()`.
+- [ ] Business rules: `OwnerOnlyMutateRule`, `UniqueMediaPositionRule`, `DuplicateRepostRule`.
+- [ ] Refactor tất cả ContentPublishing command handlers.
+
+### 18.4 Engagement
+- [ ] `CommentThread` aggregate root — domain methods: `AddComment()`, `UpdateComment()`, `DeleteComment()`.
+- [ ] `Reaction` aggregate root — domain method: `Toggle()`.
+- [ ] Business rules: `ValidParentCommentRule`, `OneReactionPerUserPerTargetRule`.
+- [ ] Refactor tất cả Engagement command handlers.
+
+### 18.5 Notifications
+- [ ] `Notification` aggregate root — domain methods: `Create()`, `MarkAsRead()`, `Delete()`.
+- [ ] Business rules: `NoSelfNotificationRule`.
+- [ ] Refactor notification command handlers + inbox consumers.
+
+### 18.6 Stories
+- [ ] `Story` aggregate root — domain methods: `Create()`, `Archive()`, `Delete()`, `Expire()`, `RecordView()`.
+- [ ] Business rules: `StoryTTL24hRule`, `NoDuplicateViewRule`, `OwnerOnlyArchiveRule`.
+- [ ] Refactor tất cả Stories command handlers.
+
+### 18.7 Messaging
+- [ ] `Conversation` aggregate root — domain methods: `CreateDm()`, `CreateGroup()`.
+- [ ] `Message` aggregate root — domain methods: `Send()`, `MarkRead()`.
+- [ ] Business rules: `DmUniquenessRule`, `SenderMustBeMemberRule`, `MonotonicReadMarkerRule`.
+- [ ] Refactor tất cả Messaging command handlers.
+
+### 18.8 Moderation & Trust
+- [ ] `ReportCase` aggregate root — domain methods: `Create()`, `Resolve()`.
+- [ ] `UserModeration` aggregate root — domain methods: `Moderate()`, `Revoke()`.
+- [ ] `AdminAction` aggregate root — domain method: `Log()` (immutable — không có mutate method).
+- [ ] Business rules: `ValidReporterTargetRule`, `ReportLifecycleOpenToResolvedRule`, `BanWindowConsistencyRule`.
+- [ ] Refactor tất cả Moderation command handlers.
+
+### 18.9 Architecture tests
+- [ ] Convention: command handlers không còn chứa `if (...) throw` business rule logic trực tiếp — chỉ gọi aggregate domain method + `CheckRule(...)`. Enforce bằng code review gate hoặc Roslyn analyzer nếu có.
+
+### Exit criteria Slice 15
+- [ ] Build pass (0 errors, 0 warnings mới).
+- [ ] Tất cả invariants implement dưới dạng `IBusinessRule` và throw `BusinessRuleValidationException`.
+- [ ] Command handlers không còn chứa business conditionals trực tiếp — chỉ orchestrate.
+- [ ] Behavior parity với trước refactor cho tất cả command endpoints.
+
+---
+
+## 19) Slice 16 — `Facade.ModuleContracts`
+
+Mục tiêu: API layer không reference module-internal command/query types trực tiếp. Controller inject module facade thay vì `IMediator` với command/query types cụ thể.
+
+### 19.1 Facade interface definition
+
+| Facade | Location | Phạm vi method |
+|---|---|---|
+| `IAuthFacade` | `Favi-BE.Modules.Auth/Application/IAuthFacade.cs` | Login, Register, Logout, RefreshToken, ChangePassword, GetProfile, UpdateProfile, DeleteProfile, UploadAvatar, UploadPoster, GetRecommended, GetOnlineFriends, SyncProfile, UpdateLastActive, GetProfileAvatar, GetProfilePoster |
+| `ISocialGraphFacade` | `Favi-BE.Modules.SocialGraph/Application/ISocialGraphFacade.cs` | Follow, Unfollow, AddSocialLink, RemoveSocialLink, GetFollowers, GetFollowings, GetSocialLinks |
+| `IContentPublishingFacade` | `Favi-BE.Modules.ContentPublishing/Application/IContentPublishingFacade.cs` | CreatePost, UpdatePost, DeletePost, ArchivePost, media/tag/collection/repost methods + all query methods |
+| `IEngagementFacade` | `Favi-BE.Modules.Engagement/Application/IEngagementFacade.cs` | CreateComment, ToggleReaction variants + comment/reaction queries |
+| `INotificationsFacade` | `Favi-BE.Modules.Notifications/Application/INotificationsFacade.cs` | GetNotifications, GetUnreadCount, MarkAsRead, MarkAllAsRead, DeleteNotification |
+| `IStoriesFacade` | `Favi-BE.Modules.Stories/Application/IStoriesFacade.cs` | CreateStory, ArchiveStory, DeleteStory, RecordView + all query methods |
+| `IMessagingFacade` | `Favi-BE.Modules.Messaging/Application/IMessagingFacade.cs` | GetOrCreateDm, CreateGroup, SendMessage, MarkRead + query methods |
+| `IModerationFacade` | `Favi-BE.Modules.Moderation/Application/IModerationFacade.cs` | CreateReport, ResolveReport, ModerateUser, RevokeModeration, LogAdminAction + query methods |
+
+### 19.2 Facade implementation
+- [ ] Mỗi module có `<Module>Facade : I<Module>Facade` trong `Application/` — delegate mọi call sang `IMediator.Send(...)` tương ứng.
+- [ ] `Add<Module>Module()` extension đăng ký `I<Module>Facade → <Module>Facade` (Scoped).
+
+### 19.3 Controller strangler — second pass
+- [ ] Mỗi controller: thay inject `IMediator` bằng inject `I<Module>Facade`.
+- [ ] Thay `_mediator.Send(new XCommand(...))` bằng `_facade.DoX(...)`.
+- [ ] Xóa `using Favi_BE.Modules.*.Application.Commands` và `using Favi_BE.Modules.*.Application.Queries` khỏi controller files.
+
+### 19.4 Cross-module facade — formalize adapter contracts
+- [ ] Rà soát tất cả `I*Adapter` ports hiện tại — upgrade/rename thành `I<Module>Facade` cross-module contracts nếu chưa align với naming convention.
+- [ ] Đảm bảo module-to-module calls không reference sibling module internal namespaces.
+
+### 19.5 Architecture tests
+- [ ] `ApiLayerArchitectureTests`: API assembly không có dependency vào `*.Commands.*` hoặc `*.Queries.*` namespace của bất kỳ module nào.
+- [ ] `ApiLayerArchitectureTests`: Controllers không inject `IMediator` trực tiếp sau khi facade hoàn chỉnh.
+
+### Exit criteria Slice 16
+- [ ] Build pass (0 errors, 0 warnings mới).
+- [ ] Controllers không còn reference internal module command/query types.
+- [ ] Architecture tests enforce API → Facade boundary.
+- [ ] Feature parity toàn bộ endpoints.
+
+---
+
+## 20) Slice 17 (Optional) — `Infrastructure.ModuleDbContexts`
+
+> **Scope:** Optional — ưu tiên thấp. Triển khai khi cần isolation mạnh hơn hoặc chuẩn bị tách microservice. Không bắt buộc cho modular monolith đang hoạt động. Thực hiện sau khi Slice 15 (aggregate domain model) hoàn chỉnh vì cần đảm bảo không còn cross-module EF navigation properties.
+
+Mục tiêu: Mỗi module có DbContext riêng, chỉ map các bảng thuộc ownership của module đó. Tất cả vẫn dùng cùng 1 physical database.
+
+### 20.1 Shared infra DbContext
+- [ ] Tạo `FaviInfraDbContext` chứa `OutboxMessages`, `InboxMessages` — tách khỏi module DbContexts.
+- [ ] Migration history của infra DbContext là nguồn chính.
+
+### 20.2 Per-module DbContext
+- [ ] `AuthDbContext` — owns: `profiles`, `email_accounts`, `auth_sessions`.
+- [ ] `SocialGraphDbContext` — owns: `follows`, `social_links`.
+- [ ] `ContentPublishingDbContext` — owns: `posts`, `post_media`, `post_tags`, `collections`, `post_collections`, `reposts`, `tags`.
+- [ ] `EngagementDbContext` — owns: `comments`, `reactions`.
+- [ ] `NotificationsDbContext` — owns: `notifications`.
+- [ ] `StoriesDbContext` — owns: `stories`, `story_views`.
+- [ ] `MessagingDbContext` — owns: `conversations`, `messages`, `user_conversations`, `message_reads`.
+- [ ] `ModerationDbContext` — owns: `reports`, `user_moderations`, `admin_actions`.
+
+### 20.3 Migration split
+- [ ] Split migration hiện tại thành per-module migration files — validate thứ tự áp dụng.
+- [ ] Xác nhận không còn cross-module EF navigation properties (chỉ còn ID references giữa modules).
+- [ ] `dotnet ef` chạy được cho từng module DbContext độc lập.
+
+### 20.4 Cross-module join resolution
+- [ ] Audit tất cả query handlers dùng cross-module navigation → chuyển sang ID-based lookup hoặc application-level join.
+- [ ] Không query nào join cross-module tables qua EF navigation properties.
+
+### 20.5 Adapter updates + AppDbContext removal
+- [ ] Mỗi module adapter inject đúng module DbContext thay vì `AppDbContext`.
+- [ ] `AppDbContext` deprecated và xóa sau khi tất cả module DbContexts hoàn chỉnh.
+
+### Exit criteria Slice 17
+- [ ] Build pass.
+- [ ] `AppDbContext` đã xóa hoàn toàn.
+- [ ] Mỗi module DbContext chỉ chứa entities thuộc ownership của module đó.
+- [ ] Migrations chạy được per-module.
+- [ ] Feature parity toàn bộ endpoints.
+
+---
+
+## 21) Read/Write segregation rollout checklist
+
+### 21.1 Contract level
 - [ ] Mỗi module có `I<Module>CommandRepository`, `I<Module>UnitOfWork`, `I<Module>QueryReader`.
 
-### 13.2 Handler rules
+### 21.2 Handler rules
 - [ ] Command handlers dùng write DbContext (tracking).
 - [ ] Command handlers không gọi `I<Module>QueryReader`.
 - [ ] Query handlers không thực hiện mutate/tracking writes.
 
-### 13.3 Query migration seam
+### 21.3 Query migration seam
 - [ ] Mỗi query có mapping: `EFCoreAsNoTracking` hiện tại -> ứng viên `Dapper` tương lai.
 - [ ] Hot queries được đánh dấu để chuyển projection/read model trước.
 
 ---
 
-## 13) Schema transition checklist (Expand -> Migrate -> Switch -> Contract)
+## 22) Schema transition checklist (Expand -> Migrate -> Switch -> Contract)
 
-### 14.1 Expand
+### 22.1 Expand
 - [ ] Migration additive cho outbox/inbox/auth sessions/read projections cần thiết.
 
-### 14.2 Migrate/Backfill
+### 22.2 Migrate/Backfill
 - [ ] Backfill dữ liệu với script an toàn, idempotent.
 - [ ] Đối chiếu record counts + integrity.
 
-### 14.3 Switch
+### 22.3 Switch
 - [ ] Chuyển query handlers sang read contracts mới.
 - [ ] Theo dõi metrics so sánh old/new.
 
-### 14.4 Contract
+### 22.4 Contract
 - [ ] Chỉ xóa cột/bảng legacy sau khi parity + ổn định được xác nhận.
 
 ---
 
-## 14) Boundary enforcement checklist
+## 23) Boundary enforcement checklist
 
 - [ ] Mỗi module có facade interface rõ ràng.
 - [ ] API chỉ phụ thuộc facade/module contracts.
@@ -392,7 +815,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 ---
 
-## 15) Validation checklist bắt buộc cho mỗi slice
+## 24) Validation checklist bắt buộc cho mỗi slice
 
 - [ ] Build passes.
 - [ ] Tests pass (unit/integration tương ứng).
@@ -406,34 +829,52 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 
 ---
 
-## 16) Mốc bàn giao theo nhịp release
+## 25) Mốc bàn giao theo nhịp release
 
 - [ ] R0: Discovery + tài liệu kiến trúc hoàn chỉnh.
-- [ ] R1: Foundation.CQRSOutbox merged.
+- [x] R1: Foundation.CQRSOutbox merged.
 - [x] R2: Auth.LoginCQRS merged.
 - [x] R3: Notification.EventDriven merged.
 - [x] R4: Engagement + SocialGraph merged.
 - [x] R5: ContentPublishing.Commands merged.
 - [x] R6: Stories.CommandsAndExpiry merged.
-- [ ] R7: Messaging.CQRS merged.
-- [ ] R8: Moderation.BackofficeCQRS merged.
-- [ ] R9: Hardening + cleanup + final parity signoff.
+- [x] R7: Messaging.CQRS merged.
+- [x] R8: Moderation.BackofficeCQRS merged.
+- [x] R9: Stories.Queries merged.
+- [ ] R10: ContentPublishing.Queries merged.
+- [ ] R11: Notifications.CommandsAndQueries merged.
+- [ ] R12: Auth.ProfileQueries merged.
+- [ ] R13: Integration.DomainEvents merged.
+- [ ] R14: ArchTests.ReadWriteSegregation merged.
+- [ ] R15: Domain.AggregateRoots merged.
+- [ ] R16: Facade.ModuleContracts merged.
+- [ ] R17 (optional): Infrastructure.ModuleDbContexts merged.
+- [ ] R18: Hardening + cleanup + final parity signoff.
 
 ---
 
-## 17) Definition of Done toàn chương trình
+## 26) Definition of Done toàn chương trình
 
-- [ ] Tất cả slice bắt buộc đã merge theo đúng thứ tự.
+- [ ] Tất cả slice bắt buộc đã merge theo đúng thứ tự (R1–R16).
+- [ ] Tất cả business invariants sống trong aggregate domain model (`IBusinessRule` + `BusinessRuleValidationException`) — không còn `if (...) throw` trực tiếp trong command handlers.
+- [ ] API layer không reference module-internal command/query types — toàn bộ controller chỉ inject `I<Module>Facade`.
+- [ ] Architecture tests enforce API → Facade boundary và Facade → Handler boundary.
 - [ ] Không còn SignalR push trong transactional write path.
 - [ ] Outbox/Inbox chạy ổn định, không mất event, không duplicate side effects.
 - [ ] Module boundaries được enforce tự động bằng tests + CI.
-- [ ] CQRS read/write segregation được áp dụng nhất quán.
-- [ ] Bộ 16 tài liệu deliverables hoàn thiện end-to-end.
+- [ ] CQRS read/write segregation được áp dụng nhất quán trên tất cả modules.
+- [ ] Không còn `IPostService` trong `PostController`, `CommentsController` constructor.
+- [ ] Không còn `ICollectionService` trong `CollectionsController` constructor.
+- [ ] Không còn `IStoryService`, `IProfileService` trong `StoriesController` constructor.
+- [ ] Không còn `INotificationService` trong `NotificationsController` constructor.
+- [ ] Không còn `IProfileService` trong `ProfilesController`, `PostController`, `ProfilesSyncController` constructor.
+- [ ] Không còn `ISocialGraphNotificationService`, `IEngagementNotificationService` trong handlers.
+- [ ] Bộ tài liệu deliverables hoàn thiện end-to-end.
 - [ ] Có hồ sơ rollback và parity report cho từng slice.
 
 ---
 
-## 18) Parity report artifact bắt buộc cho mỗi slice
+## 27) Parity report artifact bắt buộc cho mỗi slice
 
 - [ ] Có báo cáo so sánh `old vs new command result parity` cho từng slice.
 - [ ] Có báo cáo so sánh `key read-model metrics parity` cho từng slice.

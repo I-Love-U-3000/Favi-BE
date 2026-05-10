@@ -1,15 +1,17 @@
-# Step 7 — Validation Gate (Global)
+# Step 8 — Validation Gate (Global)
+
+> **Note:** File giữ tên `step-07-seed-validation-gate.md` vì lý do backward compat, nhưng trong pipeline thực tế đây là **Step 8** (Step 7 là Seed Stories).
 
 ## Mục tiêu
 Thực thi validation tổng hợp sau các step seed, đảm bảo toàn bộ dataset hợp lệ trước khi export/finalize.
 
 ## Điều kiện để chạy
-- Đã hoàn thành các step dữ liệu trước đó (ít nhất Step 1–5, Step 6 nếu có).
+- Đã hoàn thành các step dữ liệu trước đó (Step 1–7).
 - Có thể truy vấn đủ bảng liên quan trong DB.
 
 ## Input
 - `seed/SeedValidator.cs`
-- Dữ liệu đã seed trong DB (`Profiles`, `EmailAccounts`, `Follows`, `Posts`, `PostMedias`, `Reactions`, `Comments`, `Reposts`, `Tags`, `PostTags`, `Notifications`).
+- Dữ liệu đã seed trong DB (`Profiles`, `EmailAccounts`, `Follows`, `Posts`, `PostMedias`, `Reactions`, `Comments`, `Reposts`, `Tags`, `PostTags`, `Notifications`, `Stories`).
 
 ## Output
 - PASS/FAIL toàn cục của pipeline.
@@ -52,6 +54,11 @@ Thực thi validation tổng hợp sau các step seed, đảm bảo toàn bộ d
 - Notifications (nếu có):
   - actor/recipient hợp lệ, không trùng nhau
   - FK target post/comment hợp lệ nếu có
+- Stories:
+  - count trong range `[SeedConfig.Stories.Min, SeedConfig.Stories.Max]`
+  - FK `ProfileId` hợp lệ
+  - `MediaUrl` không rỗng
+  - Expired stories không archived => `WARNING` (không fail — có thể xảy ra nếu seed cũ)
 
 ## Behavior
 - Bất kỳ lỗi bắt buộc nào => `FAIL` và dừng pipeline.
@@ -59,4 +66,4 @@ Thực thi validation tổng hợp sau các step seed, đảm bảo toàn bộ d
 
 ## Definition of Done
 - `SeedValidator` pass toàn bộ checks bắt buộc.
-- Pipeline đủ điều kiện qua Step 8 export.
+- Pipeline đủ điều kiện qua Step 9 export.

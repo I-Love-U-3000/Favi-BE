@@ -23,6 +23,7 @@ public sealed class SeedExport
             "reposts.csv",
             "tags.csv",
             "post-tags.csv",
+            "stories.csv",
             SeedConfig.OutputPaths.ImageCatalogFileName,
             SeedConfig.OutputPaths.RunImageSetFileName
         };
@@ -52,7 +53,8 @@ public sealed class SeedExport
                 Comments = await db.Comments.CountAsync(cancellationToken),
                 Reposts = await db.Reposts.CountAsync(cancellationToken),
                 Tags = await db.Tags.CountAsync(cancellationToken),
-                Notifications = await db.Notifications.CountAsync(cancellationToken)
+                Notifications = await db.Notifications.CountAsync(cancellationToken),
+                Stories = await db.Stories.CountAsync(cancellationToken)
             },
             Artifacts = expectedCoreFiles
                 .Concat([SeedConfig.OutputPaths.ManifestFileName])
@@ -74,7 +76,8 @@ public sealed class SeedExport
     {
         var optionalFiles = new[]
         {
-            "notifications.csv"
+            "notifications.csv",
+            "story-views.csv"
         };
 
         return optionalFiles
@@ -101,6 +104,7 @@ public sealed class SeedExport
         public int Reposts { get; init; }
         public int Tags { get; init; }
         public int Notifications { get; init; }
+        public int Stories { get; init; }
     }
 }
 

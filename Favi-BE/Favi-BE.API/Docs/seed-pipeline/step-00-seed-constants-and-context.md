@@ -8,7 +8,7 @@ Thiết lập nguồn cấu hình duy nhất cho toàn bộ pipeline để đả
 
 ## Input
 - `SEED_KEY`
-- count ranges cho users/posts/follows/reactions/comments/reposts/tags/vectorized posts
+- count ranges cho users/posts/follows/reactions/comments/reposts/tags/stories/vectorized posts
 - role distribution
 - output paths
 - image policy (`image-catalog`, `run-image-set`)

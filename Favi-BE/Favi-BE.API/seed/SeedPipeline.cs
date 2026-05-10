@@ -144,10 +144,23 @@ public static class SeedPipeline
             Log("[SeedPipeline] Step 6 skipped: notifications already exist.");
         }
 
-        Log("[SeedPipeline] Running Step 7 - Global Validation Gate...");
+        Log("[SeedPipeline] Running Step 7 - Seed Stories...");
+        if (!await db.Stories.AnyAsync(cancellationToken))
+        {
+            var step7 = new SeedStoriesStep();
+            var step7Result = await step7.ExecuteAsync(db, profiles, seedContext, cancellationToken);
+            Log($"[SeedPipeline] Step 7 done. Stories: {step7Result.CreatedStories}");
+            Log($"[SeedPipeline] Step 7 export: {step7Result.ExportPath}");
+        }
+        else
+        {
+            Log("[SeedPipeline] Step 7 skipped: stories already exist.");
+        }
+
+        Log("[SeedPipeline] Running Step 8 - Global Validation Gate...");
         var validator = new SeedValidator();
         await validator.ValidateAsync(db, cancellationToken);
-        Log("[SeedPipeline] Step 7 done. Validation passed.");
+        Log("[SeedPipeline] Step 8 done. Validation passed.");
 
         Log("[SeedPipeline] Running auth bootstrap for tokens.csv...");
         var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
@@ -156,11 +169,11 @@ public static class SeedPipeline
         Log($"[SeedPipeline] Auth bootstrap done. Tokens generated for users: {authResult.UserCount}");
         Log($"[SeedPipeline] Auth bootstrap export: {authResult.ExportPath}");
 
-        Log("[SeedPipeline] Running Step 8 - Export Dataset...");
-        var step8 = new SeedExport();
-        var step8Result = await step8.ExecuteAsync(db, cancellationToken);
-        Log($"[SeedPipeline] Step 8 done. Output root: {step8Result.OutputRoot}");
-        Log($"[SeedPipeline] Step 8 manifest: {step8Result.ManifestPath}");
+        Log("[SeedPipeline] Running Step 9 - Export Dataset...");
+        var step9 = new SeedExport();
+        var step9Result = await step9.ExecuteAsync(db, cancellationToken);
+        Log($"[SeedPipeline] Step 9 done. Output root: {step9Result.OutputRoot}");
+        Log($"[SeedPipeline] Step 9 manifest: {step9Result.ManifestPath}");
     }
 
     private static void Log(string message, string level = "INFO")

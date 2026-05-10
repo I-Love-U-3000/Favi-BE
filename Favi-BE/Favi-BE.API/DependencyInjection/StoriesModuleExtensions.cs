@@ -10,6 +10,7 @@ public static class StoriesModuleDiExtensions
     public static IServiceCollection AddStoriesModule(this IServiceCollection services)
     {
         services.AddScoped<IStoriesCommandRepository, StoriesCommandRepositoryAdapter>();
+        services.AddScoped<IStoriesQueryReader, StoriesQueryReaderAdapter>();
 
         services.AddMediatR(cfg =>
         {

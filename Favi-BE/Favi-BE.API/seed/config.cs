@@ -13,6 +13,7 @@ public static class SeedConfig
     public static readonly SeedCountRange Comments = new(15000, 30000);
     public static readonly SeedCountRange Reposts = new(1000, 2000);
     public static readonly SeedCountRange Tags = new(50, 120);
+    public static readonly SeedCountRange Stories = new(500, 2000);
     public static readonly SeedCountRange VectorizedPosts = new(3000, 5000);
 
     public const int ImageCatalogMinSize = 1000;

@@ -6,15 +6,19 @@ using Favi_BE.Modules.Stories.Application.Commands.ArchiveStory;
 using Favi_BE.Modules.Stories.Application.Commands.CreateStory;
 using Favi_BE.Modules.Stories.Application.Commands.DeleteStory;
 using Favi_BE.Modules.Stories.Application.Commands.RecordStoryView;
+using Favi_BE.Modules.Stories.Application.Contracts.ReadModels;
+using Favi_BE.Modules.Stories.Application.Exceptions;
+using Favi_BE.Modules.Stories.Application.Queries.GetActiveStoriesByProfile;
+using Favi_BE.Modules.Stories.Application.Queries.GetActiveStoryCount;
+using Favi_BE.Modules.Stories.Application.Queries.GetArchivedStories;
+using Favi_BE.Modules.Stories.Application.Queries.GetStoryById;
+using Favi_BE.Modules.Stories.Application.Queries.GetStoryViewers;
+using Favi_BE.Modules.Stories.Application.Queries.GetViewableStories;
 using Favi_BE.Modules.Stories.Domain;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Favi_BE.Controllers
 {
@@ -22,22 +26,11 @@ namespace Favi_BE.Controllers
     [Route("api/[controller]")]
     public class StoriesController : ControllerBase
     {
-        private readonly IStoryService _stories;
-        private readonly IPrivacyGuard _privacy;
-        private readonly IProfileService _profileService;
         private readonly IMediator _mediator;
         private readonly ICloudinaryService _cloudinary;
 
-        public StoriesController(
-            IStoryService stories,
-            IPrivacyGuard privacy,
-            IProfileService profileService,
-            IMediator mediator,
-            ICloudinaryService cloudinary)
+        public StoriesController(IMediator mediator, ICloudinaryService cloudinary)
         {
-            _stories = stories;
-            _privacy = privacy;
-            _profileService = profileService;
             _mediator = mediator;
             _cloudinary = cloudinary;
         }
@@ -54,12 +47,12 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<StoryResponse>> GetById(Guid id)
         {
             var viewerId = TryGetUserId();
-            var story = await _stories.GetByIdAsync(id, viewerId);
+            var story = await _mediator.Send(new GetStoryByIdQuery(id, viewerId));
 
-            if (story == null)
+            if (story is null)
                 return NotFound(new { code = "STORY_NOT_FOUND", message = "Story not found or expired." });
 
-            return Ok(story);
+            return Ok(MapToResponse(story));
         }
 
         // GET: api/stories/profile/{profileId}
@@ -67,13 +60,15 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<IEnumerable<StoryResponse>>> GetByProfile(Guid profileId)
         {
             var viewerId = TryGetUserId();
-            var profile = await _profileService.GetEntityByIdAsync(profileId);
-
-            if (profile == null)
+            try
+            {
+                var stories = await _mediator.Send(new GetActiveStoriesByProfileQuery(profileId, viewerId));
+                return Ok(stories.Select(MapToResponse));
+            }
+            catch (ProfileNotFoundException)
+            {
                 return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Profile not found." });
-
-            var stories = await _stories.GetActiveStoriesByProfileAsync(profileId, viewerId);
-            return Ok(stories);
+            }
         }
 
         // GET: api/stories/feed (stories from following)
@@ -82,7 +77,7 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<IEnumerable<StoryFeedResponse>>> GetFeed()
         {
             var viewerId = User.GetUserId();
-            var stories = await _stories.GetViewableStoriesAsync(viewerId);
+            var stories = await _mediator.Send(new GetViewableStoriesQuery(viewerId));
 
             var grouped = stories
                 .GroupBy(s => new { s.ProfileId, s.ProfileUsername, s.ProfileAvatarUrl })
@@ -90,7 +85,7 @@ namespace Favi_BE.Controllers
                     g.Key.ProfileId,
                     g.Key.ProfileUsername,
                     g.Key.ProfileAvatarUrl,
-                    g.ToList()
+                    g.Select(MapToResponse).ToList()
                 ))
                 .OrderByDescending(g => g.Stories.First().CreatedAt);
 
@@ -103,8 +98,8 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<IEnumerable<StoryResponse>>> GetArchived()
         {
             var userId = User.GetUserId();
-            var stories = await _stories.GetArchivedStoriesAsync(userId);
-            return Ok(stories);
+            var stories = await _mediator.Send(new GetArchivedStoriesQuery(userId));
+            return Ok(stories.Select(MapToResponse));
         }
 
         // POST: api/stories
@@ -135,11 +130,11 @@ namespace Favi_BE.Controllers
                     Privacy: MapPrivacy(request.PrivacyLevel)
                 ));
 
-                var created = await _stories.GetByIdAsync(result.StoryId, userId);
+                var created = await _mediator.Send(new GetStoryByIdQuery(result.StoryId, userId));
                 if (created is null)
                     return StatusCode(500, new { code = "STORY_CREATION_FAILED", message = "Failed to reload created story." });
 
-                return CreatedAtAction(nameof(GetById), new { id = result.StoryId }, created);
+                return CreatedAtAction(nameof(GetById), new { id = result.StoryId }, MapToResponse(created));
             }
             catch (ArgumentException ex)
             {
@@ -197,11 +192,11 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<IEnumerable<StoryViewerResponse>>> GetViewers(Guid id)
         {
             var userId = User.GetUserId();
-
             try
             {
-                var viewers = await _stories.GetViewersAsync(id, userId);
-                return Ok(viewers);
+                var viewers = await _mediator.Send(new GetStoryViewersQuery(id, userId));
+                return Ok(viewers.Select(v => new StoryViewerResponse(
+                    v.ViewerId, v.Username, v.DisplayName, v.AvatarUrl, v.ViewedAt)));
             }
             catch (UnauthorizedAccessException)
             {
@@ -213,10 +208,25 @@ namespace Favi_BE.Controllers
         [HttpGet("profile/{profileId:guid}/count")]
         public async Task<ActionResult<int>> GetActiveStoryCount(Guid profileId)
         {
-            var count = await _stories.GetActiveStoryCountAsync(profileId);
+            var count = await _mediator.Send(new GetActiveStoryCountQuery(profileId));
             return Ok(count);
         }
 
         private static StoryPrivacy MapPrivacy(PrivacyLevel p) => (StoryPrivacy)(int)p;
+
+        private static StoryResponse MapToResponse(StoryReadModel m) => new(
+            m.Id,
+            m.ProfileId,
+            m.ProfileUsername,
+            m.ProfileAvatarUrl,
+            m.MediaUrl,
+            m.ThumbnailUrl,
+            m.CreatedAt,
+            m.ExpiresAt,
+            (PrivacyLevel)(int)m.Privacy,
+            m.IsArchived,
+            m.IsNSFW,
+            m.ViewCount,
+            m.HasViewed);
     }
 }

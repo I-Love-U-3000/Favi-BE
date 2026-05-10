@@ -16,6 +16,7 @@ public sealed class SeedValidator
         await ValidateEngagementAsync(db, snapshot, cancellationToken);
         await ValidateTagsAsync(db, snapshot, cancellationToken);
         await ValidateNotificationsAsync(db, snapshot, cancellationToken);
+        await ValidateStoriesAsync(db, snapshot, cancellationToken);
     }
 
     private static async Task ValidateUsersAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)
@@ -269,6 +270,32 @@ public sealed class SeedValidator
             Console.WriteLine($"[SeedValidator] WARNING: {postsWithoutTagCount} posts have no tag.");
     }
 
+    private static async Task ValidateStoriesAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)
+    {
+        var scopedStories = snapshot.StoryIds.Count > 0
+            ? db.Stories.Where(s => snapshot.StoryIds.Contains(s.Id))
+            : db.Stories;
+
+        var storyCount = await scopedStories.CountAsync(cancellationToken);
+        if (storyCount < SeedConfig.Stories.Min || storyCount > SeedConfig.Stories.Max)
+            throw new InvalidOperationException($"Seed validation failed: stories count {storyCount} is outside expected range [{SeedConfig.Stories.Min}, {SeedConfig.Stories.Max}].");
+
+        var invalidProfileFkExists = await scopedStories
+            .AnyAsync(s => !db.Profiles.Any(p => p.Id == s.ProfileId), cancellationToken);
+        if (invalidProfileFkExists)
+            throw new InvalidOperationException("Seed validation failed: story has invalid ProfileId foreign key.");
+
+        var emptyMediaUrlExists = await scopedStories
+            .AnyAsync(s => string.IsNullOrWhiteSpace(s.MediaUrl), cancellationToken);
+        if (emptyMediaUrlExists)
+            throw new InvalidOperationException("Seed validation failed: story media URL is empty.");
+
+        var expiredStoryExists = await scopedStories
+            .AnyAsync(s => s.ExpiresAt <= DateTime.UtcNow && !s.IsArchived, cancellationToken);
+        if (expiredStoryExists)
+            Console.WriteLine("[SeedValidator] WARNING: some seeded stories have already expired. Consider re-running seed.");
+    }
+
     private static async Task ValidateNotificationsAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)
     {
         var scopedNotifications = snapshot.NotificationIds.Count > 0
@@ -310,6 +337,7 @@ public sealed class SeedValidator
         public HashSet<Guid> TagIds { get; init; } = [];
         public HashSet<(Guid PostId, Guid TagId)> PostTagPairs { get; init; } = [];
         public HashSet<Guid> NotificationIds { get; init; } = [];
+        public HashSet<Guid> StoryIds { get; init; } = [];
     }
 
     private static SeedSnapshot TryLoadSeedSnapshot()
@@ -335,7 +363,8 @@ public sealed class SeedValidator
             RepostIds = LoadGuidColumn(Path.Combine(seedRoot, "reposts.csv"), "repost_id"),
             TagIds = LoadGuidColumn(Path.Combine(seedRoot, "tags.csv"), "tag_id"),
             PostTagPairs = LoadGuidPair(Path.Combine(seedRoot, "post-tags.csv"), "post_id", "tag_id"),
-            NotificationIds = LoadGuidColumn(Path.Combine(seedRoot, "notifications.csv"), "notification_id")
+            NotificationIds = LoadGuidColumn(Path.Combine(seedRoot, "notifications.csv"), "notification_id"),
+            StoryIds = LoadGuidColumn(Path.Combine(seedRoot, "stories.csv"), "story_id")
         };
     }
 

@@ -24,6 +24,10 @@ The following smoke test scenarios are implemented:
 6. **SMOKE-PROFILE-PRIVACY-READ-SINGLE_USER**
    - Verify that profile privacy settings are respected.
 
+7. **SMOKE-STORIES-SINGLE_USER**
+   - Verify stories feed, profile stories list, active story count, single story read, record view, and viewers endpoint.
+   - Story creation (multipart image upload) is covered by functional tests, not smoke.
+
 ## Running the Tests
 
 To run the smoke tests, use the following command:

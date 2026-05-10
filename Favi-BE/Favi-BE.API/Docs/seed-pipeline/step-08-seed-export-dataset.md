@@ -1,10 +1,12 @@
-# Step 8 — Export Dataset
+# Step 9 — Export Dataset
+
+> **Note:** File giữ tên `step-08-seed-export-dataset.md` vì lý do backward compat, nhưng trong pipeline thực tế đây là **Step 9** (Step 7 = Seed Stories, Step 8 = Validation Gate).
 
 ## Mục tiêu
-Khóa output dataset benchmark sau khi Step 7 pass, tạo manifest runtime để chứng minh repeatability.
+Khóa output dataset benchmark sau khi Step 8 pass, tạo manifest runtime để chứng minh repeatability.
 
 ## Điều kiện để chạy
-- Step 7 đã PASS (global validation).
+- Step 8 đã PASS (global validation).
 - Các artifacts core đã có trên `seed-output/`.
 
 ## Input
@@ -25,17 +27,21 @@ Khóa output dataset benchmark sau khi Step 7 pass, tạo manifest runtime để
   - `reposts.csv`
   - `tags.csv`
   - `post-tags.csv`
+  - `stories.csv`
   - `image-catalog.json`
   - `run-image-set.json`
+- Optional artifacts (nếu có):
+  - `notifications.csv`
+  - `story-views.csv`
 
 ## Rules bắt buộc
 - Thiếu artifact core => `FAIL` ngay.
 - Manifest phải ghi:
   - `seedKey`
   - `generatedAt`
-  - counts runtime (`users/posts/follows/reactions/comments/reposts/tags/notifications`)
+  - counts runtime (`users/posts/follows/reactions/comments/reposts/tags/notifications/stories`)
   - `artifacts`
-  - `optionalArtifacts` (`notifications.csv` nếu có)
+  - `optionalArtifacts` (`notifications.csv`, `story-views.csv` nếu có)
 
 ## Validation cục bộ
 - Kiểm tra tồn tại toàn bộ core files trước khi ghi manifest.
