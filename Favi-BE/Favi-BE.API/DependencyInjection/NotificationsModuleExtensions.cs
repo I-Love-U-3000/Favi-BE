@@ -10,6 +10,8 @@ public static class NotificationsModuleDiExtensions
     {
         services.AddScoped<INotificationWriteRepository, NotificationWriteRepositoryAdapter>();
         services.AddScoped<INotificationRealtimeGateway, NotificationRealtimeGatewayAdapter>();
+        services.AddScoped<INotificationQueryReader, NotificationQueryReaderAdapter>();
+        services.AddScoped<INotificationCommandRepository, NotificationCommandRepositoryAdapter>();
 
         services.AddMediatR(cfg =>
         {

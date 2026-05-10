@@ -144,7 +144,7 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 - [x] `Moderation.BackofficeCQRS`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Aggregate-Inventory.md` + `Module-Boundary-Enforcement.md`.
 - [x] `Stories.Queries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Module-Boundary-Enforcement.md`.
 - [ ] `ContentDiscovery.Queries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md` + `Favi-Concrete-Module-Aggregate-Matrix.md` + `Architecture-BoundedContexts.md`.
-- [ ] `Notifications.CommandsAndQueries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Notification-Refactor-SignalR-MediatR.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`.
+- [x] `Notifications.CommandsAndQueries`: đã đọc `CQRS-CommandQuery-Catalog.md` + `Notification-Refactor-SignalR-MediatR.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`.
 - [ ] `Auth.ProfileQueries`: đã đọc `Auth-CQRS-Catalog.md` + `CQRS-CommandQuery-Catalog.md` + `Favi-Concrete-Module-Aggregate-Matrix.md`.
 - [ ] `Integration.DomainEvents`: đã đọc `Notification-Refactor-SignalR-MediatR.md` + `Outbox-Implementation-Guide.md` + `BuildingBlocks-Design.md`.
 - [ ] `ArchTests.ReadWriteSegregation`: đã đọc `Module-Boundary-Enforcement.md` + `ReadWrite-Segregation-EFCore-To-Dapper-Plan.md`.
@@ -487,38 +487,38 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 ## 14) Slice 11 — `Notifications.CommandsAndQueries`
 
 ### 14.1 Query port + read model
-- [ ] `INotificationQueryReader` (port trong `Favi-BE.Modules.Notifications/Application/Contracts`).
-- [ ] `NotificationReadModel` (ReadModel trong `Contracts/ReadModels`).
+- [x] `INotificationQueryReader` (port trong `Favi-BE.Modules.Notifications/Application/Contracts`).
+- [x] `NotificationReadModel` (ReadModel trong `Contracts/ReadModels`).
 
 ### 14.2 Query handlers
-- [ ] `GetNotificationsQuery` + `GetNotificationsQueryHandler`.
-- [ ] `GetUnreadNotificationCountQuery` + `GetUnreadNotificationCountQueryHandler`.
+- [x] `GetNotificationsQuery` + `GetNotificationsQueryHandler`.
+- [x] `GetUnreadNotificationCountQuery` + `GetUnreadNotificationCountQueryHandler`.
 
 ### 14.3 Command handlers
-- [ ] `MarkNotificationAsReadCommand` + `MarkNotificationAsReadCommandHandler`.
-- [ ] `MarkAllNotificationsAsReadCommand` + `MarkAllNotificationsAsReadCommandHandler`.
-- [ ] `DeleteNotificationCommand` + `DeleteNotificationCommandHandler`.
+- [x] `MarkNotificationAsReadCommand` + `MarkNotificationAsReadCommandHandler`.
+- [x] `MarkAllNotificationsAsReadCommand` + `MarkAllNotificationsAsReadCommandHandler` (inject `INotificationRealtimeGateway` để push `UnreadCountUpdated=0` — parity với legacy).
+- [x] `DeleteNotificationCommand` + `DeleteNotificationCommandHandler`.
 
 ### 14.4 Adapters
-- [ ] `NotificationQueryReaderAdapter` trong `Favi-BE.API/Application/Notifications` (dùng AsNoTracking).
-- [ ] `NotificationCommandRepositoryAdapter` trong `Favi-BE.API/Application/Notifications`.
-- [ ] `AddNotificationsModule()` cập nhật để đăng ký `INotificationQueryReader` + command repository.
+- [x] `NotificationQueryReaderAdapter` trong `Favi-BE.API/Modules/Notifications` (dùng AsNoTracking).
+- [x] `NotificationCommandRepositoryAdapter` trong `Favi-BE.API/Modules/Notifications`.
+- [x] `AddNotificationsModule()` cập nhật để đăng ký `INotificationQueryReader` + `INotificationCommandRepository`.
 
 ### 14.5 Controller strangler
-- [ ] `NotificationsController`: `GET /notifications` — thay `_notifications.GetNotificationsAsync` bằng `_mediator.Send(new GetNotificationsQuery(...))`.
-- [ ] `NotificationsController`: `GET /notifications/unread-count` — thay `_notifications.GetUnreadCountAsync` bằng `_mediator.Send(new GetUnreadNotificationCountQuery(...))`.
-- [ ] `NotificationsController`: `PUT /notifications/{id}/read` — thay `_notifications.MarkAsReadAsync` bằng `_mediator.Send(new MarkNotificationAsReadCommand(...))`.
-- [ ] `NotificationsController`: `PUT /notifications/read-all` — thay `_notifications.MarkAllAsReadAsync` bằng `_mediator.Send(new MarkAllNotificationsAsReadCommand(...))`.
-- [ ] `NotificationsController`: `DELETE /notifications/{id}` — thay `_notifications.DeleteNotificationAsync` bằng `_mediator.Send(new DeleteNotificationCommand(...))`.
-- [ ] `NotificationsController`: bỏ inject `INotificationService` khỏi constructor.
+- [x] `NotificationsController`: `GET /notifications` — thay `_notifications.GetNotificationsAsync` bằng `_mediator.Send(new GetNotificationsQuery(...))`.
+- [x] `NotificationsController`: `GET /notifications/unread-count` — thay `_notifications.GetUnreadCountAsync` bằng `_mediator.Send(new GetUnreadNotificationCountQuery(...))`.
+- [x] `NotificationsController`: `PUT /notifications/{id}/read` — thay `_notifications.MarkAsReadAsync` bằng `_mediator.Send(new MarkNotificationAsReadCommand(...))`.
+- [x] `NotificationsController`: `PUT /notifications/read-all` — thay `_notifications.MarkAllAsReadAsync` bằng `_mediator.Send(new MarkAllNotificationsAsReadCommand(...))`.
+- [x] `NotificationsController`: `DELETE /notifications/{id}` — thay `_notifications.DeleteNotificationAsync` bằng `_mediator.Send(new DeleteNotificationCommand(...))`.
+- [x] `NotificationsController`: bỏ inject `INotificationService` khỏi constructor.
 
 ### 14.6 Architecture tests
-- [ ] `NotificationsModuleArchitectureTests`: thêm test `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+- [x] `NotificationsModuleArchitectureTests`: thêm NOT-01 `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`, NOT-02 `QueryHandlers_Should_Not_Depend_On_Commands_Namespace`. 61/61 tests pass.
 
 ### Exit criteria Slice 11
-- [ ] Build pass (0 errors, 0 warnings mới).
-- [ ] `INotificationService` không còn trong `NotificationsController` constructor.
-- [ ] Architecture tests pass.
+- [x] Build pass (0 errors, 0 warnings mới).
+- [x] `INotificationService` không còn trong `NotificationsController` constructor.
+- [x] Architecture tests pass (61/61).
 - [ ] Read/write parity cho tất cả 5 notification endpoints.
 
 ---
@@ -864,7 +864,7 @@ Mục tiêu: Mỗi module có DbContext riêng, chỉ map các bảng thuộc ow
 - [x] R8: Moderation.BackofficeCQRS merged.
 - [x] R9: Stories.Queries merged.
 - [x] R10: ContentPublishing.Queries merged.
-- [ ] R11: Notifications.CommandsAndQueries merged.
+- [x] R11: Notifications.CommandsAndQueries merged.
 - [ ] R12: Auth.ProfileQueries merged.
 - [ ] R13: Integration.DomainEvents merged.
 - [ ] R14: ArchTests.ReadWriteSegregation merged.

@@ -1,6 +1,13 @@
 using Favi_BE.Common;
-using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Notifications.Application.Commands.DeleteNotification;
+using Favi_BE.Modules.Notifications.Application.Commands.MarkAllNotificationsAsRead;
+using Favi_BE.Modules.Notifications.Application.Commands.MarkNotificationAsRead;
+using Favi_BE.Modules.Notifications.Application.Contracts.ReadModels;
+using Favi_BE.Modules.Notifications.Application.Queries.GetNotifications;
+using Favi_BE.Modules.Notifications.Application.Queries.GetUnreadNotificationCount;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,11 +17,11 @@ namespace Favi_BE.Controllers
     [Route("api/[controller]")]
     public class NotificationsController : ControllerBase
     {
-        private readonly INotificationService _notifications;
+        private readonly IMediator _mediator;
 
-        public NotificationsController(INotificationService notifications)
+        public NotificationsController(IMediator mediator)
         {
-            _notifications = notifications;
+            _mediator = mediator;
         }
 
         [Authorize]
@@ -24,7 +31,9 @@ namespace Favi_BE.Controllers
             [FromQuery] int pageSize = 20)
         {
             var userId = User.GetUserId();
-            return Ok(await _notifications.GetNotificationsAsync(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetNotificationsQuery(userId, page, pageSize));
+            var dtos = items.Select(MapToDto).ToList();
+            return Ok(new PagedResult<NotificationDto>(dtos, page, pageSize, total));
         }
 
         [Authorize]
@@ -32,7 +41,8 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<int>> GetUnreadCount()
         {
             var userId = User.GetUserId();
-            return Ok(await _notifications.GetUnreadCountAsync(userId));
+            var count = await _mediator.Send(new GetUnreadNotificationCountQuery(userId));
+            return Ok(count);
         }
 
         [Authorize]
@@ -40,7 +50,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> MarkAsRead(Guid id)
         {
             var userId = User.GetUserId();
-            var success = await _notifications.MarkAsReadAsync(id, userId);
+            var success = await _mediator.Send(new MarkNotificationAsReadCommand(id, userId));
 
             return success
                 ? Ok(new { message = "Notification marked as read." })
@@ -52,7 +62,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> MarkAllAsRead()
         {
             var userId = User.GetUserId();
-            await _notifications.MarkAllAsReadAsync(userId);
+            await _mediator.Send(new MarkAllNotificationsAsReadCommand(userId));
             return Ok(new { message = "All notifications marked as read." });
         }
 
@@ -61,9 +71,31 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult> DeleteNotification(Guid id)
         {
             var userId = User.GetUserId();
-            var success = await _notifications.DeleteNotificationAsync(id, userId);
+            var success = await _mediator.Send(new DeleteNotificationCommand(id, userId));
             if (!success) return NotFound();
             return NoContent();
         }
+
+        private static NotificationDto MapToDto(NotificationReadModel n) => new(
+            n.Id,
+            MapType(n.Type),
+            n.ActorProfileId,
+            n.ActorUsername,
+            n.ActorDisplayName,
+            n.ActorAvatarUrl,
+            n.TargetPostId,
+            n.TargetCommentId,
+            n.Message,
+            n.IsRead,
+            n.CreatedAt);
+
+        private static NotificationType MapType(Favi_BE.Modules.Notifications.Domain.NotificationType type) => type switch
+        {
+            Favi_BE.Modules.Notifications.Domain.NotificationType.Like => NotificationType.Like,
+            Favi_BE.Modules.Notifications.Domain.NotificationType.Comment => NotificationType.Comment,
+            Favi_BE.Modules.Notifications.Domain.NotificationType.Follow => NotificationType.Follow,
+            Favi_BE.Modules.Notifications.Domain.NotificationType.Share => NotificationType.Share,
+            _ => NotificationType.System
+        };
     }
 }
