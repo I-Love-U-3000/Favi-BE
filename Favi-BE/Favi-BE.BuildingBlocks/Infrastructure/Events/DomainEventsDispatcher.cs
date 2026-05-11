@@ -40,11 +40,15 @@ public sealed class DomainEventsDispatcher : IDomainEventsDispatcher
         }
 
         // Phase B: Cross-boundary dispatching (Outbox enqueue)
-        var outboxMessages = domainEvents
-            .Select(x => _domainNotificationsMapper.Map(x, correlationId, causationId))
-            .ToList();
+        var outboxMessages = new List<OutboxMessageData>(domainEvents.Count);
+        foreach (var domainEvent in domainEvents)
+        {
+            var msg = await _domainNotificationsMapper.MapAsync(domainEvent, correlationId, causationId);
+            if (msg is not null) outboxMessages.Add(msg);
+        }
 
-        await _outbox.AddAsync(outboxMessages, cancellationToken);
+        if (outboxMessages.Count > 0)
+            await _outbox.AddAsync(outboxMessages, cancellationToken);
 
         // Clear events after dispatching to avoid duplicates
         _domainEventsAccessor.ClearAllDomainEvents();

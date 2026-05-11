@@ -37,5 +37,8 @@ internal sealed class SocialGraphQueryReaderAdapter : ISocialGraphQueryReader
             l.Id, l.ProfileId, MapSocialKind(l.Kind), l.Url, l.CreatedAt)).ToList();
     }
 
+    public async Task<bool> ProfileExistsAsync(Guid profileId, CancellationToken ct = default)
+        => await _uow.Profiles.GetByIdAsync(profileId) is not null;
+
     private static SocialKind MapSocialKind(LegacySocialKind k) => (SocialKind)(int)k;
 }

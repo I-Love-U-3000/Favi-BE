@@ -7,4 +7,7 @@ public interface ISocialGraphQueryReader
     Task<IReadOnlyList<FollowQueryDto>> GetFollowersAsync(Guid profileId, int skip, int take, CancellationToken ct = default);
     Task<IReadOnlyList<FollowQueryDto>> GetFollowingsAsync(Guid profileId, int skip, int take, CancellationToken ct = default);
     Task<IReadOnlyList<SocialLinkQueryDto>> GetSocialLinksAsync(Guid profileId, CancellationToken ct = default);
+
+    /// <summary>Cross-context lookup: returns true if the profile exists in the identity store.</summary>
+    Task<bool> ProfileExistsAsync(Guid profileId, CancellationToken ct = default);
 }

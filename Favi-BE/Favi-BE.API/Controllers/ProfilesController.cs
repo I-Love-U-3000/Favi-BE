@@ -1,6 +1,19 @@
-﻿using Favi_BE.Common;
+using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
+using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Auth.Application.Commands.DeleteProfile;
+using Favi_BE.Modules.Auth.Application.Commands.UpdateLastActive;
+using Favi_BE.Modules.Auth.Application.Commands.UpdateProfile;
+using Favi_BE.Modules.Auth.Application.Commands.UploadAvatar;
+using Favi_BE.Modules.Auth.Application.Commands.UploadPoster;
+using Favi_BE.Modules.Auth.Application.Contracts.ReadModels;
+using Favi_BE.Modules.Auth.Application.Contracts.WriteModels;
+using Favi_BE.Modules.Auth.Application.Queries.GetOnlineFriends;
+using Favi_BE.Modules.Auth.Application.Queries.GetProfileAvatar;
+using Favi_BE.Modules.Auth.Application.Queries.GetProfileById;
+using Favi_BE.Modules.Auth.Application.Queries.GetProfilePoster;
+using Favi_BE.Modules.Auth.Application.Queries.GetRecommendedProfiles;
 using Favi_BE.Modules.SocialGraph.Application.Commands.AddSocialLink;
 using Favi_BE.Modules.SocialGraph.Application.Commands.FollowUser;
 using Favi_BE.Modules.SocialGraph.Application.Commands.RemoveSocialLink;
@@ -19,61 +32,57 @@ namespace Favi_BE.Controllers
     [Route("api/[controller]")]
     public class ProfilesController : ControllerBase
     {
-        private readonly IProfileService _profiles;
-        private readonly IPrivacyGuard _privacy;
         private readonly IMediator _mediator;
+        private readonly ICloudinaryService _cloudinary;
 
-        public ProfilesController(IProfileService profiles, IPrivacyGuard privacy, IMediator mediator)
-        { _profiles = profiles; _privacy = privacy; _mediator = mediator; }
+        public ProfilesController(IMediator mediator, ICloudinaryService cloudinary)
+        {
+            _mediator = mediator;
+            _cloudinary = cloudinary;
+        }
 
-        // Ai cũng xem được profile người khác
         [HttpGet("{id}")]
         public async Task<ActionResult<ProfileResponse>> GetById(Guid id)
         {
-            var profile = await _profiles.GetEntityByIdAsync(id);
-            if (profile is null)
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
-
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            if (!await _privacy.CanViewProfileAsync(profile, viewerId))
-                return StatusCode(403, new { code = "PROFILE_FORBIDDEN", message = "Bạn không có quyền xem hồ sơ này." });
+            var profile = await _mediator.Send(new GetProfileByIdQuery(id, viewerId));
+            if (profile is null)
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại hoặc bạn không có quyền xem." });
 
-            return Ok(await _profiles.GetByIdAsync(id));
+            return Ok(MapProfile(profile));
         }
 
-
-        // Cập nhật profile chính mình
         [Authorize]
         [HttpPut]
         public async Task<ActionResult<ProfileResponse>> Update(ProfileUpdateRequest dto)
         {
             var userId = User.GetUserId();
-            var updated = await _profiles.UpdateAsync(userId, dto);
-            return updated is null
-                ? NotFound(new { code = "PROFILE_NOT_FOUND", message = "Không tìm thấy hồ sơ để cập nhật." })
-                : Ok(updated);
+            var result = await _mediator.Send(new UpdateProfileCommand(
+                userId,
+                dto.Username,
+                dto.DisplayName,
+                dto.Bio,
+                dto.AvatarUrl,
+                dto.CoverUrl,
+                dto.PrivacyLevel.HasValue ? (int)dto.PrivacyLevel.Value : null,
+                dto.FollowPrivacyLevel.HasValue ? (int)dto.FollowPrivacyLevel.Value : null));
+
+            return result.Succeeded
+                ? Ok(MapProfile(result.Profile!))
+                : NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
-        // Follow người khác
         [Authorize]
         [HttpPost("follow/{targetId}")]
         public async Task<IActionResult> Follow(Guid targetId)
         {
             var userId = User.GetUserId();
-            var profile = await _profiles.GetEntityByIdAsync(targetId);
-            if (profile is null)
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ mục tiêu không tồn tại." });
-
-            if (!await _privacy.CanFollowAsync(profile, userId))
-                return StatusCode(403, new { code = "FOLLOW_FORBIDDEN", message = "Bạn không thể theo dõi hồ sơ này." });
-
             var result = await _mediator.Send(new FollowUserCommand(userId, targetId));
             return result.Succeeded
                 ? Ok(new { message = "Đã theo dõi." })
                 : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
-        // Unfollow người khác
         [Authorize]
         [HttpDelete("follow/{targetId}")]
         public async Task<IActionResult> Unfollow(Guid targetId)
@@ -85,34 +94,16 @@ namespace Favi_BE.Controllers
                 : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
-        // Xem followers của người khác
         [HttpGet("{id}/followers")]
         public async Task<IActionResult> Followers(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
         {
-            var profile = await _profiles.GetEntityByIdAsync(id);
-            if (profile is null)
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
-
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
-                return StatusCode(403, new { code = "FOLLOW_LIST_FORBIDDEN", message = "Bạn không có quyền xem danh sách người theo dõi." });
-
             var result = await _mediator.Send(new GetFollowersQuery(id, skip ?? 0, take ?? 1000));
             return Ok(result);
         }
 
-        // Xem followings của người khác
         [HttpGet("{id}/followings")]
         public async Task<IActionResult> Followings(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
         {
-            var profile = await _profiles.GetEntityByIdAsync(id);
-            if (profile is null)
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
-
-            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            if (!await _privacy.CanViewFollowListAsync(profile, viewerId))
-                return StatusCode(403, new { code = "FOLLOW_LIST_FORBIDDEN", message = "Bạn không có quyền xem danh sách đang theo dõi." });
-
             var result = await _mediator.Send(new GetFollowingsQuery(id, skip ?? 0, take ?? 1000));
             return Ok(result);
         }
@@ -124,7 +115,6 @@ namespace Favi_BE.Controllers
             return Ok(result);
         }
 
-        // Lấy social links của chính mình
         [Authorize]
         [HttpGet("me/links")]
         public async Task<IActionResult> GetLinks()
@@ -134,19 +124,17 @@ namespace Favi_BE.Controllers
             return Ok(result);
         }
 
-        // Thêm social link cho chính mình
         [Authorize]
         [HttpPost("links")]
         public async Task<IActionResult> AddLink(SocialLinkDto dto)
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new AddSocialLinkCommand(userId, (SocialKind)(int)dto.SocialKind, dto.Url));
+            var result = await _mediator.Send(new AddSocialLinkCommand(userId, (Favi_BE.Modules.SocialGraph.Domain.SocialKind)(int)dto.SocialKind, dto.Url));
             return result.Succeeded
                 ? Ok(result.Data)
                 : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
-        // Xoá social link của chính mình
         [Authorize]
         [HttpDelete("links/{linkId}")]
         public async Task<IActionResult> RemoveLink(Guid linkId)
@@ -158,37 +146,34 @@ namespace Favi_BE.Controllers
                 : NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
         }
 
-        // Xoá tài khoản chính mình
         [Authorize]
         [HttpDelete]
         public async Task<IActionResult> Delete()
         {
             var userId = User.GetUserId();
-            return await _profiles.DeleteAsync(userId)
+            var deleted = await _mediator.Send(new DeleteProfileCommand(userId));
+            return deleted
                 ? Ok(new { message = "Đã xoá tài khoản." })
                 : BadRequest(new { code = "DELETE_PROFILE_FAILED", message = "Không thể xoá tài khoản." });
         }
 
-        //I dont think we need this endpoint, but I will keep it for now
         [HttpGet("avatar/{profileId}")]
         public async Task<IActionResult> GetAvatar(Guid profileId)
         {
-            var avatar = await _profiles.GetAvatar(profileId);
-            if (avatar is null)
+            var url = await _mediator.Send(new GetProfileAvatarQuery(profileId));
+            if (url is null)
                 return NotFound(new { code = "AVATAR_NOT_FOUND", message = "Không tìm thấy ảnh đại diện." });
-            return Ok(avatar.Url);
+            return Ok(url);
         }
 
-        //I dont think we need this endpoint, but I will keep it for now
         [HttpGet("poster/{profileId}")]
         public async Task<IActionResult> GetPoster(Guid profileId)
         {
-            var poster = await _profiles.GetPoster(profileId);
-            if (poster is null)
+            var url = await _mediator.Send(new GetProfilePosterQuery(profileId));
+            if (url is null)
                 return NotFound(new { code = "POSTER_NOT_FOUND", message = "Không tìm thấy ảnh bìa." });
-            return Ok(poster.Url);
+            return Ok(url);
         }
-
 
         [Authorize]
         [HttpPost("avatar")]
@@ -199,17 +184,29 @@ namespace Favi_BE.Controllers
 
             var userId = User.GetUserId();
 
-            // Đảm bảo profile tồn tại
-            var profile = await _profiles.GetEntityByIdAsync(userId);
-            if (profile is null)
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
-
-            var media = await _profiles.UploadAvatarAsync(userId, file);
-
-            if (media is null)
+            var uploaded = await _cloudinary.TryUploadAsync(file);
+            if (uploaded is null)
                 return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload avatar thất bại hoặc file không hợp lệ." });
 
-            return Ok(media);
+            var result = await _mediator.Send(new UploadAvatarCommand(
+                userId,
+                new UploadedImageData(uploaded.Url, uploaded.ThumbnailUrl, uploaded.PublicId, uploaded.Width, uploaded.Height, uploaded.Format)));
+
+            if (!result.Succeeded)
+                return result.ErrorCode == "PROFILE_NOT_FOUND"
+                    ? NotFound(new { code = result.ErrorCode, message = "Hồ sơ không tồn tại." })
+                    : BadRequest(new { code = result.ErrorCode, message = "Upload avatar thất bại." });
+
+            return Ok(new PostMediaResponse(
+                result.MediaId,
+                Guid.Empty,
+                result.Url!,
+                result.PublicId!,
+                result.Width,
+                result.Height,
+                result.Format!,
+                0,
+                result.ThumbnailUrl));
         }
 
         [Authorize]
@@ -221,73 +218,75 @@ namespace Favi_BE.Controllers
 
             var userId = User.GetUserId();
 
-            var profile = await _profiles.GetEntityByIdAsync(userId);
-            if (profile is null)
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
-
-            var media = await _profiles.UploadPosterAsync(userId, file);
-
-            if (media is null)
+            var uploaded = await _cloudinary.TryUploadAsync(file);
+            if (uploaded is null)
                 return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload poster thất bại hoặc file không hợp lệ." });
 
-            return Ok(media);
+            var result = await _mediator.Send(new UploadPosterCommand(
+                userId,
+                new UploadedImageData(uploaded.Url, uploaded.ThumbnailUrl, uploaded.PublicId, uploaded.Width, uploaded.Height, uploaded.Format)));
+
+            if (!result.Succeeded)
+                return result.ErrorCode == "PROFILE_NOT_FOUND"
+                    ? NotFound(new { code = result.ErrorCode, message = "Hồ sơ không tồn tại." })
+                    : BadRequest(new { code = result.ErrorCode, message = "Upload poster thất bại." });
+
+            return Ok(new PostMediaResponse(
+                result.MediaId,
+                Guid.Empty,
+                result.Url!,
+                result.PublicId!,
+                result.Width,
+                result.Height,
+                result.Format!,
+                0,
+                result.ThumbnailUrl));
         }
 
         [HttpGet("recommendations")]
-        [Authorize] // phải đăng nhập mới xem danh sách gợi ý
-        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetRecommendations([FromQuery] int skip = 0, [FromQuery] int take = 20)
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetRecommendations(
+            [FromQuery] int skip = 0, [FromQuery] int take = 20)
         {
             var viewerId = User.GetUserId();
-
-            // Nếu chưa có profile cho user hiện tại thì trả về rỗng / 404 tuỳ bạn chọn
-            var viewerProfile = await _profiles.GetEntityByIdAsync(viewerId);
-            if (viewerProfile is null)
-            {
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ người dùng hiện tại không tồn tại." });
-            }
-
-            var items = await _profiles.GetRecommendedAsync(viewerId, skip, take);
-
-            // (Tạm thời chưa filter thêm theo privacy; khi user click vào từng profile
-            // thì GetById vẫn check privacy, nên vẫn an toàn.)
-            return Ok(items);
+            var items = await _mediator.Send(new GetRecommendedProfilesQuery(viewerId, skip, take));
+            return Ok(items.Select(MapProfile));
         }
 
-        // Lấy danh sách bạn bè đang online
         [HttpGet("online-friends")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetOnlineFriends([FromQuery] int withinLastMinutes = 15)
+        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetOnlineFriends(
+            [FromQuery] int withinLastMinutes = 15)
         {
             var userId = User.GetUserId();
-
-            // Nếu chưa có profile cho user hiện tại thì trả về rỗng
-            var viewerProfile = await _profiles.GetEntityByIdAsync(userId);
-            if (viewerProfile is null)
-            {
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ người dùng hiện tại không tồn tại." });
-            }
-
-            var items = await _profiles.GetOnlineFriendsAsync(userId, withinLastMinutes);
-            return Ok(items);
+            var items = await _mediator.Send(new GetOnlineFriendsQuery(userId, withinLastMinutes));
+            return Ok(items.Select(MapProfile));
         }
 
-        // Heartbeat endpoint để update LastActiveAt định kỳ
         [HttpPost("heartbeat")]
         [Authorize]
         public async Task<IActionResult> Heartbeat()
         {
             var userId = User.GetUserId();
-
-            // Check if profile exists
-            var profile = await _profiles.GetEntityByIdAsync(userId);
-            if (profile is null)
-            {
-                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
-            }
-
-            var lastActiveAt = await _profiles.UpdateLastActiveAsync(userId);
-
+            var lastActiveAt = await _mediator.Send(new UpdateLastActiveCommand(userId));
             return Ok(new { message = "Heartbeat recorded.", lastActiveAt });
         }
+
+        private static ProfileResponse MapProfile(ProfileReadModel m) => new(
+            m.Id,
+            m.Username,
+            m.DisplayName,
+            m.Bio,
+            m.AvatarUrl,
+            m.CoverUrl,
+            m.Email,
+            m.CreatedAt,
+            m.LastActiveAt,
+            (PrivacyLevel)m.PrivacyLevel,
+            (PrivacyLevel)m.FollowPrivacyLevel,
+            m.IsBanned,
+            m.BannedUntil,
+            m.FollowersCount,
+            m.FollowingCount);
     }
 }

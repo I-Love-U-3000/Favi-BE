@@ -1,6 +1,8 @@
+using Favi_BE.BuildingBlocks.Application.Events;
 using Favi_BE.Modules.SocialGraph.Application.Contracts;
 using Favi_BE.Modules.SocialGraph.Application.Contracts.WriteModels;
 using Favi_BE.Modules.SocialGraph.Application.Responses;
+using Favi_BE.Modules.SocialGraph.Domain.Events;
 using MediatR;
 
 namespace Favi_BE.Modules.SocialGraph.Application.Commands.FollowUser;
@@ -8,14 +10,14 @@ namespace Favi_BE.Modules.SocialGraph.Application.Commands.FollowUser;
 internal sealed class FollowUserCommandHandler : IRequestHandler<FollowUserCommand, FollowCommandResult>
 {
     private readonly ISocialGraphCommandRepository _repo;
-    private readonly ISocialGraphNotificationService _notifications;
+    private readonly IDomainEventRegistry _domainEvents;
 
     public FollowUserCommandHandler(
         ISocialGraphCommandRepository repo,
-        ISocialGraphNotificationService notifications)
+        IDomainEventRegistry domainEvents)
     {
         _repo = repo;
-        _notifications = notifications;
+        _domainEvents = domainEvents;
     }
 
     public async Task<FollowCommandResult> Handle(FollowUserCommand request, CancellationToken cancellationToken)
@@ -35,7 +37,7 @@ internal sealed class FollowUserCommandHandler : IRequestHandler<FollowUserComma
 
         await _repo.SaveAsync(cancellationToken);
 
-        await _notifications.NotifyUserFollowedAsync(request.FollowerId, request.FolloweeId, cancellationToken);
+        _domainEvents.Raise(new UserFollowedDomainEvent(request.FollowerId, request.FolloweeId, DateTime.UtcNow));
 
         return FollowCommandResult.Success();
     }

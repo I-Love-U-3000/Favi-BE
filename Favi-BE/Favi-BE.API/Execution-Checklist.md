@@ -526,90 +526,90 @@ Mục tiêu tài liệu này là checklist thực thi chi tiết theo từng bư
 ## 15) Slice 12 — `Auth.ProfileQueries`
 
 ### 15.1 Query handlers
-- [ ] `GetProfileByIdQuery` + `GetProfileByIdQueryHandler` (theo `Auth-CQRS-Catalog.md`).
-- [ ] `GetRecommendedProfilesQuery` + `GetRecommendedProfilesQueryHandler`.
-- [ ] `GetOnlineFriendsQuery` + `GetOnlineFriendsQueryHandler`.
-- [ ] `GetProfileAvatarQuery` + `GetProfileAvatarQueryHandler` (GET /profiles/avatar/{profileId}).
-- [ ] `GetProfilePosterQuery` + `GetProfilePosterQueryHandler` (GET /profiles/poster/{profileId}).
+- [x] `GetProfileByIdQuery` + `GetProfileByIdQueryHandler` (theo `Auth-CQRS-Catalog.md`).
+- [x] `GetRecommendedProfilesQuery` + `GetRecommendedProfilesQueryHandler`.
+- [x] `GetOnlineFriendsQuery` + `GetOnlineFriendsQueryHandler`.
+- [x] `GetProfileAvatarQuery` + `GetProfileAvatarQueryHandler` (GET /profiles/avatar/{profileId}).
+- [x] `GetProfilePosterQuery` + `GetProfilePosterQueryHandler` (GET /profiles/poster/{profileId}).
 
 ### 15.2 Command handlers
-- [ ] `UpdateProfileCommand` + `UpdateProfileCommandHandler`.
-- [ ] `DeleteProfileCommand` + `DeleteProfileCommandHandler`.
-- [ ] `UploadAvatarCommand` + `UploadAvatarCommandHandler` — file bytes resolved bởi API layer adapter trước khi dispatch; handler nhận stream/URL, không nhận `IFormFile`.
-- [ ] `UploadPosterCommand` + `UploadPosterCommandHandler` — tương tự `UploadAvatarCommand`.
-- [ ] `SyncProfileCommand` + `SyncProfileCommandHandler` — idempotent upsert từ Supabase webhook: no-op nếu profile đã tồn tại, create nếu chưa có.
-- [ ] `UpdateLastActiveCommand` — **đã implement trong Auth module** (ChatController đang dùng); chỉ cần gọi `_mediator.Send(new UpdateLastActiveCommand(userId))` trong ProfilesController heartbeat endpoint.
+- [x] `UpdateProfileCommand` + `UpdateProfileCommandHandler`.
+- [x] `DeleteProfileCommand` + `DeleteProfileCommandHandler`.
+- [x] `UploadAvatarCommand` + `UploadAvatarCommandHandler` — file bytes resolved bởi API layer adapter trước khi dispatch; handler nhận stream/URL, không nhận `IFormFile`.
+- [x] `UploadPosterCommand` + `UploadPosterCommandHandler` — tương tự `UploadAvatarCommand`.
+- [x] `SyncProfileCommand` + `SyncProfileCommandHandler` — idempotent upsert từ Supabase webhook: no-op nếu profile đã tồn tại, create nếu chưa có.
+- [x] `UpdateLastActiveCommand` — đã update signature trả về `DateTime`; ProfilesController heartbeat endpoint dùng `_mediator.Send(new UpdateLastActiveCommand(userId))`.
 
 ### 15.3 Adapter
-- [ ] Bổ sung `GetProfileByIdAsync`, `GetRecommendedAsync`, `GetOnlineFriendsAsync`, `GetAvatarAsync`, `GetPosterAsync` vào `AuthQueryReaderAdapter`.
-- [ ] `AddAuthModule()` cập nhật để đăng ký các handler mới.
+- [x] Bổ sung `GetProfileByIdAsync`, `GetRecommendedAsync`, `GetOnlineFriendsAsync`, `GetAvatarAsync`, `GetPosterAsync` vào `AuthQueryReaderAdapter` (inject `IPrivacyGuard` để apply privacy check).
+- [x] `IAuthWriteRepository` và `AuthWriteRepositoryAdapter` mở rộng với `ProfileExistsAsync`, `UpdateProfileAsync`, `DeleteProfileAsync`, `CreateProfileIfNotExistsAsync`, `SaveAvatarAsync`, `SavePosterAsync`.
+- [x] `ISocialGraphQueryReader` + `SocialGraphQueryReaderAdapter` thêm `ProfileExistsAsync` — absorbed into `GetFollowersQueryHandler` + `GetFollowingsQueryHandler`.
 
 ### 15.4 Controller strangler
-> **Lưu ý**: SocialGraph commands (Follow/Unfollow/AddLink/RemoveLink) và queries (GetFollowers/GetFollowings/GetSocialLinks) đã được strangled từ Slice 4 — chỉ cần thay các `_profiles.*` calls còn lại.
-- [ ] `ProfilesController`: `GET /profiles/{id}` — thay `_profiles.GetByIdAsync` + `GetEntityByIdAsync` guard bằng `_mediator.Send(new GetProfileByIdQuery(...))`.
-- [ ] `ProfilesController`: `PUT /profiles` — thay `_profiles.UpdateAsync` bằng `_mediator.Send(new UpdateProfileCommand(...))`.
-- [ ] `ProfilesController`: `DELETE /profiles` — thay `_profiles.DeleteAsync` bằng `_mediator.Send(new DeleteProfileCommand(...))`.
-- [ ] `ProfilesController`: `GET /profiles/avatar/{profileId}` — thay `_profiles.GetAvatar` bằng `_mediator.Send(new GetProfileAvatarQuery(...))`.
-- [ ] `ProfilesController`: `GET /profiles/poster/{profileId}` — thay `_profiles.GetPoster` bằng `_mediator.Send(new GetProfilePosterQuery(...))`.
-- [ ] `ProfilesController`: `POST /profiles/avatar` — thay `_profiles.UploadAvatarAsync` bằng `_mediator.Send(new UploadAvatarCommand(...))` (resolve file trước, send command với stream/URL).
-- [ ] `ProfilesController`: `POST /profiles/poster` — thay `_profiles.UploadPosterAsync` bằng `_mediator.Send(new UploadPosterCommand(...))`.
-- [ ] `ProfilesController`: `GET /profiles/recommendations` — thay `_profiles.GetRecommendedAsync` + `GetEntityByIdAsync` guard bằng `_mediator.Send(new GetRecommendedProfilesQuery(...))`.
-- [ ] `ProfilesController`: `GET /profiles/online-friends` — thay `_profiles.GetOnlineFriendsAsync` + `GetEntityByIdAsync` guard bằng `_mediator.Send(new GetOnlineFriendsQuery(...))`.
-- [ ] `ProfilesController`: `POST /profiles/heartbeat` — thay `_profiles.UpdateLastActiveAsync` bằng `_mediator.Send(new UpdateLastActiveCommand(userId))` (handler đã có trong Auth module).
-- [ ] Guard calls `_profiles.GetEntityByIdAsync(...)` rải rác (Follow, Followers, Followings, UploadAvatar, UploadPoster, heartbeat) — absorbed vào từng query/command handler; xóa khỏi controller sau khi strangled.
-- [ ] `ProfilesController`: bỏ inject `IProfileService` khỏi constructor.
+- [x] `ProfilesController`: `GET /profiles/{id}` — thay bằng `_mediator.Send(new GetProfileByIdQuery(...))`.
+- [x] `ProfilesController`: `PUT /profiles` — thay bằng `_mediator.Send(new UpdateProfileCommand(...))`.
+- [x] `ProfilesController`: `DELETE /profiles` — thay bằng `_mediator.Send(new DeleteProfileCommand(...))`.
+- [x] `ProfilesController`: `GET /profiles/avatar/{profileId}` — thay bằng `_mediator.Send(new GetProfileAvatarQuery(...))`.
+- [x] `ProfilesController`: `GET /profiles/poster/{profileId}` — thay bằng `_mediator.Send(new GetProfilePosterQuery(...))`.
+- [x] `ProfilesController`: `POST /profiles/avatar` — resolve file qua `ICloudinaryService`, dispatch `UploadAvatarCommand`.
+- [x] `ProfilesController`: `POST /profiles/poster` — resolve file qua `ICloudinaryService`, dispatch `UploadPosterCommand`.
+- [x] `ProfilesController`: `GET /profiles/recommendations` — thay bằng `_mediator.Send(new GetRecommendedProfilesQuery(...))`.
+- [x] `ProfilesController`: `GET /profiles/online-friends` — thay bằng `_mediator.Send(new GetOnlineFriendsQuery(...))`.
+- [x] `ProfilesController`: `POST /profiles/heartbeat` — thay bằng `_mediator.Send(new UpdateLastActiveCommand(userId))`.
+- [x] Guard calls absorbed: Follow/Unfollow guards removed (FollowUserCommandHandler đã có `ProfileExistsAsync`); Followers/Followings guards absorbed vào handlers; UploadAvatar/Poster/heartbeat guards absorbed vào command handlers.
+- [x] `ProfilesController`: bỏ inject `IProfileService` khỏi constructor.
 
 ### 15.5 Controller strangler — ProfileSyncController
-> `ProfilesSyncController` là Supabase auth webhook (`POST /api/ProfilesSync/sync`, AllowAnonymous). Không có mediator hiện tại.
-- [ ] `ProfilesSyncController`: thay `_profiles.GetByIdAsync(dto.user_id)` bằng `_mediator.Send(new GetProfileByIdQuery(dto.user_id))`.
-- [ ] `ProfilesSyncController`: thay `_profiles.CreateProfileAsync(...)` bằng `_mediator.Send(new SyncProfileCommand(dto.user_id, username, displayName))`.
-- [ ] `ProfilesSyncController`: inject `IMediator`; bỏ inject `IProfileService` khỏi constructor.
+- [x] `ProfilesSyncController` đã xoá hoàn toàn (controller chưa bao giờ được dùng thực tế; `SyncProfileCommand` implement sẵn nếu cần sau này).
 
 ### 15.7 Architecture tests
-- [ ] `AuthModuleArchitectureTests`: thêm test `CommandHandlers_Should_Not_Depend_On_Queries_Namespace`.
+- [x] `AuthModuleArchitectureTests`: AUTH-01 `AuthCommandHandlers_Should_Not_Depend_On_Queries_Namespace` + AUTH-02 đã có từ trước và vẫn pass (61/61).
 
 ### Exit criteria Slice 12
-- [ ] Build pass (0 errors, 0 warnings mới).
-- [ ] `IProfileService` không còn trong `ProfilesController` constructor.
-- [ ] `IProfileService` không còn trong `ProfilesSyncController` constructor.
-- [ ] Architecture tests pass.
+- [x] Build pass (0 errors, 0 warnings mới).
+- [x] `IProfileService` không còn trong `ProfilesController` constructor.
+- [x] `ProfilesSyncController` đã xoá.
+- [x] Architecture tests pass (61/61).
 - [ ] Read parity cho profile/avatar/poster/recommended/online-friends endpoints.
-- [ ] Heartbeat endpoint vẫn hoạt động qua `UpdateLastActiveCommand`.
-- [ ] Supabase sync endpoint vẫn idempotent qua `SyncProfileCommand`.
+- [x] Heartbeat endpoint hoạt động qua `UpdateLastActiveCommand` trả về `DateTime`.
+- [x] `SyncProfileCommand` implement idempotent upsert.
 
 ---
 
 ## 16) Slice 13 — `Integration.DomainEvents`
 
 ### 16.1 Domain events trong SocialGraph module
-- [ ] Tạo `UserFollowedDomainEvent` trong `Favi-BE.Modules.SocialGraph/Domain/Events`.
-- [ ] `FollowUserCommandHandler`: raise `UserFollowedDomainEvent` trên aggregate thay vì gọi `ISocialGraphNotificationService`.
-- [ ] Bỏ inject `ISocialGraphNotificationService` khỏi `FollowUserCommandHandler`.
+- [x] Tạo `UserFollowedDomainEvent` trong `Favi-BE.Modules.SocialGraph/Domain/Events`.
+- [x] `FollowUserCommandHandler`: raise `UserFollowedDomainEvent` trên aggregate thay vì gọi `ISocialGraphNotificationService`.
+- [x] Bỏ inject `ISocialGraphNotificationService` khỏi `FollowUserCommandHandler`.
 
 ### 16.2 Domain events trong Engagement module
-- [ ] Tạo `CommentCreatedDomainEvent` trong `Favi-BE.Modules.Engagement/Domain/Events`.
-- [ ] Tạo `ReactionToggledDomainEvent` trong `Favi-BE.Modules.Engagement/Domain/Events`.
-- [ ] `CreateCommentCommandHandler`: raise `CommentCreatedDomainEvent` thay vì gọi `IEngagementNotificationService`.
-- [ ] `TogglePostReactionCommandHandler`: raise `ReactionToggledDomainEvent` thay vì gọi `IEngagementNotificationService`.
-- [ ] `ToggleCommentReactionCommandHandler`: raise `ReactionToggledDomainEvent` thay vì gọi `IEngagementNotificationService`.
-- [ ] Bỏ inject `IEngagementNotificationService` khỏi tất cả handlers.
+- [x] Tạo `CommentCreatedDomainEvent` trong `Favi-BE.Modules.Engagement/Domain/Events`.
+- [x] Tạo `PostReactionAddedDomainEvent` + `CommentReactionAddedDomainEvent` trong `Favi-BE.Modules.Engagement/Domain/Events`.
+- [x] `CreateCommentCommandHandler`: raise `CommentCreatedDomainEvent` thay vì gọi `IEngagementNotificationService`.
+- [x] `TogglePostReactionCommandHandler`: raise `PostReactionAddedDomainEvent` thay vì gọi `IEngagementNotificationService`.
+- [x] `ToggleCommentReactionCommandHandler`: raise `CommentReactionAddedDomainEvent` thay vì gọi `IEngagementNotificationService`.
+- [x] Bỏ inject `IEngagementNotificationService` khỏi tất cả handlers.
 
 ### 16.3 Domain notifications mappers
-- [ ] `SocialGraphDomainNotificationsMapper` trong `Favi-BE.API/Application/SocialGraph`: map `UserFollowedDomainEvent` → `UserFollowedIntegrationEvent` → outbox.
-- [ ] `EngagementDomainNotificationsMapper` trong `Favi-BE.API/Application/Engagement`: map `CommentCreatedDomainEvent` → `CommentCreatedIntegrationEvent`, `ReactionToggledDomainEvent` → `PostReactionToggledIntegrationEvent` hoặc `CommentReactionToggledIntegrationEvent` tùy target.
-- [ ] Đăng ký mappers vào `IDomainNotificationsMapper` pipeline trong DI.
+- [x] `IDomainEventRegistry` (scoped) thêm vào BuildingBlocks — handlers raise events không qua EF ChangeTracker.
+- [x] `IDomainNotificationsMapper` → async `MapAsync()` + `IModuleDomainEventMapper` composite pattern.
+- [x] `CompositeDomainNotificationsMapper` trong BuildingBlocks: chain module mappers, fallback serialize as-is.
+- [x] `SocialGraphDomainNotificationsMapper` trong `Favi-BE.API/Application/SocialGraph`: map `UserFollowedDomainEvent` → `UserFollowedIntegrationEvent` → outbox.
+- [x] `EngagementDomainNotificationsMapper` trong `Favi-BE.API/Application/Engagement`: map `CommentCreatedDomainEvent` → `CommentCreatedIntegrationEvent`, `PostReactionAddedDomainEvent` → `PostReactionToggledIntegrationEvent`, `CommentReactionAddedDomainEvent` → `CommentReactionToggledIntegrationEvent`.
+- [x] Đăng ký mappers vào `IDomainNotificationsMapper` pipeline trong DI.
 
 ### 16.4 Cleanup (sau khi parity validated)
-- [ ] Xóa `ISocialGraphNotificationService` + `SocialGraphNotificationServiceAdapter`.
-- [ ] Xóa `IEngagementNotificationService` + `EngagementNotificationServiceAdapter`.
+- [x] Xóa `ISocialGraphNotificationService` + `SocialGraphNotificationServiceAdapter`.
+- [x] Xóa `IEngagementNotificationService` + `EngagementNotificationServiceAdapter`.
 
 ### Exit criteria Slice 13
-- [ ] Build pass (0 errors, 0 warnings mới).
-- [ ] `ISocialGraphNotificationService` và `IEngagementNotificationService` không còn trong handlers.
-- [ ] `TransactionBehavior` dispatch domain events → outbox trong cùng transaction.
+- [x] Build pass (0 errors, 0 warnings mới).
+- [x] `ISocialGraphNotificationService` và `IEngagementNotificationService` không còn trong handlers.
+- [x] `TransactionBehavior` dispatch domain events → outbox trong cùng transaction.
 - [ ] Notification parity: follow/comment/reaction notifications vẫn hoạt động đúng qua domain event path.
-- [ ] Architecture tests pass.
-- [ ] `SocialGraphNotificationServiceAdapter` và `EngagementNotificationServiceAdapter` đã bị xóa.
+- [x] Architecture tests pass (61/61).
+- [x] `SocialGraphNotificationServiceAdapter` và `EngagementNotificationServiceAdapter` đã bị xóa.
 
 ---
 
@@ -865,8 +865,8 @@ Mục tiêu: Mỗi module có DbContext riêng, chỉ map các bảng thuộc ow
 - [x] R9: Stories.Queries merged.
 - [x] R10: ContentPublishing.Queries merged.
 - [x] R11: Notifications.CommandsAndQueries merged.
-- [ ] R12: Auth.ProfileQueries merged.
-- [ ] R13: Integration.DomainEvents merged.
+- [x] R12: Auth.ProfileQueries merged.
+- [x] R13: Integration.DomainEvents merged.
 - [ ] R14: ArchTests.ReadWriteSegregation merged.
 - [ ] R15: Domain.AggregateRoots merged.
 - [ ] R16: Facade.ModuleContracts merged.

@@ -15,7 +15,6 @@ public static class SocialGraphModuleDiExtensions
     {
         services.AddScoped<ISocialGraphCommandRepository, SocialGraphCommandRepositoryAdapter>();
         services.AddScoped<ISocialGraphQueryReader, SocialGraphQueryReaderAdapter>();
-        services.AddScoped<ISocialGraphNotificationService, SocialGraphNotificationServiceAdapter>();
 
         services.AddMediatR(cfg =>
         {

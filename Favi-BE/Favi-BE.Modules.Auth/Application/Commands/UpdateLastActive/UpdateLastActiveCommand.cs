@@ -1,5 +1,5 @@
-using Favi_BE.BuildingBlocks.Application.Messaging;
+using MediatR;
 
 namespace Favi_BE.Modules.Auth.Application.Commands.UpdateLastActive;
 
-public sealed record UpdateLastActiveCommand(Guid ProfileId) : ICommand;
+public sealed record UpdateLastActiveCommand(Guid ProfileId) : IRequest<DateTime>;

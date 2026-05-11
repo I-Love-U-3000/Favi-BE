@@ -8,23 +8,23 @@ namespace Favi_BE.BuildingBlocks.Infrastructure.Events;
 public sealed class DomainEventsAccessor : IDomainEventsAccessor
 {
     private readonly IBuildingBlocksDbContext _dbContext;
+    private readonly IDomainEventRegistry _registry;
 
-    public DomainEventsAccessor(IBuildingBlocksDbContext dbContext)
+    public DomainEventsAccessor(IBuildingBlocksDbContext dbContext, IDomainEventRegistry registry)
     {
         _dbContext = dbContext;
+        _registry = registry;
     }
 
     public IReadOnlyCollection<IDomainEvent> GetAllDomainEvents()
     {
-        var domainEntities = _dbContext.ChangeTracker
+        var fromEntities = _dbContext.ChangeTracker
             .Entries<IHasDomainEvents>()
             .Where(x => x.Entity.DomainEvents.Count > 0)
-            .Select(x => x.Entity)
+            .SelectMany(x => x.Entity.DomainEvents)
             .ToList();
 
-        return domainEntities
-            .SelectMany(x => x.DomainEvents)
-            .ToList();
+        return fromEntities.Concat(_registry.PendingEvents).ToList();
     }
 
     public void ClearAllDomainEvents()
@@ -36,8 +36,8 @@ public sealed class DomainEventsAccessor : IDomainEventsAccessor
             .ToList();
 
         foreach (var entity in domainEntities)
-        {
             entity.ClearDomainEvents();
-        }
+
+        _registry.Clear();
     }
 }

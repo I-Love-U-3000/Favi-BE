@@ -1,3 +1,5 @@
+using Favi_BE.API.Application.Engagement;
+using Favi_BE.API.Application.SocialGraph;
 using Favi_BE.API.Data.Repositories;
 using Favi_BE.API.Interfaces.Repositories;
 using Favi_BE.API.Interfaces.Services;
@@ -30,9 +32,12 @@ public static class ApplicationExtensions
     {
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IBuildingBlocksDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+        services.AddScoped<IDomainEventRegistry, DomainEventRegistry>();
         services.AddScoped<IDomainEventsAccessor, DomainEventsAccessor>();
         services.AddScoped<IDomainEventsDispatcher, DomainEventsDispatcher>();
-        services.AddScoped<IDomainNotificationsMapper, DomainNotificationsMapper>();
+        services.AddScoped<IDomainNotificationsMapper, CompositeDomainNotificationsMapper>();
+        services.AddScoped<IModuleDomainEventMapper, SocialGraphDomainNotificationsMapper>();
+        services.AddScoped<IModuleDomainEventMapper, EngagementDomainNotificationsMapper>();
         services.AddScoped<IOutbox, EfCoreOutbox>();
         services.AddScoped<IInbox, EfCoreInbox>();
         services.AddScoped<IExecutionContextAccessor, HttpExecutionContextAccessor>();

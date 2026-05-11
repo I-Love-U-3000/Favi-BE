@@ -14,5 +14,10 @@ internal sealed class GetFollowingsQueryHandler : IRequestHandler<GetFollowingsQ
     }
 
     public async Task<IReadOnlyList<FollowQueryDto>> Handle(GetFollowingsQuery request, CancellationToken cancellationToken)
-        => await _reader.GetFollowingsAsync(request.ProfileId, request.Skip, request.Take, cancellationToken);
+    {
+        if (!await _reader.ProfileExistsAsync(request.ProfileId, cancellationToken))
+            return [];
+
+        return await _reader.GetFollowingsAsync(request.ProfileId, request.Skip, request.Take, cancellationToken);
+    }
 }

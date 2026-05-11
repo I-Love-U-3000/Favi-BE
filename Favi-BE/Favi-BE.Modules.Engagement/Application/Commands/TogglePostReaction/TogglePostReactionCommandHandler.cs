@@ -1,7 +1,9 @@
+using Favi_BE.BuildingBlocks.Application.Events;
 using Favi_BE.Modules.Engagement.Application.Contracts;
 using Favi_BE.Modules.Engagement.Application.Contracts.WriteModels;
 using Favi_BE.Modules.Engagement.Application.Responses;
 using Favi_BE.Modules.Engagement.Domain;
+using Favi_BE.Modules.Engagement.Domain.Events;
 using MediatR;
 
 namespace Favi_BE.Modules.Engagement.Application.Commands.TogglePostReaction;
@@ -9,14 +11,14 @@ namespace Favi_BE.Modules.Engagement.Application.Commands.TogglePostReaction;
 internal sealed class TogglePostReactionCommandHandler : IRequestHandler<TogglePostReactionCommand, ReactionCommandResult>
 {
     private readonly IEngagementCommandRepository _repo;
-    private readonly IEngagementNotificationService _notifications;
+    private readonly IDomainEventRegistry _domainEvents;
 
     public TogglePostReactionCommandHandler(
         IEngagementCommandRepository repo,
-        IEngagementNotificationService notifications)
+        IDomainEventRegistry domainEvents)
     {
         _repo = repo;
-        _notifications = notifications;
+        _domainEvents = domainEvents;
     }
 
     public async Task<ReactionCommandResult> Handle(TogglePostReactionCommand request, CancellationToken cancellationToken)
@@ -40,7 +42,7 @@ internal sealed class TogglePostReactionCommandHandler : IRequestHandler<ToggleP
 
             await _repo.SaveAsync(cancellationToken);
 
-            await _notifications.NotifyPostReactionAddedAsync(request.ActorId, request.PostId, cancellationToken);
+            _domainEvents.Raise(new PostReactionAddedDomainEvent(request.ActorId, request.PostId, DateTime.UtcNow));
 
             return ReactionCommandResult.Added(request.Type);
         }

@@ -99,13 +99,144 @@ internal sealed class AuthWriteRepositoryAdapter : IAuthWriteRepository
         _uow.EmailAccounts.Update(emailAccount);
     }
 
-    public async Task UpdateLastActiveAsync(Guid profileId, CancellationToken ct = default)
+    public async Task<DateTime> UpdateLastActiveAsync(Guid profileId, CancellationToken ct = default)
     {
         var profile = await _uow.Profiles.GetByIdAsync(profileId);
-        if (profile is null) return;
+        if (profile is null)
+            throw new ArgumentException($"Profile '{profileId}' not found.");
 
         profile.LastActiveAt = DateTime.UtcNow;
         _uow.Profiles.Update(profile);
+        return profile.LastActiveAt.Value;
+    }
+
+    public Task<bool> ProfileExistsAsync(Guid profileId, CancellationToken ct = default)
+        => _db.Profiles.AnyAsync(p => p.Id == profileId, ct);
+
+    public async Task<bool> UpdateProfileAsync(
+        Guid profileId, string? username, string? displayName, string? bio,
+        string? avatarUrl, string? coverUrl, int? privacyLevel, int? followPrivacyLevel,
+        CancellationToken ct = default)
+    {
+        var profile = await _uow.Profiles.GetByIdAsync(profileId);
+        if (profile is null) return false;
+
+        if (!string.IsNullOrWhiteSpace(username) && username != profile.Username)
+            profile.Username = username;
+        if (!string.IsNullOrWhiteSpace(displayName))
+            profile.DisplayName = displayName;
+        if (!string.IsNullOrWhiteSpace(bio))
+            profile.Bio = bio;
+        if (!string.IsNullOrWhiteSpace(avatarUrl))
+            profile.AvatarUrl = avatarUrl;
+        if (!string.IsNullOrWhiteSpace(coverUrl))
+            profile.CoverUrl = coverUrl;
+        if (privacyLevel.HasValue)
+            profile.PrivacyLevel = (PrivacyLevel)privacyLevel.Value;
+        if (followPrivacyLevel.HasValue)
+            profile.FollowPrivacyLevel = (PrivacyLevel)followPrivacyLevel.Value;
+
+        profile.LastActiveAt = DateTime.UtcNow;
+        _uow.Profiles.Update(profile);
+        return true;
+    }
+
+    public async Task<bool> DeleteProfileAsync(Guid profileId, CancellationToken ct = default)
+    {
+        var profile = await _uow.Profiles.GetByIdAsync(profileId);
+        if (profile is null) return false;
+        _uow.Profiles.Remove(profile);
+        return true;
+    }
+
+    public async Task CreateProfileIfNotExistsAsync(Guid id, string username, string displayName, CancellationToken ct = default)
+    {
+        if (await _db.Profiles.AnyAsync(p => p.Id == id, ct)) return;
+
+        var profile = new Profile
+        {
+            Id = id,
+            Username = username,
+            DisplayName = displayName,
+            Role = UserRole.User,
+            CreatedAt = DateTime.UtcNow,
+            LastActiveAt = DateTime.UtcNow,
+            PrivacyLevel = PrivacyLevel.Public,
+            IsBanned = false
+        };
+        await _uow.Profiles.AddAsync(profile);
+    }
+
+    public async Task<(Guid MediaId, string Url, string PublicId, int Width, int Height, string Format, string? ThumbnailUrl)>
+        SaveAvatarAsync(Guid profileId, string url, string? thumbnailUrl, string publicId,
+            int width, int height, string format, CancellationToken ct = default)
+    {
+        var oldAvatar = await _uow.PostMedia.GetProfileAvatar(profileId);
+        if (oldAvatar is not null)
+            _uow.PostMedia.Remove(oldAvatar);
+
+        var media = new PostMedia
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profileId,
+            PostId = null,
+            Url = url,
+            ThumbnailUrl = thumbnailUrl,
+            PublicId = publicId,
+            Width = width,
+            Height = height,
+            Format = format,
+            Position = 0,
+            IsAvatar = true,
+            IsPoster = false
+        };
+        await _uow.PostMedia.AddAsync(media);
+
+        var profile = await _uow.Profiles.GetByIdAsync(profileId);
+        if (profile is not null)
+        {
+            profile.AvatarUrl = url;
+            profile.LastActiveAt = DateTime.UtcNow;
+            _uow.Profiles.Update(profile);
+        }
+
+        return (media.Id, url, publicId, width, height, format, thumbnailUrl);
+    }
+
+    public async Task<(Guid MediaId, string Url, string PublicId, int Width, int Height, string Format, string? ThumbnailUrl)>
+        SavePosterAsync(Guid profileId, string url, string? thumbnailUrl, string publicId,
+            int width, int height, string format, CancellationToken ct = default)
+    {
+        var oldPoster = await _uow.PostMedia.GetProfilePoster(profileId);
+        if (oldPoster is not null)
+            _uow.PostMedia.Remove(oldPoster);
+
+        var media = new PostMedia
+        {
+            Id = Guid.NewGuid(),
+            ProfileId = profileId,
+            PostId = null,
+            Url = url,
+            ThumbnailUrl = thumbnailUrl,
+            PublicId = publicId,
+            Width = width,
+            Height = height,
+            Format = format,
+            Position = 0,
+            IsAvatar = false,
+            IsPoster = true
+        };
+        await _uow.PostMedia.AddAsync(media);
+
+        var profile = await _uow.Profiles.GetByIdAsync(profileId);
+        if (profile is not null)
+        {
+            profile.CoverUrl = url;
+            profile.LastActiveAt = DateTime.UtcNow;
+            _uow.Profiles.Update(profile);
+        }
+
+        return (media.Id, url, publicId, width, height, format, thumbnailUrl);
     }
 
     public async Task SaveAsync(CancellationToken ct = default)

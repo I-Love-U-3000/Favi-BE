@@ -1,7 +1,9 @@
+using Favi_BE.BuildingBlocks.Application.Events;
 using Favi_BE.Modules.Engagement.Application.Contracts;
 using Favi_BE.Modules.Engagement.Application.Contracts.ReadModels;
 using Favi_BE.Modules.Engagement.Application.Contracts.WriteModels;
 using Favi_BE.Modules.Engagement.Application.Responses;
+using Favi_BE.Modules.Engagement.Domain.Events;
 using MediatR;
 
 namespace Favi_BE.Modules.Engagement.Application.Commands.CreateComment;
@@ -9,14 +11,14 @@ namespace Favi_BE.Modules.Engagement.Application.Commands.CreateComment;
 internal sealed class CreateCommentCommandHandler : IRequestHandler<CreateCommentCommand, CommentCommandResult>
 {
     private readonly IEngagementCommandRepository _repo;
-    private readonly IEngagementNotificationService _notifications;
+    private readonly IDomainEventRegistry _domainEvents;
 
     public CreateCommentCommandHandler(
         IEngagementCommandRepository repo,
-        IEngagementNotificationService notifications)
+        IDomainEventRegistry domainEvents)
     {
         _repo = repo;
-        _notifications = notifications;
+        _domainEvents = domainEvents;
     }
 
     public async Task<CommentCommandResult> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
@@ -41,7 +43,7 @@ internal sealed class CreateCommentCommandHandler : IRequestHandler<CreateCommen
         await _repo.AddCommentAsync(commentData, cancellationToken);
         await _repo.SaveAsync(cancellationToken);
 
-        await _notifications.NotifyCommentCreatedAsync(request.AuthorId, request.PostId, commentId, cancellationToken);
+        _domainEvents.Raise(new CommentCreatedDomainEvent(request.AuthorId, request.PostId, commentId, now));
 
         var emptyReactions = new ReactionSummaryQueryDto(0, new Dictionary<Domain.ReactionType, int>(), null);
         var dto = new CommentQueryDto(
