@@ -11,11 +11,9 @@ public static class AuthModuleDiExtensions
         services.AddScoped<IAuthWriteRepository, AuthWriteRepositoryAdapter>();
         services.AddScoped<IJwtTokenService, JwtTokenServiceAdapter>();
         services.AddScoped<IAuthQueryReader, AuthQueryReaderAdapter>();
+        services.AddScoped<IAuthFacade, Favi_BE.Modules.Auth.Application.AuthFacade>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Auth.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

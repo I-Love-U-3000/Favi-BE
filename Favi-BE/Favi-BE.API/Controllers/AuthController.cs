@@ -11,17 +11,19 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Favi_BE.Modules.Auth.Application.Contracts;
+
 namespace Favi_BE.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly IAuthFacade _authFacade;
 
-    public AuthController(IMediator mediator)
+    public AuthController(IAuthFacade authFacade)
     {
-        _mediator = mediator;
+        _authFacade = authFacade;
     }
 
     public record LoginDto(string EmailOrUsername, string Password);
@@ -32,7 +34,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginDto dto)
     {
-        var result = await _mediator.Send(new LoginCommand(dto.EmailOrUsername, dto.Password));
+        var result = await _authFacade.LoginAsync(new LoginCommand(dto.EmailOrUsername, dto.Password));
         if (!result.IsSuccess)
         {
             return result.Error!.Code switch
@@ -48,15 +50,17 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register(RegisterDto dto)
     {
-        var result = await _mediator.Send(new RegisterCommand(dto.Email, dto.Password, dto.Username, dto.DisplayName));
+        var result = await _authFacade.RegisterAsync(new RegisterCommand(dto.Email, dto.Password, dto.Username, dto.DisplayName));
         if (!result.IsSuccess)
         {
-            return result.Error!.Code switch
             {
-                "USERNAME_EXISTS" => Conflict(new { code = result.Error.Code, message = result.Error.Message }),
-                "EMAIL_EXISTS" => Conflict(new { code = result.Error.Code, message = result.Error.Message }),
-                _ => BadRequest(new { code = result.Error!.Code, message = result.Error.Message })
-            };
+                return result.Error!.Code switch
+                {
+                    "USERNAME_EXISTS" => Conflict(new { code = result.Error.Code, message = result.Error.Message }),
+                    "EMAIL_EXISTS" => Conflict(new { code = result.Error.Code, message = result.Error.Message }),
+                    _ => BadRequest(new { code = result.Error!.Code, message = result.Error.Message })
+                };
+            }
         }
         return Ok(new AuthResponse(result.AccessToken!, result.RefreshToken!, result.Message!));
     }
@@ -65,7 +69,7 @@ public class AuthController : ControllerBase
     [HttpPost("refresh")]
     public async Task<ActionResult<AuthResponse>> Refresh([FromBody] string refreshToken)
     {
-        var result = await _mediator.Send(new RefreshTokenCommand(refreshToken));
+        var result = await _authFacade.RefreshTokenAsync(new RefreshTokenCommand(refreshToken));
         if (!result.IsSuccess)
             return Unauthorized(new { code = result.Error!.Code, message = result.Error.Message });
 
@@ -77,7 +81,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout([FromBody] string? refreshToken = null)
     {
-        var result = await _mediator.Send(new LogoutCommand(refreshToken));
+        var result = await _authFacade.LogoutAsync(new LogoutCommand(refreshToken));
         return Ok(new { message = result.Message });
     }
 
@@ -87,7 +91,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
     {
         var profileId = User.GetUserId();
-        var result = await _mediator.Send(new ChangePasswordCommand(profileId, dto.CurrentPassword, dto.NewPassword));
+        var result = await _authFacade.ChangePasswordAsync(new ChangePasswordCommand(profileId, dto.CurrentPassword, dto.NewPassword));
         if (!result.IsSuccess)
             return BadRequest(new { code = result.Error!.Code, message = result.Error.Message });
 
@@ -100,7 +104,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<CurrentUserDto>> GetCurrentUser()
     {
         var profileId = User.GetUserId();
-        var result = await _mediator.Send(new GetCurrentUserQuery(profileId));
+        var result = await _authFacade.GetCurrentUserAsync(new GetCurrentUserQuery(profileId));
         if (result is null)
             return NotFound(new { code = "USER_NOT_FOUND", message = "Không tìm thấy thông tin người dùng." });
 

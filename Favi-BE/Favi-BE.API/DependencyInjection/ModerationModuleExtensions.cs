@@ -11,10 +11,7 @@ public static class ModerationModuleDiExtensions
         services.AddScoped<IModerationCommandRepository, ModerationCommandRepositoryAdapter>();
         services.AddScoped<IModerationQueryReader, ModerationQueryReaderAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Moderation.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

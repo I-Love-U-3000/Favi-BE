@@ -13,10 +13,7 @@ public static class MessagingModuleDiExtensions
         services.AddScoped<IMessagingQueryReader, MessagingQueryReaderAdapter>();
         services.AddScoped<IChatRealtimeGateway, ChatRealtimeGatewayAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Messaging.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

@@ -93,7 +93,7 @@ internal sealed class StoriesQueryReaderAdapter : IStoriesQueryReader
     public async Task<int> GetActiveStoryCountAsync(Guid profileId, CancellationToken ct = default)
         => await _uow.Stories.CountActiveStoriesByProfileIdAsync(profileId);
 
-    private async Task<StoryReadModel> MapAsync(Story story, Guid? viewerId)
+    private async Task<StoryReadModel> MapAsync(Favi_BE.Models.Entities.Story story, Guid? viewerId)
     {
         var viewCount = await _uow.StoryViews.GetViewCountAsync(story.Id);
         var hasViewed = viewerId.HasValue && await _uow.StoryViews.HasViewedAsync(story.Id, viewerId.Value);

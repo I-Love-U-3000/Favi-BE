@@ -1,6 +1,7 @@
 using Favi_BE.Modules.Stories.Application.Contracts;
 using Favi_BE.Modules.Stories.Application.Contracts.WriteModels;
 using Favi_BE.Modules.Stories.Application.Responses;
+using Favi_BE.Modules.Stories.Domain;
 using MediatR;
 
 namespace Favi_BE.Modules.Stories.Application.Commands.CreateStory;
@@ -16,20 +17,35 @@ internal sealed class CreateStoryCommandHandler : IRequestHandler<CreateStoryCom
         var now = DateTime.UtcNow;
         var id = Guid.NewGuid();
 
+        // Create the Story aggregate root to check business rules (StoryTTL24hRule)
+        var story = Story.Create(
+            id,
+            request.AuthorId,
+            request.MediaUrl,
+            request.MediaPublicId,
+            request.MediaWidth,
+            request.MediaHeight,
+            request.MediaFormat,
+            request.ThumbnailUrl,
+            request.Privacy,
+            now,
+            now.AddHours(24)
+        );
+
         var data = new StoryWriteData(
-            Id: id,
-            ProfileId: request.AuthorId,
-            MediaUrl: request.MediaUrl,
-            MediaPublicId: request.MediaPublicId,
-            MediaWidth: request.MediaWidth,
-            MediaHeight: request.MediaHeight,
-            MediaFormat: request.MediaFormat,
-            ThumbnailUrl: request.ThumbnailUrl,
-            Privacy: request.Privacy,
-            IsArchived: false,
-            IsNSFW: false,
-            CreatedAt: now,
-            ExpiresAt: now.AddHours(24)
+            Id: story.Id,
+            ProfileId: story.ProfileId,
+            MediaUrl: story.MediaUrl,
+            MediaPublicId: story.MediaPublicId,
+            MediaWidth: story.MediaWidth,
+            MediaHeight: story.MediaHeight,
+            MediaFormat: story.MediaFormat,
+            ThumbnailUrl: story.ThumbnailUrl,
+            Privacy: story.Privacy,
+            IsArchived: story.IsArchived,
+            IsNSFW: story.IsNSFW,
+            CreatedAt: story.CreatedAt,
+            ExpiresAt: story.ExpiresAt
         );
 
         await _repo.AddStoryAsync(data, cancellationToken);

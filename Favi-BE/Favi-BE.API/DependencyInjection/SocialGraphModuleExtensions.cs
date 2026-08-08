@@ -15,11 +15,9 @@ public static class SocialGraphModuleDiExtensions
     {
         services.AddScoped<ISocialGraphCommandRepository, SocialGraphCommandRepositoryAdapter>();
         services.AddScoped<ISocialGraphQueryReader, SocialGraphQueryReaderAdapter>();
+        services.AddScoped<ISocialGraphFacade, Favi_BE.Modules.SocialGraph.Application.SocialGraphFacade>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.SocialGraph.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

@@ -15,10 +15,7 @@ public static class ContentPublishingModuleDiExtensions
     {
         services.AddScoped<IContentPublishingCommandRepository, ContentPublishingCommandRepositoryAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

@@ -11,10 +11,7 @@ public static class ContentDiscoveryModuleDiExtensions
     {
         services.AddScoped<IContentDiscoveryQueryReader, ContentDiscoveryQueryReaderAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

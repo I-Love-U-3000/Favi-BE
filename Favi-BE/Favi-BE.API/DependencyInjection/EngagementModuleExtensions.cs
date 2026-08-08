@@ -16,10 +16,7 @@ public static class EngagementModuleDiExtensions
         services.AddScoped<IEngagementCommandRepository, EngagementCommandRepositoryAdapter>();
         services.AddScoped<IEngagementQueryReader, EngagementQueryReaderAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Engagement.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

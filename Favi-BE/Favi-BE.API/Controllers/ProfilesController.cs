@@ -7,6 +7,7 @@ using Favi_BE.Modules.Auth.Application.Commands.UpdateLastActive;
 using Favi_BE.Modules.Auth.Application.Commands.UpdateProfile;
 using Favi_BE.Modules.Auth.Application.Commands.UploadAvatar;
 using Favi_BE.Modules.Auth.Application.Commands.UploadPoster;
+using Favi_BE.Modules.Auth.Application.Contracts;
 using Favi_BE.Modules.Auth.Application.Contracts.ReadModels;
 using Favi_BE.Modules.Auth.Application.Contracts.WriteModels;
 using Favi_BE.Modules.Auth.Application.Queries.GetOnlineFriends;
@@ -18,11 +19,11 @@ using Favi_BE.Modules.SocialGraph.Application.Commands.AddSocialLink;
 using Favi_BE.Modules.SocialGraph.Application.Commands.FollowUser;
 using Favi_BE.Modules.SocialGraph.Application.Commands.RemoveSocialLink;
 using Favi_BE.Modules.SocialGraph.Application.Commands.UnfollowUser;
+using Favi_BE.Modules.SocialGraph.Application.Contracts;
 using Favi_BE.Modules.SocialGraph.Application.Queries.GetFollowers;
 using Favi_BE.Modules.SocialGraph.Application.Queries.GetFollowings;
 using Favi_BE.Modules.SocialGraph.Application.Queries.GetSocialLinks;
 using Favi_BE.Modules.SocialGraph.Domain;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,12 +33,17 @@ namespace Favi_BE.Controllers
     [Route("api/[controller]")]
     public class ProfilesController : ControllerBase
     {
-        private readonly IMediator _mediator;
+        private readonly IAuthFacade _authFacade;
+        private readonly ISocialGraphFacade _socialFacade;
         private readonly ICloudinaryService _cloudinary;
 
-        public ProfilesController(IMediator mediator, ICloudinaryService cloudinary)
+        public ProfilesController(
+            IAuthFacade authFacade,
+            ISocialGraphFacade socialFacade,
+            ICloudinaryService cloudinary)
         {
-            _mediator = mediator;
+            _authFacade = authFacade;
+            _socialFacade = socialFacade;
             _cloudinary = cloudinary;
         }
 
@@ -45,7 +51,7 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<ProfileResponse>> GetById(Guid id)
         {
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            var profile = await _mediator.Send(new GetProfileByIdQuery(id, viewerId));
+            var profile = await _authFacade.GetProfileByIdAsync(new GetProfileByIdQuery(id, viewerId));
             if (profile is null)
                 return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại hoặc bạn không có quyền xem." });
 
@@ -57,7 +63,7 @@ namespace Favi_BE.Controllers
         public async Task<ActionResult<ProfileResponse>> Update(ProfileUpdateRequest dto)
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new UpdateProfileCommand(
+            var result = await _authFacade.UpdateProfileAsync(new UpdateProfileCommand(
                 userId,
                 dto.Username,
                 dto.DisplayName,
@@ -77,7 +83,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Follow(Guid targetId)
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new FollowUserCommand(userId, targetId));
+            var result = await _socialFacade.FollowUserAsync(new FollowUserCommand(userId, targetId));
             return result.Succeeded
                 ? Ok(new { message = "Đã theo dõi." })
                 : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
@@ -88,7 +94,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Unfollow(Guid targetId)
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new UnfollowUserCommand(userId, targetId));
+            var result = await _socialFacade.UnfollowUserAsync(new UnfollowUserCommand(userId, targetId));
             return result.Succeeded
                 ? Ok(new { message = "Đã bỏ theo dõi." })
                 : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
@@ -97,21 +103,21 @@ namespace Favi_BE.Controllers
         [HttpGet("{id}/followers")]
         public async Task<IActionResult> Followers(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
         {
-            var result = await _mediator.Send(new GetFollowersQuery(id, skip ?? 0, take ?? 1000));
+            var result = await _socialFacade.GetFollowersAsync(new GetFollowersQuery(id, skip ?? 0, take ?? 1000));
             return Ok(result);
         }
 
         [HttpGet("{id}/followings")]
         public async Task<IActionResult> Followings(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
         {
-            var result = await _mediator.Send(new GetFollowingsQuery(id, skip ?? 0, take ?? 1000));
+            var result = await _socialFacade.GetFollowingsAsync(new GetFollowingsQuery(id, skip ?? 0, take ?? 1000));
             return Ok(result);
         }
 
         [HttpGet("{id}/links")]
         public async Task<IActionResult> GetLinks(Guid id)
         {
-            var result = await _mediator.Send(new GetSocialLinksQuery(id));
+            var result = await _socialFacade.GetSocialLinksAsync(new GetSocialLinksQuery(id));
             return Ok(result);
         }
 
@@ -120,7 +126,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> GetLinks()
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new GetSocialLinksQuery(userId));
+            var result = await _socialFacade.GetSocialLinksAsync(new GetSocialLinksQuery(userId));
             return Ok(result);
         }
 
@@ -129,7 +135,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> AddLink(SocialLinkDto dto)
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new AddSocialLinkCommand(userId, (Favi_BE.Modules.SocialGraph.Domain.SocialKind)(int)dto.SocialKind, dto.Url));
+            var result = await _socialFacade.AddSocialLinkAsync(new AddSocialLinkCommand(userId, (Favi_BE.Modules.SocialGraph.Domain.SocialKind)(int)dto.SocialKind, dto.Url));
             return result.Succeeded
                 ? Ok(result.Data)
                 : BadRequest(new { code = result.ErrorCode, message = result.ErrorMessage });
@@ -140,7 +146,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> RemoveLink(Guid linkId)
         {
             var userId = User.GetUserId();
-            var result = await _mediator.Send(new RemoveSocialLinkCommand(userId, linkId));
+            var result = await _socialFacade.RemoveSocialLinkAsync(new RemoveSocialLinkCommand(userId, linkId));
             return result.Succeeded
                 ? Ok(new { message = "Đã xoá liên kết mạng xã hội." })
                 : NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
@@ -151,7 +157,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Delete()
         {
             var userId = User.GetUserId();
-            var deleted = await _mediator.Send(new DeleteProfileCommand(userId));
+            var deleted = await _authFacade.DeleteProfileAsync(new DeleteProfileCommand(userId));
             return deleted
                 ? Ok(new { message = "Đã xoá tài khoản." })
                 : BadRequest(new { code = "DELETE_PROFILE_FAILED", message = "Không thể xoá tài khoản." });
@@ -160,7 +166,7 @@ namespace Favi_BE.Controllers
         [HttpGet("avatar/{profileId}")]
         public async Task<IActionResult> GetAvatar(Guid profileId)
         {
-            var url = await _mediator.Send(new GetProfileAvatarQuery(profileId));
+            var url = await _authFacade.GetProfileAvatarAsync(new GetProfileAvatarQuery(profileId));
             if (url is null)
                 return NotFound(new { code = "AVATAR_NOT_FOUND", message = "Không tìm thấy ảnh đại diện." });
             return Ok(url);
@@ -169,7 +175,7 @@ namespace Favi_BE.Controllers
         [HttpGet("poster/{profileId}")]
         public async Task<IActionResult> GetPoster(Guid profileId)
         {
-            var url = await _mediator.Send(new GetProfilePosterQuery(profileId));
+            var url = await _authFacade.GetProfilePosterAsync(new GetProfilePosterQuery(profileId));
             if (url is null)
                 return NotFound(new { code = "POSTER_NOT_FOUND", message = "Không tìm thấy ảnh bìa." });
             return Ok(url);
@@ -188,7 +194,7 @@ namespace Favi_BE.Controllers
             if (uploaded is null)
                 return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload avatar thất bại hoặc file không hợp lệ." });
 
-            var result = await _mediator.Send(new UploadAvatarCommand(
+            var result = await _authFacade.UploadAvatarAsync(new UploadAvatarCommand(
                 userId,
                 new UploadedImageData(uploaded.Url, uploaded.ThumbnailUrl, uploaded.PublicId, uploaded.Width, uploaded.Height, uploaded.Format)));
 
@@ -222,7 +228,7 @@ namespace Favi_BE.Controllers
             if (uploaded is null)
                 return BadRequest(new { code = "UPLOAD_FAILED", message = "Upload poster thất bại hoặc file không hợp lệ." });
 
-            var result = await _mediator.Send(new UploadPosterCommand(
+            var result = await _authFacade.UploadPosterAsync(new UploadPosterCommand(
                 userId,
                 new UploadedImageData(uploaded.Url, uploaded.ThumbnailUrl, uploaded.PublicId, uploaded.Width, uploaded.Height, uploaded.Format)));
 
@@ -249,7 +255,7 @@ namespace Favi_BE.Controllers
             [FromQuery] int skip = 0, [FromQuery] int take = 20)
         {
             var viewerId = User.GetUserId();
-            var items = await _mediator.Send(new GetRecommendedProfilesQuery(viewerId, skip, take));
+            var items = await _authFacade.GetRecommendedProfilesAsync(new GetRecommendedProfilesQuery(viewerId, skip, take));
             return Ok(items.Select(MapProfile));
         }
 
@@ -259,7 +265,7 @@ namespace Favi_BE.Controllers
             [FromQuery] int withinLastMinutes = 15)
         {
             var userId = User.GetUserId();
-            var items = await _mediator.Send(new GetOnlineFriendsQuery(userId, withinLastMinutes));
+            var items = await _authFacade.GetOnlineFriendsAsync(new GetOnlineFriendsQuery(userId, withinLastMinutes));
             return Ok(items.Select(MapProfile));
         }
 
@@ -268,7 +274,7 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Heartbeat()
         {
             var userId = User.GetUserId();
-            var lastActiveAt = await _mediator.Send(new UpdateLastActiveCommand(userId));
+            var lastActiveAt = await _authFacade.UpdateLastActiveAsync(new UpdateLastActiveCommand(userId));
             return Ok(new { message = "Heartbeat recorded.", lastActiveAt });
         }
 

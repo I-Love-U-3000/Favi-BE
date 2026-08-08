@@ -13,10 +13,7 @@ public static class NotificationsModuleDiExtensions
         services.AddScoped<INotificationQueryReader, NotificationQueryReaderAdapter>();
         services.AddScoped<INotificationCommandRepository, NotificationCommandRepositoryAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Notifications.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

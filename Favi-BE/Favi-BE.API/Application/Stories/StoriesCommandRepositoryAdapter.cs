@@ -15,7 +15,7 @@ internal sealed class StoriesCommandRepositoryAdapter : IStoriesCommandRepositor
     public StoriesCommandRepositoryAdapter(IUnitOfWork uow) => _uow = uow;
 
     public async Task AddStoryAsync(StoryWriteData data, CancellationToken ct = default)
-        => await _uow.Stories.AddAsync(new Story
+        => await _uow.Stories.AddAsync(new Favi_BE.Models.Entities.Story
         {
             Id = data.Id,
             ProfileId = data.ProfileId,
@@ -83,7 +83,7 @@ internal sealed class StoriesCommandRepositoryAdapter : IStoriesCommandRepositor
 
     private static LegacyPrivacy MapPrivacy(StoryPrivacy p) => (LegacyPrivacy)(int)p;
 
-    private static StoryWriteData MapStory(Story s) => new(
+    private static StoryWriteData MapStory(Favi_BE.Models.Entities.Story s) => new(
         s.Id, s.ProfileId, s.MediaUrl, s.MediaPublicId,
         s.MediaWidth, s.MediaHeight, s.MediaFormat, s.ThumbnailUrl,
         (StoryPrivacy)(int)s.Privacy, s.IsArchived, s.IsNSFW,

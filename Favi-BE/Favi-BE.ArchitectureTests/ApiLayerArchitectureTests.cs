@@ -221,4 +221,70 @@ public class ApiLayerArchitectureTests
             because: $"Content Publishing must not import Social Graph application namespace. " +
                      $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
     }
+
+    // API-02: Controllers must not directly reference legacy interfaces.
+    [Fact]
+    public void Controllers_Should_Not_Inject_Legacy_Services()
+    {
+        var controllers = ApiAssembly.GetTypes()
+            .Where(t => t.Namespace == "Favi_BE.Controllers" && t.Name.EndsWith("Controller") && !t.Name.StartsWith("Admin"))
+            .ToList();
+
+        var legacyServiceNames = new[]
+        {
+            "IPostService",
+            "IProfileService",
+            "INotificationService",
+            "IStoryService",
+            "ICollectionService"
+        };
+
+        var failingControllers = new List<string>();
+
+        foreach (var controller in controllers)
+        {
+            var constructors = controller.GetConstructors();
+            foreach (var constructor in constructors)
+            {
+                var parameters = constructor.GetParameters();
+                foreach (var parameter in parameters)
+                {
+                    if (legacyServiceNames.Contains(parameter.ParameterType.Name))
+                    {
+                        failingControllers.Add($"{controller.Name} ({parameter.ParameterType.Name})");
+                    }
+                }
+            }
+        }
+
+        failingControllers.Should().BeEmpty(
+            because: $"Non-admin controllers must use MediatR or Facades, not legacy services. Failing controllers: {string.Join(", ", failingControllers)}");
+    }
+
+    // API-03: Handlers must not depend on legacy notification interfaces.
+    [Fact]
+    public void Handlers_Should_Not_Depend_On_Notification_Services_Directly()
+    {
+        var assemblies = new[]
+        {
+            AuthAssembly,
+            EngagementAssembly,
+            NotificationsAssembly,
+            SocialGraphAssembly,
+            ContentPublishingAssembly
+        };
+
+        var result = Types
+            .InAssemblies(assemblies)
+            .ShouldNot()
+            .HaveDependencyOnAny(
+                "Favi_BE.Interfaces.Services.INotificationService",
+                "Favi_BE.API.Services.ISocialGraphNotificationService",
+                "Favi_BE.API.Services.IEngagementNotificationService")
+            .GetResult();
+
+        result.IsSuccessful.Should().BeTrue(
+            because: $"Handlers must publish events, not inject notification services. " +
+                     $"Failing types: {string.Join(", ", result.FailingTypeNames ?? [])}");
+    }
 }

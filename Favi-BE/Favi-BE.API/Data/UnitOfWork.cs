@@ -14,18 +14,18 @@ namespace Favi_BE.Data
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
-        private readonly IDomainEventsDispatcher _domainEventsDispatcher;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IExecutionContextAccessor _executionContextAccessor;
         private IDbContextTransaction _transaction;
         private bool _disposed = false;
 
         public UnitOfWork(
             AppDbContext context,
-            IDomainEventsDispatcher domainEventsDispatcher,
+            IServiceProvider serviceProvider,
             IExecutionContextAccessor executionContextAccessor)
         {
             _context = context;
-            _domainEventsDispatcher = domainEventsDispatcher;
+            _serviceProvider = serviceProvider;
             _executionContextAccessor = executionContextAccessor;
 
             // Initialize repositories
@@ -94,7 +94,9 @@ namespace Favi_BE.Data
 
         public async Task<int> CompleteAsync()
         {
-            await _domainEventsDispatcher.DispatchEventsAsync(_executionContextAccessor.CorrelationId);
+            var domainEventsDispatcher = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions
+                .GetRequiredService<IDomainEventsDispatcher>(_serviceProvider);
+            await domainEventsDispatcher.DispatchEventsAsync(_executionContextAccessor.CorrelationId);
 
             return await _context.SaveChangesAsync();
         }

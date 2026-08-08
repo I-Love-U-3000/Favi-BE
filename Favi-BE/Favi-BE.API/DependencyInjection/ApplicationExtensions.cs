@@ -45,7 +45,18 @@ public static class ApplicationExtensions
 
         services.AddMediatR(cfg =>
         {
-            cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+            cfg.RegisterServicesFromAssemblies(
+                typeof(Program).Assembly,
+                typeof(Favi_BE.Modules.Auth.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.SocialGraph.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.Stories.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.ContentPublishing.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.ContentDiscovery.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.Engagement.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.Notifications.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.Messaging.AssemblyReference).Assembly,
+                typeof(Favi_BE.Modules.Moderation.AssemblyReference).Assembly
+            );
         });
 
         // Auth module

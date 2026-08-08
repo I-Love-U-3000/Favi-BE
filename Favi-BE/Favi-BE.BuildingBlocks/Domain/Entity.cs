@@ -20,7 +20,7 @@ public abstract class Entity : IHasDomainEvents
     {
         if (rule.IsBroken())
         {
-            throw new BusinessRuleValidationException(rule.Message);
+            throw new BusinessRuleValidationException(rule);
         }
     }
 }

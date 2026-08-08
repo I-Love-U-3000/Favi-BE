@@ -12,10 +12,7 @@ public static class StoriesModuleDiExtensions
         services.AddScoped<IStoriesCommandRepository, StoriesCommandRepositoryAdapter>();
         services.AddScoped<IStoriesQueryReader, StoriesQueryReaderAdapter>();
 
-        services.AddMediatR(cfg =>
-        {
-            cfg.RegisterServicesFromAssembly(Favi_BE.Modules.Stories.AssemblyReference.Assembly);
-        });
+
 
         return services;
     }

@@ -24,7 +24,7 @@ internal sealed class ContentPublishingCommandRepositoryAdapter : IContentPublis
     // ── Post ──────────────────────────────────────────────────────────────
 
     public async Task AddPostAsync(PostWriteData data, CancellationToken ct = default)
-        => await _uow.Posts.AddAsync(new Post
+        => await _uow.Posts.AddAsync(new Favi_BE.Models.Entities.Post
         {
             Id = data.Id,
             ProfileId = data.ProfileId,
@@ -265,7 +265,7 @@ internal sealed class ContentPublishingCommandRepositoryAdapter : IContentPublis
 
     private static CollectionPrivacy MapCollectionPrivacy(LegacyPrivacy p) => (CollectionPrivacy)(int)p;
 
-    private static PostWriteData MapPost(Post p) => new(
+    private static PostWriteData MapPost(Favi_BE.Models.Entities.Post p) => new(
         p.Id, p.ProfileId, p.Caption, (PostPrivacy)(int)p.Privacy,
         p.LocationName, p.LocationFullAddress, p.LocationLatitude, p.LocationLongitude,
         p.CreatedAt, p.UpdatedAt, p.IsArchived, p.DeletedDayExpiredAt
