@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Favi_BE.UnitTests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Favi-BE.BuildingBlocks\Favi-BE.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.Auth\Favi-BE.Modules.Auth.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.SocialGraph\Favi-BE.Modules.SocialGraph.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.ContentPublishing\Favi-BE.Modules.ContentPublishing.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.Stories\Favi-BE.Modules.Stories.csproj" />
+    <ProjectReference Include="..\Favi-BE.Modules.Engagement\Favi-BE.Modules.Engagement.csproj" />
+  </ItemGroup>
+
+</Project>
