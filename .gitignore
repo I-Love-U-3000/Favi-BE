@@ -421,3 +421,8 @@ FodyWeavers.xsd
 appsettings.*.json
 !appsettings.json
 *.csv
+
+# Local Seed Assets (downloaded images)
+**/seed-assets/
+**/wwwroot/seed-assets/
+seed-assets/

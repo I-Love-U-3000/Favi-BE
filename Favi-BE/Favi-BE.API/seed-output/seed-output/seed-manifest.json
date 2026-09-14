@@ -1,0 +1,34 @@
+{
+  "SeedKey": "favi_v1",
+  "GeneratedAt": "2026-09-14T05:39:48.0544511Z",
+  "Counts": {
+    "Users": 5000,
+    "Posts": 11957,
+    "Follows": 60616,
+    "Reactions": 87266,
+    "Comments": 22520,
+    "Reposts": 1337,
+    "Tags": 117,
+    "Notifications": 8000,
+    "Stories": 1252
+  },
+  "Artifacts": [
+    "users.csv",
+    "tokens.csv",
+    "follows.csv",
+    "posts.csv",
+    "post-medias.csv",
+    "reactions.csv",
+    "comments.csv",
+    "reposts.csv",
+    "tags.csv",
+    "post-tags.csv",
+    "stories.csv",
+    "image-catalog.json",
+    "run-image-set.json",
+    "seed-manifest.json"
+  ],
+  "OptionalArtifacts": [
+    "notifications.csv"
+  ]
+}

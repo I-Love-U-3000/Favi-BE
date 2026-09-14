@@ -1,4 +1,5 @@
-﻿using Favi_BE.Interfaces;
+using Favi_BE.BuildingBlocks.Application.Redis;
+using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
@@ -21,6 +22,7 @@ namespace Favi_BE.Services
         private readonly INSFWService _nsfwService;
         private readonly INotificationService? _notificationService;
         private readonly IAuditService? _auditService;
+        private readonly IRedisStreamProducer? _redisStreamProducer;
 
         // ------- Trending Score constants -------
         private const double W_Like = 1.0;    // Wl
@@ -34,7 +36,15 @@ namespace Favi_BE.Services
         private static readonly TimeSpan VelocityWindow = TimeSpan.FromHours(1);
         private const int TrendingCandidateLimit = 500; // tối đa ứng viên để tính trending
 
-        public PostService(IUnitOfWork uow, ICloudinaryService cloudinary, IPrivacyGuard privacy, IVectorIndexService vectorIndex, INSFWService nsfwService, INotificationService? notificationService = null, IAuditService? auditService = null)
+        public PostService(
+            IUnitOfWork uow,
+            ICloudinaryService cloudinary,
+            IPrivacyGuard privacy,
+            IVectorIndexService vectorIndex,
+            INSFWService nsfwService,
+            INotificationService? notificationService = null,
+            IAuditService? auditService = null,
+            IRedisStreamProducer? redisStreamProducer = null)
         {
             _uow = uow;
             _cloudinary = cloudinary;
@@ -43,6 +53,7 @@ namespace Favi_BE.Services
             _nsfwService = nsfwService;
             _notificationService = notificationService;
             _auditService = auditService;
+            _redisStreamProducer = redisStreamProducer;
         }
 
         public Task<Post?> GetEntityAsync(Guid id) => _uow.Posts.GetByIdAsync(id);
@@ -356,35 +367,27 @@ namespace Favi_BE.Services
                 throw new InvalidOperationException($"Failed to create post. The post could not be saved to the database.", ex);
             }
 
-            // Vectorize post for semantic search (fire-and-forget, don't block post creation)
+            // Asynchronously dispatch AI tasks (NSFW evaluation + Vector Indexing) via Redis Streams
             var full = await _uow.Posts.GetPostWithAllAsync(post.Id);
-            if (full != null && _vectorIndex.IsEnabled())
+            if (full != null)
             {
-                Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _vectorIndex.IndexPostAsync(full);
-                    }
-                    catch
-                    {
-                        // Swallow - errors logged in VectorIndexService
-                    }
-                });
-            }
+                var imageUrls = full.PostMedias?
+                    .OrderBy(m => m.Position)
+                    .Select(m => m.Url)
+                    .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .ToList() ?? [];
 
-            // Check NSFW content
-            if (full != null && _nsfwService.IsEnabled())
-            {
-                try
+                if (_redisStreamProducer != null)
                 {
-                    full.IsNSFW = await _nsfwService.CheckPostAsync(full);
-                    _uow.Posts.Update(full);
-                    await _uow.CompleteAsync();
+                    _ = _redisStreamProducer.PublishPostAITaskAsync(full.Id, full.Caption, imageUrls);
                 }
-                catch
+                else if (_vectorIndex.IsEnabled())
                 {
-                    // Swallow - errors logged in NSFWService
+                    // Fallback to background Task if Redis producer is not registered
+                    _ = Task.Run(async () =>
+                    {
+                        try { await _vectorIndex.IndexPostAsync(full); } catch { }
+                    });
                 }
             }
 

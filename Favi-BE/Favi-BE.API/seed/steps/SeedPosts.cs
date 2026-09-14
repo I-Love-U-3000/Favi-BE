@@ -24,7 +24,9 @@ public sealed class SeedPostsStep
             throw new InvalidOperationException("Step 3 requires profiles from Step 1.");
 
         var targetPostCount = seedContext.Random.Next(SeedConfig.Posts.Min, SeedConfig.Posts.Max + 1);
-        var runImageSet = EnsureRunImageSet(seedContext);
+        var catalog = TryLoadRealPostsCatalog();
+        var hasCatalog = catalog != null && catalog.Count > 0;
+        var runImageSet = hasCatalog ? null : EnsureRunImageSet(seedContext);
 
         var posts = new List<Post>(targetPostCount);
         var medias = new List<PostMedia>(targetPostCount);
@@ -34,18 +36,39 @@ public sealed class SeedPostsStep
             var profile = PickProfileByRoleWeight(profiles, seedContext);
             var createdAt = BuildCreatedAt(seedContext);
             var postId = Guid.NewGuid();
-            var mediaUrl = runImageSet[i % runImageSet.Count];
+
+            string caption;
+            bool isNsfw;
+            string mediaUrl;
+            string? location;
+
+            if (hasCatalog)
+            {
+                var item = catalog![i % catalog.Count];
+                caption = !string.IsNullOrWhiteSpace(item.Caption) ? item.Caption : $"Seed post #{i + 1}";
+                isNsfw = item.IsNsfw;
+                mediaUrl = !string.IsNullOrWhiteSpace(item.Url) ? item.Url : item.LocalPath;
+                location = item.Category;
+            }
+            else
+            {
+                caption = $"Seed post #{i + 1}";
+                isNsfw = false;
+                mediaUrl = runImageSet![i % runImageSet.Count];
+                location = null;
+            }
 
             var post = new Post
             {
                 Id = postId,
                 ProfileId = profile.Id,
-                Caption = $"Seed post #{i + 1}",
+                Caption = caption,
                 Privacy = BuildPrivacy(seedContext),
                 CreatedAt = createdAt,
                 UpdatedAt = createdAt,
                 IsArchived = false,
-                IsNSFW = false
+                IsNSFW = isNsfw,
+                LocationName = location
             };
 
             var media = new PostMedia
@@ -248,10 +271,40 @@ public sealed class SeedPostsStep
         {
             writer.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
-                $"{post.Id},{post.ProfileId},{EscapeCsv(post.Caption)},{post.Privacy},{post.CreatedAt:O},{post.UpdatedAt:O},{post.IsArchived},{post.IsNSFW},"));
+                $"{post.Id},{post.ProfileId},{EscapeCsv(post.Caption)},{post.Privacy},{post.CreatedAt:O},{post.UpdatedAt:O},{post.IsArchived},{post.IsNSFW},{EscapeCsv(post.LocationName)}"));
         }
 
         return filePath;
+    }
+
+    private static List<CatalogPostItem>? TryLoadRealPostsCatalog()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-posts-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-posts-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE", "Favi-BE.API", "seed", "catalogs", "real-posts-catalog.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "seed", "catalogs", "real-posts-catalog.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "catalogs", "real-posts-catalog.json")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Favi-BE.API", "seed", "catalogs", "real-posts-catalog.json"))
+        };
+
+        var catalogPath = candidates.FirstOrDefault(File.Exists);
+        if (string.IsNullOrWhiteSpace(catalogPath))
+            return null;
+
+        try
+        {
+            var json = File.ReadAllText(catalogPath);
+            return JsonSerializer.Deserialize<List<CatalogPostItem>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string ExportPostMediasCsv(IEnumerable<PostMedia> medias)
@@ -287,4 +340,41 @@ public sealed class SeedPostsStep
     }
 }
 
+public sealed class CatalogPostItem
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string Category { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("filename")]
+    public string Filename { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("url")]
+    public string Url { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("local_path")]
+    public string? LocalPath { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("caption")]
+    public string Caption { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("caption_en")]
+    public string? CaptionEn { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public List<string> Tags { get; set; } = [];
+
+    [System.Text.Json.Serialization.JsonPropertyName("is_nsfw")]
+    public bool IsNsfw { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("skin_ratio")]
+    public double SkinRatio { get; set; }
+}
+
 public readonly record struct SeedPostsResult(int CreatedPosts, int CreatedPostMedias, string PostsExportPath, string PostMediasExportPath);
+

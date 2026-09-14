@@ -50,6 +50,8 @@ public sealed class SeedUsersStep
             .Concat(Enumerable.Repeat("power", powerCount))
             .ToArray();
 
+        var deterministicPasswordHash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword, DeterministicBcryptSalt);
+
         for (var i = 0; i < targetUserCount; i++)
         {
             var profileId = DeterministicGuid(seedContext.SeedKey, i);
@@ -81,7 +83,7 @@ public sealed class SeedUsersStep
             {
                 Id = profileId,
                 Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword, DeterministicBcryptSalt),
+                PasswordHash = deterministicPasswordHash,
                 CreatedAt = createdAt,
                 EmailVerifiedAt = createdAt.AddMinutes(5)
             };
@@ -106,16 +108,65 @@ public sealed class SeedUsersStep
         return UserRole.User;
     }
 
+    private static readonly Lazy<string[]> RealAvatars = new(() =>
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-avatars-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-avatars-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-avatars-catalog.json")
+        };
+        var path = candidates.FirstOrDefault(File.Exists);
+        if (path != null)
+        {
+            try
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<string[]>(File.ReadAllText(path));
+                if (list != null && list.Length > 0) return list;
+            }
+            catch { }
+        }
+        return [
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&fit=crop&crop=faces&q=80",
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop&crop=faces&q=80",
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&fit=crop&crop=faces&q=80"
+        ];
+    });
+
+    private static readonly Lazy<string[]> RealCovers = new(() =>
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-covers-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-covers-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-covers-catalog.json")
+        };
+        var path = candidates.FirstOrDefault(File.Exists);
+        if (path != null)
+        {
+            try
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<string[]>(File.ReadAllText(path));
+                if (list != null && list.Length > 0) return list;
+            }
+            catch { }
+        }
+        return [
+            "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&h=400&fit=crop&q=80",
+            "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&h=400&fit=crop&q=80"
+        ];
+    });
+
     private static string BuildAvatarUrl(int index)
     {
-        var tag = AvatarTags[index % AvatarTags.Length];
-        return $"https://loremflickr.com/320/320/{tag}?lock=avatar-{index + 1}";
+        var avatars = RealAvatars.Value;
+        return avatars[index % avatars.Length];
     }
 
     private static string BuildCoverUrl(int index)
     {
-        var tag = CoverTags[index % CoverTags.Length];
-        return $"https://loremflickr.com/1280/420/{tag}?lock=cover-{index + 1}";
+        var covers = RealCovers.Value;
+        return covers[index % covers.Length];
     }
 
     private static DateTime BuildCreatedAt(SeedContext seedContext)

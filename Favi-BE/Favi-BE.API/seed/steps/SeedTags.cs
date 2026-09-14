@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using Favi_BE.Data;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
@@ -41,32 +42,66 @@ public sealed class SeedTagsStep
 
     private static List<Tag> GenerateTags(int targetTagCount)
     {
-        var tags = new List<Tag>(targetTagCount);
-        for (var i = 0; i < targetTagCount; i++)
+        var catalogTags = TryExtractCatalogTags();
+        var uniqueNames = new List<string>(targetTagCount);
+
+        if (catalogTags != null)
+        {
+            foreach (var tag in catalogTags.OrderBy(t => t))
+            {
+                if (uniqueNames.Count >= targetTagCount) break;
+                if (!uniqueNames.Contains(tag, StringComparer.OrdinalIgnoreCase))
+                    uniqueNames.Add(tag);
+            }
+        }
+
+        for (var i = 0; uniqueNames.Count < targetTagCount; i++)
         {
             var baseName = BaseTagNames[i % BaseTagNames.Length];
             var suffix = i / BaseTagNames.Length;
             var name = suffix == 0 ? baseName : $"{baseName}_{suffix:D2}";
-
-            tags.Add(new Tag
-            {
-                Id = Guid.NewGuid(),
-                Name = name
-            });
+            if (!uniqueNames.Contains(name, StringComparer.OrdinalIgnoreCase))
+                uniqueNames.Add(name);
         }
 
-        return tags;
+        return uniqueNames.Take(targetTagCount).Select(name => new Tag
+        {
+            Id = Guid.NewGuid(),
+            Name = name
+        }).ToList();
     }
 
     private static List<PostTag> GeneratePostTags(IReadOnlyList<Post> posts, IReadOnlyList<Tag> tags, SeedContext seedContext)
     {
         var postTags = new List<PostTag>(posts.Count * 2);
         var tagWeights = BuildTagWeights(tags.Count);
+        var tagLookup = tags.ToDictionary(t => t.Name.ToLowerInvariant(), t => t);
 
         foreach (var post in posts)
         {
             var tagCountForPost = seedContext.Random.Next(1, 4);
             var selected = new HashSet<Guid>();
+
+            if (!string.IsNullOrWhiteSpace(post.Caption))
+            {
+                var words = post.Caption.Split(new[] { ' ', ',', '.', '!', '?', '#' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var w in words)
+                {
+                    if (selected.Count >= tagCountForPost) break;
+                    var clean = w.Trim().ToLowerInvariant();
+                    if (tagLookup.TryGetValue(clean, out var matchedTag))
+                    {
+                        if (selected.Add(matchedTag.Id))
+                        {
+                            postTags.Add(new PostTag
+                            {
+                                PostId = post.Id,
+                                TagId = matchedTag.Id
+                            });
+                        }
+                    }
+                }
+            }
 
             while (selected.Count < tagCountForPost)
             {
@@ -83,6 +118,49 @@ public sealed class SeedTagsStep
         }
 
         return postTags;
+    }
+
+    private static HashSet<string>? TryExtractCatalogTags()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-posts-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-posts-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE", "Favi-BE.API", "seed", "catalogs", "real-posts-catalog.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "seed", "catalogs", "real-posts-catalog.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "catalogs", "real-posts-catalog.json")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Favi-BE.API", "seed", "catalogs", "real-posts-catalog.json"))
+        };
+
+        var catalogPath = candidates.FirstOrDefault(File.Exists);
+        if (string.IsNullOrWhiteSpace(catalogPath))
+            return null;
+
+        try
+        {
+            var json = File.ReadAllText(catalogPath);
+            using var doc = JsonDocument.Parse(json);
+            var tagSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var elem in doc.RootElement.EnumerateArray())
+            {
+                if (elem.TryGetProperty("tags", out var tagsElem) && tagsElem.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var t in tagsElem.EnumerateArray())
+                    {
+                        var tagStr = t.GetString();
+                        if (!string.IsNullOrWhiteSpace(tagStr))
+                            tagSet.Add(tagStr.Trim().ToLowerInvariant());
+                    }
+                }
+            }
+
+            return tagSet.Count > 0 ? tagSet : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static double[] BuildTagWeights(int count)

@@ -36,7 +36,10 @@ public sealed class DomainEventsDispatcher : IDomainEventsDispatcher
         // Phase A: In-process dispatching (MediatR Publish)
         foreach (var domainEvent in domainEvents)
         {
-            await _mediator.Publish(domainEvent, cancellationToken);
+            if (domainEvent is INotification notification)
+            {
+                await _mediator.Publish(notification, cancellationToken);
+            }
         }
 
         // Phase B: Cross-boundary dispatching (Outbox enqueue)

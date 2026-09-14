@@ -26,6 +26,8 @@ app.UseMiddleware<Favi_BE.API.Middleware.ExceptionHandlingMiddleware>();
 
 app.UseCors("Frontend");
 
+app.UseStaticFiles();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

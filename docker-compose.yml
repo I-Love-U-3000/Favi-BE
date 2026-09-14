@@ -38,6 +38,10 @@ services:
     depends_on:
       favi-postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
     ports:
       - "5000:8080" # http://localhost:5000
 
@@ -70,14 +74,16 @@ services:
       COLLECTION_NAME: posts_demo
       MODEL_NAME: ViT-B-32
       PRETRAINED: openai
-      RL_SEARCH_PER_MIN: "60"
-      RL_POST_PER_MIN: "200"
-      RL_BULK_PER_MIN: "20"
+      RL_SEARCH_PER_MIN: "120"
+      RL_POST_PER_MIN: "1200"
+      RL_BULK_PER_MIN: "1200"
       BULK_EMBED_BATCH: "64"
     depends_on:
       - qdrant
       - redis
       - favi-api
+    volumes:
+      - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
     ports:
       - "18080:8080" # http://localhost:18080 (dev)
 

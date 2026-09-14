@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using Favi_BE.API.Models.Entities;
 using Favi_BE.Data;
 using Favi_BE.Models.Entities;
@@ -231,6 +232,9 @@ public sealed class SeedEngagementStep
     private static List<Comment> GenerateComments(IReadOnlyList<Profile> profiles, IReadOnlyList<Post> posts, SeedContext seedContext)
     {
         var target = seedContext.Random.Next(SeedConfig.Comments.Min, SeedConfig.Comments.Max + 1);
+        var catalog = TryLoadRealCommentsCatalog();
+        var hasCatalog = catalog != null && catalog.Count > 0;
+
         var hotPosts = BuildHotPostSet(posts);
         var results = new List<Comment>(target);
         var rootCommentsByPost = posts.ToDictionary(p => p.Id, _ => new List<Comment>());
@@ -250,13 +254,42 @@ public sealed class SeedEngagementStep
             var createdAt = BuildTimestamp(seedContext);
             var includeUrl = seedContext.Random.NextDouble() < CommentUrlRate;
 
+            string content;
+            string? mediaUrl = null;
+
+            if (hasCatalog)
+            {
+                var item = catalog![i % catalog.Count];
+                var baseContent = !string.IsNullOrWhiteSpace(item.Content) ? item.Content : CommentTemplates[i % CommentTemplates.Length];
+                if (includeUrl)
+                {
+                    var domain = CommentLinkDomains[i % CommentLinkDomains.Length];
+                    var slug = $"post-{seedContext.Random.Next(1, 5000):D4}";
+                    content = $"{baseContent} Xem thêm: https://{domain}/{slug}";
+                }
+                else
+                {
+                    content = baseContent;
+                }
+
+                if (item.HasMedia)
+                {
+                    mediaUrl = !string.IsNullOrWhiteSpace(item.Url) ? item.Url : item.LocalPath;
+                }
+            }
+            else
+            {
+                content = BuildCommentContent(i, includeUrl, seedContext);
+            }
+
             var comment = new Comment
             {
                 Id = Guid.NewGuid(),
                 PostId = post.Id,
                 ProfileId = profile.Id,
                 ParentCommentId = parentId,
-                Content = BuildCommentContent(i, includeUrl, seedContext),
+                Content = content,
+                MediaUrl = mediaUrl,
                 CreatedAt = createdAt,
                 UpdatedAt = createdAt.AddMinutes(seedContext.Random.Next(0, 90))
             };
@@ -571,10 +604,40 @@ public sealed class SeedEngagementStep
         {
             writer.WriteLine(string.Create(
                 CultureInfo.InvariantCulture,
-                $"{comment.Id},{comment.PostId},{comment.ProfileId},{comment.ParentCommentId},{EscapeCsv(comment.Content)},,{comment.CreatedAt:O},{comment.UpdatedAt:O}"));
+                $"{comment.Id},{comment.PostId},{comment.ProfileId},{comment.ParentCommentId},{EscapeCsv(comment.Content)},{EscapeCsv(comment.MediaUrl)},{comment.CreatedAt:O},{comment.UpdatedAt:O}"));
         }
 
         return filePath;
+    }
+
+    private static List<CatalogCommentItem>? TryLoadRealCommentsCatalog()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-comments-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-comments-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE", "Favi-BE.API", "seed", "catalogs", "real-comments-catalog.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "seed", "catalogs", "real-comments-catalog.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "catalogs", "real-comments-catalog.json")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Favi-BE.API", "seed", "catalogs", "real-comments-catalog.json"))
+        };
+
+        var catalogPath = candidates.FirstOrDefault(File.Exists);
+        if (string.IsNullOrWhiteSpace(catalogPath))
+            return null;
+
+        try
+        {
+            var json = File.ReadAllText(catalogPath);
+            return JsonSerializer.Deserialize<List<CatalogCommentItem>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string ExportRepostsCsv(IEnumerable<Repost> reposts)
@@ -616,3 +679,33 @@ public readonly record struct SeedEngagementResult(
     string ReactionsExportPath,
     string CommentsExportPath,
     string RepostsExportPath);
+
+public sealed class CatalogCommentItem
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("has_media")]
+    public bool HasMedia { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("category")]
+    public string Category { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("filename")]
+    public string Filename { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("url")]
+    public string Url { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("local_path")]
+    public string? LocalPath { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("content")]
+    public string Content { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("tags")]
+    public List<string> Tags { get; set; } = [];
+}

@@ -9,7 +9,21 @@ namespace Favi_BE.Models.Dtos
         public bool Enabled { get; set; } = true;
         public int TimeoutSeconds { get; set; } = 60;
         public double Alpha { get; set; } = 0.5;
+        public int BulkBatchSize { get; set; } = 16;
+        public int MaxConcurrency { get; set; } = 4;
     }
+
+    // DTO for bulk post indexing
+    public record BulkIndexPostsRequest(
+        [property: JsonPropertyName("items")] List<VectorIndexPostRequest> Items,
+        [property: JsonPropertyName("batch_size")] int BatchSize = 16
+    );
+
+    public record BulkIndexPostsResponse(
+        [property: JsonPropertyName("ok")] bool Ok,
+        [property: JsonPropertyName("inserted")] int Inserted,
+        [property: JsonPropertyName("batch_size")] int BatchSize
+    );
 
     // DTO for indexing a post (matches Python API PostIn model)
     public record VectorIndexPostRequest(

@@ -13,6 +13,12 @@ namespace Favi_BE.Interfaces.Services
         Task<bool> IndexPostAsync(Post post, CancellationToken ct = default);
 
         /// <summary>
+        /// Bulk index multiple posts in batches into the vector database.
+        /// Returns the count of successfully indexed posts.
+        /// </summary>
+        Task<int> IndexPostsBatchAsync(IReadOnlyList<Post> posts, CancellationToken ct = default);
+
+        /// <summary>
         /// Search for posts using semantic/vector search.
         /// Returns list of search results with scores, or empty list on error.
         /// </summary>

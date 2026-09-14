@@ -13,12 +13,28 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
+using Favi_BE.BuildingBlocks.Application.Redis;
+using Favi_BE.BuildingBlocks.Infrastructure.Redis;
+using StackExchange.Redis;
+
 namespace Favi_BE.API.DependencyInjection;
 
 public static class InfrastructureExtensions
 {
     public static IServiceCollection AddInfrastructureExtensions(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        services.Configure<MediaCacheOptions>(configuration.GetSection("MediaCache"));
+        services.Configure<RedisStreamOptions>(configuration.GetSection("Redis"));
+
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var redisConnectionString = configuration["Redis:ConnectionString"] ?? "redis:6379";
+            var redisConfig = ConfigurationOptions.Parse(redisConnectionString);
+            redisConfig.AbortOnConnectFail = false;
+            return ConnectionMultiplexer.Connect(redisConfig);
+        });
+
+        services.AddScoped<IRedisStreamProducer, RedisStreamProducer>();
         services.AddCors(options =>
         {
             options.AddPolicy("Frontend", policy =>
@@ -70,6 +86,7 @@ public static class InfrastructureExtensions
         services.AddHostedService<StoryExpirationService>();
         services.AddHostedService<OutboxProcessor>();
         services.AddHostedService<InboxProcessor>();
+        services.AddHostedService<PostAIProcessingWorker>();
 
         services.AddSignalR();
 
@@ -82,6 +99,7 @@ public static class InfrastructureExtensions
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.DefaultRequestHeaders.Add("X-Internal-Service", "favi-backend");
         });
 
         services.Configure<NSFWOptions>(configuration.GetSection("NSFW"));
@@ -93,6 +111,7 @@ public static class InfrastructureExtensions
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             client.DefaultRequestHeaders.Add("Accept", "application/json");
+            client.DefaultRequestHeaders.Add("X-Internal-Service", "favi-backend");
         });
 
         services.AddDbContext<AppDbContext>(options =>

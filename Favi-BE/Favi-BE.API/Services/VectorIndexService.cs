@@ -97,6 +97,79 @@ namespace Favi_BE.Services
             }
         }
 
+        public async Task<int> IndexPostsBatchAsync(IReadOnlyList<Post> posts, CancellationToken ct = default)
+        {
+            if (!_options.Enabled || posts.Count == 0)
+            {
+                return 0;
+            }
+
+            var batchId = Guid.NewGuid().ToString("N")[..8];
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            try
+            {
+                var items = new List<VectorIndexPostRequest>(posts.Count);
+                foreach (var post in posts)
+                {
+                    var imageUrls = post.PostMedias?
+                        .OrderBy(m => m.Position)
+                        .Select(m => m.Url)
+                        .Where(url => !string.IsNullOrWhiteSpace(url))
+                        .ToList() ?? [];
+
+                    if (imageUrls.Count == 0) continue;
+
+                    items.Add(new VectorIndexPostRequest(
+                        PostId: post.Id.ToString(),
+                        OwnerId: post.ProfileId.ToString(),
+                        Privacy: MapPrivacyLevel(post.Privacy),
+                        ImageUrls: imageUrls,
+                        Caption: post.Caption ?? string.Empty,
+                        Alpha: _options.Alpha
+                    ));
+                }
+
+                if (items.Count == 0) return 0;
+
+                var bulkRequest = new BulkIndexPostsRequest(items, _options.BulkBatchSize);
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds * 2));
+
+                var response = await _httpClient.PostAsJsonAsync("/bulk_posts", bulkRequest, cts.Token);
+                sw.Stop();
+
+                var throughput = sw.ElapsedMilliseconds > 0 ? (items.Count / (sw.ElapsedMilliseconds / 1000.0)) : 0;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<BulkIndexPostsResponse>(cancellationToken: ct);
+                    var inserted = result?.Inserted ?? items.Count;
+
+                    _logger.LogInformation(
+                        "[VECTOR_INDEXED] Batch {BatchId} indexed {PostCount} posts into Qdrant. Status={StatusCode}, ElapsedMs={ElapsedMs}ms, Throughput={Throughput:F1} posts/s",
+                        batchId, inserted, (int)response.StatusCode, sw.ElapsedMilliseconds, throughput);
+
+                    return inserted;
+                }
+                else
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync(ct);
+                    _logger.LogWarning(
+                        "[VECTOR_INDEX_FAILED] Batch {BatchId} failed with HTTP {StatusCode}. Body: {ErrorBody}, ElapsedMs={ElapsedMs}ms",
+                        batchId, response.StatusCode, errorBody, sw.ElapsedMilliseconds);
+
+                    return 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+                _logger.LogError(ex, "[VECTOR_INDEX_ERROR] Batch {BatchId} failed after {ElapsedMs}ms", batchId, sw.ElapsedMilliseconds);
+                return 0;
+            }
+        }
+
         public async Task<List<VectorSearchResultItem>> SearchAsync(
             Guid userId,
             string query,

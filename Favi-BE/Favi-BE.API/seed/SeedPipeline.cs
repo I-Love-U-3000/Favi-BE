@@ -1,5 +1,6 @@
 using Favi_BE.API.Seed.Steps;
 using Favi_BE.Data;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -157,10 +158,16 @@ public static class SeedPipeline
             Log("[SeedPipeline] Step 7 skipped: stories already exist.");
         }
 
-        Log("[SeedPipeline] Running Step 8 - Global Validation Gate...");
+        Log("[SeedPipeline] Running Step 8 - Seed Vector Index (Qdrant)...");
+        var vectorIndexService = scope.ServiceProvider.GetRequiredService<IVectorIndexService>();
+        var vectorIndexStep = new SeedVectorIndexStep();
+        var vectorIndexResult = await vectorIndexStep.ExecuteAsync(db, vectorIndexService, seedContext, cancellationToken);
+        Log($"[SeedPipeline] Step 8 done. Indexed posts: {vectorIndexResult.IndexedCount} in {vectorIndexResult.ElapsedMilliseconds}ms. Manifest: {vectorIndexResult.ManifestPath}");
+
+        Log("[SeedPipeline] Running Step 9 - Global Validation Gate...");
         var validator = new SeedValidator();
         await validator.ValidateAsync(db, cancellationToken);
-        Log("[SeedPipeline] Step 8 done. Validation passed.");
+        Log("[SeedPipeline] Step 9 done. Validation passed.");
 
         Log("[SeedPipeline] Running auth bootstrap for tokens.csv...");
         var jwtService = scope.ServiceProvider.GetRequiredService<IJwtService>();
@@ -169,11 +176,11 @@ public static class SeedPipeline
         Log($"[SeedPipeline] Auth bootstrap done. Tokens generated for users: {authResult.UserCount}");
         Log($"[SeedPipeline] Auth bootstrap export: {authResult.ExportPath}");
 
-        Log("[SeedPipeline] Running Step 9 - Export Dataset...");
-        var step9 = new SeedExport();
-        var step9Result = await step9.ExecuteAsync(db, cancellationToken);
-        Log($"[SeedPipeline] Step 9 done. Output root: {step9Result.OutputRoot}");
-        Log($"[SeedPipeline] Step 9 manifest: {step9Result.ManifestPath}");
+        Log("[SeedPipeline] Running Step 10 - Export Dataset...");
+        var step10 = new SeedExport();
+        var step10Result = await step10.ExecuteAsync(db, cancellationToken);
+        Log($"[SeedPipeline] Step 10 done. Output root: {step10Result.OutputRoot}");
+        Log($"[SeedPipeline] Step 10 manifest: {step10Result.ManifestPath}");
     }
 
     private static void Log(string message, string level = "INFO")
