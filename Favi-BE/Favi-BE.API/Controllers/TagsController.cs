@@ -1,4 +1,4 @@
-﻿using Favi_BE.Interfaces.Services;
+using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +39,15 @@ namespace Favi_BE.Controllers
             Ok(await _tags.CreateAsync());*/
 
         [HttpGet("{id}/posts")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetPosts(Guid id, int page = 1, int pageSize = 20) =>
-            Ok(await _tags.GetPostsByTagAsync(id, null, page, pageSize));
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetPosts(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
+        {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
+            var result = await _tags.GetPostsByTagAsync(id, null, page, actualSize);
+            return Ok(PaginationResult<PostResponse>.Create(result.Items.ToList(), page, actualSize, result.TotalCount));
+        }
     }
 }

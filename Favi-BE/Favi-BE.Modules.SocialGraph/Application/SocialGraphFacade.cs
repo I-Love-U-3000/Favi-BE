@@ -24,10 +24,10 @@ public sealed class SocialGraphFacade : ISocialGraphFacade
     public Task<FollowCommandResult> UnfollowUserAsync(UnfollowUserCommand command, CancellationToken ct)
         => _mediator.Send(command, ct);
 
-    public Task<IReadOnlyList<FollowQueryDto>> GetFollowersAsync(GetFollowersQuery query, CancellationToken ct)
+    public Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowersAsync(GetFollowersQuery query, CancellationToken ct)
         => _mediator.Send(query, ct);
 
-    public Task<IReadOnlyList<FollowQueryDto>> GetFollowingsAsync(GetFollowingsQuery query, CancellationToken ct)
+    public Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowingsAsync(GetFollowingsQuery query, CancellationToken ct)
         => _mediator.Send(query, ct);
 
     public Task<IReadOnlyList<SocialLinkQueryDto>> GetSocialLinksAsync(GetSocialLinksQuery query, CancellationToken ct)

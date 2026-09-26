@@ -112,21 +112,26 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("{id}/posts")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetPosts(Guid id, int page = 1, int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetPosts(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             var collection = await _mediator.Send(new GetCollectionByIdQuery(id, viewerId));
             if (collection is null)
                 return NotFound(new { code = "COLLECTION_NOT_FOUND", message = "Bộ sưu tập không tồn tại." });
 
-            var (posts, total) = await _mediator.Send(new GetCollectionPostsQuery(id, viewerId, page, pageSize));
+            var (posts, total) = await _mediator.Send(new GetCollectionPostsQuery(id, viewerId, page, actualSize));
             var dtos = new List<PostResponse>();
             foreach (var p in posts)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, viewerId));
                 dtos.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(dtos, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(dtos, page, actualSize, total));
         }
 
         [Authorize]
@@ -141,17 +146,22 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("owner/{ownerId}")]
-        public async Task<ActionResult<PagedResult<CollectionResponse>>> GetByOwner(Guid ownerId, int page = 1, int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<CollectionResponse>>> GetByOwner(
+            Guid ownerId,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            var (collections, total) = await _mediator.Send(new GetCollectionsQuery(ownerId, viewerId, page, pageSize));
+            var (collections, total) = await _mediator.Send(new GetCollectionsQuery(ownerId, viewerId, page, actualSize));
             var dtos = new List<CollectionResponse>();
             foreach (var c in collections)
             {
                 var reactions = await _mediator.Send(new GetCollectionReactionsQuery(c.Id, viewerId));
                 dtos.Add(MapToCollectionResponse(c, reactions));
             }
-            return Ok(new PagedResult<CollectionResponse>(dtos, page, pageSize, total));
+            return Ok(PaginationResult<CollectionResponse>.Create(dtos, page, actualSize, total));
         }
 
         [HttpGet("{id}")]
@@ -210,30 +220,42 @@ namespace Favi_BE.Controllers
 
         [Authorize]
         [HttpGet("{id:guid}/reactors")]
-        public async Task<ActionResult<IEnumerable<CollectionReactorResponse>>> GetReactors(Guid id)
+        public async Task<ActionResult<PaginationResult<CollectionReactorResponse>>> GetReactors(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var reactors = await _mediator.Send(new GetCollectionReactorsQuery(id));
-            return Ok(reactors.Select(r => new CollectionReactorResponse(
+            var dtos = reactors.Select(r => new CollectionReactorResponse(
                 r.ProfileId,
                 r.Username,
                 r.DisplayName,
                 r.AvatarUrl,
                 (LegacyReactionType)(int)r.ReactionType,
-                r.ReactedAt)));
+                r.ReactedAt)).ToList();
+
+            var paginated = dtos.Skip((page - 1) * actualSize).Take(actualSize).ToList();
+            return Ok(PaginationResult<CollectionReactorResponse>.Create(paginated, page, actualSize, dtos.Count));
         }
 
         [HttpGet("trending")]
-        public async Task<ActionResult<PagedResult<CollectionResponse>>> GetTrending(int page = 1, int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<CollectionResponse>>> GetTrending(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
-            var (collections, total) = await _mediator.Send(new GetTrendingCollectionsQuery(viewerId, page, pageSize));
+            var (collections, total) = await _mediator.Send(new GetTrendingCollectionsQuery(viewerId, page, actualSize));
             var dtos = new List<CollectionResponse>();
             foreach (var c in collections)
             {
                 var reactions = await _mediator.Send(new GetCollectionReactionsQuery(c.Id, viewerId));
                 dtos.Add(MapToCollectionResponse(c, reactions));
             }
-            return Ok(new PagedResult<CollectionResponse>(dtos, page, pageSize, total));
+            return Ok(PaginationResult<CollectionResponse>.Create(dtos, page, actualSize, total));
         }
 
         // ── Mapping helpers ───────────────────────────────────────────────

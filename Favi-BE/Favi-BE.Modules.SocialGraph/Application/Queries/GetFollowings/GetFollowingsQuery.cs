@@ -6,4 +6,4 @@ namespace Favi_BE.Modules.SocialGraph.Application.Queries.GetFollowings;
 public sealed record GetFollowingsQuery(
     Guid ProfileId,
     int Skip,
-    int Take) : IQuery<IReadOnlyList<FollowQueryDto>>;
+    int Take) : IQuery<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)>;

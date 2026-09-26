@@ -15,18 +15,22 @@ internal sealed class SocialGraphQueryReaderAdapter : ISocialGraphQueryReader
         _uow = uow;
     }
 
-    public async Task<IReadOnlyList<FollowQueryDto>> GetFollowersAsync(
+    public async Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowersAsync(
         Guid profileId, int skip, int take, CancellationToken ct = default)
     {
         var follows = await _uow.Follows.GetFollowersAsync(profileId, skip, take);
-        return follows.Select(f => new FollowQueryDto(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+        var count = await _uow.Follows.GetFollowersCountAsync(profileId);
+        var dtos = follows.Select(f => new FollowQueryDto(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+        return (dtos, count);
     }
 
-    public async Task<IReadOnlyList<FollowQueryDto>> GetFollowingsAsync(
+    public async Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowingsAsync(
         Guid profileId, int skip, int take, CancellationToken ct = default)
     {
         var follows = await _uow.Follows.GetFollowingAsync(profileId, skip, take);
-        return follows.Select(f => new FollowQueryDto(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+        var count = await _uow.Follows.GetFollowingCountAsync(profileId);
+        var dtos = follows.Select(f => new FollowQueryDto(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+        return (dtos, count);
     }
 
     public async Task<IReadOnlyList<SocialLinkQueryDto>> GetSocialLinksAsync(

@@ -83,20 +83,21 @@ namespace Favi_BE.Controllers
         // GET: Bài viết theo Profile
         // ======================
         [HttpGet("profile/{profileId:guid}")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetByProfile(
-            Guid profileId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetByProfile(
+            Guid profileId, [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = TryGetUserId();
             try
             {
-                var (items, total) = await _mediator.Send(new GetProfilePostsQuery(profileId, viewerId, page, pageSize));
+                var (items, total) = await _mediator.Send(new GetProfilePostsQuery(profileId, viewerId, page, actualSize));
                 var responses = new List<PostResponse>();
                 foreach (var p in items)
                 {
                     var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, viewerId));
                     responses.Add(MapToPostResponse(p, reactions));
                 }
-                return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+                return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
             }
             catch (KeyNotFoundException)
             {
@@ -109,18 +110,19 @@ namespace Favi_BE.Controllers
         // ======================
         [Authorize]
         [HttpGet("feed")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetPersonalFeed(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetPersonalFeed(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetNewsFeedQuery(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetNewsFeedQuery(userId, page, actualSize));
             var responses = new List<PostResponse>();
             foreach (var p in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, userId));
                 responses.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================
@@ -128,11 +130,12 @@ namespace Favi_BE.Controllers
         // ======================
         [Authorize]
         [HttpGet("feed-with-reposts")]
-        public async Task<ActionResult<PagedResult<FeedItemDto>>> GetFeedWithReposts(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<FeedItemDto>>> GetFeedWithReposts(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetFeedWithRepostsQuery(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetFeedWithRepostsQuery(userId, page, actualSize));
 
             var dtos = new List<FeedItemDto>();
             foreach (var item in items)
@@ -149,7 +152,7 @@ namespace Favi_BE.Controllers
                 }
             }
 
-            return Ok(new PagedResult<FeedItemDto>(dtos, page, pageSize, total));
+            return Ok(PaginationResult<FeedItemDto>.Create(dtos, page, actualSize, total));
         }
 
         // ======================
@@ -157,17 +160,18 @@ namespace Favi_BE.Controllers
         // ======================
         [HttpGet("guest-feed")]
         [AllowAnonymous]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetGuestFeed(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetGuestFeed(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
-            var (items, total) = await _mediator.Send(new GetGuestFeedQuery(page, pageSize));
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
+            var (items, total) = await _mediator.Send(new GetGuestFeedQuery(page, actualSize));
             var responses = new List<PostResponse>();
             foreach (var p in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, null));
                 responses.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================
@@ -175,57 +179,61 @@ namespace Favi_BE.Controllers
         // ======================
         [Authorize]
         [HttpGet("explore")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetExplore(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetExplore(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetExploreFeedQuery(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetExploreFeedQuery(userId, page, actualSize));
             var responses = new List<PostResponse>();
             foreach (var p in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, userId));
                 responses.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================
         // GET: Latest
         // ======================
         [HttpGet("latest")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetLatest(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetLatest(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = TryGetUserId();
-            var (items, total) = await _mediator.Send(new GetLatestFeedQuery(page, pageSize));
+            var (items, total) = await _mediator.Send(new GetLatestFeedQuery(page, actualSize));
             var responses = new List<PostResponse>();
             foreach (var p in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, viewerId));
                 responses.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================
         // GET: Post theo Tag
         // ======================
         [HttpGet("tag/{tagId:guid}")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetByTag(
-            Guid tagId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetByTag(
+            Guid tagId, [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = TryGetUserId();
-            var result = await _tags.GetPostsByTagAsync(tagId, viewerId, page, pageSize);
-            return Ok(result);
+            var result = await _tags.GetPostsByTagAsync(tagId, viewerId, page, actualSize);
+            return Ok(PaginationResult<PostResponse>.Create(result.Items.ToList(), page, actualSize, result.TotalCount));
         }
 
         // ======================
         // GET: Related posts
         // ======================
         [HttpGet("{id:guid}/related")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetRelated(
-            Guid id, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetRelated(
+            Guid id, [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = TryGetUserId();
             var post = await _mediator.Send(new GetPostByIdQuery(id, null));
             if (post is null)
@@ -239,7 +247,7 @@ namespace Favi_BE.Controllers
             {
                 foreach (var tagId in tagIds)
                 {
-                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, userId, 1, pageSize * 2);
+                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, userId, 1, actualSize * 2);
                     foreach (var p in tagPosts.Items.Where(p => p.Id != id))
                     {
                         if (!relatedPosts.Any(rp => rp.Id == p.Id))
@@ -249,10 +257,10 @@ namespace Favi_BE.Controllers
             }
 
             // Strategy 2: Semantic search if not enough
-            if (relatedPosts.Count < pageSize && !string.IsNullOrEmpty(post.Caption))
+            if (relatedPosts.Count < actualSize && !string.IsNullOrEmpty(post.Caption))
             {
                 var semanticResult = await _search.SemanticSearchAsync(
-                    new SemanticSearchRequest(post.Caption, 1, pageSize, 50),
+                    new SemanticSearchRequest(post.Caption, 1, actualSize, 50),
                     userId ?? Guid.Empty);
 
                 foreach (var searchPost in semanticResult.Posts.Where(p => p.Id != id))
@@ -272,11 +280,11 @@ namespace Favi_BE.Controllers
             relatedPosts.RemoveAll(p => p.Id == id);
 
             var paginated = relatedPosts
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((page - 1) * actualSize)
+                .Take(actualSize)
                 .ToList();
 
-            return Ok(new PagedResult<PostResponse>(paginated, page, pageSize, relatedPosts.Count));
+            return Ok(PaginationResult<PostResponse>.Create(paginated, page, actualSize, relatedPosts.Count));
         }
 
         // ======================
@@ -398,18 +406,19 @@ namespace Favi_BE.Controllers
         // ======================
         [Authorize]
         [HttpGet("recycle-bin")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetRecycleBin(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetRecycleBin(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetRecycleBinQuery(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetRecycleBinQuery(userId, page, actualSize));
             var responses = new List<PostResponse>();
             foreach (var p in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, userId));
                 responses.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================
@@ -445,18 +454,19 @@ namespace Favi_BE.Controllers
         // ======================
         [Authorize]
         [HttpGet("archived")]
-        public async Task<ActionResult<PagedResult<PostResponse>>> GetArchived(
-            [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<PostResponse>>> GetArchived(
+            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetArchivedPostsQuery(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetArchivedPostsQuery(userId, page, actualSize));
             var responses = new List<PostResponse>();
             foreach (var p in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, userId));
                 responses.Add(MapToPostResponse(p, reactions));
             }
-            return Ok(new PagedResult<PostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================
@@ -530,16 +540,21 @@ namespace Favi_BE.Controllers
         // ======================
         [Authorize]
         [HttpGet("{id:guid}/reactors")]
-        public async Task<ActionResult<IEnumerable<PostReactorResponse>>> GetReactors(Guid id)
+        public async Task<ActionResult<PaginationResult<PostReactorResponse>>> GetReactors(
+            Guid id, [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var reactors = await _mediator.Send(new GetPostReactorsQuery(id));
-            return Ok(reactors.Select(r => new PostReactorResponse(
+            var dtos = reactors.Select(r => new PostReactorResponse(
                 r.ProfileId,
                 r.Username,
                 r.DisplayName,
                 r.AvatarUrl,
                 (ReactionType)(int)r.ReactionType,
-                r.ReactedAt)));
+                r.ReactedAt)).ToList();
+
+            var paginated = dtos.Skip((page - 1) * actualSize).Take(actualSize).ToList();
+            return Ok(PaginationResult<PostReactorResponse>.Create(paginated, page, actualSize, dtos.Count));
         }
 
         // ======================
@@ -585,18 +600,19 @@ namespace Favi_BE.Controllers
         // GET: Get reposts by profile
         // ======================
         [HttpGet("profile/{profileId:guid}/shares")]
-        public async Task<ActionResult<PagedResult<RepostResponse>>> GetProfileShares(
-            Guid profileId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<RepostResponse>>> GetProfileShares(
+            Guid profileId, [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var currentUserId = TryGetUserId();
-            var (items, total) = await _mediator.Send(new GetRepostsByProfileQuery(profileId, currentUserId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetRepostsByProfileQuery(profileId, currentUserId, page, actualSize));
             var responses = new List<RepostResponse>();
             foreach (var r in items)
             {
                 var reactions = await _mediator.Send(new GetPostReactionsQuery(r.OriginalPostId, currentUserId));
                 responses.Add(MapToRepostResponse(r, reactions));
             }
-            return Ok(new PagedResult<RepostResponse>(responses, page, pageSize, total));
+            return Ok(PaginationResult<RepostResponse>.Create(responses, page, actualSize, total));
         }
 
         // ======================

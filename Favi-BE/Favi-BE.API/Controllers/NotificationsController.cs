@@ -26,14 +26,16 @@ namespace Favi_BE.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<ActionResult<PagedResult<NotificationDto>>> GetNotifications(
+        public async Task<ActionResult<PaginationResult<NotificationDto>>> GetNotifications(
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetNotificationsQuery(userId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetNotificationsQuery(userId, page, actualSize));
             var dtos = items.Select(MapToDto).ToList();
-            return Ok(new PagedResult<NotificationDto>(dtos, page, pageSize, total));
+            return Ok(PaginationResult<NotificationDto>.Create(dtos, page, actualSize, total));
         }
 
         [Authorize]

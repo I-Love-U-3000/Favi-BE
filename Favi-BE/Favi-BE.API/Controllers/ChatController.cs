@@ -1,6 +1,7 @@
 using Favi_BE.Common;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.API.Models.Dtos;
+using Favi_BE.Models.Dtos;
 using Favi_BE.Modules.Auth.Application.Commands.UpdateLastActive;
 using Favi_BE.Modules.Messaging.Application.Commands.CreateGroupConversation;
 using Favi_BE.Modules.Messaging.Application.Commands.GetOrCreateDm;
@@ -52,14 +53,20 @@ namespace Favi_BE.API.Controllers
         }
 
         [HttpGet("conversations")]
-        public async Task<ActionResult<IEnumerable<ConversationSummaryDto>>> GetConversations(
+        public async Task<ActionResult<PaginationResult<ConversationSummaryDto>>> GetConversations(
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
             await _mediator.Send(new UpdateLastActiveCommand(userId));
-            var result = await _mediator.Send(new GetConversationsQuery(userId, page, pageSize));
-            return Ok(result.Select(MapConversation));
+            var result = await _mediator.Send(new GetConversationsQuery(userId, actualPage, actualSize));
+            var dtos = result.Select(MapConversation).ToList();
+            var hasPrevious = actualPage > 1;
+            var hasNext = dtos.Count >= actualSize;
+            return Ok(new PaginationResult<ConversationSummaryDto>(dtos, actualPage, actualSize, hasPrevious, hasNext));
         }
 
         [HttpGet("{conversationId:guid}/messages")]

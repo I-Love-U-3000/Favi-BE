@@ -101,17 +101,39 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("{id}/followers")]
-        public async Task<IActionResult> Followers(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
+        public async Task<ActionResult<PaginationResult<FollowResponse>>> Followers(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? skip = null,
+            [FromQuery] int? take = null,
+            [FromQuery] int? pageSize = null)
         {
-            var result = await _socialFacade.GetFollowersAsync(new GetFollowersQuery(id, skip ?? 0, take ?? 1000));
-            return Ok(result);
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize ?? (take ?? (size > 0 ? size : 10));
+            var actualSkip = skip ?? ((actualPage - 1) * actualSize);
+
+            var (items, total) = await _socialFacade.GetFollowersAsync(new GetFollowersQuery(id, actualSkip, actualSize));
+            var dtos = items.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+            return Ok(PaginationResult<FollowResponse>.Create(dtos, actualPage, actualSize, total));
         }
 
         [HttpGet("{id}/followings")]
-        public async Task<IActionResult> Followings(Guid id, [FromQuery] int? skip, [FromQuery] int? take)
+        public async Task<ActionResult<PaginationResult<FollowResponse>>> Followings(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? skip = null,
+            [FromQuery] int? take = null,
+            [FromQuery] int? pageSize = null)
         {
-            var result = await _socialFacade.GetFollowingsAsync(new GetFollowingsQuery(id, skip ?? 0, take ?? 1000));
-            return Ok(result);
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize ?? (take ?? (size > 0 ? size : 10));
+            var actualSkip = skip ?? ((actualPage - 1) * actualSize);
+
+            var (items, total) = await _socialFacade.GetFollowingsAsync(new GetFollowingsQuery(id, actualSkip, actualSize));
+            var dtos = items.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+            return Ok(PaginationResult<FollowResponse>.Create(dtos, actualPage, actualSize, total));
         }
 
         [HttpGet("{id}/links")]
@@ -251,22 +273,83 @@ namespace Favi_BE.Controllers
 
         [HttpGet("recommendations")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetRecommendations(
-            [FromQuery] int skip = 0, [FromQuery] int take = 20)
+        public async Task<ActionResult<PaginationResult<ProfileResponse>>> GetRecommendations(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null,
+            [FromQuery] int? skip = null,
+            [FromQuery] int? take = null)
         {
             var viewerId = User.GetUserId();
-            var items = await _authFacade.GetRecommendedProfilesAsync(new GetRecommendedProfilesQuery(viewerId, skip, take));
-            return Ok(items.Select(MapProfile));
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
+            var actualSkip = skip ?? ((actualPage - 1) * actualSize);
+            var actualTake = take ?? actualSize;
+
+            var items = await _authFacade.GetRecommendedProfilesAsync(new GetRecommendedProfilesQuery(viewerId, actualSkip, actualTake));
+            var dtos = items.Select(MapProfile).ToList();
+            var hasPrevious = actualPage > 1;
+            var hasNext = dtos.Count >= actualTake;
+            return Ok(new PaginationResult<ProfileResponse>(dtos, actualPage, actualSize, hasPrevious, hasNext));
         }
 
         [HttpGet("online-friends")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<ProfileResponse>>> GetOnlineFriends(
-            [FromQuery] int withinLastMinutes = 15)
+        public async Task<ActionResult<PaginationResult<ProfileResponse>>> GetOnlineFriends(
+            [FromQuery] int withinLastMinutes = 15,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize ?? (size > 0 ? size : 10);
             var userId = User.GetUserId();
             var items = await _authFacade.GetOnlineFriendsAsync(new GetOnlineFriendsQuery(userId, withinLastMinutes));
-            return Ok(items.Select(MapProfile));
+            var dtos = items.Select(MapProfile).ToList();
+            var paginated = dtos.Skip((actualPage - 1) * actualSize).Take(actualSize).ToList();
+            return Ok(PaginationResult<ProfileResponse>.Create(paginated, actualPage, actualSize, dtos.Count));
+        }
+
+        [HttpGet("friends")]
+        [Authorize]
+        public async Task<ActionResult<PaginationResult<ProfileResponse>>> GetMyFriends(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
+        {
+            var userId = User.GetUserId();
+            return await GetFriendsInternal(userId, page, size, pageSize);
+        }
+
+        [HttpGet("{id}/friends")]
+        public async Task<ActionResult<PaginationResult<ProfileResponse>>> GetFriends(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
+        {
+            return await GetFriendsInternal(id, page, size, pageSize);
+        }
+
+        private async Task<ActionResult<PaginationResult<ProfileResponse>>> GetFriendsInternal(
+            Guid profileId, int page, int size, int? pageSize)
+        {
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize ?? (size > 0 ? size : 10);
+            var actualSkip = (actualPage - 1) * actualSize;
+
+            var (items, total) = await _socialFacade.GetFollowingsAsync(new GetFollowingsQuery(profileId, actualSkip, actualSize));
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
+            var profiles = new List<ProfileResponse>();
+            foreach (var f in items)
+            {
+                var p = await _authFacade.GetProfileByIdAsync(new GetProfileByIdQuery(f.FolloweeId, viewerId));
+                if (p is not null)
+                {
+                    profiles.Add(MapProfile(p));
+                }
+            }
+            return Ok(PaginationResult<ProfileResponse>.Create(profiles, actualPage, actualSize, total));
         }
 
         [HttpPost("heartbeat")]

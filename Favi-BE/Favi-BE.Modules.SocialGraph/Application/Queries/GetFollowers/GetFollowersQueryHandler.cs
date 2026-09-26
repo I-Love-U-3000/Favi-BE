@@ -4,7 +4,7 @@ using MediatR;
 
 namespace Favi_BE.Modules.SocialGraph.Application.Queries.GetFollowers;
 
-internal sealed class GetFollowersQueryHandler : IRequestHandler<GetFollowersQuery, IReadOnlyList<FollowQueryDto>>
+internal sealed class GetFollowersQueryHandler : IRequestHandler<GetFollowersQuery, (IReadOnlyList<FollowQueryDto> Items, int TotalCount)>
 {
     private readonly ISocialGraphQueryReader _reader;
 
@@ -13,10 +13,10 @@ internal sealed class GetFollowersQueryHandler : IRequestHandler<GetFollowersQue
         _reader = reader;
     }
 
-    public async Task<IReadOnlyList<FollowQueryDto>> Handle(GetFollowersQuery request, CancellationToken cancellationToken)
+    public async Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> Handle(GetFollowersQuery request, CancellationToken cancellationToken)
     {
         if (!await _reader.ProfileExistsAsync(request.ProfileId, cancellationToken))
-            return [];
+            return ([], 0);
 
         return await _reader.GetFollowersAsync(request.ProfileId, request.Skip, request.Take, cancellationToken);
     }

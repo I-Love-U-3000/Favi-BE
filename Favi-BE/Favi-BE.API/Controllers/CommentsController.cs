@@ -80,17 +80,22 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("post/{postId}")]
-        public async Task<ActionResult<PagedResult<CommentResponse>>> GetByPost(Guid postId, int page = 1, int pageSize = 20)
+        public async Task<ActionResult<PaginationResult<CommentResponse>>> GetByPost(
+            Guid postId,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
             var post = await _mediator.Send(new GetPostByIdQuery(postId, viewerId));
 
             if (post is null)
                 return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại." });
 
-            var (items, total) = await _mediator.Send(new GetCommentsByPostQuery(postId, viewerId, page, pageSize));
+            var (items, total) = await _mediator.Send(new GetCommentsByPostQuery(postId, viewerId, page, actualSize));
             var dtos = items.Select(MapToCommentResponse).ToList();
-            return Ok(new PagedResult<CommentResponse>(dtos, page, pageSize, total));
+            return Ok(PaginationResult<CommentResponse>.Create(dtos, page, actualSize, total));
         }
 
         [Authorize]
@@ -116,20 +121,28 @@ namespace Favi_BE.Controllers
 
         [Authorize]
         [HttpGet("{id:guid}/reactors")]
-        public async Task<ActionResult<IEnumerable<CommentReactorResponse>>> GetReactors(Guid id)
+        public async Task<ActionResult<PaginationResult<CommentReactorResponse>>> GetReactors(
+            Guid id,
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var comment = await _mediator.Send(new GetCommentByIdQuery(id, null));
             if (comment is null)
                 return NotFound(new { code = "COMMENT_NOT_FOUND", message = "Bình luận không tồn tại." });
 
             var reactors = await _mediator.Send(new GetCommentReactorsQuery(id));
-            return Ok(reactors.Select(r => new CommentReactorResponse(
+            var dtos = reactors.Select(r => new CommentReactorResponse(
                 r.ProfileId,
                 r.Username,
                 r.DisplayName,
                 r.AvatarUrl,
                 (LegacyReactionType)(int)r.ReactionType,
-                r.ReactedAt)));
+                r.ReactedAt)).ToList();
+
+            var paginated = dtos.Skip((page - 1) * actualSize).Take(actualSize).ToList();
+            return Ok(PaginationResult<CommentReactorResponse>.Create(paginated, page, actualSize, dtos.Count));
         }
 
         [Authorize]

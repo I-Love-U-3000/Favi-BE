@@ -14,8 +14,8 @@ public interface ISocialGraphFacade
 {
     Task<FollowCommandResult> FollowUserAsync(FollowUserCommand command, CancellationToken ct = default);
     Task<FollowCommandResult> UnfollowUserAsync(UnfollowUserCommand command, CancellationToken ct = default);
-    Task<IReadOnlyList<FollowQueryDto>> GetFollowersAsync(GetFollowersQuery query, CancellationToken ct = default);
-    Task<IReadOnlyList<FollowQueryDto>> GetFollowingsAsync(GetFollowingsQuery query, CancellationToken ct = default);
+    Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowersAsync(GetFollowersQuery query, CancellationToken ct = default);
+    Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowingsAsync(GetFollowingsQuery query, CancellationToken ct = default);
     Task<IReadOnlyList<SocialLinkQueryDto>> GetSocialLinksAsync(GetSocialLinksQuery query, CancellationToken ct = default);
     Task<SocialLinkCommandResult> AddSocialLinkAsync(AddSocialLinkCommand command, CancellationToken ct = default);
     Task<SocialLinkCommandResult> RemoveSocialLinkAsync(RemoveSocialLinkCommand command, CancellationToken ct = default);
