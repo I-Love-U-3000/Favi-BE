@@ -65,6 +65,18 @@ public sealed class SeedValidator
             || !roleKinds.Contains(UserRole.Moderator)
             || !roleKinds.Contains(UserRole.User))
             throw new InvalidOperationException("Seed validation failed: account roles are not sufficiently varied.");
+
+        var overduplicatedAvatarExists = await scopedProfiles
+            .GroupBy(p => p.AvatarUrl)
+            .AnyAsync(g => g.Count() > 2, cancellationToken);
+        if (overduplicatedAvatarExists)
+            throw new InvalidOperationException("Seed validation failed: profile avatar is duplicated more than 2 times.");
+
+        var overduplicatedCoverExists = await scopedProfiles
+            .GroupBy(p => p.CoverUrl)
+            .AnyAsync(g => g.Count() > 2, cancellationToken);
+        if (overduplicatedCoverExists)
+            throw new InvalidOperationException("Seed validation failed: profile cover is duplicated more than 2 times.");
     }
 
     private static async Task ValidateFollowsAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)
@@ -73,7 +85,7 @@ public sealed class SeedValidator
             ? await db.Profiles.CountAsync(p => snapshot.ProfileIds.Contains(p.Id), cancellationToken)
             : await db.Profiles.CountAsync(cancellationToken);
 
-        var feasibleMax = Math.Min(userCount * (userCount - 1), userCount * 20);
+        var feasibleMax = userCount * (userCount - 1);
         var expectedMin = Math.Min(SeedConfig.Follows.Min, feasibleMax);
         var expectedMax = Math.Min(SeedConfig.Follows.Max, feasibleMax);
 
@@ -84,6 +96,18 @@ public sealed class SeedValidator
         var followCount = await scopedFollows.CountAsync(cancellationToken);
         if (followCount < expectedMin || followCount > expectedMax)
             throw new InvalidOperationException("Seed validation failed: follows count is outside expected range.");
+
+        var accountsWith1000Followers = await scopedFollows
+            .GroupBy(f => f.FolloweeId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (accountsWith1000Followers < 100)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 100 accounts with 1000+ followers, but found {accountsWith1000Followers}.");
+
+        var accountsWith1000Followees = await scopedFollows
+            .GroupBy(f => f.FollowerId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (accountsWith1000Followees < 100)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 100 accounts with 1000+ followees, but found {accountsWith1000Followees}.");
 
         var selfFollowExists = await scopedFollows
             .AnyAsync(f => f.FollowerId == f.FolloweeId, cancellationToken);
@@ -140,6 +164,12 @@ public sealed class SeedValidator
             .AnyAsync(pm => !pm.Url.StartsWith("/seed-assets/") && !pm.Url.StartsWith("http://") && !pm.Url.StartsWith("https://"), cancellationToken);
         if (invalidUrlFormat)
             throw new InvalidOperationException("Seed validation failed: post media URL has invalid format.");
+
+        var overduplicatedMediaExists = await scopedPostMedias
+            .GroupBy(pm => pm.Url)
+            .AnyAsync(g => g.Count() > 2, cancellationToken);
+        if (overduplicatedMediaExists)
+            throw new InvalidOperationException("Seed validation failed: post media image is duplicated more than 2 times.");
     }
 
     private static async Task ValidateEngagementAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)
@@ -159,6 +189,13 @@ public sealed class SeedValidator
         var reactionCount = await scopedReactions.CountAsync(cancellationToken);
         if (reactionCount < SeedConfig.Reactions.Min || reactionCount > SeedConfig.Reactions.Max)
             throw new InvalidOperationException("Seed validation failed: reactions count is outside expected range.");
+
+        var postsWith1000Reactions = await scopedReactions
+            .Where(r => r.PostId != null)
+            .GroupBy(r => r.PostId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (postsWith1000Reactions < 100)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 100 posts with 1000+ reactions, but found {postsWith1000Reactions}.");
 
         var commentCount = await scopedComments.CountAsync(cancellationToken);
         if (commentCount < SeedConfig.Comments.Min || commentCount > SeedConfig.Comments.Max)
@@ -241,6 +278,13 @@ public sealed class SeedValidator
             .AnyAsync(c => !c.MediaUrl!.StartsWith("/seed-assets/") && !c.MediaUrl!.StartsWith("http://") && !c.MediaUrl!.StartsWith("https://"), cancellationToken);
         if (invalidCommentMediaUrl)
             throw new InvalidOperationException("Seed validation failed: comment media URL has invalid format.");
+
+        var overduplicatedCommentMediaExists = await scopedComments
+            .Where(c => c.MediaUrl != null)
+            .GroupBy(c => c.MediaUrl)
+            .AnyAsync(g => g.Count() > 2, cancellationToken);
+        if (overduplicatedCommentMediaExists)
+            throw new InvalidOperationException("Seed validation failed: comment media is duplicated more than 2 times.");
     }
 
     private static async Task ValidateTagsAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)
@@ -309,6 +353,12 @@ public sealed class SeedValidator
             .AnyAsync(s => s.ExpiresAt <= DateTime.UtcNow && !s.IsArchived, cancellationToken);
         if (expiredStoryExists)
             Console.WriteLine("[SeedValidator] WARNING: some seeded stories have already expired. Consider re-running seed.");
+
+        var overduplicatedStoryMediaExists = await scopedStories
+            .GroupBy(s => s.MediaUrl)
+            .AnyAsync(g => g.Count() > 2, cancellationToken);
+        if (overduplicatedStoryMediaExists)
+            throw new InvalidOperationException("Seed validation failed: story media is duplicated more than 2 times.");
     }
 
     private static async Task ValidateNotificationsAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)

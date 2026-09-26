@@ -158,6 +158,19 @@ public static class SeedPipeline
             Log("[SeedPipeline] Step 7 skipped: stories already exist.");
         }
 
+        Log("[SeedPipeline] Running Step 7b - Seed Collections...");
+        if (!await db.Collections.AnyAsync(cancellationToken))
+        {
+            var step7b = new SeedCollectionsStep();
+            var step7bResult = await step7b.ExecuteAsync(db, profiles, posts, seedContext, cancellationToken);
+            Log($"[SeedPipeline] Step 7b done. Collections: {step7bResult.CreatedCollections}, PostCollections: {step7bResult.CreatedPostCollections}");
+            Log($"[SeedPipeline] Step 7b export: {step7bResult.CollectionsExportPath} | {step7bResult.PostCollectionsExportPath}");
+        }
+        else
+        {
+            Log("[SeedPipeline] Step 7b skipped: collections already exist.");
+        }
+
         Log("[SeedPipeline] Running Step 8 - Seed Vector Index (Qdrant)...");
         var vectorIndexService = scope.ServiceProvider.GetRequiredService<IVectorIndexService>();
         var vectorIndexStep = new SeedVectorIndexStep();

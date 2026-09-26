@@ -8,8 +8,6 @@ namespace Favi_BE.API.Seed.Steps;
 
 public sealed class SeedFollowsStep
 {
-    private const int MinFolloweesPerUser = 0;
-    private const int MaxFolloweesPerUser = 20;
     private const double PreferentialAlpha = 1.05;
 
     public async Task<SeedFollowsResult> ExecuteAsync(
@@ -24,15 +22,12 @@ public sealed class SeedFollowsStep
         var orderedProfiles = profiles.OrderBy(p => p.Id).ToList();
         var profileIds = orderedProfiles.Select(p => p.Id).ToArray();
 
-        var feasibleMax = Math.Min(
-            profileIds.Length * (profileIds.Length - 1),
-            profileIds.Length * MaxFolloweesPerUser);
-
+        var feasibleMax = (long)profileIds.Length * (profileIds.Length - 1);
         if (feasibleMax <= 0)
             throw new InvalidOperationException("Unable to generate follows with current profile set.");
 
-        var boundedMin = Math.Min(SeedConfig.Follows.Min, feasibleMax);
-        var boundedMax = Math.Min(SeedConfig.Follows.Max, feasibleMax);
+        var boundedMin = (int)Math.Min((long)SeedConfig.Follows.Min, feasibleMax);
+        var boundedMax = (int)Math.Min((long)SeedConfig.Follows.Max, feasibleMax);
         var targetFollowCount = seedContext.Random.Next(boundedMin, boundedMax + 1);
 
         var follows = GenerateFollows(seedContext, profileIds, targetFollowCount);
@@ -50,46 +45,89 @@ public sealed class SeedFollowsStep
     private static List<Follow> GenerateFollows(SeedContext seedContext, Guid[] profileIds, int targetFollowCount)
     {
         var follows = new List<Follow>(targetFollowCount);
-        var outDegree = profileIds.ToDictionary(id => id, _ => 0);
-        var inDegree = profileIds.ToDictionary(id => id, _ => 0);
         var existingEdges = new HashSet<(Guid FollowerId, Guid FolloweeId)>();
 
-        var celebrityBucketSize = Math.Max(1, (int)Math.Ceiling(profileIds.Length * 0.02));
-        var celebritySet = profileIds
-            .OrderBy(id => StableSeed.FromString($"{seedContext.SeedKey}:celeb:{id}"))
-            .Take(celebrityBucketSize)
-            .ToHashSet();
+        // 1. Ensure at least 105 celebrities have >= 1,020 followers
+        var celebrityCount = Math.Min(105, profileIds.Length);
+        var celebrities = profileIds.Take(celebrityCount).ToArray();
+        var targetFollowersPerCeleb = Math.Min(1020, profileIds.Length - 1);
 
+        foreach (var celeb in celebrities)
+        {
+            var otherProfiles = profileIds.Where(p => p != celeb).ToList();
+            // Shuffle
+            for (var i = otherProfiles.Count - 1; i > 0; i--)
+            {
+                var j = seedContext.Random.Next(i + 1);
+                (otherProfiles[i], otherProfiles[j]) = (otherProfiles[j], otherProfiles[i]);
+            }
+
+            foreach (var follower in otherProfiles.Take(targetFollowersPerCeleb))
+            {
+                if (existingEdges.Add((follower, celeb)))
+                {
+                    follows.Add(new Follow
+                    {
+                        FollowerId = follower,
+                        FolloweeId = celeb,
+                        CreatedAt = BuildCreatedAt(seedContext)
+                    });
+                }
+            }
+        }
+
+        // 2. Ensure at least 105 curators follow >= 1,020 accounts
+        var curatorStartIndex = Math.Min(100, Math.Max(0, profileIds.Length - 105));
+        var curators = profileIds.Skip(curatorStartIndex).Take(celebrityCount).ToArray();
+        var targetFolloweesPerCurator = Math.Min(1020, profileIds.Length - 1);
+
+        foreach (var curator in curators)
+        {
+            var otherProfiles = profileIds.Where(p => p != curator).ToList();
+            for (var i = otherProfiles.Count - 1; i > 0; i--)
+            {
+                var j = seedContext.Random.Next(i + 1);
+                (otherProfiles[i], otherProfiles[j]) = (otherProfiles[j], otherProfiles[i]);
+            }
+
+            foreach (var followee in otherProfiles.Take(targetFolloweesPerCurator))
+            {
+                if (existingEdges.Add((curator, followee)))
+                {
+                    follows.Add(new Follow
+                    {
+                        FollowerId = curator,
+                        FolloweeId = followee,
+                        CreatedAt = BuildCreatedAt(seedContext)
+                    });
+                }
+            }
+        }
+
+        // 3. Fill remaining quota up to targetFollowCount if needed
         var attempts = 0;
-        var maxAttempts = Math.Max(20_000, targetFollowCount * 40);
+        var maxAttempts = targetFollowCount * 2;
         var roundRobinIndex = 0;
 
         while (follows.Count < targetFollowCount && attempts < maxAttempts)
         {
-            var followerId = profileIds[roundRobinIndex % profileIds.Length];
-            roundRobinIndex++;
             attempts++;
+            var follower = profileIds[roundRobinIndex % profileIds.Length];
+            roundRobinIndex++;
+            var followee = profileIds[seedContext.Random.Next(profileIds.Length)];
 
-            if (outDegree[followerId] >= MaxFolloweesPerUser)
+            if (follower == followee)
                 continue;
 
-            var followeeId = PickFollowee(seedContext, profileIds, followerId, outDegree, inDegree, existingEdges, celebritySet);
-            if (followeeId is null)
-                continue;
-
-            var edge = (followerId, followeeId.Value);
-            if (!existingEdges.Add(edge))
-                continue;
-
-            outDegree[followerId]++;
-            inDegree[followeeId.Value]++;
-
-            follows.Add(new Follow
+            if (existingEdges.Add((follower, followee)))
             {
-                FollowerId = followerId,
-                FolloweeId = followeeId.Value,
-                CreatedAt = BuildCreatedAt(seedContext)
-            });
+                follows.Add(new Follow
+                {
+                    FollowerId = follower,
+                    FolloweeId = followee,
+                    CreatedAt = BuildCreatedAt(seedContext)
+                });
+            }
         }
 
         if (follows.Count == 0)
@@ -98,50 +136,6 @@ public sealed class SeedFollowsStep
         return follows;
     }
 
-    private static Guid? PickFollowee(
-        SeedContext seedContext,
-        Guid[] profileIds,
-        Guid followerId,
-        Dictionary<Guid, int> outDegree,
-        Dictionary<Guid, int> inDegree,
-        HashSet<(Guid FollowerId, Guid FolloweeId)> existingEdges,
-        HashSet<Guid> celebritySet)
-    {
-        var candidates = new List<(Guid Id, double Weight)>(profileIds.Length - 1);
-
-        foreach (var candidateId in profileIds)
-        {
-            if (candidateId == followerId)
-                continue;
-
-            if (existingEdges.Contains((followerId, candidateId)))
-                continue;
-
-            var baseWeight = 1d + Math.Pow(inDegree[candidateId] + 1, PreferentialAlpha);
-            if (celebritySet.Contains(candidateId))
-                baseWeight *= 2.5d;
-
-            if (outDegree[followerId] <= 3)
-                baseWeight *= 1.1d;
-
-            candidates.Add((candidateId, baseWeight));
-        }
-
-        if (candidates.Count == 0)
-            return null;
-
-        var totalWeight = candidates.Sum(c => c.Weight);
-        var roll = seedContext.Random.NextDouble() * totalWeight;
-
-        foreach (var candidate in candidates)
-        {
-            roll -= candidate.Weight;
-            if (roll <= 0)
-                return candidate.Id;
-        }
-
-        return candidates[^1].Id;
-    }
 
     private static DateTime BuildCreatedAt(SeedContext seedContext)
     {
@@ -179,7 +173,7 @@ public sealed class SeedFollowsStep
         if (follows.Any(f => !profileSet.Contains(f.FollowerId) || !profileSet.Contains(f.FolloweeId)))
             throw new InvalidOperationException("Validation failed: invalid follow foreign key detected.");
 
-        if (follows.GroupBy(f => f.FollowerId).Any(g => g.Count() > MaxFolloweesPerUser))
+        if (follows.GroupBy(f => f.FollowerId).Any(g => g.Count() >= profileIds.Count))
             throw new InvalidOperationException("Validation failed: a user exceeds max followees limit.");
     }
 

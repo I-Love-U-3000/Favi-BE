@@ -19,9 +19,12 @@ public sealed class SeedStoriesStep
         if (profiles.Count == 0)
             throw new InvalidOperationException("Step 7 requires profiles from Step 1.");
 
-        var runImageSet = LoadRunImageSet();
+        var storyCatalog = TryLoadRealStoriesCatalog();
+        var hasCatalog = storyCatalog != null && storyCatalog.Count > 0;
+        var runImageSet = hasCatalog ? null : LoadRunImageSet();
         var now = DateTime.UtcNow;
         var stories = new List<Story>();
+        var totalStoriesCreated = 0;
 
         for (var i = 0; i < profiles.Count; i++)
         {
@@ -38,7 +41,16 @@ public sealed class SeedStoriesStep
             for (var s = 0; s < storyCount; s++)
             {
                 var storyId = Guid.NewGuid();
-                var imageUrl = runImageSet[(i * 7 + s) % runImageSet.Count];
+                string imageUrl;
+                if (hasCatalog)
+                {
+                    imageUrl = storyCatalog![totalStoriesCreated % storyCatalog.Count].Url;
+                }
+                else
+                {
+                    imageUrl = runImageSet![(i * 7 + s) % runImageSet.Count];
+                }
+                totalStoriesCreated++;
                 var createdAt = now.AddMinutes(-seedContext.Random.Next(1, 1380)); // within 23h so still active
 
                 stories.Add(new Story
@@ -147,6 +159,52 @@ public sealed class SeedStoriesStep
 
         return filePath;
     }
+
+    private static List<CatalogStoryItem>? TryLoadRealStoriesCatalog()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-stories-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-stories-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE", "Favi-BE.API", "seed", "catalogs", "real-stories-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-stories-catalog.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "seed", "catalogs", "real-stories-catalog.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "catalogs", "real-stories-catalog.json")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Favi-BE.API", "seed", "catalogs", "real-stories-catalog.json"))
+        };
+
+        var catalogPath = candidates.FirstOrDefault(File.Exists);
+        if (string.IsNullOrWhiteSpace(catalogPath))
+            return null;
+
+        try
+        {
+            var json = File.ReadAllText(catalogPath);
+            return JsonSerializer.Deserialize<List<CatalogStoryItem>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}
+
+public sealed class CatalogStoryItem
+{
+    [System.Text.Json.Serialization.JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("index")]
+    public int Index { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("url")]
+    public string Url { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonPropertyName("caption")]
+    public string? Caption { get; set; }
 }
 
 public readonly record struct SeedStoriesResult(int CreatedStories, string ExportPath);

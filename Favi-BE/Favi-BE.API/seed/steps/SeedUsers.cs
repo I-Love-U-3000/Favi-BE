@@ -114,7 +114,11 @@ public sealed class SeedUsersStep
         {
             Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-avatars-catalog.json"),
             Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-avatars-catalog.json"),
-            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-avatars-catalog.json")
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE", "Favi-BE.API", "seed", "catalogs", "real-avatars-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-avatars-catalog.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "seed", "catalogs", "real-avatars-catalog.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "catalogs", "real-avatars-catalog.json")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Favi-BE.API", "seed", "catalogs", "real-avatars-catalog.json"))
         };
         var path = candidates.FirstOrDefault(File.Exists);
         if (path != null)
@@ -139,7 +143,11 @@ public sealed class SeedUsersStep
         {
             Path.Combine(AppContext.BaseDirectory, "seed", "catalogs", "real-covers-catalog.json"),
             Path.Combine(Directory.GetCurrentDirectory(), "seed", "catalogs", "real-covers-catalog.json"),
-            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-covers-catalog.json")
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE", "Favi-BE.API", "seed", "catalogs", "real-covers-catalog.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "Favi-BE.API", "seed", "catalogs", "real-covers-catalog.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "seed", "catalogs", "real-covers-catalog.json"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "catalogs", "real-covers-catalog.json")),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Favi-BE.API", "seed", "catalogs", "real-covers-catalog.json"))
         };
         var path = candidates.FirstOrDefault(File.Exists);
         if (path != null)
@@ -160,13 +168,15 @@ public sealed class SeedUsersStep
     private static string BuildAvatarUrl(int index)
     {
         var avatars = RealAvatars.Value;
-        return avatars[index % avatars.Length];
+        var avatarIndex = (index / 2) % avatars.Length;
+        return avatars[avatarIndex];
     }
 
     private static string BuildCoverUrl(int index)
     {
         var covers = RealCovers.Value;
-        return covers[index % covers.Length];
+        var coverIndex = (index / 2) % covers.Length;
+        return covers[coverIndex];
     }
 
     private static DateTime BuildCreatedAt(SeedContext seedContext)

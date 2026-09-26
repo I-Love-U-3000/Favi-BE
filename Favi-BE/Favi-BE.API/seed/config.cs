@@ -7,14 +7,15 @@ public static class SeedConfig
     public const string SeedKey = "favi_v1";
 
     public static readonly SeedCountRange Users = new(5000, 5000);
-    public static readonly SeedCountRange Posts = new(10000, 12000);
-    public static readonly SeedCountRange Follows = new(50000, 70000);
-    public static readonly SeedCountRange Reactions = new(80000, 120000);
-    public static readonly SeedCountRange Comments = new(15000, 30000);
-    public static readonly SeedCountRange Reposts = new(1000, 2000);
-    public static readonly SeedCountRange Tags = new(50, 120);
+    public static readonly SeedCountRange Posts = new(5000, 5000);
+    public static readonly SeedCountRange Follows = new(200000, 350000);
+    public static readonly SeedCountRange Reactions = new(130000, 200000);
+    public static readonly SeedCountRange Comments = new(5000, 15000);
+    public static readonly SeedCountRange Reposts = new(500, 1500);
+    public static readonly SeedCountRange Tags = new(50, 150);
     public static readonly SeedCountRange Stories = new(500, 2000);
-    public static readonly SeedCountRange VectorizedPosts = new(3000, 5000);
+    public static readonly SeedCountRange Collections = new(200, 300);
+    public static readonly SeedCountRange VectorizedPosts = new(4500, 5000);
 
     public const int ImageCatalogMinSize = 1000;
 
