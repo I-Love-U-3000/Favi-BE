@@ -136,6 +136,18 @@ public sealed class SeedValidator
         if (postCount < SeedConfig.Posts.Min || postCount > SeedConfig.Posts.Max)
             throw new InvalidOperationException("Seed validation failed: posts count is outside expected range.");
 
+        var privatePosts = await scopedPosts.CountAsync(p => p.Privacy == PrivacyLevel.Private, cancellationToken);
+        if (privatePosts > 0)
+            throw new InvalidOperationException($"Seed validation failed: expected 0 private posts, but found {privatePosts}.");
+
+        if (postCount == 5000)
+        {
+            var followersPosts = await scopedPosts.CountAsync(p => p.Privacy == PrivacyLevel.Followers, cancellationToken);
+            var publicPosts = await scopedPosts.CountAsync(p => p.Privacy == PrivacyLevel.Public, cancellationToken);
+            if (publicPosts != 4900 || followersPosts != 100)
+                throw new InvalidOperationException($"Seed validation failed: expected 4900 public and 100 friend-only posts, but found {publicPosts} public and {followersPosts} friend-only.");
+        }
+
         // Allow text-only posts if any exist at runtime
         var postsWithoutMedia = await scopedPosts
             .Where(p => !db.PostMedias.Any(pm => pm.PostId == p.Id))

@@ -1,5 +1,6 @@
-﻿using Favi_BE.Interfaces.Repositories;
+using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Models.Entities;
+using Favi_BE.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -67,8 +68,12 @@ namespace Favi_BE.Data.Repositories
 
         public async Task<IEnumerable<Post>> GetFeedByFollowingsAsync(Guid profileId, int skip, int take)
         {
+            var now = DateTime.UtcNow;
             return await _dbSet
-                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Where(p => _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId)
+                    && p.Privacy != PrivacyLevel.Private
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                    && p.DeletedDayExpiredAt == null && !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -106,8 +111,11 @@ namespace Favi_BE.Data.Repositories
 
         public async Task<IEnumerable<Post>> GetLatestPostsAsync(int skip, int take)
         {
+            var now = DateTime.UtcNow;
             return await _dbSet
-                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                    && p.Privacy == PrivacyLevel.Public
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now)))
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(take)
@@ -131,8 +139,19 @@ namespace Favi_BE.Data.Repositories
 
         public async Task<(IEnumerable<Post> Items, int Total)> GetFeedPagedAsync(Guid profileId, int skip, int take)
         {
+            var now = DateTime.UtcNow;
             var baseQuery = _dbSet
-                .Where(p => (_context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId) || p.ProfileId == profileId) && p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived &&
+                    (
+                        p.ProfileId == profileId
+                        ||
+                        (
+                            _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId)
+                            && p.Privacy != PrivacyLevel.Private
+                            && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                        )
+                    )
+                )
                 .OrderByDescending(p => p.CreatedAt);
 
             var total = await baseQuery.CountAsync();
@@ -229,10 +248,18 @@ namespace Favi_BE.Data.Repositories
         }
 
         public async Task<(IEnumerable<Post> Items, int Total)> GetProfilePostsPagedAsync(
-            Guid profileId, int skip, int take)
+            Guid profileId, int skip, int take, Guid? viewerId = null)
         {
+            var isOwner = viewerId.HasValue && viewerId.Value == profileId;
+            var isAdmin = viewerId.HasValue && await _context.Profiles.AnyAsync(p => p.Id == viewerId.Value && p.Role == UserRole.Admin);
+            var isFollowing = viewerId.HasValue && !isOwner && !isAdmin &&
+                await _context.Follows.AnyAsync(f => f.FollowerId == viewerId.Value && f.FolloweeId == profileId);
+
             var query = _dbSet
                 .Where(p => p.ProfileId == profileId && p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Where(p => isOwner || isAdmin
+                    || (isFollowing && (p.Privacy == PrivacyLevel.Public || p.Privacy == PrivacyLevel.Followers))
+                    || (!isFollowing && p.Privacy == PrivacyLevel.Public))
                 .OrderByDescending(p => p.CreatedAt);
 
             var total = await query.CountAsync();
@@ -249,8 +276,11 @@ namespace Favi_BE.Data.Repositories
 
         public async Task<(IEnumerable<Post> Items, int Total)> GetLatestPostsPagedAsync(int skip, int take)
         {
+            var now = DateTime.UtcNow;
             var query = _dbSet
-                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                    && p.Privacy == PrivacyLevel.Public
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now)))
                 .OrderByDescending(p => p.CreatedAt);
 
             var total = await query.CountAsync();
@@ -268,6 +298,7 @@ namespace Favi_BE.Data.Repositories
         public async Task<(IEnumerable<Post> Items, int Total)> GetExploreFeedPagedAsync(
             Guid profileId, int skip, int take)
         {
+            var now = DateTime.UtcNow;
             // Explore: posts not from self and not from followings, public only
             var followeeIds = await _context.Follows
                 .Where(f => f.FollowerId == profileId)
@@ -277,7 +308,9 @@ namespace Favi_BE.Data.Repositories
             var query = _dbSet
                 .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
                     && p.ProfileId != profileId
-                    && !followeeIds.Contains(p.ProfileId))
+                    && !followeeIds.Contains(p.ProfileId)
+                    && p.Privacy == PrivacyLevel.Public
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now)))
                 .OrderByDescending(p => p.CreatedAt);
 
             var total = await query.CountAsync();
@@ -294,8 +327,11 @@ namespace Favi_BE.Data.Repositories
 
         public async Task<(IEnumerable<Post> Items, int Total)> GetGuestFeedPagedAsync(int skip, int take)
         {
+            var now = DateTime.UtcNow;
             var query = _dbSet
-                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived)
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                    && p.Privacy == PrivacyLevel.Public
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now)))
                 .OrderByDescending(p => p.CreatedAt);
 
             var total = await query.CountAsync();

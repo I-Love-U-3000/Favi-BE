@@ -44,7 +44,7 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             return ([], 0);
 
         var skip = (page - 1) * pageSize;
-        var (posts, total) = await _uow.Posts.GetProfilePostsPagedAsync(profileId, skip, pageSize);
+        var (posts, total) = await _uow.Posts.GetProfilePostsPagedAsync(profileId, skip, pageSize, viewerId);
 
         var result = new List<PostReadModel>();
         foreach (var p in posts)
@@ -61,7 +61,13 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     {
         var skip = (page - 1) * pageSize;
         var (posts, total) = await _uow.Posts.GetFeedPagedAsync(userId, skip, pageSize);
-        return (posts.Select(MapPost).ToList(), total);
+        var result = new List<PostReadModel>();
+        foreach (var p in posts)
+        {
+            if (await _privacy.CanViewPostAsync(p, userId))
+                result.Add(MapPost(p));
+        }
+        return (result, total);
     }
 
     public async Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetGuestFeedAsync(
@@ -69,7 +75,13 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     {
         var skip = (page - 1) * pageSize;
         var (posts, total) = await _uow.Posts.GetGuestFeedPagedAsync(skip, pageSize);
-        return (posts.Select(MapPost).ToList(), total);
+        var result = new List<PostReadModel>();
+        foreach (var p in posts)
+        {
+            if (await _privacy.CanViewPostAsync(p, null))
+                result.Add(MapPost(p));
+        }
+        return (result, total);
     }
 
     public async Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetExploreFeedAsync(
@@ -77,7 +89,13 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     {
         var skip = (page - 1) * pageSize;
         var (posts, total) = await _uow.Posts.GetExploreFeedPagedAsync(userId, skip, pageSize);
-        return (posts.Select(MapPost).ToList(), total);
+        var result = new List<PostReadModel>();
+        foreach (var p in posts)
+        {
+            if (await _privacy.CanViewPostAsync(p, userId))
+                result.Add(MapPost(p));
+        }
+        return (result, total);
     }
 
     public async Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetLatestFeedAsync(
@@ -85,7 +103,13 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     {
         var skip = (page - 1) * pageSize;
         var (posts, total) = await _uow.Posts.GetLatestPostsPagedAsync(skip, pageSize);
-        return (posts.Select(MapPost).ToList(), total);
+        var result = new List<PostReadModel>();
+        foreach (var p in posts)
+        {
+            if (await _privacy.CanViewPostAsync(p, null))
+                result.Add(MapPost(p));
+        }
+        return (result, total);
     }
 
     public async Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetArchivedPostsAsync(
@@ -125,6 +149,12 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         var repost = await _uow.Reposts.GetRepostByIdAsync(repostId);
         if (repost is null) return null;
 
+        if (repost.OriginalPost == null || repost.OriginalPost.DeletedDayExpiredAt != null || repost.OriginalPost.IsArchived)
+            return null;
+
+        if (!await _privacy.CanViewPostAsync(repost.OriginalPost, viewerId))
+            return null;
+
         var repostCount = await _uow.Reposts.GetRepostCountAsync(repost.OriginalPostId);
         var hasReposted = viewerId.HasValue && await _uow.Reposts.HasRepostedAsync(viewerId.Value, repost.OriginalPostId);
 
@@ -140,6 +170,12 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         var result = new List<RepostReadModel>();
         foreach (var r in reposts)
         {
+            if (r.OriginalPost == null || r.OriginalPost.DeletedDayExpiredAt != null || r.OriginalPost.IsArchived)
+                continue;
+
+            if (!await _privacy.CanViewPostAsync(r.OriginalPost, viewerId))
+                continue;
+
             var repostCount = await _uow.Reposts.GetRepostCountAsync(r.OriginalPostId);
             var hasReposted = viewerId.HasValue && await _uow.Reposts.HasRepostedAsync(viewerId.Value, r.OriginalPostId);
             result.Add(MapRepost(r, repostCount, hasReposted));
@@ -159,10 +195,19 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         var feedItems = new List<FeedItemReadModel>();
 
         foreach (var p in posts)
-            feedItems.Add(new FeedItemReadModel(FeedItemKind.Post, MapPost(p), null, p.CreatedAt));
+        {
+            if (await _privacy.CanViewPostAsync(p, userId))
+                feedItems.Add(new FeedItemReadModel(FeedItemKind.Post, MapPost(p), null, p.CreatedAt));
+        }
 
         foreach (var r in reposts)
         {
+            if (r.OriginalPost == null || r.OriginalPost.DeletedDayExpiredAt != null || r.OriginalPost.IsArchived)
+                continue;
+
+            if (!await _privacy.CanViewPostAsync(r.OriginalPost, userId))
+                continue;
+
             var repostCount = await _uow.Reposts.GetRepostCountAsync(r.OriginalPostId);
             var hasReposted = await _uow.Reposts.HasRepostedAsync(userId, r.OriginalPostId);
             feedItems.Add(new FeedItemReadModel(FeedItemKind.Repost, null, MapRepost(r, repostCount, hasReposted), r.CreatedAt));
@@ -219,7 +264,13 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
 
         var skip = (page - 1) * pageSize;
         var (posts, total) = await _uow.Posts.GetPostsByCollectionPagedAsync(collectionId, skip, pageSize);
-        return (posts.Select(MapPost).ToList(), total);
+        var result = new List<PostReadModel>();
+        foreach (var p in posts)
+        {
+            if (await _privacy.CanViewPostAsync(p, viewerId))
+                result.Add(MapPost(p));
+        }
+        return (result, total);
     }
 
     public async Task<(IReadOnlyList<CollectionReadModel> Items, int TotalCount)> GetTrendingCollectionsAsync(

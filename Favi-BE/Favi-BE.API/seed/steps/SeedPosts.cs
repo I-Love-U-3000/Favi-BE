@@ -31,6 +31,24 @@ public sealed class SeedPostsStep
         var posts = new List<Post>(targetPostCount);
         var medias = new List<PostMedia>(targetPostCount);
 
+        // All 5000 posts must have privacy level as public (4900) and friend-only (100)
+        const int friendOnlyCount = 100;
+        var actualFriendOnly = Math.Min(friendOnlyCount, targetPostCount);
+        var actualPublic = targetPostCount - actualFriendOnly;
+
+        var privacyLevels = new List<PrivacyLevel>(targetPostCount);
+        for (var k = 0; k < actualPublic; k++)
+            privacyLevels.Add(PrivacyLevel.Public);
+        for (var k = 0; k < actualFriendOnly; k++)
+            privacyLevels.Add(PrivacyLevel.Followers);
+
+        // Deterministic shuffle with seedContext.Random
+        for (var k = privacyLevels.Count - 1; k > 0; k--)
+        {
+            var j = seedContext.Random.Next(k + 1);
+            (privacyLevels[k], privacyLevels[j]) = (privacyLevels[j], privacyLevels[k]);
+        }
+
         for (var i = 0; i < targetPostCount; i++)
         {
             var profile = PickProfileByRoleWeight(profiles, seedContext);
@@ -63,7 +81,7 @@ public sealed class SeedPostsStep
                 Id = postId,
                 ProfileId = profile.Id,
                 Caption = caption,
-                Privacy = BuildPrivacy(seedContext),
+                Privacy = privacyLevels[i],
                 CreatedAt = createdAt,
                 UpdatedAt = createdAt,
                 IsArchived = false,
@@ -150,14 +168,6 @@ public sealed class SeedPostsStep
         return "casual";
     }
 
-    private static PrivacyLevel BuildPrivacy(SeedContext seedContext)
-    {
-        var roll = seedContext.Random.NextDouble();
-        if (roll < 0.80) return PrivacyLevel.Public;
-        if (roll < 0.95) return PrivacyLevel.Followers;
-        return PrivacyLevel.Private;
-    }
-
     private static DateTime BuildCreatedAt(SeedContext seedContext)
     {
         var now = DateTime.UtcNow;
@@ -177,6 +187,15 @@ public sealed class SeedPostsStep
 
         if (medias.Count != expectedCount)
             throw new InvalidOperationException("Validation failed: post-medias count mismatch.");
+
+        var privateCount = posts.Count(p => p.Privacy == PrivacyLevel.Private);
+        if (privateCount > 0)
+            throw new InvalidOperationException($"Validation failed: expected 0 private posts, found {privateCount}.");
+
+        var followersCount = posts.Count(p => p.Privacy == PrivacyLevel.Followers);
+        var publicCount = posts.Count(p => p.Privacy == PrivacyLevel.Public);
+        if (expectedCount == 5000 && (publicCount != 4900 || followersCount != 100))
+            throw new InvalidOperationException($"Validation failed: expected 4900 public and 100 friend-only posts, found {publicCount} public and {followersCount} friend-only.");
 
         var postIds = posts.Select(p => p.Id).ToHashSet();
         if (medias.Any(m => m.PostId is null || !postIds.Contains(m.PostId.Value)))

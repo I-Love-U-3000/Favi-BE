@@ -235,7 +235,7 @@ namespace Favi_BE.Controllers
         {
             var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = TryGetUserId();
-            var post = await _mediator.Send(new GetPostByIdQuery(id, null));
+            var post = await _mediator.Send(new GetPostByIdQuery(id, userId));
             if (post is null)
                 return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại hoặc đã bị xoá." });
 

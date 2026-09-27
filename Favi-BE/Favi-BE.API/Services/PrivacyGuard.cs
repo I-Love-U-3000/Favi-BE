@@ -53,6 +53,14 @@ namespace Favi_BE.Services
             if (await IsOwnerBannedAsync(post.Profile, post.ProfileId))
                 return false;
 
+            // Archived posts only visible to owner (unless admin)
+            if (post.IsArchived && (!viewerId.HasValue || viewerId.Value != post.ProfileId))
+                return false;
+
+            // Soft-deleted posts only visible to owner (unless admin)
+            if (post.DeletedDayExpiredAt != null && (!viewerId.HasValue || viewerId.Value != post.ProfileId))
+                return false;
+
             if (!viewerId.HasValue)
                 return post.Privacy == PrivacyLevel.Public;
 

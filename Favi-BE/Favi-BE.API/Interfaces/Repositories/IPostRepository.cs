@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Entities;
+using Favi_BE.Models.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -31,7 +31,7 @@ namespace Favi_BE.Interfaces.Repositories
         Task<IEnumerable<Post>> SearchPostsByCaptionAsync(string query, int skip, int take);
 
         // ContentDiscovery paged queries
-        Task<(IEnumerable<Post> Items, int Total)> GetProfilePostsPagedAsync(Guid profileId, int skip, int take);
+        Task<(IEnumerable<Post> Items, int Total)> GetProfilePostsPagedAsync(Guid profileId, int skip, int take, Guid? viewerId = null);
         Task<(IEnumerable<Post> Items, int Total)> GetLatestPostsPagedAsync(int skip, int take);
         Task<(IEnumerable<Post> Items, int Total)> GetExploreFeedPagedAsync(Guid profileId, int skip, int take);
         Task<(IEnumerable<Post> Items, int Total)> GetGuestFeedPagedAsync(int skip, int take);
