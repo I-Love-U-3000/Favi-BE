@@ -74,8 +74,13 @@ namespace Favi_BE.Controllers
         // GET: api/stories/feed (stories from following)
         [Authorize]
         [HttpGet("feed")]
-        public async Task<ActionResult<IEnumerable<StoryFeedResponse>>> GetFeed()
+        public async Task<ActionResult<PaginationResult<StoryFeedResponse>>> GetFeed(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 10,
+            [FromQuery] int? pageSize = null)
         {
+            var actualPage = page > 0 ? page : 1;
+            var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var viewerId = User.GetUserId();
             var stories = await _mediator.Send(new GetViewableStoriesQuery(viewerId));
 
@@ -87,9 +92,11 @@ namespace Favi_BE.Controllers
                     g.Key.ProfileAvatarUrl,
                     g.Select(MapToResponse).ToList()
                 ))
-                .OrderByDescending(g => g.Stories.First().CreatedAt);
+                .OrderByDescending(g => g.Stories.First().CreatedAt)
+                .ToList();
 
-            return Ok(grouped);
+            var paginated = grouped.Skip((actualPage - 1) * actualSize).Take(actualSize).ToList();
+            return Ok(PaginationResult<StoryFeedResponse>.Create(paginated, actualPage, actualSize, grouped.Count));
         }
 
         // GET: api/stories/archived
