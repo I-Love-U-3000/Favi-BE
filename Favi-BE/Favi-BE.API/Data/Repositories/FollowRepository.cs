@@ -89,5 +89,21 @@ namespace Favi_BE.Data.Repositories
         {
             return await _dbSet.FirstOrDefaultAsync(f => f.FollowerId == followerId && f.FolloweeId == followeeId);
         }
+
+        public async Task<List<Guid>> GetFolloweeIdsAsync(Guid profileId, CancellationToken ct = default)
+        {
+            return await _dbSet
+                .Where(f => f.FollowerId == profileId)
+                .Select(f => f.FolloweeId)
+                .ToListAsync(ct);
+        }
+
+        public async Task<List<Guid>> GetFollowerIdsAsync(Guid profileId, CancellationToken ct = default)
+        {
+            return await _dbSet
+                .Where(f => f.FolloweeId == profileId)
+                .Select(f => f.FollowerId)
+                .ToListAsync(ct);
+        }
     }
 }

@@ -17,7 +17,9 @@ namespace Favi_BE.Models.Dtos
         bool IsBanned,
         DateTime? BannedUntil,
         int? FollowersCount,
-        int? FollowingCount
+        int? FollowingCount,
+        int? MutualFriendsCount = null,
+        string? RecommendationReason = null
     );
 
     public record ProfileUpdateRequest(

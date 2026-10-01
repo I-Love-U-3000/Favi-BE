@@ -73,6 +73,8 @@ public class PrivacyGuardTests
         public Task<int> GetFollowersCountAsync(Guid profileId, string? query = null) => throw new NotImplementedException();
         public Task<int> GetFollowingCountAsync(Guid profileId, string? query = null) => throw new NotImplementedException();
         public Task<Follow?> GetAsync(Guid followerId, Guid followeeId) => throw new NotImplementedException();
+        public Task<List<Guid>> GetFolloweeIdsAsync(Guid profileId, CancellationToken ct = default) => throw new NotImplementedException();
+        public Task<List<Guid>> GetFollowerIdsAsync(Guid profileId, CancellationToken ct = default) => throw new NotImplementedException();
     }
 
     private class FakeUnitOfWork : IUnitOfWork

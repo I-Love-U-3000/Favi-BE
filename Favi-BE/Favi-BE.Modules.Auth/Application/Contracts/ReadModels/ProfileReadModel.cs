@@ -18,5 +18,7 @@ public sealed record ProfileReadModel(
     bool IsBanned,
     DateTime? BannedUntil,
     int FollowersCount,
-    int FollowingCount
+    int FollowingCount,
+    int MutualFriendsCount = 0,
+    string? RecommendationReason = null
 );

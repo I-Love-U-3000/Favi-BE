@@ -400,6 +400,8 @@ namespace Favi_BE.Controllers
             m.IsBanned,
             m.BannedUntil,
             m.FollowersCount,
-            m.FollowingCount);
+            m.FollowingCount,
+            m.MutualFriendsCount,
+            m.RecommendationReason);
     }
 }

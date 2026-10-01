@@ -382,5 +382,156 @@ namespace Favi_BE.Data.Repositories
 
             return (items, total);
         }
+
+        public async Task<List<Post>> GetFeedCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default)
+        {
+            var now = DateTime.UtcNow;
+            var window = now.AddDays(-30);
+
+            var candidates = await _dbSet
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived &&
+                    (
+                        p.ProfileId == profileId
+                        ||
+                        (
+                            _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId)
+                            && p.Privacy != PrivacyLevel.Private
+                            && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                        )
+                    )
+                    && p.CreatedAt >= window
+                )
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Include(p => p.Comments)
+                .Include(p => p.Reactions)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(limit)
+                .ToListAsync(ct);
+
+            if (candidates.Count < 20)
+            {
+                var existingIds = candidates.Select(c => c.Id).ToHashSet();
+                var fallback = await _dbSet
+                    .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived &&
+                        (
+                            p.ProfileId == profileId
+                            ||
+                            (
+                                _context.Follows.Any(f => f.FollowerId == profileId && f.FolloweeId == p.ProfileId)
+                                && p.Privacy != PrivacyLevel.Private
+                                && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                            )
+                        )
+                        && !existingIds.Contains(p.Id)
+                    )
+                    .Include(p => p.Profile)
+                    .Include(p => p.PostMedias)
+                    .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                    .Include(p => p.Comments)
+                    .Include(p => p.Reactions)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(limit - candidates.Count)
+                    .ToListAsync(ct);
+
+                candidates.AddRange(fallback);
+            }
+
+            return candidates;
+        }
+
+        public async Task<List<Post>> GetDiscoveryCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default)
+        {
+            var now = DateTime.UtcNow;
+            var window = now.AddDays(-14);
+
+            var followedIds = await _context.Follows
+                .Where(f => f.FollowerId == profileId)
+                .Select(f => f.FolloweeId)
+                .ToListAsync(ct);
+
+            var candidates = await _dbSet
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                    && p.ProfileId != profileId
+                    && !followedIds.Contains(p.ProfileId)
+                    && p.Privacy == PrivacyLevel.Public
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                    && p.CreatedAt >= window)
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Include(p => p.Comments)
+                .Include(p => p.Reactions)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(limit)
+                .ToListAsync(ct);
+
+            if (candidates.Count < 10)
+            {
+                var existingIds = candidates.Select(c => c.Id).ToHashSet();
+                var fallback = await _dbSet
+                    .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                        && p.ProfileId != profileId
+                        && !followedIds.Contains(p.ProfileId)
+                        && p.Privacy == PrivacyLevel.Public
+                        && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                        && !existingIds.Contains(p.Id))
+                    .Include(p => p.Profile)
+                    .Include(p => p.PostMedias)
+                    .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                    .Include(p => p.Comments)
+                    .Include(p => p.Reactions)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(limit - candidates.Count)
+                    .ToListAsync(ct);
+
+                candidates.AddRange(fallback);
+            }
+
+            return candidates;
+        }
+
+        public async Task<List<Post>> GetGuestFeedCandidatesAsync(int limit, CancellationToken ct = default)
+        {
+            var now = DateTime.UtcNow;
+            var window = now.AddDays(-14);
+
+            var candidates = await _dbSet
+                .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                    && p.Privacy == PrivacyLevel.Public
+                    && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                    && p.CreatedAt >= window)
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Include(p => p.Comments)
+                .Include(p => p.Reactions)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(limit)
+                .ToListAsync(ct);
+
+            if (candidates.Count < 20)
+            {
+                var existingIds = candidates.Select(c => c.Id).ToHashSet();
+                var fallback = await _dbSet
+                    .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
+                        && p.Privacy == PrivacyLevel.Public
+                        && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
+                        && !existingIds.Contains(p.Id))
+                    .Include(p => p.Profile)
+                    .Include(p => p.PostMedias)
+                    .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                    .Include(p => p.Comments)
+                    .Include(p => p.Reactions)
+                    .OrderByDescending(p => p.CreatedAt)
+                    .Take(limit - candidates.Count)
+                    .ToListAsync(ct);
+
+                candidates.AddRange(fallback);
+            }
+
+            return candidates;
+        }
     }
 }

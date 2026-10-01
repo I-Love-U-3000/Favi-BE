@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Entities;
+using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 using System;
 using System.Collections.Generic;
@@ -14,5 +14,6 @@ namespace Favi_BE.Interfaces.Repositories
         Task<Reaction> GetProfileReactionOnPostAsync(Guid profileId, Guid postId);
         Task<Reaction> GetProfileReactionOnCommentAysnc(Guid profileId, Guid commentId);
         Task<Reaction> GetProfileReactionOnCollectionAsync(Guid profileId, Guid collectionId);
+        Task<List<Reaction>> GetRecentReactionsByProfileIdAsync(Guid profileId, DateTime since, CancellationToken ct = default);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Entities;
+using Favi_BE.Models.Entities;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -11,5 +11,6 @@ namespace Favi_BE.Interfaces.Repositories
         Task<Collection> GetCollectionWithPostsAsync(Guid collectionId);
         Task<(IEnumerable<Collection> Items, int Total)> GetAllByOwnerPagedAsync(Guid ownerId, int skip, int take);
         Task<(IEnumerable<Collection> Items, int Total)> GetAllPagedAsync(int skip, int take);
+        Task<List<Collection>> GetTrendingCandidatesAsync(int limit, CancellationToken ct = default);
     }
 }

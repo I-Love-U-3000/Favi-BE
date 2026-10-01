@@ -13,5 +13,7 @@ namespace Favi_BE.Interfaces.Repositories
         Task<int> GetFollowersCountAsync(Guid profileId, string? query = null);
         Task<int> GetFollowingCountAsync(Guid profileId, string? query = null);
         Task<Follow?> GetAsync(Guid followerId, Guid followeeId);
+        Task<List<Guid>> GetFolloweeIdsAsync(Guid profileId, CancellationToken ct = default);
+        Task<List<Guid>> GetFollowerIdsAsync(Guid profileId, CancellationToken ct = default);
     }
 }

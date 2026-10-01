@@ -56,5 +56,14 @@ namespace Favi_BE.Data.Repositories
             return await _dbSet
                 .FirstOrDefaultAsync(r => r.ProfileId == profileId && r.CollectionId == collectionId);
         }
+
+        public async Task<List<Reaction>> GetRecentReactionsByProfileIdAsync(Guid profileId, DateTime since, CancellationToken ct = default)
+        {
+            return await _dbSet
+                .Where(r => r.ProfileId == profileId && r.CreatedAt >= since)
+                .Include(r => r.Post)
+                    .ThenInclude(p => p != null ? p.PostTags : null)
+                .ToListAsync(ct);
+        }
     }
 }
