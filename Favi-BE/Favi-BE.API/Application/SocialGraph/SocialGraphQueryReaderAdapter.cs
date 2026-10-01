@@ -16,20 +16,34 @@ internal sealed class SocialGraphQueryReaderAdapter : ISocialGraphQueryReader
     }
 
     public async Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowersAsync(
-        Guid profileId, int skip, int take, CancellationToken ct = default)
+        Guid profileId, int skip, int take, string? query = null, CancellationToken ct = default)
     {
-        var follows = await _uow.Follows.GetFollowersAsync(profileId, skip, take);
-        var count = await _uow.Follows.GetFollowersCountAsync(profileId);
-        var dtos = follows.Select(f => new FollowQueryDto(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+        var follows = await _uow.Follows.GetFollowersAsync(profileId, skip, take, query);
+        var count = await _uow.Follows.GetFollowersCountAsync(profileId, query);
+        var dtos = follows.Select(f => new FollowQueryDto(
+            f.FollowerId,
+            f.FolloweeId,
+            f.CreatedAt,
+            f.Follower?.Username,
+            f.Follower?.DisplayName,
+            f.Follower?.AvatarUrl,
+            f.Follower?.Bio)).ToList();
         return (dtos, count);
     }
 
     public async Task<(IReadOnlyList<FollowQueryDto> Items, int TotalCount)> GetFollowingsAsync(
-        Guid profileId, int skip, int take, CancellationToken ct = default)
+        Guid profileId, int skip, int take, string? query = null, CancellationToken ct = default)
     {
-        var follows = await _uow.Follows.GetFollowingAsync(profileId, skip, take);
-        var count = await _uow.Follows.GetFollowingCountAsync(profileId);
-        var dtos = follows.Select(f => new FollowQueryDto(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+        var follows = await _uow.Follows.GetFollowingAsync(profileId, skip, take, query);
+        var count = await _uow.Follows.GetFollowingCountAsync(profileId, query);
+        var dtos = follows.Select(f => new FollowQueryDto(
+            f.FollowerId,
+            f.FolloweeId,
+            f.CreatedAt,
+            f.Followee?.Username,
+            f.Followee?.DisplayName,
+            f.Followee?.AvatarUrl,
+            f.Followee?.Bio)).ToList();
         return (dtos, count);
     }
 

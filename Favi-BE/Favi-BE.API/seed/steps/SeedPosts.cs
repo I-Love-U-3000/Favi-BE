@@ -53,7 +53,7 @@ public sealed class SeedPostsStep
         {
             var profile = PickProfileByRoleWeight(profiles, seedContext);
             var createdAt = BuildCreatedAt(seedContext);
-            var postId = Guid.NewGuid();
+            var postId = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", i);
 
             string caption;
             bool isNsfw;
@@ -91,7 +91,7 @@ public sealed class SeedPostsStep
 
             var media = new PostMedia
             {
-                Id = Guid.NewGuid(),
+                Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "postmedia", i),
                 PostId = postId,
                 ProfileId = profile.Id,
                 Url = mediaUrl,

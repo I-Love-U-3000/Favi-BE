@@ -18,6 +18,6 @@ internal sealed class GetFollowingsQueryHandler : IRequestHandler<GetFollowingsQ
         if (!await _reader.ProfileExistsAsync(request.ProfileId, cancellationToken))
             return ([], 0);
 
-        return await _reader.GetFollowingsAsync(request.ProfileId, request.Skip, request.Take, cancellationToken);
+        return await _reader.GetFollowingsAsync(request.ProfileId, request.Skip, request.Take, request.Query, cancellationToken);
     }
 }

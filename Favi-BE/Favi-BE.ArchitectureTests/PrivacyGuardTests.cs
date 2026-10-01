@@ -68,10 +68,10 @@ public class PrivacyGuardTests
         public Task<bool> IsFollowingAsync(Guid followerId, Guid followedId) =>
             Task.FromResult(_follows.Contains((followerId, followedId)));
 
-        public Task<IEnumerable<Follow>> GetFollowersAsync(Guid profileId, int skip, int take) => throw new NotImplementedException();
-        public Task<IEnumerable<Follow>> GetFollowingAsync(Guid profileId, int skip, int take) => throw new NotImplementedException();
-        public Task<int> GetFollowersCountAsync(Guid profileId) => throw new NotImplementedException();
-        public Task<int> GetFollowingCountAsync(Guid profileId) => throw new NotImplementedException();
+        public Task<IEnumerable<Follow>> GetFollowersAsync(Guid profileId, int skip, int take, string? query = null) => throw new NotImplementedException();
+        public Task<IEnumerable<Follow>> GetFollowingAsync(Guid profileId, int skip, int take, string? query = null) => throw new NotImplementedException();
+        public Task<int> GetFollowersCountAsync(Guid profileId, string? query = null) => throw new NotImplementedException();
+        public Task<int> GetFollowingCountAsync(Guid profileId, string? query = null) => throw new NotImplementedException();
         public Task<Follow?> GetAsync(Guid followerId, Guid followeeId) => throw new NotImplementedException();
     }
 

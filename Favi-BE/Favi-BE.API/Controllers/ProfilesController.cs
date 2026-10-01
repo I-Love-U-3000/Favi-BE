@@ -101,8 +101,12 @@ namespace Favi_BE.Controllers
         }
 
         [HttpGet("{id}/followers")]
+        [HttpGet("{id}/followers/search")]
         public async Task<ActionResult<PaginationResult<FollowResponse>>> Followers(
             Guid id,
+            [FromQuery] string? query = null,
+            [FromQuery] string? username = null,
+            [FromQuery] string? search = null,
             [FromQuery] int page = 1,
             [FromQuery] int size = 10,
             [FromQuery] int? skip = null,
@@ -112,15 +116,27 @@ namespace Favi_BE.Controllers
             var actualPage = page > 0 ? page : 1;
             var actualSize = pageSize ?? (take ?? (size > 0 ? size : 10));
             var actualSkip = skip ?? ((actualPage - 1) * actualSize);
+            var searchQuery = query ?? username ?? search;
 
-            var (items, total) = await _socialFacade.GetFollowersAsync(new GetFollowersQuery(id, actualSkip, actualSize));
-            var dtos = items.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+            var (items, total) = await _socialFacade.GetFollowersAsync(new GetFollowersQuery(id, actualSkip, actualSize, searchQuery));
+            var dtos = items.Select(f => new FollowResponse(
+                f.FollowerId,
+                f.FolloweeId,
+                f.CreatedAt,
+                f.Username,
+                f.DisplayName,
+                f.AvatarUrl,
+                f.Bio)).ToList();
             return Ok(PaginationResult<FollowResponse>.Create(dtos, actualPage, actualSize, total));
         }
 
         [HttpGet("{id}/followings")]
+        [HttpGet("{id}/followings/search")]
         public async Task<ActionResult<PaginationResult<FollowResponse>>> Followings(
             Guid id,
+            [FromQuery] string? query = null,
+            [FromQuery] string? username = null,
+            [FromQuery] string? search = null,
             [FromQuery] int page = 1,
             [FromQuery] int size = 10,
             [FromQuery] int? skip = null,
@@ -130,9 +146,17 @@ namespace Favi_BE.Controllers
             var actualPage = page > 0 ? page : 1;
             var actualSize = pageSize ?? (take ?? (size > 0 ? size : 10));
             var actualSkip = skip ?? ((actualPage - 1) * actualSize);
+            var searchQuery = query ?? username ?? search;
 
-            var (items, total) = await _socialFacade.GetFollowingsAsync(new GetFollowingsQuery(id, actualSkip, actualSize));
-            var dtos = items.Select(f => new FollowResponse(f.FollowerId, f.FolloweeId, f.CreatedAt)).ToList();
+            var (items, total) = await _socialFacade.GetFollowingsAsync(new GetFollowingsQuery(id, actualSkip, actualSize, searchQuery));
+            var dtos = items.Select(f => new FollowResponse(
+                f.FollowerId,
+                f.FolloweeId,
+                f.CreatedAt,
+                f.Username,
+                f.DisplayName,
+                f.AvatarUrl,
+                f.Bio)).ToList();
             return Ok(PaginationResult<FollowResponse>.Create(dtos, actualPage, actualSize, total));
         }
 

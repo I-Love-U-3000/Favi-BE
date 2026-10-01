@@ -18,12 +18,14 @@ public static class SeedPipeline
 
         var seedContext = new SeedContext(SeedConfig.SeedKey);
 
+        var anyStepExecuted = false;
         var hasExistingProfiles = await db.Profiles.AnyAsync(cancellationToken);
         var hasExistingEmailAccounts = await db.EmailAccounts.AnyAsync(cancellationToken);
 
         Log("[SeedPipeline] Running Step 1 - Seed Users / Profiles...");
         if (!hasExistingProfiles && !hasExistingEmailAccounts)
         {
+            anyStepExecuted = true;
             var step1 = new SeedUsersStep();
             var step1Result = await step1.ExecuteAsync(db, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 1 done. Created users: {step1Result.CreatedCount}");
@@ -49,6 +51,7 @@ public static class SeedPipeline
 
         if (!await db.Follows.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var step2 = new SeedFollowsStep();
             var result = await step2.ExecuteAsync(db, profiles, seedContext, cancellationToken);
 
@@ -64,6 +67,7 @@ public static class SeedPipeline
 
         if (!await db.Posts.AnyAsync(cancellationToken) && !await db.PostMedias.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var step3 = new SeedPostsStep();
             var step3Result = await step3.ExecuteAsync(db, profiles, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 3 done. Posts: {step3Result.CreatedPosts}, PostMedias: {step3Result.CreatedPostMedias}");
@@ -87,6 +91,7 @@ public static class SeedPipeline
             && !await db.Comments.AnyAsync(cancellationToken)
             && !await db.Reposts.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var step4 = new SeedEngagementStep();
             var step4Result = await step4.ExecuteAsync(db, profiles, posts, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 4 done. Reactions: {step4Result.CreatedReactions}, Comments: {step4Result.CreatedComments}, Reposts: {step4Result.CreatedReposts}");
@@ -100,6 +105,7 @@ public static class SeedPipeline
         Log("[SeedPipeline] Running Step 5 - Seed Tags + PostTags...");
         if (!await db.Tags.AnyAsync(cancellationToken) && !await db.PostTags.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var step5 = new SeedTagsStep();
             var step5Result = await step5.ExecuteAsync(db, posts, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 5 done. Tags: {step5Result.CreatedTags}, PostTags: {step5Result.CreatedPostTags}");
@@ -113,6 +119,7 @@ public static class SeedPipeline
         Log("[SeedPipeline] Running Step 6 - Seed Lightweight Notifications...");
         if (!await db.Notifications.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var follows = await db.Follows
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
@@ -148,6 +155,7 @@ public static class SeedPipeline
         Log("[SeedPipeline] Running Step 7 - Seed Stories...");
         if (!await db.Stories.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var step7 = new SeedStoriesStep();
             var step7Result = await step7.ExecuteAsync(db, profiles, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 7 done. Stories: {step7Result.CreatedStories}");
@@ -161,6 +169,7 @@ public static class SeedPipeline
         Log("[SeedPipeline] Running Step 7b - Seed Collections...");
         if (!await db.Collections.AnyAsync(cancellationToken))
         {
+            anyStepExecuted = true;
             var step7b = new SeedCollectionsStep();
             var step7bResult = await step7b.ExecuteAsync(db, profiles, posts, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 7b done. Collections: {step7bResult.CreatedCollections}, PostCollections: {step7bResult.CreatedPostCollections}");
@@ -176,6 +185,13 @@ public static class SeedPipeline
         var vectorIndexStep = new SeedVectorIndexStep();
         var vectorIndexResult = await vectorIndexStep.ExecuteAsync(db, vectorIndexService, seedContext, cancellationToken);
         Log($"[SeedPipeline] Step 8 done. Indexed posts: {vectorIndexResult.IndexedCount} in {vectorIndexResult.ElapsedMilliseconds}ms. Manifest: {vectorIndexResult.ManifestPath}");
+
+        if (!anyStepExecuted)
+        {
+            Log("[SeedPipeline] All seed steps skipped: database is already populated.");
+            Log("[SeedPipeline] Skipping Step 9 (Global Validation Gate) and Step 10 (Export Dataset) on already-seeded database.");
+            return;
+        }
 
         Log("[SeedPipeline] Running Step 9 - Global Validation Gate...");
         var validator = new SeedValidator();

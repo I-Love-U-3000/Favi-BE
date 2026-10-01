@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Enums;
+using Favi_BE.Models.Enums;
 
 namespace Favi_BE.Models.Dtos
 {
@@ -39,6 +39,10 @@ namespace Favi_BE.Models.Dtos
     public record FollowResponse(
         Guid FollowerId,
         Guid FolloweeId,
-        DateTime CreatedAt
+        DateTime CreatedAt,
+        string? Username = null,
+        string? DisplayName = null,
+        string? AvatarUrl = null,
+        string? Bio = null
     );
 }

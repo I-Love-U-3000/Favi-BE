@@ -28,7 +28,25 @@ public sealed class SeedValidator
 
         var userCount = await scopedProfiles.CountAsync(cancellationToken);
         if (userCount < SeedConfig.Users.Min || userCount > SeedConfig.Users.Max)
-            throw new InvalidOperationException("Seed validation failed: users count is outside expected range.");
+        {
+            if (snapshot.ProfileIds.Count > 0)
+            {
+                var totalProfiles = await db.Profiles.CountAsync(cancellationToken);
+                if (totalProfiles >= SeedConfig.Users.Min && totalProfiles <= SeedConfig.Users.Max)
+                {
+                    scopedProfiles = db.Profiles;
+                    userCount = totalProfiles;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Seed validation failed: users count is outside expected range [{SeedConfig.Users.Min}, {SeedConfig.Users.Max}]. Found {userCount} matching snapshot (total in DB: {totalProfiles}).");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Seed validation failed: users count {userCount} is outside expected range [{SeedConfig.Users.Min}, {SeedConfig.Users.Max}].");
+            }
+        }
 
         var duplicateUsernameExists = await scopedProfiles
             .GroupBy(p => p.Username.ToLower())
@@ -134,7 +152,25 @@ public sealed class SeedValidator
 
         var postCount = await scopedPosts.CountAsync(cancellationToken);
         if (postCount < SeedConfig.Posts.Min || postCount > SeedConfig.Posts.Max)
-            throw new InvalidOperationException("Seed validation failed: posts count is outside expected range.");
+        {
+            if (snapshot.PostIds.Count > 0)
+            {
+                var totalDbPosts = await db.Posts.CountAsync(cancellationToken);
+                if (totalDbPosts >= SeedConfig.Posts.Min && totalDbPosts <= SeedConfig.Posts.Max)
+                {
+                    scopedPosts = db.Posts;
+                    postCount = totalDbPosts;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Seed validation failed: posts count is outside expected range [{SeedConfig.Posts.Min}, {SeedConfig.Posts.Max}]. Found {postCount} matching snapshot (total in DB: {totalDbPosts}).");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Seed validation failed: posts count {postCount} is outside expected range [{SeedConfig.Posts.Min}, {SeedConfig.Posts.Max}].");
+            }
+        }
 
         var privatePosts = await scopedPosts.CountAsync(p => p.Privacy == PrivacyLevel.Private, cancellationToken);
         if (privatePosts > 0)

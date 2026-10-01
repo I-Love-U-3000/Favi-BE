@@ -19,36 +19,70 @@ namespace Favi_BE.Data.Repositories
             return await _dbSet.AnyAsync(f => f.FollowerId == followerId && f.FolloweeId == followedId);
         }
 
-        public async Task<IEnumerable<Follow>> GetFollowersAsync(Guid profileId, int skip, int take)
+        public async Task<IEnumerable<Follow>> GetFollowersAsync(Guid profileId, int skip, int take, string? query = null)
         {
-            return await _dbSet
+            var q = _dbSet
                 .Where(f => f.FolloweeId == profileId)
                 .Include(f => f.Follower)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var trimmed = query.Trim();
+                q = q.Where(f => EF.Functions.ILike(f.Follower.Username, $"%{trimmed}%")
+                              || (f.Follower.DisplayName != null && EF.Functions.ILike(f.Follower.DisplayName, $"%{trimmed}%")));
+            }
+
+            return await q
                 .OrderByDescending(f => f.CreatedAt)
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Follow>> GetFollowingAsync(Guid profileId, int skip, int take)
+        public async Task<IEnumerable<Follow>> GetFollowingAsync(Guid profileId, int skip, int take, string? query = null)
         {
-            return await _dbSet
+            var q = _dbSet
                 .Where(f => f.FollowerId == profileId)
                 .Include(f => f.Followee)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var trimmed = query.Trim();
+                q = q.Where(f => EF.Functions.ILike(f.Followee.Username, $"%{trimmed}%")
+                              || (f.Followee.DisplayName != null && EF.Functions.ILike(f.Followee.DisplayName, $"%{trimmed}%")));
+            }
+
+            return await q
                 .OrderByDescending(f => f.CreatedAt)
                 .Skip(skip)
                 .Take(take)
                 .ToListAsync();
         }
 
-        public async Task<int> GetFollowersCountAsync(Guid profileId)
+        public async Task<int> GetFollowersCountAsync(Guid profileId, string? query = null)
         {
-            return await _dbSet.CountAsync(f => f.FolloweeId == profileId);
+            var q = _dbSet.Where(f => f.FolloweeId == profileId);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var trimmed = query.Trim();
+                q = q.Where(f => EF.Functions.ILike(f.Follower.Username, $"%{trimmed}%")
+                              || (f.Follower.DisplayName != null && EF.Functions.ILike(f.Follower.DisplayName, $"%{trimmed}%")));
+            }
+            return await q.CountAsync();
         }
 
-        public async Task<int> GetFollowingCountAsync(Guid profileId)
+        public async Task<int> GetFollowingCountAsync(Guid profileId, string? query = null)
         {
-            return await _dbSet.CountAsync(f => f.FollowerId == profileId);
+            var q = _dbSet.Where(f => f.FollowerId == profileId);
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var trimmed = query.Trim();
+                q = q.Where(f => EF.Functions.ILike(f.Followee.Username, $"%{trimmed}%")
+                              || (f.Followee.DisplayName != null && EF.Functions.ILike(f.Followee.DisplayName, $"%{trimmed}%")));
+            }
+            return await q.CountAsync();
         }
 
         public async Task<Follow?> GetAsync(Guid followerId, Guid followeeId)

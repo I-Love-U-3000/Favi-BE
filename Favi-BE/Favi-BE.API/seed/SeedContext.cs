@@ -25,4 +25,12 @@ public static class StableSeed
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return BitConverter.ToInt32(bytes, 0);
     }
+
+    public static Guid DeterministicGuid(string seedKey, string entityType, int index)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{seedKey}:{entityType}:{index}"));
+        var guidBytes = new byte[16];
+        Array.Copy(bytes, guidBytes, guidBytes.Length);
+        return new Guid(guidBytes);
+    }
 }
