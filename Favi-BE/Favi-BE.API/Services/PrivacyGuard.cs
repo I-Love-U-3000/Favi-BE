@@ -194,6 +194,9 @@ namespace Favi_BE.Services
             if (IsBanActive(profile))
                 return false;
 
+            if (!await CanViewProfileAsync(profile, viewerId, isAdmin))
+                return false;
+
             var privacy = profile.FollowPrivacyLevel;
             if (!viewerId.HasValue)
                 return privacy == PrivacyLevel.Public;

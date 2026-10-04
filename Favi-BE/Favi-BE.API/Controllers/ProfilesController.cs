@@ -1,4 +1,5 @@
 using Favi_BE.Common;
+using Favi_BE.Interfaces.Repositories;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
@@ -36,15 +37,21 @@ namespace Favi_BE.Controllers
         private readonly IAuthFacade _authFacade;
         private readonly ISocialGraphFacade _socialFacade;
         private readonly ICloudinaryService _cloudinary;
+        private readonly IPrivacyGuard _privacy;
+        private readonly IProfileRepository _profileRepo;
 
         public ProfilesController(
             IAuthFacade authFacade,
             ISocialGraphFacade socialFacade,
-            ICloudinaryService cloudinary)
+            ICloudinaryService cloudinary,
+            IPrivacyGuard privacy,
+            IProfileRepository profileRepo)
         {
             _authFacade = authFacade;
             _socialFacade = socialFacade;
             _cloudinary = cloudinary;
+            _privacy = privacy;
+            _profileRepo = profileRepo;
         }
 
         [HttpGet("{id}")]
@@ -119,6 +126,15 @@ namespace Favi_BE.Controllers
             [FromQuery] int? take = null,
             [FromQuery] int? pageSize = null)
         {
+            var profile = await _profileRepo.GetByIdAsync(id);
+            if (profile is null)
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
+            var canView = await _privacy.CanViewFollowListAsync(profile, viewerId);
+            if (!canView)
+                return StatusCode(StatusCodes.Status403Forbidden, new { code = "FOLLOW_LIST_PRIVATE", message = "Danh sách người theo dõi của người dùng này là riêng tư." });
+
             var actualPage = page > 0 ? page : 1;
             var actualSize = pageSize ?? (take ?? (size > 0 ? size : 10));
             var actualSkip = skip ?? ((actualPage - 1) * actualSize);
@@ -149,6 +165,15 @@ namespace Favi_BE.Controllers
             [FromQuery] int? take = null,
             [FromQuery] int? pageSize = null)
         {
+            var profile = await _profileRepo.GetByIdAsync(id);
+            if (profile is null)
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
+            var canView = await _privacy.CanViewFollowListAsync(profile, viewerId);
+            if (!canView)
+                return StatusCode(StatusCodes.Status403Forbidden, new { code = "FOLLOW_LIST_PRIVATE", message = "Danh sách đang theo dõi của người dùng này là riêng tư." });
+
             var actualPage = page > 0 ? page : 1;
             var actualSize = pageSize ?? (take ?? (size > 0 ? size : 10));
             var actualSkip = skip ?? ((actualPage - 1) * actualSize);
@@ -358,6 +383,15 @@ namespace Favi_BE.Controllers
             [FromQuery] int size = 10,
             [FromQuery] int? pageSize = null)
         {
+            var profile = await _profileRepo.GetByIdAsync(id);
+            if (profile is null)
+                return NotFound(new { code = "PROFILE_NOT_FOUND", message = "Hồ sơ không tồn tại." });
+
+            var viewerId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : (Guid?)null;
+            var canView = await _privacy.CanViewFollowListAsync(profile, viewerId);
+            if (!canView)
+                return StatusCode(StatusCodes.Status403Forbidden, new { code = "FOLLOW_LIST_PRIVATE", message = "Danh sách bạn bè của người dùng này là riêng tư." });
+
             return await GetFriendsInternal(id, page, size, pageSize);
         }
 
