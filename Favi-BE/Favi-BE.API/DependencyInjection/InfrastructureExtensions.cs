@@ -97,7 +97,7 @@ public static class InfrastructureExtensions
             var baseUrl = vectorConfig["BaseUrl"] ?? "http://vector-index-api:8080";
             var timeoutSeconds = int.Parse(vectorConfig["TimeoutSeconds"] ?? "60");
             client.BaseAddress = new Uri(baseUrl);
-            client.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
+            client.Timeout = TimeSpan.FromSeconds(Math.Max(timeoutSeconds * 3, 300));
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.DefaultRequestHeaders.Add("X-Internal-Service", "favi-backend");
         });

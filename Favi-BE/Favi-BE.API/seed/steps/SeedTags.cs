@@ -12,7 +12,7 @@ public sealed class SeedTagsStep
     private static readonly string[] BaseTagNames =
     [
         "travel", "food", "sports", "music", "art", "tech", "nature", "fitness", "books", "gaming",
-        "city", "lifestyle", "coding", "photography", "science", "history", "comedy", "design", "movies", "coffee"
+        "city", "lifestyle", "favi", "coding", "photography", "science", "history", "comedy", "design", "movies", "coffee"
     ];
 
     public async Task<SeedTagsResult> ExecuteAsync(
@@ -31,8 +31,12 @@ public sealed class SeedTagsStep
         ValidateTags(tags, postTags, posts);
 
         await db.Tags.AddRangeAsync(tags, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+        db.ChangeTracker.Clear();
+
         await db.PostTags.AddRangeAsync(postTags, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        db.ChangeTracker.Clear();
 
         var tagsPath = ExportTagsCsv(tags);
         var postTagsPath = ExportPostTagsCsv(postTags);
@@ -87,17 +91,20 @@ public sealed class SeedTagsStep
                 var words = post.Caption.Split(new[] { ' ', ',', '.', '!', '?', '#' }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var w in words)
                 {
-                    if (selected.Count >= tagCountForPost) break;
                     var clean = w.Trim().ToLowerInvariant();
-                    if (tagLookup.TryGetValue(clean, out var matchedTag))
+                    // Always capture benchmark tags to guarantee 1000+ posts for performance testing
+                    if (clean == "lifestyle" || clean == "favi" || selected.Count < tagCountForPost)
                     {
-                        if (selected.Add(matchedTag.Id))
+                        if (tagLookup.TryGetValue(clean, out var matchedTag))
                         {
-                            postTags.Add(new PostTag
+                            if (selected.Add(matchedTag.Id))
                             {
-                                PostId = post.Id,
-                                TagId = matchedTag.Id
-                            });
+                                postTags.Add(new PostTag
+                                {
+                                    PostId = post.Id,
+                                    TagId = matchedTag.Id
+                                });
+                            }
                         }
                     }
                 }

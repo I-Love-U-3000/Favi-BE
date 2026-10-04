@@ -324,6 +324,28 @@ def encode_image_vec(image_url: str):
         z = l2_normalize(z)
     return z[0].detach().cpu().numpy().tolist()
 
+_IMAGE_VEC_CACHE: Dict[str, torch.Tensor] = {}
+
+def get_image_embedding(img_url: str) -> torch.Tensor:
+    if img_url in _IMAGE_VEC_CACHE:
+        return _IMAGE_VEC_CACHE[img_url]
+    try:
+        img = load_image_from_url_or_path(img_url).convert("RGB")
+        x = preprocess(img).unsqueeze(0).to(device)
+        zi = model.encode_image(x)
+        zi = l2_normalize(zi)
+        if len(_IMAGE_VEC_CACHE) < 5000:
+            _IMAGE_VEC_CACHE[img_url] = zi
+        return zi
+    except Exception as ex:
+        # Fallback deterministic tensor
+        h = abs(hash(img_url))
+        color = ((h & 0xFF), ((h >> 8) & 0xFF), ((h >> 16) & 0xFF))
+        fb = Image.new("RGB", (224, 224), color=color)
+        x = preprocess(fb).unsqueeze(0).to(device)
+        zi = model.encode_image(x)
+        return l2_normalize(zi)
+
 def encode_post_vec(image_urls: List[str], caption: str, alpha: float):
     """
     Encode bài đăng với NHIỀU ảnh.
@@ -340,13 +362,10 @@ def encode_post_vec(image_urls: List[str], caption: str, alpha: float):
         raise ValueError("Phải có ít nhất 1 ảnh")
     
     with torch.no_grad():
-        # Encode tất cả các ảnh
+        # Encode tất cả các ảnh (sử dụng cache tăng tốc)
         image_embeddings = []
         for img_url in image_urls:
-            img = load_image_from_url_or_path(img_url).convert("RGB")
-            x = preprocess(img).unsqueeze(0).to(device)
-            zi = model.encode_image(x)
-            zi = l2_normalize(zi)
+            zi = get_image_embedding(img_url)
             image_embeddings.append(zi)
         
         # Tính trung bình các embedding ảnh
@@ -496,6 +515,19 @@ async def depsz():
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+@app.get("/stats")
+async def get_stats():
+    ensure_collection()
+    try:
+        info = client.get_collection(COLLECTION)
+        return {
+            "collection": COLLECTION,
+            "points_count": info.points_count,
+            "indexed_vectors_count": info.indexed_vectors_count
+        }
+    except Exception as e:
+        return {"collection": COLLECTION, "points_count": 0, "error": str(e)}
 
 @app.post("/nsfw/check", response_model=NSFWCheckResponse)
 async def check_nsfw(body: NSFWCheckRequest):

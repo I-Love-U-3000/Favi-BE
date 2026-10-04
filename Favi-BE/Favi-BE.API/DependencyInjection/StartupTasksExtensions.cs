@@ -15,7 +15,7 @@ public static class StartupTasksExtensions
         var hasTables = false;
         try
         {
-            await db.Profiles.Take(1).ToListAsync();
+            await db.Profiles.OrderBy(p => p.Id).Take(1).ToListAsync();
             hasTables = true;
         }
         catch

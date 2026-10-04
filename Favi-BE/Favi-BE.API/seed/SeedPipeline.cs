@@ -87,10 +87,28 @@ public static class SeedPipeline
         if (posts.Count == 0)
             throw new InvalidOperationException("Step 4 requires posts from Step 3.");
 
-        if (!await db.Reactions.AnyAsync(cancellationToken)
-            && !await db.Comments.AnyAsync(cancellationToken)
-            && !await db.Reposts.AnyAsync(cancellationToken))
+        var hasReactions = await db.Reactions.AnyAsync(cancellationToken);
+        var hasComments = await db.Comments.AnyAsync(cancellationToken);
+        var hasReposts = await db.Reposts.AnyAsync(cancellationToken);
+
+        if (!hasReactions || !hasComments || !hasReposts)
         {
+            if (hasReactions || hasComments || hasReposts)
+            {
+                Log("[SeedPipeline] Incomplete engagement detected from previous run. Resetting engagement tables...", "WARN");
+                if (db.Database.IsRelational())
+                {
+                    await db.Database.ExecuteSqlRawAsync(@"TRUNCATE TABLE ""Reactions"", ""Comments"", ""Reposts"" CASCADE;", cancellationToken);
+                }
+                else
+                {
+                    db.Reactions.RemoveRange(db.Reactions);
+                    db.Comments.RemoveRange(db.Comments);
+                    db.Reposts.RemoveRange(db.Reposts);
+                    await db.SaveChangesAsync(cancellationToken);
+                }
+            }
+
             anyStepExecuted = true;
             var step4 = new SeedEngagementStep();
             var step4Result = await step4.ExecuteAsync(db, profiles, posts, seedContext, cancellationToken);
@@ -122,9 +140,15 @@ public static class SeedPipeline
             anyStepExecuted = true;
             var follows = await db.Follows
                 .AsNoTracking()
+                .OrderBy(f => f.FollowerId)
+                .ThenBy(f => f.FolloweeId)
+                .Take(30000)
                 .ToListAsync(cancellationToken);
             var reactions = await db.Reactions
                 .AsNoTracking()
+                .Where(r => r.PostId != null)
+                .OrderBy(r => r.Id)
+                .Take(30000)
                 .ToListAsync(cancellationToken);
             var comments = await db.Comments
                 .AsNoTracking()
@@ -180,16 +204,11 @@ public static class SeedPipeline
             Log("[SeedPipeline] Step 7b skipped: collections already exist.");
         }
 
-        Log("[SeedPipeline] Running Step 8 - Seed Vector Index (Qdrant)...");
-        var vectorIndexService = scope.ServiceProvider.GetRequiredService<IVectorIndexService>();
-        var vectorIndexStep = new SeedVectorIndexStep();
-        var vectorIndexResult = await vectorIndexStep.ExecuteAsync(db, vectorIndexService, seedContext, cancellationToken);
-        Log($"[SeedPipeline] Step 8 done. Indexed posts: {vectorIndexResult.IndexedCount} in {vectorIndexResult.ElapsedMilliseconds}ms. Manifest: {vectorIndexResult.ManifestPath}");
-
         if (!anyStepExecuted)
         {
             Log("[SeedPipeline] All seed steps skipped: database is already populated.");
             Log("[SeedPipeline] Skipping Step 9 (Global Validation Gate) and Step 10 (Export Dataset) on already-seeded database.");
+            TriggerBackgroundVectorIndex(serviceProvider);
             return;
         }
 
@@ -210,6 +229,32 @@ public static class SeedPipeline
         var step10Result = await step10.ExecuteAsync(db, cancellationToken);
         Log($"[SeedPipeline] Step 10 done. Output root: {step10Result.OutputRoot}");
         Log($"[SeedPipeline] Step 10 manifest: {step10Result.ManifestPath}");
+
+        // Step 8: Trigger vector indexing in the background so Kestrel opens port immediately
+        TriggerBackgroundVectorIndex(serviceProvider);
+    }
+
+    private static void TriggerBackgroundVectorIndex(IServiceProvider serviceProvider)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var bgScope = serviceProvider.CreateScope();
+                var bgDb = bgScope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var vectorIndexService = bgScope.ServiceProvider.GetRequiredService<IVectorIndexService>();
+                var seedContext = new SeedContext(SeedConfig.SeedKey);
+
+                Log("[SeedPipeline:Background] Running Step 8 - Background Seed Vector Index (Qdrant)...");
+                var vectorIndexStep = new SeedVectorIndexStep();
+                var result = await vectorIndexStep.ExecuteAsync(bgDb, vectorIndexService, seedContext, CancellationToken.None);
+                Log($"[SeedPipeline:Background] Step 8 done. Indexed posts: {result.IndexedCount} in {result.ElapsedMilliseconds}ms. Manifest: {result.ManifestPath}");
+            }
+            catch (Exception ex)
+            {
+                Log($"[SeedPipeline:Background] Step 8 background indexing error: {ex.Message}", "ERROR");
+            }
+        });
     }
 
     private static void Log(string message, string level = "INFO")

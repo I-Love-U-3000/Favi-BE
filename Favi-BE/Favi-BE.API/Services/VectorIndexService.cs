@@ -266,5 +266,33 @@ namespace Favi_BE.Services
                 _ => "Public"  // default fallback
             };
         }
+
+        public async Task<int> GetIndexedCountAsync(CancellationToken ct = default)
+        {
+            if (!_options.Enabled)
+                return 0;
+
+            try
+            {
+                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                cts.CancelAfter(TimeSpan.FromSeconds(5));
+
+                var response = await _httpClient.GetAsync("/stats", cts.Token);
+                if (response.IsSuccessStatusCode)
+                {
+                    var doc = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(cancellationToken: cts.Token);
+                    if (doc.TryGetProperty("points_count", out var pCount))
+                    {
+                        return pCount.GetInt32();
+                    }
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[VECTOR_STATS_FAILED] Unable to query /stats from vector API service.");
+                return 0;
+            }
+        }
     }
 }

@@ -36,22 +36,51 @@ public sealed class SeedPostsStep
         var actualFriendOnly = Math.Min(friendOnlyCount, targetPostCount);
         var actualPublic = targetPostCount - actualFriendOnly;
 
+        // Reserve the first 105 posts (indices 0..104) to be strictly Public for viral/trending tests
         var privacyLevels = new List<PrivacyLevel>(targetPostCount);
-        for (var k = 0; k < actualPublic; k++)
+        for (var k = 0; k < 105 && k < targetPostCount; k++)
             privacyLevels.Add(PrivacyLevel.Public);
-        for (var k = 0; k < actualFriendOnly; k++)
-            privacyLevels.Add(PrivacyLevel.Followers);
 
-        // Deterministic shuffle with seedContext.Random
-        for (var k = privacyLevels.Count - 1; k > 0; k--)
+        var remainingCount = targetPostCount - privacyLevels.Count;
+        var remainingFollowers = actualFriendOnly;
+        var remainingPublic = remainingCount - remainingFollowers;
+
+        var tailPrivacy = new List<PrivacyLevel>(remainingCount);
+        for (var k = 0; k < remainingPublic; k++)
+            tailPrivacy.Add(PrivacyLevel.Public);
+        for (var k = 0; k < remainingFollowers; k++)
+            tailPrivacy.Add(PrivacyLevel.Followers);
+
+        // Deterministic shuffle of the tail privacy levels
+        for (var k = tailPrivacy.Count - 1; k > 0; k--)
         {
             var j = seedContext.Random.Next(k + 1);
-            (privacyLevels[k], privacyLevels[j]) = (privacyLevels[j], privacyLevels[k]);
+            (tailPrivacy[k], tailPrivacy[j]) = (tailPrivacy[j], tailPrivacy[k]);
         }
+
+        privacyLevels.AddRange(tailPrivacy);
+
+        var user0 = profiles.FirstOrDefault(p => p.Username == "user_00001") ?? profiles[0];
+        var user1 = profiles.FirstOrDefault(p => p.Username == "user_00002") ?? (profiles.Count > 1 ? profiles[1] : profiles[0]);
 
         for (var i = 0; i < targetPostCount; i++)
         {
-            var profile = PickProfileByRoleWeight(profiles, seedContext);
+            Profile profile;
+            if (i < 1050)
+            {
+                // Heavy creator 1: user_00001 authors 1,050 posts
+                profile = user0;
+            }
+            else if (i < 2070)
+            {
+                // Heavy creator 2: user_00002 authors 1,020 posts
+                profile = user1;
+            }
+            else
+            {
+                profile = PickProfileByRoleWeight(profiles, seedContext);
+            }
+
             var createdAt = BuildCreatedAt(seedContext);
             var postId = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", i);
 
@@ -75,6 +104,12 @@ public sealed class SeedPostsStep
                 mediaUrl = runImageSet![i % runImageSet.Count];
                 location = null;
             }
+
+            // Ensure high-performance search queries return 1,000+ posts (2 distinct cases: #lifestyle and #favi)
+            if (i < 1250 && !caption.Contains("#lifestyle", StringComparison.OrdinalIgnoreCase))
+                caption += " #lifestyle";
+            if (i >= 500 && i < 1650 && !caption.Contains("#favi", StringComparison.OrdinalIgnoreCase))
+                caption += " #favi";
 
             var post = new Post
             {
@@ -171,10 +206,8 @@ public sealed class SeedPostsStep
     private static DateTime BuildCreatedAt(SeedContext seedContext)
     {
         var now = DateTime.UtcNow;
-        return now
-            .AddDays(-seedContext.Random.Next(0, 30))
-            .AddHours(-seedContext.Random.Next(0, 24))
-            .AddMinutes(-seedContext.Random.Next(0, 60));
+        var minutesAgo = seedContext.Random.Next(60, 30 * 24 * 60);
+        return now.AddMinutes(-minutesAgo);
     }
 
     private static void ValidatePostsAndMedia(
@@ -211,6 +244,15 @@ public sealed class SeedPostsStep
 
         if (posts.Any(p => !mediaCoverage.TryGetValue(p.Id, out var cnt) || cnt != 1))
             throw new InvalidOperationException("Validation failed: each post must have exactly one media.");
+
+        var heavyCreators = posts.GroupBy(p => p.ProfileId).Count(g => g.Count() >= 1000);
+        if (heavyCreators < 2)
+            throw new InvalidOperationException($"Validation failed: expected at least 2 heavy creators with 1000+ posts, but found {heavyCreators}.");
+
+        var lifestylePosts = posts.Count(p => p.Caption != null && p.Caption.Contains("#lifestyle", StringComparison.OrdinalIgnoreCase));
+        var faviPosts = posts.Count(p => p.Caption != null && p.Caption.Contains("#favi", StringComparison.OrdinalIgnoreCase));
+        if (lifestylePosts < 1000 || faviPosts < 1000)
+            throw new InvalidOperationException($"Validation failed: expected >= 1000 posts for #lifestyle ({lifestylePosts}) and #favi ({faviPosts}).");
     }
 
     private static List<string> EnsureRunImageSet(SeedContext seedContext)

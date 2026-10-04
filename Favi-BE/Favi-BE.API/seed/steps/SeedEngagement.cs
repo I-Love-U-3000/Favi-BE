@@ -6,15 +6,13 @@ using Favi_BE.Data;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Favi_BE.API.Seed.Steps;
 
 public sealed class SeedEngagementStep
 {
-    private const double PostReactionShare = 0.72;
-    private const double CommentReactionShare = 0.20;
-    private const double RepostReactionShare = 0.08;
-    private const double ReplyRate = 0.32;
+    private const double ReplyRate = 0.30;
     private const double CommentUrlRate = 0.10;
 
     private static readonly string[] CommentTemplates =
@@ -37,6 +35,22 @@ public sealed class SeedEngagementStep
         "news.example.net"
     ];
 
+    private enum PostTier
+    {
+        Viral = 0,    // 105 posts, 1005-1030 reactions (meets SeedValidator >= 100 posts with 1000+ rx)
+        Trending = 1, // 300 posts, 60-200 reactions
+        Active = 2,   // 1000 posts, 15-60 reactions
+        Moderate = 3, // 2000 posts, 4-15 reactions
+        Cold = 4      // ~1595 posts, 1-4 reactions
+    }
+
+    private sealed class PostEngagementMeta
+    {
+        public required Post Post { get; init; }
+        public required PostTier Tier { get; init; }
+        public required int TargetReactions { get; init; }
+    }
+
     public async Task<SeedEngagementResult> ExecuteAsync(
         AppDbContext db,
         IReadOnlyList<Profile> profiles,
@@ -47,16 +61,47 @@ public sealed class SeedEngagementStep
         if (profiles.Count == 0 || posts.Count == 0)
             throw new InvalidOperationException("Step 4 requires profiles and posts from earlier steps.");
 
-        var comments = GenerateComments(profiles, posts, seedContext);
-        var reposts = GenerateReposts(profiles, posts, seedContext);
-        var reactions = GenerateReactions(profiles, posts, comments, reposts, seedContext);
+        // 1. Pre-load followers for authors of friend-only posts to respect privacy rules
+        var followersPostsAuthors = posts
+            .Where(p => p.Privacy == PrivacyLevel.Followers)
+            .Select(p => p.ProfileId)
+            .Distinct()
+            .ToList();
 
-        ValidateEngagement(reactions, comments, reposts, profiles, posts);
+        var followersByAuthor = await db.Follows
+            .AsNoTracking()
+            .Where(f => followersPostsAuthors.Contains(f.FolloweeId))
+            .GroupBy(f => f.FolloweeId)
+            .ToDictionaryAsync(g => g.Key, g => g.Select(f => f.FollowerId).ToList(), cancellationToken);
 
-        await db.Reactions.AddRangeAsync(reactions, cancellationToken);
-        await db.Comments.AddRangeAsync(comments, cancellationToken);
-        await db.Reposts.AddRangeAsync(reposts, cancellationToken);
-        await db.SaveChangesAsync(cancellationToken);
+        // 2. Classify posts into realistic engagement tiers (Viral, Trending, Active, Moderate, Cold)
+        var postMetas = ClassifyPostTiers(posts, profiles, seedContext);
+        var postTierMap = postMetas.ToDictionary(m => m.Post.Id, m => m.Tier);
+
+        // 3. Generate realistic comments correlated with post popularity
+        var comments = GenerateComments(profiles, postMetas, followersByAuthor, seedContext);
+
+        // 4. Generate reposts correlated with post popularity
+        var reposts = GenerateReposts(profiles, postMetas, seedContext);
+
+        // 5. Generate reactions with realistic heavy-tail post curve, comment reactions, and repost reactions
+        var reactions = GenerateAllReactions(profiles, postMetas, comments, reposts, followersByAuthor, postTierMap, seedContext);
+
+        // 6. Comprehensive validation ensuring integrity, causality, and compliance with SeedValidator
+        ValidateEngagement(reactions, comments, reposts, profiles, posts, seedContext);
+
+        // 7. Persist in memory-friendly batches in strict topological foreign-key order:
+        // (a) Root comments first
+        // (b) Reply comments next (referencing root comments)
+        // (c) Reposts
+        // (d) Reactions last (which reference posts, comments, and reposts)
+        var rootComments = comments.Where(c => c.ParentCommentId == null).ToList();
+        var replyComments = comments.Where(c => c.ParentCommentId != null).ToList();
+
+        await SaveCommentsInBatchesAsync(db, rootComments, cancellationToken);
+        await SaveCommentsInBatchesAsync(db, replyComments, cancellationToken);
+        await SaveRepostsInBatchesAsync(db, reposts, cancellationToken);
+        await SaveReactionsInBatchesAsync(db, reactions, cancellationToken);
 
         var reactionsPath = ExportReactionsCsv(reactions);
         var commentsPath = ExportCommentsCsv(comments);
@@ -65,243 +110,426 @@ public sealed class SeedEngagementStep
         return new SeedEngagementResult(reactions.Count, comments.Count, reposts.Count, reactionsPath, commentsPath, repostsPath);
     }
 
-    private static List<Reaction> GenerateReactions(
-        IReadOnlyList<Profile> profiles,
+    private static List<PostEngagementMeta> ClassifyPostTiers(
         IReadOnlyList<Post> posts,
-        IReadOnlyList<Comment> comments,
-        IReadOnlyList<Repost> reposts,
+        IReadOnlyList<Profile> profiles,
         SeedContext seedContext)
     {
-        var target = seedContext.Random.Next(SeedConfig.Reactions.Min, SeedConfig.Reactions.Max + 1);
+        var postById = posts.ToDictionary(p => p.Id);
+        var assignedPostIds = new HashSet<Guid>();
+        var result = new List<PostEngagementMeta>(posts.Count);
 
-        var postQuota = (int)Math.Round(target * PostReactionShare, MidpointRounding.AwayFromZero);
-        var commentQuota = (int)Math.Round(target * CommentReactionShare, MidpointRounding.AwayFromZero);
-        var repostQuota = Math.Max(0, target - postQuota - commentQuota);
+        // Tier 0: Exactly 105 Viral posts. Must be PrivacyLevel.Public.
+        // Explicitly map post_0 to post_104 (the first 105 posts in posts.csv and k6 benchmark scripts)
+        for (var i = 0; i < 105; i++)
+        {
+            var viralPostId = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", i);
+            if (postById.TryGetValue(viralPostId, out var post) && assignedPostIds.Add(post.Id))
+            {
+                result.Add(new PostEngagementMeta
+                {
+                    Post = post,
+                    Tier = PostTier.Viral,
+                    TargetReactions = seedContext.Random.Next(1005, 1031) // Guarantees >= 1000 for SeedValidator
+                });
+            }
+        }
+
+        // Fallback: If any of post_0..post_104 wasn't found, pick remaining public posts to ensure exactly 105 viral posts
+        if (result.Count < 105)
+        {
+            var candidates = posts
+                .Where(p => p.Privacy == PrivacyLevel.Public && !assignedPostIds.Contains(p.Id))
+                .ToList();
+            foreach (var post in candidates.Take(105 - result.Count))
+            {
+                assignedPostIds.Add(post.Id);
+                result.Add(new PostEngagementMeta
+                {
+                    Post = post,
+                    Tier = PostTier.Viral,
+                    TargetReactions = seedContext.Random.Next(1005, 1031)
+                });
+            }
+        }
+
+        var remainingPosts = posts
+            .Where(p => !assignedPostIds.Contains(p.Id))
+            .OrderBy(p => StableSeed.FromString($"{seedContext.SeedKey}:post-tier:{p.Id}"))
+            .ToList();
+
+        var index = 0;
+
+        // 300 Trending Posts (60-200 likes)
+        var trendingLimit = Math.Min(300, remainingPosts.Count);
+        for (; index < trendingLimit; index++)
+        {
+            result.Add(new PostEngagementMeta
+            {
+                Post = remainingPosts[index],
+                Tier = PostTier.Trending,
+                TargetReactions = seedContext.Random.Next(60, 201)
+            });
+        }
+
+        // 1000 Active Posts (15-60 likes)
+        var activeLimit = Math.Min(index + 1000, remainingPosts.Count);
+        for (; index < activeLimit; index++)
+        {
+            result.Add(new PostEngagementMeta
+            {
+                Post = remainingPosts[index],
+                Tier = PostTier.Active,
+                TargetReactions = seedContext.Random.Next(15, 61)
+            });
+        }
+
+        // 2000 Moderate Posts (4-15 likes)
+        var moderateLimit = Math.Min(index + 2000, remainingPosts.Count);
+        for (; index < moderateLimit; index++)
+        {
+            result.Add(new PostEngagementMeta
+            {
+                Post = remainingPosts[index],
+                Tier = PostTier.Moderate,
+                TargetReactions = seedContext.Random.Next(4, 16)
+            });
+        }
+
+        // Remaining Cold Posts (1-4 likes)
+        for (; index < remainingPosts.Count; index++)
+        {
+            result.Add(new PostEngagementMeta
+            {
+                Post = remainingPosts[index],
+                Tier = PostTier.Cold,
+                TargetReactions = seedContext.Random.Next(1, 5)
+            });
+        }
+
+        return result;
+    }
+
+    private static List<Reaction> GenerateAllReactions(
+        IReadOnlyList<Profile> profiles,
+        IReadOnlyList<PostEngagementMeta> postMetas,
+        IReadOnlyList<Comment> comments,
+        IReadOnlyList<Repost> reposts,
+        IReadOnlyDictionary<Guid, List<Guid>> followersByAuthor,
+        IReadOnlyDictionary<Guid, PostTier> postTierMap,
+        SeedContext seedContext)
+    {
+        var targetTotal = seedContext.Random.Next(SeedConfig.Reactions.Min, SeedConfig.Reactions.Max + 1);
+        var reactions = new List<Reaction>(targetTotal);
 
         var postPairSet = new HashSet<(Guid PostId, Guid ProfileId)>();
         var commentPairSet = new HashSet<(Guid CommentId, Guid ProfileId)>();
         var repostPairSet = new HashSet<(Guid RepostId, Guid ProfileId)>();
 
-        var hotPosts = BuildHotPostSet(posts);
-        var results = new List<Reaction>(target);
+        // Pre-group profiles by activity role
+        var powerProfiles = profiles.Where(p => InferActivityRole(p) == "power").ToList();
+        var casualProfiles = profiles.Where(p => InferActivityRole(p) == "casual").ToList();
+        var lurkerProfiles = profiles.Where(p => InferActivityRole(p) == "lurker").ToList();
 
-        // Ensure at least 105 posts have >= 1,020 reactions
-        var viralPostCount = Math.Min(105, posts.Count);
-        var viralPosts = posts.Take(viralPostCount).ToList();
-        var profileArray = profiles.ToArray();
-        var targetReactionsPerViralPost = Math.Min(1020, profileArray.Length);
-
-        foreach (var post in viralPosts)
+        // 1. Generate Post Reactions adhering to natural curve & privacy
+        foreach (var meta in postMetas)
         {
-            var shuffledProfiles = profileArray.ToArray();
-            for (var i = shuffledProfiles.Length - 1; i > 0; i--)
+            var post = meta.Post;
+            var targetCount = meta.TargetReactions;
+
+            if (post.Privacy == PrivacyLevel.Followers)
             {
-                var j = seedContext.Random.Next(i + 1);
-                (shuffledProfiles[i], shuffledProfiles[j]) = (shuffledProfiles[j], shuffledProfiles[i]);
+                if (followersByAuthor.TryGetValue(post.ProfileId, out var followers) && followers.Count > 0)
+                {
+                    var eligibleFollowers = followers.Where(fid => fid != post.ProfileId).ToList();
+                    var countToTake = Math.Min(targetCount, eligibleFollowers.Count);
+                    ShuffleList(eligibleFollowers, seedContext);
+
+                    foreach (var reactorId in eligibleFollowers.Take(countToTake))
+                    {
+                        if (postPairSet.Add((post.Id, reactorId)))
+                        {
+                            reactions.Add(new Reaction
+                            {
+                                Id = Guid.NewGuid(),
+                                PostId = post.Id,
+                                ProfileId = reactorId,
+                                Type = PickReactionType(seedContext),
+                                CreatedAt = BuildCausalTimestamp(post.CreatedAt, seedContext)
+                            });
+                        }
+                    }
+                }
+                continue;
             }
 
-            foreach (var profile in shuffledProfiles.Take(targetReactionsPerViralPost))
+            // Public posts
+            if (meta.Tier == PostTier.Viral)
             {
-                if (postPairSet.Add((post.Id, profile.Id)))
+                var eligibleProfiles = profiles.Where(p => p.Id != post.ProfileId).ToList();
+                ShuffleList(eligibleProfiles, seedContext);
+
+                // Prioritize power and casual users, then lurkers, with deterministic tie-breaking
+                var prioritizedReactors = eligibleProfiles
+                    .OrderByDescending(p => InferActivityRole(p) == "power" ? 3 : (InferActivityRole(p) == "casual" ? 2 : 1))
+                    .ThenBy(p => StableSeed.FromString($"{seedContext.SeedKey}:{post.Id}:rx:{p.Id}"))
+                    .Take(targetCount)
+                    .ToList();
+
+                foreach (var reactor in prioritizedReactors)
                 {
-                    results.Add(new Reaction
+                    if (postPairSet.Add((post.Id, reactor.Id)))
+                    {
+                        reactions.Add(new Reaction
+                        {
+                            Id = Guid.NewGuid(),
+                            PostId = post.Id,
+                            ProfileId = reactor.Id,
+                            Type = PickReactionType(seedContext),
+                            CreatedAt = BuildCausalTimestamp(post.CreatedAt, seedContext)
+                        });
+                    }
+                }
+            }
+            else
+            {
+                // Trending, Active, Moderate, Cold
+                var attempts = 0;
+                var maxAttempts = targetCount * 10;
+                while (postPairSet.Count(p => p.PostId == post.Id) < targetCount && attempts < maxAttempts)
+                {
+                    attempts++;
+                    var profile = PickProfileWeightedByActivity(profiles, seedContext);
+                    if (profile.Id == post.ProfileId)
+                        continue;
+
+                    if (postPairSet.Add((post.Id, profile.Id)))
+                    {
+                        reactions.Add(new Reaction
+                        {
+                            Id = Guid.NewGuid(),
+                            PostId = post.Id,
+                            ProfileId = profile.Id,
+                            Type = PickReactionType(seedContext),
+                            CreatedAt = BuildCausalTimestamp(post.CreatedAt, seedContext)
+                        });
+                    }
+                }
+            }
+        }
+
+        // 2. High-performance seed requirements: root comments on top viral posts have 1000+ reactions (>= 2 cases)
+        var post0Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 0);
+        var post1Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 1);
+        var post2Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 2);
+
+        var megaComment0 = comments.FirstOrDefault(c => c.PostId == post0Id && c.ParentCommentId == null);
+        var megaComment1 = comments.FirstOrDefault(c => c.PostId == post1Id && c.ParentCommentId == null);
+        var megaComment2 = comments.FirstOrDefault(c => c.PostId == post2Id && c.ParentCommentId == null);
+
+        void AddMegaCommentReactions(Comment comment, int targetRx)
+        {
+            var eligible = profiles
+                .Where(p => p.Id != comment.ProfileId)
+                .OrderBy(p => StableSeed.FromString($"{seedContext.SeedKey}:{comment.Id}:crx:{p.Id}"))
+                .Take(targetRx)
+                .ToList();
+
+            foreach (var p in eligible)
+            {
+                if (commentPairSet.Add((comment.Id, p.Id)))
+                {
+                    reactions.Add(new Reaction
                     {
                         Id = Guid.NewGuid(),
-                        PostId = post.Id,
-                        CommentId = null,
-                        RepostId = null,
-                        CollectionId = null,
-                        ProfileId = profile.Id,
+                        CommentId = comment.Id,
+                        ProfileId = p.Id,
                         Type = PickReactionType(seedContext),
-                        CreatedAt = BuildTimestamp(seedContext)
+                        CreatedAt = BuildCausalTimestamp(comment.CreatedAt, seedContext)
                     });
                 }
             }
         }
 
-        postQuota = Math.Max(0, postQuota - results.Count);
-        var attempts = 0;
-        var maxAttempts = target * 30;
+        if (megaComment0 != null) AddMegaCommentReactions(megaComment0, 1025);
+        if (megaComment1 != null) AddMegaCommentReactions(megaComment1, 1015);
+        if (megaComment2 != null) AddMegaCommentReactions(megaComment2, 1005);
 
-        while (results.Count < target && attempts < maxAttempts)
+        // 3. Generate Comment and Repost reactions to reach total reaction quota
+        var remainingNeeded = Math.Max(0, targetTotal - reactions.Count);
+        if (remainingNeeded > 0 && (comments.Count > 0 || reposts.Count > 0))
         {
-            attempts++;
+            var commentQuota = reposts.Count > 0 ? (int)Math.Round(remainingNeeded * 0.72) : remainingNeeded;
+            var repostQuota = remainingNeeded - commentQuota;
 
-            var generated = false;
-            if (postQuota > 0)
+            // Comment reactions
+            var commentAttempts = 0;
+            var maxCommentAttempts = commentQuota * 15;
+            while (commentQuota > 0 && comments.Count > 0 && commentAttempts < maxCommentAttempts)
             {
-                generated = TryCreatePostReaction(results, profiles, posts, hotPosts, seedContext, postPairSet);
-                if (generated)
-                {
-                    postQuota--;
+                commentAttempts++;
+                var comment = PickCommentWeightedByTier(comments, postTierMap, seedContext);
+                var profile = PickProfileWeightedByActivity(profiles, seedContext);
+                if (profile.Id == comment.ProfileId)
                     continue;
-                }
-            }
 
-            if (commentQuota > 0)
-            {
-                generated = TryCreateCommentReaction(results, profiles, comments, hotPosts, seedContext, commentPairSet);
-                if (generated)
+                if (commentPairSet.Add((comment.Id, profile.Id)))
                 {
+                    reactions.Add(new Reaction
+                    {
+                        Id = Guid.NewGuid(),
+                        CommentId = comment.Id,
+                        ProfileId = profile.Id,
+                        Type = PickReactionType(seedContext),
+                        CreatedAt = BuildCausalTimestamp(comment.CreatedAt, seedContext)
+                    });
                     commentQuota--;
-                    continue;
                 }
             }
 
-            if (repostQuota > 0)
+            // Repost reactions
+            var repostAttempts = 0;
+            var maxRepostAttempts = repostQuota * 15;
+            while (repostQuota > 0 && reposts.Count > 0 && repostAttempts < maxRepostAttempts)
             {
-                generated = TryCreateRepostReaction(results, profiles, reposts, hotPosts, seedContext, repostPairSet);
-                if (generated)
-                {
-                    repostQuota--;
+                repostAttempts++;
+                var repost = reposts[seedContext.Random.Next(reposts.Count)];
+                var profile = PickProfileWeightedByActivity(profiles, seedContext);
+                if (profile.Id == repost.ProfileId)
                     continue;
+
+                if (repostPairSet.Add((repost.Id, profile.Id)))
+                {
+                    reactions.Add(new Reaction
+                    {
+                        Id = Guid.NewGuid(),
+                        RepostId = repost.Id,
+                        ProfileId = profile.Id,
+                        Type = PickReactionType(seedContext),
+                        CreatedAt = BuildCausalTimestamp(repost.CreatedAt, seedContext)
+                    });
+                    repostQuota--;
                 }
             }
 
-            generated = TryCreatePostReaction(results, profiles, posts, hotPosts, seedContext, postPairSet)
-                        || TryCreateCommentReaction(results, profiles, comments, hotPosts, seedContext, commentPairSet)
-                        || TryCreateRepostReaction(results, profiles, reposts, hotPosts, seedContext, repostPairSet);
+            // Top-up with comment reactions if any remaining quota left
+            while (reactions.Count < targetTotal && comments.Count > 0 && commentAttempts < maxCommentAttempts * 2)
+            {
+                commentAttempts++;
+                var comment = PickCommentWeightedByTier(comments, postTierMap, seedContext);
+                var profile = PickProfileWeightedByActivity(profiles, seedContext);
+                if (profile.Id == comment.ProfileId)
+                    continue;
 
-            if (!generated)
-                break;
+                if (commentPairSet.Add((comment.Id, profile.Id)))
+                {
+                    reactions.Add(new Reaction
+                    {
+                        Id = Guid.NewGuid(),
+                        CommentId = comment.Id,
+                        ProfileId = profile.Id,
+                        Type = PickReactionType(seedContext),
+                        CreatedAt = BuildCausalTimestamp(comment.CreatedAt, seedContext)
+                    });
+                }
+            }
         }
 
-        return results;
+        return reactions;
     }
 
-    private static bool TryCreatePostReaction(
-        ICollection<Reaction> results,
+    private static List<Comment> GenerateComments(
         IReadOnlyList<Profile> profiles,
-        IReadOnlyList<Post> posts,
-        HashSet<Guid> hotPosts,
-        SeedContext seedContext,
-        ISet<(Guid PostId, Guid ProfileId)> pairSet)
+        IReadOnlyList<PostEngagementMeta> postMetas,
+        IReadOnlyDictionary<Guid, List<Guid>> followersByAuthor,
+        SeedContext seedContext)
     {
-        if (posts.Count == 0)
-            return false;
+        // 1. Identify top viral posts that must have 1000+ comments
+        // Specifically post_0, post_1, post_2, post_3 (the benchmark targets)
+        var topViralMetas = postMetas
+            .Where(m => m.Tier == PostTier.Viral)
+            .Take(4)
+            .ToList();
 
-        var post = PickPostWeighted(posts, hotPosts, seedContext);
-        var profile = PickProfileWeightedByActivity(profiles, seedContext);
-        if (!pairSet.Add((post.Id, profile.Id)))
-            return false;
-
-        results.Add(new Reaction
+        var topViralTargets = new Dictionary<Guid, int>();
+        if (topViralMetas.Count >= 4)
         {
-            Id = Guid.NewGuid(),
-            PostId = post.Id,
-            CommentId = null,
-            RepostId = null,
-            CollectionId = null,
-            ProfileId = profile.Id,
-            Type = PickReactionType(seedContext),
-            CreatedAt = BuildTimestamp(seedContext)
-        });
+            topViralTargets[topViralMetas[0].Post.Id] = 1050; // post_0 (scenario-b3, scenario-5)
+            topViralTargets[topViralMetas[1].Post.Id] = 1030; // post_1 (scenario-a4)
+            topViralTargets[topViralMetas[2].Post.Id] = 1015; // post_2
+            topViralTargets[topViralMetas[3].Post.Id] = 1005; // post_3
+        }
 
-        return true;
-    }
+        var topViralCommentQuota = topViralTargets.Values.Sum(); // 4100 comments
 
-    private static bool TryCreateCommentReaction(
-        ICollection<Reaction> results,
-        IReadOnlyList<Profile> profiles,
-        IReadOnlyList<Comment> comments,
-        HashSet<Guid> hotPosts,
-        SeedContext seedContext,
-        ISet<(Guid CommentId, Guid ProfileId)> pairSet)
-    {
-        if (comments.Count == 0)
-            return false;
+        // Total comments quota within SeedConfig.Comments [5000, 15000]
+        var targetTotal = seedContext.Random.Next(12000, 13001);
+        var remainingQuota = Math.Max(0, targetTotal - topViralCommentQuota);
 
-        var comment = PickCommentWeighted(comments, hotPosts, seedContext);
-        var profile = PickProfileWeightedByActivity(profiles, seedContext);
-        if (!pairSet.Add((comment.Id, profile.Id)))
-            return false;
-
-        results.Add(new Reaction
-        {
-            Id = Guid.NewGuid(),
-            PostId = null,
-            CommentId = comment.Id,
-            RepostId = null,
-            CollectionId = null,
-            ProfileId = profile.Id,
-            Type = PickReactionType(seedContext),
-            CreatedAt = BuildTimestamp(seedContext)
-        });
-
-        return true;
-    }
-
-    private static bool TryCreateRepostReaction(
-        ICollection<Reaction> results,
-        IReadOnlyList<Profile> profiles,
-        IReadOnlyList<Repost> reposts,
-        HashSet<Guid> hotPosts,
-        SeedContext seedContext,
-        ISet<(Guid RepostId, Guid ProfileId)> pairSet)
-    {
-        if (reposts.Count == 0)
-            return false;
-
-        var repost = PickRepostWeighted(reposts, hotPosts, seedContext);
-        var profile = PickProfileWeightedByActivity(profiles, seedContext);
-        if (!pairSet.Add((repost.Id, profile.Id)))
-            return false;
-
-        results.Add(new Reaction
-        {
-            Id = Guid.NewGuid(),
-            PostId = null,
-            CommentId = null,
-            RepostId = repost.Id,
-            CollectionId = null,
-            ProfileId = profile.Id,
-            Type = PickReactionType(seedContext),
-            CreatedAt = BuildTimestamp(seedContext)
-        });
-
-        return true;
-    }
-
-    private static List<Comment> GenerateComments(IReadOnlyList<Profile> profiles, IReadOnlyList<Post> posts, SeedContext seedContext)
-    {
-        var target = seedContext.Random.Next(SeedConfig.Comments.Min, SeedConfig.Comments.Max + 1);
         var catalog = TryLoadRealCommentsCatalog();
         var hasCatalog = catalog != null && catalog.Count > 0;
 
-        var hotPosts = BuildHotPostSet(posts);
-        var results = new List<Comment>(target);
-        var rootCommentsByPost = posts.ToDictionary(p => p.Id, _ => new List<Comment>());
+        var results = new List<Comment>(targetTotal);
+        var rootCommentsByPost = postMetas.ToDictionary(m => m.Post.Id, _ => new List<Comment>());
 
-        var mediaItems = hasCatalog 
-            ? catalog!.Where(c => c.HasMedia && (!string.IsNullOrWhiteSpace(c.Url) || !string.IsNullOrWhiteSpace(c.LocalPath))).ToList() 
+        var mediaItems = hasCatalog
+            ? catalog!.Where(c => c.HasMedia && (!string.IsNullOrWhiteSpace(c.Url) || !string.IsNullOrWhiteSpace(c.LocalPath))).ToList()
             : [];
         var mediaAssignments = 0;
+        var commentIndex = 0;
 
-        for (var i = 0; i < target; i++)
+        // Helper to generate a single comment for a post
+        Comment AddCommentForPost(Post post, Guid? forcedParentId = null)
         {
-            var post = PickPostWeighted(posts, hotPosts, seedContext);
-            var profile = PickProfileWeightedByActivity(profiles, seedContext);
-
-            Guid? parentId = null;
-            if (rootCommentsByPost[post.Id].Count > 0 && seedContext.Random.NextDouble() < ReplyRate)
+            // Pick commenter adhering to privacy
+            Guid commenterId;
+            if (post.Privacy == PrivacyLevel.Followers && followersByAuthor.TryGetValue(post.ProfileId, out var followers) && followers.Count > 0)
             {
-                var parent = rootCommentsByPost[post.Id][seedContext.Random.Next(rootCommentsByPost[post.Id].Count)];
-                parentId = parent.Id;
+                var eligibleFollowers = followers.Where(fid => fid != post.ProfileId).ToList();
+                commenterId = eligibleFollowers.Count > 0
+                    ? eligibleFollowers[seedContext.Random.Next(eligibleFollowers.Count)]
+                    : followers[seedContext.Random.Next(followers.Count)];
+            }
+            else
+            {
+                var profile = PickProfileWeightedByActivity(profiles, seedContext);
+                commenterId = profile.Id;
             }
 
-            var createdAt = BuildTimestamp(seedContext);
-            var includeUrl = seedContext.Random.NextDouble() < CommentUrlRate;
+            // Decide root comment vs reply (strictly depth <= 2: parent must be a root comment)
+            Guid? parentId = null;
+            DateTime commentCreatedAt;
+            var postRootComments = rootCommentsByPost[post.Id];
 
+            if (forcedParentId.HasValue)
+            {
+                parentId = forcedParentId.Value;
+                var parent = postRootComments.FirstOrDefault(c => c.Id == forcedParentId.Value);
+                var parentTime = parent?.CreatedAt ?? post.CreatedAt;
+                commentCreatedAt = BuildCausalTimestamp(parentTime, seedContext);
+            }
+            else if (postRootComments.Count > 0 && seedContext.Random.NextDouble() < ReplyRate)
+            {
+                var parent = postRootComments[seedContext.Random.Next(postRootComments.Count)];
+                parentId = parent.Id;
+                commentCreatedAt = BuildCausalTimestamp(parent.CreatedAt, seedContext);
+            }
+            else
+            {
+                commentCreatedAt = BuildCausalTimestamp(post.CreatedAt, seedContext);
+            }
+
+            var includeUrl = seedContext.Random.NextDouble() < CommentUrlRate;
             string content;
             string? mediaUrl = null;
 
             if (hasCatalog)
             {
-                var item = catalog![i % catalog.Count];
-                var baseContent = !string.IsNullOrWhiteSpace(item.Content) ? item.Content : CommentTemplates[i % CommentTemplates.Length];
+                var item = catalog![commentIndex % catalog.Count];
+                var baseContent = !string.IsNullOrWhiteSpace(item.Content) ? item.Content : CommentTemplates[commentIndex % CommentTemplates.Length];
                 if (includeUrl)
                 {
-                    var domain = CommentLinkDomains[i % CommentLinkDomains.Length];
+                    var domain = CommentLinkDomains[commentIndex % CommentLinkDomains.Length];
                     var slug = $"post-{seedContext.Random.Next(1, 5000):D4}";
                     content = $"{baseContent} Xem thêm: https://{domain}/{slug}";
                 }
@@ -310,7 +538,6 @@ public sealed class SeedEngagementStep
                     content = baseContent;
                 }
 
-                // Enforce max 2 uses per comment media image across the dataset
                 if (mediaAssignments < mediaItems.Count * 2 && seedContext.Random.NextDouble() < 0.25)
                 {
                     var mediaItem = mediaItems[mediaAssignments / 2];
@@ -320,52 +547,178 @@ public sealed class SeedEngagementStep
             }
             else
             {
-                content = BuildCommentContent(i, includeUrl, seedContext);
+                content = BuildCommentContent(commentIndex, includeUrl, seedContext);
             }
 
             var comment = new Comment
             {
                 Id = Guid.NewGuid(),
                 PostId = post.Id,
-                ProfileId = profile.Id,
+                ProfileId = commenterId,
                 ParentCommentId = parentId,
                 Content = content,
                 MediaUrl = mediaUrl,
-                CreatedAt = createdAt,
-                UpdatedAt = createdAt.AddMinutes(seedContext.Random.Next(0, 90))
+                CreatedAt = commentCreatedAt,
+                UpdatedAt = BuildCausalTimestamp(commentCreatedAt, seedContext)
             };
 
             if (parentId is null)
-                rootCommentsByPost[post.Id].Add(comment);
+                postRootComments.Add(comment);
 
             results.Add(comment);
+            commentIndex++;
+            return comment;
+        }
+
+        // 2. Generate comments for the top viral posts to guarantee 1000+ comments and mega-threads (>= 2 cases)
+        var post0Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 0);
+        var post1Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 1);
+
+        foreach (var topMeta in topViralMetas)
+        {
+            if (topViralTargets.TryGetValue(topMeta.Post.Id, out var needed))
+            {
+                var post = topMeta.Post;
+                if (post.Id == post0Id && needed >= 251)
+                {
+                    // Root comment 0 followed by 250 direct discussion replies
+                    var root = AddCommentForPost(post);
+                    for (var r = 0; r < 250; r++)
+                    {
+                        AddCommentForPost(post, root.Id);
+                    }
+                    for (var k = 251; k < needed; k++)
+                    {
+                        AddCommentForPost(post);
+                    }
+                }
+                else if (post.Id == post1Id && needed >= 221)
+                {
+                    // Root comment 0 followed by 220 direct discussion replies
+                    var root = AddCommentForPost(post);
+                    for (var r = 0; r < 220; r++)
+                    {
+                        AddCommentForPost(post, root.Id);
+                    }
+                    for (var k = 221; k < needed; k++)
+                    {
+                        AddCommentForPost(post);
+                    }
+                }
+                else
+                {
+                    for (var k = 0; k < needed; k++)
+                    {
+                        AddCommentForPost(post);
+                    }
+                }
+            }
+        }
+
+        // 3. Distribute remaining comments across other posts by tier weights
+        var remainingMetas = postMetas
+            .Where(m => !topViralTargets.ContainsKey(m.Post.Id))
+            .ToList();
+
+        var postWeights = new double[remainingMetas.Count];
+        var totalWeight = 0d;
+        for (var i = 0; i < remainingMetas.Count; i++)
+        {
+            var weight = remainingMetas[i].Tier switch
+            {
+                PostTier.Viral => 35d,
+                PostTier.Trending => 12d,
+                PostTier.Active => 4d,
+                PostTier.Moderate => 1d,
+                _ => 0.20d
+            };
+            postWeights[i] = weight;
+            totalWeight += weight;
+        }
+
+        for (var i = 0; i < remainingQuota; i++)
+        {
+            var roll = seedContext.Random.NextDouble() * totalWeight;
+            var chosenMeta = remainingMetas[^1];
+            for (var j = 0; j < remainingMetas.Count; j++)
+            {
+                roll -= postWeights[j];
+                if (roll <= 0)
+                {
+                    chosenMeta = remainingMetas[j];
+                    break;
+                }
+            }
+
+            AddCommentForPost(chosenMeta.Post);
         }
 
         return results;
     }
 
-    private static List<Repost> GenerateReposts(IReadOnlyList<Profile> profiles, IReadOnlyList<Post> posts, SeedContext seedContext)
+    private static List<Repost> GenerateReposts(
+        IReadOnlyList<Profile> profiles,
+        IReadOnlyList<PostEngagementMeta> postMetas,
+        SeedContext seedContext)
     {
-        var maxPairs = posts.Count * profiles.Count;
-        var target = seedContext.Random.Next(SeedConfig.Reposts.Min, SeedConfig.Reposts.Max + 1);
-        target = Math.Min(target, maxPairs);
+        // Only public posts in Viral, Trending, and Active tiers get reposted
+        var eligibleMetas = postMetas
+            .Where(m => m.Post.Privacy == PrivacyLevel.Public && m.Tier <= PostTier.Active)
+            .ToList();
 
+        if (eligibleMetas.Count == 0)
+            eligibleMetas = postMetas.Where(m => m.Post.Privacy == PrivacyLevel.Public).ToList();
+
+        var target = seedContext.Random.Next(SeedConfig.Reposts.Min, SeedConfig.Reposts.Max + 1);
         var results = new List<Repost>(target);
         var pairSet = new HashSet<(Guid ProfileId, Guid PostId)>();
-        var hotPosts = BuildHotPostSet(posts);
 
-        while (results.Count < target)
+        var weights = new double[eligibleMetas.Count];
+        var totalWeight = 0d;
+        for (var i = 0; i < eligibleMetas.Count; i++)
         {
-            var post = PickPostWeighted(posts, hotPosts, seedContext);
-            var profile = PickProfileWeightedByActivity(profiles, seedContext);
-            if (!pairSet.Add((profile.Id, post.Id)))
+            var w = eligibleMetas[i].Tier switch
+            {
+                PostTier.Viral => 10d,
+                PostTier.Trending => 4d,
+                _ => 1d
+            };
+            weights[i] = w;
+            totalWeight += w;
+        }
+
+        var attempts = 0;
+        var maxAttempts = target * 20;
+
+        while (results.Count < target && attempts < maxAttempts)
+        {
+            attempts++;
+
+            var roll = seedContext.Random.NextDouble() * totalWeight;
+            var chosenMeta = eligibleMetas[^1];
+            for (var j = 0; j < eligibleMetas.Count; j++)
+            {
+                roll -= weights[j];
+                if (roll <= 0)
+                {
+                    chosenMeta = eligibleMetas[j];
+                    break;
+                }
+            }
+
+            var post = chosenMeta.Post;
+            var reposter = PickProfileWeightedByActivity(profiles, seedContext);
+            if (reposter.Id == post.ProfileId)
                 continue;
 
-            var createdAt = BuildTimestamp(seedContext);
+            if (!pairSet.Add((reposter.Id, post.Id)))
+                continue;
+
+            var createdAt = BuildCausalTimestamp(post.CreatedAt, seedContext);
             results.Add(new Repost
             {
                 Id = Guid.NewGuid(),
-                ProfileId = profile.Id,
+                ProfileId = reposter.Id,
                 OriginalPostId = post.Id,
                 Caption = $"Seed repost #{results.Count + 1}",
                 CreatedAt = createdAt,
@@ -376,86 +729,43 @@ public sealed class SeedEngagementStep
         return results;
     }
 
-    private static HashSet<Guid> BuildHotPostSet(IReadOnlyList<Post> posts)
+    private static Comment PickCommentWeightedByTier(
+        IReadOnlyList<Comment> comments,
+        IReadOnlyDictionary<Guid, PostTier> postTierMap,
+        SeedContext seedContext)
     {
-        var hotCount = Math.Max(1, (int)Math.Ceiling(posts.Count * 0.08));
-        return posts
-            .OrderBy(p => StableSeed.FromString($"hot:{p.Id}"))
-            .Take(hotCount)
-            .Select(p => p.Id)
-            .ToHashSet();
+        // 5 random candidates tournament
+        Comment? best = null;
+        var bestScore = -1d;
+
+        for (var i = 0; i < 5; i++)
+        {
+            var candidate = comments[seedContext.Random.Next(comments.Count)];
+            var tierBoost = postTierMap.TryGetValue(candidate.PostId, out var tier)
+                ? (tier switch { PostTier.Viral => 8d, PostTier.Trending => 4d, PostTier.Active => 2d, _ => 1d })
+                : 1d;
+            var depthBoost = candidate.ParentCommentId is null ? 1.5d : 0.8d;
+            var score = tierBoost * depthBoost * seedContext.Random.NextDouble();
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = candidate;
+            }
+        }
+
+        return best ?? comments[seedContext.Random.Next(comments.Count)];
     }
 
-    private static Post PickPostWeighted(IReadOnlyList<Post> posts, HashSet<Guid> hotPosts, SeedContext seedContext)
+    private static DateTime BuildCausalTimestamp(DateTime entityCreatedAt, SeedContext seedContext)
     {
-        var totalWeight = 0d;
-        var weights = new double[posts.Count];
+        var now = DateTime.UtcNow;
+        var diffSeconds = (int)(now - entityCreatedAt).TotalSeconds;
+        if (diffSeconds <= 5)
+            return now;
 
-        for (var i = 0; i < posts.Count; i++)
-        {
-            var weight = hotPosts.Contains(posts[i].Id) ? 7d : 1d;
-            weights[i] = weight;
-            totalWeight += weight;
-        }
-
-        var roll = seedContext.Random.NextDouble() * totalWeight;
-        for (var i = 0; i < posts.Count; i++)
-        {
-            roll -= weights[i];
-            if (roll <= 0)
-                return posts[i];
-        }
-
-        return posts[^1];
-    }
-
-    private static Comment PickCommentWeighted(IReadOnlyList<Comment> comments, HashSet<Guid> hotPosts, SeedContext seedContext)
-    {
-        var totalWeight = 0d;
-        var weights = new double[comments.Count];
-
-        for (var i = 0; i < comments.Count; i++)
-        {
-            var baseWeight = hotPosts.Contains(comments[i].PostId) ? 6d : 1d;
-            var depthBoost = comments[i].ParentCommentId is null ? 1.4d : 0.9d;
-            var weight = baseWeight * depthBoost;
-
-            weights[i] = weight;
-            totalWeight += weight;
-        }
-
-        var roll = seedContext.Random.NextDouble() * totalWeight;
-        for (var i = 0; i < comments.Count; i++)
-        {
-            roll -= weights[i];
-            if (roll <= 0)
-                return comments[i];
-        }
-
-        return comments[^1];
-    }
-
-    private static Repost PickRepostWeighted(IReadOnlyList<Repost> reposts, HashSet<Guid> hotPosts, SeedContext seedContext)
-    {
-        var totalWeight = 0d;
-        var weights = new double[reposts.Count];
-
-        for (var i = 0; i < reposts.Count; i++)
-        {
-            var weight = hotPosts.Contains(reposts[i].OriginalPostId) ? 5d : 1d;
-            weights[i] = weight;
-            totalWeight += weight;
-        }
-
-        var roll = seedContext.Random.NextDouble() * totalWeight;
-        for (var i = 0; i < reposts.Count; i++)
-        {
-            roll -= weights[i];
-            if (roll <= 0)
-                return reposts[i];
-        }
-
-        return reposts[^1];
+        var randomSeconds = seedContext.Random.Next(1, diffSeconds);
+        return entityCreatedAt.AddSeconds(randomSeconds);
     }
 
     private static Profile PickProfileWeightedByActivity(IReadOnlyList<Profile> profiles, SeedContext seedContext)
@@ -486,6 +796,15 @@ public sealed class SeedEngagementStep
         }
 
         return profiles[^1];
+    }
+
+    private static void ShuffleList<T>(IList<T> list, SeedContext seedContext)
+    {
+        for (var i = list.Count - 1; i > 0; i--)
+        {
+            var j = seedContext.Random.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
     }
 
     private static string InferActivityRole(Profile profile)
@@ -527,24 +846,17 @@ public sealed class SeedEngagementStep
         return ReactionType.Angry;
     }
 
-    private static DateTime BuildTimestamp(SeedContext seedContext)
-    {
-        var now = DateTime.UtcNow;
-        return now
-            .AddDays(-seedContext.Random.Next(0, 30))
-            .AddHours(-seedContext.Random.Next(0, 24))
-            .AddMinutes(-seedContext.Random.Next(0, 60));
-    }
-
     private static void ValidateEngagement(
         IReadOnlyCollection<Reaction> reactions,
         IReadOnlyCollection<Comment> comments,
         IReadOnlyCollection<Repost> reposts,
         IReadOnlyList<Profile> profiles,
-        IReadOnlyList<Post> posts)
+        IReadOnlyList<Post> posts,
+        SeedContext seedContext)
     {
         var postIds = posts.Select(p => p.Id).ToHashSet();
         var profileIds = profiles.Select(p => p.Id).ToHashSet();
+        var postById = posts.ToDictionary(p => p.Id);
 
         if (reactions.GroupBy(r => new { r.PostId, r.ProfileId }).Any(g => g.Key.PostId is not null && g.Count() > 1))
             throw new InvalidOperationException("Validation failed: duplicate reaction pair detected.");
@@ -563,6 +875,7 @@ public sealed class SeedEngagementStep
             throw new InvalidOperationException("Validation failed: reaction must target exactly one entity.");
 
         var commentIds = comments.Select(c => c.Id).ToHashSet();
+        var commentById = comments.ToDictionary(c => c.Id);
         var repostIds = reposts.Select(r => r.Id).ToHashSet();
 
         if (reactions.Any(r => !profileIds.Contains(r.ProfileId)))
@@ -577,10 +890,19 @@ public sealed class SeedEngagementStep
         if (reactions.Any(r => r.RepostId is not null && !repostIds.Contains(r.RepostId.Value)))
             throw new InvalidOperationException("Validation failed: reaction has invalid RepostId foreign key.");
 
+        // Temporal causality validations
+        if (reactions.Any(r => r.PostId.HasValue && postById.TryGetValue(r.PostId.Value, out var post) && r.CreatedAt < post.CreatedAt))
+            throw new InvalidOperationException("Validation failed: reaction created before target post.");
+
+        if (comments.Any(c => postById.TryGetValue(c.PostId, out var post) && c.CreatedAt < post.CreatedAt))
+            throw new InvalidOperationException("Validation failed: comment created before target post.");
+
+        if (comments.Any(c => c.ParentCommentId.HasValue && commentById.TryGetValue(c.ParentCommentId.Value, out var parent) && c.CreatedAt < parent.CreatedAt))
+            throw new InvalidOperationException("Validation failed: reply created before parent comment.");
+
         if (comments.Any(c => c.ParentCommentId is not null && !commentIds.Contains(c.ParentCommentId.Value)))
             throw new InvalidOperationException("Validation failed: orphan comment detected.");
 
-        var commentById = comments.ToDictionary(c => c.Id);
         if (comments.Any(c => c.ParentCommentId is not null
                               && commentById.TryGetValue(c.ParentCommentId.Value, out var parent)
                               && parent.ParentCommentId is not null))
@@ -609,6 +931,102 @@ public sealed class SeedEngagementStep
 
         if (reposts.Any(r => !postIds.Contains(r.OriginalPostId) || !profileIds.Contains(r.ProfileId)))
             throw new InvalidOperationException("Validation failed: repost has invalid foreign key.");
+
+        // Validator compatibility check - Reactions
+        var postsWith1000 = reactions
+            .Where(r => r.PostId.HasValue)
+            .GroupBy(r => r.PostId!.Value)
+            .Count(g => g.Count() >= 1000);
+
+        if (postsWith1000 < 100)
+            throw new InvalidOperationException($"Validation failed: expected at least 100 posts with 1000+ reactions, but got {postsWith1000}.");
+
+        // Validator compatibility check - Comments
+        var postsWith1000Comments = comments
+            .GroupBy(c => c.PostId)
+            .Count(g => g.Count() >= 1000);
+
+        if (postsWith1000Comments < 3)
+            throw new InvalidOperationException($"Validation failed: expected at least 3 posts with 1000+ comments, but got {postsWith1000Comments}.");
+
+        var post0Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 0);
+        var post0 = posts.FirstOrDefault(p => p.Id == post0Id)
+            ?? throw new InvalidOperationException($"Validation failed: post_0 ({post0Id}) not found in posts.");
+        var post0Reactions = reactions.Count(r => r.PostId == post0.Id);
+        var post0Comments = comments.Count(c => c.PostId == post0.Id);
+        if (post0Reactions < 1000 || post0Comments < 1000)
+            throw new InvalidOperationException($"Validation failed: post_0 must have >= 1000 reactions and >= 1000 comments, but got {post0Reactions} reactions and {post0Comments} comments.");
+
+        var post1Id = StableSeed.DeterministicGuid(seedContext.SeedKey, "post", 1);
+        var post1 = posts.FirstOrDefault(p => p.Id == post1Id)
+            ?? throw new InvalidOperationException($"Validation failed: post_1 ({post1Id}) not found in posts.");
+        var post1Reactions = reactions.Count(r => r.PostId == post1.Id);
+        var post1Comments = comments.Count(c => c.PostId == post1.Id);
+        if (post1Reactions < 1000 || post1Comments < 1000)
+            throw new InvalidOperationException($"Validation failed: post_1 must have >= 1000 reactions and >= 1000 comments, but got {post1Reactions} reactions and {post1Comments} comments.");
+
+        // Validator check - Comments with 1000+ reactions (>= 2 cases)
+        var commentsWith1000Reactions = reactions
+            .Where(r => r.CommentId.HasValue)
+            .GroupBy(r => r.CommentId!.Value)
+            .Count(g => g.Count() >= 1000);
+
+        if (commentsWith1000Reactions < 2)
+            throw new InvalidOperationException($"Validation failed: expected at least 2 comments with 1000+ reactions, but got {commentsWith1000Reactions}.");
+
+        // Validator check - Mega discussion threads with 200+ replies (>= 2 cases)
+        var megaThreads = comments
+            .Where(c => c.ParentCommentId.HasValue)
+            .GroupBy(c => c.ParentCommentId!.Value)
+            .Count(g => g.Count() >= 200);
+
+        if (megaThreads < 2)
+            throw new InvalidOperationException($"Validation failed: expected at least 2 discussion threads with 200+ replies, but got {megaThreads}.");
+    }
+
+    private static async Task SaveCommentsInBatchesAsync(
+        AppDbContext db,
+        List<Comment> comments,
+        CancellationToken cancellationToken)
+    {
+        const int batchSize = 5000;
+        for (var i = 0; i < comments.Count; i += batchSize)
+        {
+            var chunk = comments.Skip(i).Take(batchSize).ToList();
+            await db.Comments.AddRangeAsync(chunk, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
+    }
+
+    private static async Task SaveRepostsInBatchesAsync(
+        AppDbContext db,
+        List<Repost> reposts,
+        CancellationToken cancellationToken)
+    {
+        const int batchSize = 5000;
+        for (var i = 0; i < reposts.Count; i += batchSize)
+        {
+            var chunk = reposts.Skip(i).Take(batchSize).ToList();
+            await db.Reposts.AddRangeAsync(chunk, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
+    }
+
+    private static async Task SaveReactionsInBatchesAsync(
+        AppDbContext db,
+        List<Reaction> reactions,
+        CancellationToken cancellationToken)
+    {
+        const int batchSize = 25000;
+        for (var i = 0; i < reactions.Count; i += batchSize)
+        {
+            var chunk = reactions.Skip(i).Take(batchSize).ToList();
+            await db.Reactions.AddRangeAsync(chunk, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
     }
 
     private static string ExportReactionsCsv(IEnumerable<Reaction> reactions)

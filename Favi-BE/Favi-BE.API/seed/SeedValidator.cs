@@ -17,6 +17,7 @@ public sealed class SeedValidator
         await ValidateTagsAsync(db, snapshot, cancellationToken);
         await ValidateNotificationsAsync(db, snapshot, cancellationToken);
         await ValidateStoriesAsync(db, snapshot, cancellationToken);
+        await ValidateCollectionsAsync(db, cancellationToken);
         await ValidateVectorIndexAsync(snapshot, cancellationToken);
     }
 
@@ -245,6 +246,26 @@ public sealed class SeedValidator
         if (postsWith1000Reactions < 100)
             throw new InvalidOperationException($"Seed validation failed: expected at least 100 posts with 1000+ reactions, but found {postsWith1000Reactions}.");
 
+        var postsWith1000Comments = await scopedComments
+            .GroupBy(c => c.PostId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (postsWith1000Comments < 2)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 2 posts with 1000+ comments, but found {postsWith1000Comments}.");
+
+        var commentsWith200Replies = await scopedComments
+            .Where(c => c.ParentCommentId != null)
+            .GroupBy(c => c.ParentCommentId)
+            .CountAsync(g => g.Count() >= 200, cancellationToken);
+        if (commentsWith200Replies < 2)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 2 comments with 200+ replies, but found {commentsWith200Replies}.");
+
+        var commentsWith1000Reactions = await scopedReactions
+            .Where(r => r.CommentId != null)
+            .GroupBy(r => r.CommentId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (commentsWith1000Reactions < 2)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 2 comments with 1000+ reactions, but found {commentsWith1000Reactions}.");
+
         var commentCount = await scopedComments.CountAsync(cancellationToken);
         if (commentCount < SeedConfig.Comments.Min || commentCount > SeedConfig.Comments.Max)
             throw new InvalidOperationException("Seed validation failed: comments count is outside expected range.");
@@ -366,6 +387,12 @@ public sealed class SeedValidator
         if (invalidPostTagFkExists)
             throw new InvalidOperationException("Seed validation failed: post-tag row has invalid foreign keys.");
 
+        var tagsWith1000Posts = await scopedPostTags
+            .GroupBy(pt => pt.TagId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (tagsWith1000Posts < 2)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 2 tags with 1000+ posts, but found {tagsWith1000Posts}.");
+
         var scopedPosts = snapshot.PostIds.Count > 0
             ? db.Posts.Where(p => snapshot.PostIds.Contains(p.Id))
             : db.Posts;
@@ -407,6 +434,26 @@ public sealed class SeedValidator
             .AnyAsync(g => g.Count() > 2, cancellationToken);
         if (overduplicatedStoryMediaExists)
             throw new InvalidOperationException("Seed validation failed: story media is duplicated more than 2 times.");
+    }
+
+    private static async Task ValidateCollectionsAsync(AppDbContext db, CancellationToken cancellationToken)
+    {
+        var collCount = await db.Collections.CountAsync(cancellationToken);
+        if (collCount < SeedConfig.Collections.Min)
+            throw new InvalidOperationException($"Seed validation failed: expected at least {SeedConfig.Collections.Min} collections, but found {collCount}.");
+
+        var collectionsWith1000Posts = await db.PostCollections
+            .GroupBy(pc => pc.CollectionId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (collectionsWith1000Posts < 2)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 2 collections with 1000+ posts, but found {collectionsWith1000Posts}.");
+
+        var collectionsWith1000Reactions = await db.Reactions
+            .Where(r => r.CollectionId != null)
+            .GroupBy(r => r.CollectionId)
+            .CountAsync(g => g.Count() >= 1000, cancellationToken);
+        if (collectionsWith1000Reactions < 2)
+            throw new InvalidOperationException($"Seed validation failed: expected at least 2 collections with 1000+ reactions, but found {collectionsWith1000Reactions}.");
     }
 
     private static async Task ValidateNotificationsAsync(AppDbContext db, SeedSnapshot snapshot, CancellationToken cancellationToken)

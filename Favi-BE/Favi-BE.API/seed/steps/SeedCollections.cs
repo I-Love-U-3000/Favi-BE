@@ -76,9 +76,25 @@ public sealed class SeedCollectionsStep
 
             collections.Add(collection);
 
-            // Attach 3 to 8 posts to this collection
-            var postCount = seedContext.Random.Next(3, 9);
-            var startIndex = (i * 7) % posts.Count;
+            // Attach posts: ensure at least 2 collections have 1000+ posts
+            int postCount;
+            int startIndex;
+            if (i == 0)
+            {
+                postCount = Math.Min(1050, posts.Count);
+                startIndex = 0;
+            }
+            else if (i == 1)
+            {
+                postCount = Math.Min(1020, posts.Count);
+                startIndex = 500 % posts.Count;
+            }
+            else
+            {
+                postCount = seedContext.Random.Next(3, 9);
+                startIndex = (i * 7) % posts.Count;
+            }
+
             for (var p = 0; p < postCount; p++)
             {
                 var post = posts[(startIndex + p) % posts.Count];
@@ -90,9 +106,77 @@ public sealed class SeedCollectionsStep
             }
         }
 
+        // Generate reactions to collections: ensure at least 2 collections have 1000+ reactions
+        var collectionReactions = new List<Reaction>();
+        if (collections.Count >= 2)
+        {
+            var coll0Reactors = profiles
+                .Where(p => p.Id != collections[0].ProfileId)
+                .Take(1050)
+                .ToList();
+            foreach (var rProfile in coll0Reactors)
+            {
+                collectionReactions.Add(new Reaction
+                {
+                    Id = Guid.NewGuid(),
+                    CollectionId = collections[0].Id,
+                    ProfileId = rProfile.Id,
+                    Type = ReactionType.Like,
+                    CreatedAt = collections[0].CreatedAt.AddMinutes(seedContext.Random.Next(1, 1440))
+                });
+            }
+
+            var coll1Reactors = profiles
+                .Where(p => p.Id != collections[1].ProfileId)
+                .Take(1020)
+                .ToList();
+            foreach (var rProfile in coll1Reactors)
+            {
+                collectionReactions.Add(new Reaction
+                {
+                    Id = Guid.NewGuid(),
+                    CollectionId = collections[1].Id,
+                    ProfileId = rProfile.Id,
+                    Type = ReactionType.Like,
+                    CreatedAt = collections[1].CreatedAt.AddMinutes(seedContext.Random.Next(1, 1440))
+                });
+            }
+        }
+
+        // Validate collections high performance requirement
+        if (collections.Count >= 2)
+        {
+            var coll0PostCount = postCollections.Count(pc => pc.CollectionId == collections[0].Id);
+            var coll0RxCount = collectionReactions.Count(r => r.CollectionId == collections[0].Id);
+            if (coll0PostCount < 1000 || coll0RxCount < 1000)
+                throw new InvalidOperationException($"Validation failed: Collection 0 must have >= 1000 posts and >= 1000 reactions, got {coll0PostCount} posts and {coll0RxCount} reactions.");
+
+            var coll1PostCount = postCollections.Count(pc => pc.CollectionId == collections[1].Id);
+            var coll1RxCount = collectionReactions.Count(r => r.CollectionId == collections[1].Id);
+            if (coll1PostCount < 1000 || coll1RxCount < 1000)
+                throw new InvalidOperationException($"Validation failed: Collection 1 must have >= 1000 posts and >= 1000 reactions, got {coll1PostCount} posts and {coll1RxCount} reactions.");
+        }
+
         await db.Collections.AddRangeAsync(collections, cancellationToken);
-        await db.PostCollections.AddRangeAsync(postCollections, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
+        db.ChangeTracker.Clear();
+
+        const int batchSize = 5000;
+        for (var idx = 0; idx < postCollections.Count; idx += batchSize)
+        {
+            var chunk = postCollections.Skip(idx).Take(batchSize).ToList();
+            await db.PostCollections.AddRangeAsync(chunk, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
+
+        for (var idx = 0; idx < collectionReactions.Count; idx += batchSize)
+        {
+            var chunk = collectionReactions.Skip(idx).Take(batchSize).ToList();
+            await db.Reactions.AddRangeAsync(chunk, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
 
         var collCsv = ExportCollectionsCsv(collections);
         var postCollCsv = ExportPostCollectionsCsv(postCollections);

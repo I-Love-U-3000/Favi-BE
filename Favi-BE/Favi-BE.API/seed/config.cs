@@ -9,7 +9,7 @@ public static class SeedConfig
     public static readonly SeedCountRange Users = new(5000, 5000);
     public static readonly SeedCountRange Posts = new(5000, 5000);
     public static readonly SeedCountRange Follows = new(200000, 350000);
-    public static readonly SeedCountRange Reactions = new(130000, 200000);
+    public static readonly SeedCountRange Reactions = new(240000, 260000);
     public static readonly SeedCountRange Comments = new(5000, 15000);
     public static readonly SeedCountRange Reposts = new(500, 1500);
     public static readonly SeedCountRange Tags = new(50, 150);

@@ -25,51 +25,77 @@ public sealed class SeedStoriesStep
         var now = DateTime.UtcNow;
         var stories = new List<Story>();
         var totalStoriesCreated = 0;
+        var orderedProfiles = profiles.OrderBy(p => p.Username).ToList();
 
-        for (var i = 0; i < profiles.Count; i++)
+        // 1. Guarantee that the 1046 accounts (indices 105..1150) followed by user_00001 and user_00002 each have 1 active story
+        var curatorFolloweeCount = Math.Min(1150, orderedProfiles.Count);
+        for (var i = 105; i < curatorFolloweeCount; i++)
         {
-            var profile = profiles[i];
-            var role = InferActivityRole(profile);
-
-            var storyCount = role switch
+            var profile = orderedProfiles[i];
+            var storyId = Guid.NewGuid();
+            string imageUrl;
+            if (hasCatalog)
             {
-                "power"  => seedContext.Random.Next(2, 5),    // 2-4 stories
-                "casual" => seedContext.Random.NextDouble() < 0.40 ? 1 : 0,
-                _        => 0
-            };
-
-            for (var s = 0; s < storyCount; s++)
-            {
-                var storyId = Guid.NewGuid();
-                string imageUrl;
-                if (hasCatalog)
-                {
-                    imageUrl = storyCatalog![totalStoriesCreated % storyCatalog.Count].Url;
-                }
-                else
-                {
-                    imageUrl = runImageSet![(i * 7 + s) % runImageSet.Count];
-                }
-                totalStoriesCreated++;
-                var createdAt = now.AddMinutes(-seedContext.Random.Next(1, 1380)); // within 23h so still active
-
-                stories.Add(new Story
-                {
-                    Id = storyId,
-                    ProfileId = profile.Id,
-                    MediaUrl = imageUrl,
-                    ThumbnailUrl = imageUrl,
-                    MediaPublicId = $"seed/story/{storyId:N}",
-                    MediaWidth = 1080,
-                    MediaHeight = 1920,
-                    MediaFormat = "jpg",
-                    Privacy = BuildPrivacy(seedContext),
-                    IsArchived = false,
-                    IsNSFW = false,
-                    CreatedAt = createdAt,
-                    ExpiresAt = createdAt.AddHours(24)
-                });
+                imageUrl = storyCatalog![totalStoriesCreated % storyCatalog.Count].Url;
             }
+            else
+            {
+                imageUrl = $"https://loremflickr.com/1080/1920/nature?lock={totalStoriesCreated + 1}";
+            }
+            totalStoriesCreated++;
+            var createdAt = now.AddMinutes(-seedContext.Random.Next(1, 1380)); // within 23h so still active
+
+            stories.Add(new Story
+            {
+                Id = storyId,
+                ProfileId = profile.Id,
+                MediaUrl = imageUrl,
+                ThumbnailUrl = imageUrl,
+                MediaPublicId = $"seed/story/{storyId:N}",
+                MediaWidth = 1080,
+                MediaHeight = 1920,
+                MediaFormat = "jpg",
+                Privacy = BuildPrivacy(seedContext),
+                IsArchived = false,
+                IsNSFW = false,
+                CreatedAt = createdAt,
+                ExpiresAt = createdAt.AddHours(24)
+            });
+        }
+
+        // 2. Add additional stories for power users if quota allows
+        for (var i = 0; i < 105 && stories.Count < SeedConfig.Stories.Max; i++)
+        {
+            var profile = orderedProfiles[i];
+            var storyId = Guid.NewGuid();
+            string imageUrl;
+            if (hasCatalog)
+            {
+                imageUrl = storyCatalog![totalStoriesCreated % storyCatalog.Count].Url;
+            }
+            else
+            {
+                imageUrl = $"https://loremflickr.com/1080/1920/nature?lock={totalStoriesCreated + 1}";
+            }
+            totalStoriesCreated++;
+            var createdAt = now.AddMinutes(-seedContext.Random.Next(1, 1380));
+
+            stories.Add(new Story
+            {
+                Id = storyId,
+                ProfileId = profile.Id,
+                MediaUrl = imageUrl,
+                ThumbnailUrl = imageUrl,
+                MediaPublicId = $"seed/story/{storyId:N}",
+                MediaWidth = 1080,
+                MediaHeight = 1920,
+                MediaFormat = "jpg",
+                Privacy = BuildPrivacy(seedContext),
+                IsArchived = false,
+                IsNSFW = false,
+                CreatedAt = createdAt,
+                ExpiresAt = createdAt.AddHours(24)
+            });
         }
 
         ValidateStories(stories, profiles);

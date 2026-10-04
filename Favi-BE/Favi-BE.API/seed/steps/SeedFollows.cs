@@ -19,7 +19,7 @@ public sealed class SeedFollowsStep
         if (profiles is null || profiles.Count < 2)
             throw new InvalidOperationException("Step 2 requires at least 2 profiles.");
 
-        var orderedProfiles = profiles.OrderBy(p => p.Id).ToList();
+        var orderedProfiles = profiles.OrderBy(p => p.Username).ToList();
         var profileIds = orderedProfiles.Select(p => p.Id).ToArray();
 
         var feasibleMax = (long)profileIds.Length * (profileIds.Length - 1);
@@ -34,8 +34,14 @@ public sealed class SeedFollowsStep
 
         ValidateGeneratedGraph(follows, profileIds, boundedMin, boundedMax);
 
-        await db.Follows.AddRangeAsync(follows, cancellationToken);
-        await db.SaveChangesAsync(cancellationToken);
+        const int batchSize = 25000;
+        for (var i = 0; i < follows.Count; i += batchSize)
+        {
+            var chunk = follows.Skip(i).Take(batchSize).ToList();
+            await db.Follows.AddRangeAsync(chunk, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+        }
 
         var exportPath = ExportFollowsCsv(follows);
 
@@ -76,21 +82,34 @@ public sealed class SeedFollowsStep
             }
         }
 
-        // 2. Ensure at least 105 curators follow >= 1,020 accounts
-        var curatorStartIndex = Math.Min(100, Math.Max(0, profileIds.Length - 105));
-        var curators = profileIds.Skip(curatorStartIndex).Take(celebrityCount).ToArray();
+        // 2. Ensure at least 105 curators follow >= 1,020 accounts (user_00001 and user_00002 are both included)
+        var curators = profileIds.Take(celebrityCount).ToArray();
         var targetFolloweesPerCurator = Math.Min(1020, profileIds.Length - 1);
 
         foreach (var curator in curators)
         {
-            var otherProfiles = profileIds.Where(p => p != curator).ToList();
-            for (var i = otherProfiles.Count - 1; i > 0; i--)
+            List<Guid> followeeCandidates;
+            if (curator == profileIds[0] || curator == profileIds[1])
             {
-                var j = seedContext.Random.Next(i + 1);
-                (otherProfiles[i], otherProfiles[j]) = (otherProfiles[j], otherProfiles[i]);
+                // Both user_00001 and user_00002 follow the accounts 105..1150 (1,046 accounts that have active stories)
+                followeeCandidates = profileIds.Skip(105).Take(1046).Where(p => p != curator).ToList();
+            }
+            else
+            {
+                var otherProfiles = profileIds.Where(p => p != curator).ToList();
+                for (var i = otherProfiles.Count - 1; i > 0; i--)
+                {
+                    var j = seedContext.Random.Next(i + 1);
+                    (otherProfiles[i], otherProfiles[j]) = (otherProfiles[j], otherProfiles[i]);
+                }
+                followeeCandidates = otherProfiles;
             }
 
-            foreach (var followee in otherProfiles.Take(targetFolloweesPerCurator))
+            var limit = (curator == profileIds[0] || curator == profileIds[1])
+                ? Math.Min(1046, followeeCandidates.Count)
+                : targetFolloweesPerCurator;
+
+            foreach (var followee in followeeCandidates.Take(limit))
             {
                 if (existingEdges.Add((curator, followee)))
                 {

@@ -40,6 +40,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      vector-index-api:
+        condition: service_started
     volumes:
       - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
     ports:
@@ -81,7 +83,6 @@ services:
     depends_on:
       - qdrant
       - redis
-      - favi-api
     volumes:
       - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
     ports:

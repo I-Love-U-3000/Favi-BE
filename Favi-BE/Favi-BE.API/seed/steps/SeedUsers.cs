@@ -11,7 +11,6 @@ public sealed class SeedUsersStep
 {
     private const string DefaultPassword = "123456";
     private const string DeterministicBcryptSalt = "$2a$11$abcdefghijklmnopqrstuu";
-    private static readonly DateTime SeedAnchorUtc = new(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     private static readonly string[] AvatarTags = ["portrait", "people", "face", "profile", "person"];
     private static readonly string[] CoverTags = ["landscape", "city", "nature", "travel", "lifestyle", "technology"];
 
@@ -181,26 +180,25 @@ public sealed class SeedUsersStep
 
     private static DateTime BuildCreatedAt(SeedContext seedContext)
     {
-        var daysAgo = seedContext.Random.Next(30, 91);
+        var now = DateTime.UtcNow;
+        var daysAgo = seedContext.Random.Next(35, 180);
         var hours = seedContext.Random.Next(0, 24);
         var minutes = seedContext.Random.Next(0, 60);
-        return SeedAnchorUtc.AddDays(-daysAgo).AddHours(-hours).AddMinutes(-minutes);
+        return now.AddDays(-daysAgo).AddHours(-hours).AddMinutes(-minutes);
     }
 
     private static DateTime BuildLastActiveAt(SeedContext seedContext, string activityRole, DateTime createdAt)
     {
-        var inactiveWindow = activityRole switch
+        var now = DateTime.UtcNow;
+        var hoursAgo = activityRole switch
         {
-            "lurker" => seedContext.Random.Next(7, 31),
-            "casual" => seedContext.Random.Next(2, 14),
-            "power" => seedContext.Random.Next(0, 3),
-            _ => seedContext.Random.Next(1, 7)
+            "power" => seedContext.Random.Next(0, 12),
+            "casual" => seedContext.Random.Next(1, 48),
+            "lurker" => seedContext.Random.Next(24, 30 * 24),
+            _ => seedContext.Random.Next(1, 24)
         };
 
-        var candidate = SeedAnchorUtc.AddDays(-inactiveWindow)
-            .AddHours(-seedContext.Random.Next(0, 24))
-            .AddMinutes(-seedContext.Random.Next(0, 60));
-
+        var candidate = now.AddHours(-hoursAgo).AddMinutes(-seedContext.Random.Next(0, 60));
         return candidate < createdAt ? createdAt.AddMinutes(1) : candidate;
     }
 

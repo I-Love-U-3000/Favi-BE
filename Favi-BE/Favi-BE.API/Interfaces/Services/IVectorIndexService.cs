@@ -33,5 +33,10 @@ namespace Favi_BE.Interfaces.Services
         /// Check if the vector index service is enabled and available.
         /// </summary>
         bool IsEnabled();
+
+        /// <summary>
+        /// Get the count of points currently stored in the vector index collection.
+        /// </summary>
+        Task<int> GetIndexedCountAsync(CancellationToken ct = default);
     }
 }

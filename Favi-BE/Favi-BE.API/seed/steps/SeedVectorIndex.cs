@@ -27,14 +27,29 @@ public sealed class SeedVectorIndexStep
         };
         var manifestPath = manifestCandidates.FirstOrDefault(File.Exists) ?? Path.Combine(outputRoot, "vector-index-manifest.json");
 
-        if (File.Exists(manifestPath))
+        // Wait for vector index service to be responsive on startup (up to 30s)
+        var existingPointsInQdrant = 0;
+        for (var attempt = 1; attempt <= 15; attempt++)
+        {
+            if (cancellationToken.IsCancellationRequested) break;
+            existingPointsInQdrant = await vectorIndexService.GetIndexedCountAsync(cancellationToken);
+            if (existingPointsInQdrant > 0)
+                break;
+            if (attempt < 5)
+                await Task.Delay(1000, cancellationToken);
+            else
+                break;
+        }
+
+        // Only skip if manifest is "Completed" AND Qdrant actually has points!
+        if (File.Exists(manifestPath) && existingPointsInQdrant > 0)
         {
             try
             {
                 var existing = JsonSerializer.Deserialize<JsonElement>(File.ReadAllText(manifestPath));
                 if (existing.TryGetProperty("Status", out var statusProp) && statusProp.GetString() == "Completed")
                 {
-                    var count = existing.TryGetProperty("IndexedCount", out var cProp) ? cProp.GetInt32() : 0;
+                    var count = existing.TryGetProperty("IndexedCount", out var cProp) ? cProp.GetInt32() : existingPointsInQdrant;
                     return new SeedVectorIndexResult(count, 0, manifestPath);
                 }
             }
@@ -77,7 +92,7 @@ public sealed class SeedVectorIndexStep
             return new SeedVectorIndexResult(0, 0, manifestPath);
         }
 
-        const int batchSize = 100;
+        const int batchSize = 25;
         var totalIndexed = 0;
         var sw = Stopwatch.StartNew();
 
