@@ -106,6 +106,29 @@ internal sealed class EngagementQueryReaderAdapter : IEngagementQueryReader
         return BuildSummary(reactions.Select(r => (r.ProfileId, r.Type)), currentUserId);
     }
 
+    public async Task<IReadOnlyDictionary<Guid, ReactionSummaryQueryDto>> GetBatchReactionSummariesForPostsAsync(
+        IReadOnlyList<Guid> postIds, Guid? currentUserId, CancellationToken ct = default)
+    {
+        if (postIds.Count == 0)
+            return new Dictionary<Guid, ReactionSummaryQueryDto>();
+
+        var distinctIds = postIds.Distinct().ToList();
+        var reactions = await _db.Reactions
+            .AsNoTracking()
+            .Where(r => r.PostId.HasValue && distinctIds.Contains(r.PostId.Value))
+            .Select(r => new { PostId = r.PostId!.Value, r.ProfileId, r.Type })
+            .ToListAsync(ct);
+
+        var grouped = reactions
+            .GroupBy(r => r.PostId)
+            .ToDictionary(
+                g => g.Key,
+                g => BuildSummary(g.Select(r => (r.ProfileId, r.Type)), currentUserId)
+            );
+
+        return grouped;
+    }
+
     public async Task<ReactionSummaryQueryDto> GetReactionSummaryForCommentAsync(
         Guid commentId, Guid? currentUserId, CancellationToken ct = default)
     {

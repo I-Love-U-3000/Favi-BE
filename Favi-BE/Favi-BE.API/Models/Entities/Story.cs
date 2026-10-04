@@ -18,6 +18,8 @@ namespace Favi_BE.Models.Entities
         public bool IsArchived { get; set; }
         public bool IsNSFW { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public int Version { get; set; } = 1;
         public DateTime ExpiresAt { get; set; }
 
         public Profile Profile { get; set; } = null!;

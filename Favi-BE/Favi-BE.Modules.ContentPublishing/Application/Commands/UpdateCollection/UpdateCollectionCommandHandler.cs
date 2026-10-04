@@ -22,6 +22,9 @@ internal sealed class UpdateCollectionCommandHandler : IRequestHandler<UpdateCol
         if (collection.ProfileId != request.RequesterId)
             return CollectionCommandResult.Fail("FORBIDDEN", "Bạn không có quyền chỉnh sửa bộ sưu tập này.");
 
+        if (request.Version.HasValue && request.Version.Value != collection.Version)
+            return CollectionCommandResult.Fail("CONCURRENCY_CONFLICT", "Bộ sưu tập đã được chỉnh sửa bởi phiên bản khác. Vui lòng tải lại trang.");
+
         var updated = collection with
         {
             Title = !string.IsNullOrWhiteSpace(request.Title) ? request.Title.Trim() : collection.Title,

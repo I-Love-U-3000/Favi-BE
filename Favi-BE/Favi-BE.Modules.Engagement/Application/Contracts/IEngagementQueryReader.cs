@@ -13,6 +13,9 @@ public interface IEngagementQueryReader
     Task<ReactionSummaryQueryDto> GetReactionSummaryForPostAsync(
         Guid postId, Guid? currentUserId, CancellationToken ct = default);
 
+    Task<IReadOnlyDictionary<Guid, ReactionSummaryQueryDto>> GetBatchReactionSummariesForPostsAsync(
+        IReadOnlyList<Guid> postIds, Guid? currentUserId, CancellationToken ct = default);
+
     Task<ReactionSummaryQueryDto> GetReactionSummaryForCommentAsync(
         Guid commentId, Guid? currentUserId, CancellationToken ct = default);
 

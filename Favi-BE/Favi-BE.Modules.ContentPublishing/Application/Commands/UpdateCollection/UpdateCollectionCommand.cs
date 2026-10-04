@@ -11,5 +11,6 @@ public sealed record UpdateCollectionCommand(
     string? Description,
     CollectionPrivacy? Privacy,
     string? CoverImageUrl,
-    string? CoverImagePublicId
+    string? CoverImagePublicId,
+    int? Version = null
 ) : IRequest<CollectionCommandResult>;

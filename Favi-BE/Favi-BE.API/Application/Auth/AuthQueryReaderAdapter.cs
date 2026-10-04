@@ -294,5 +294,6 @@ internal sealed class AuthQueryReaderAdapter : IAuthQueryReader
             followersCount,
             followingCount,
             mutualFriendsCount,
-            recommendationReason);
+            recommendationReason,
+            p.Version);
 }

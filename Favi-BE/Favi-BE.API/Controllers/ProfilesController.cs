@@ -71,11 +71,17 @@ namespace Favi_BE.Controllers
                 dto.AvatarUrl,
                 dto.CoverUrl,
                 dto.PrivacyLevel.HasValue ? (int)dto.PrivacyLevel.Value : null,
-                dto.FollowPrivacyLevel.HasValue ? (int)dto.FollowPrivacyLevel.Value : null));
+                dto.FollowPrivacyLevel.HasValue ? (int)dto.FollowPrivacyLevel.Value : null,
+                dto.Version));
 
-            return result.Succeeded
-                ? Ok(MapProfile(result.Profile!))
-                : NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
+            if (!result.Succeeded)
+            {
+                if (result.ErrorCode == "CONCURRENCY_CONFLICT")
+                    return Conflict(new { code = result.ErrorCode, message = result.ErrorMessage });
+                return NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
+            }
+
+            return Ok(MapProfile(result.Profile!));
         }
 
         [Authorize]
@@ -402,6 +408,7 @@ namespace Favi_BE.Controllers
             m.FollowersCount,
             m.FollowingCount,
             m.MutualFriendsCount,
-            m.RecommendationReason);
+            m.RecommendationReason,
+            m.Version);
     }
 }

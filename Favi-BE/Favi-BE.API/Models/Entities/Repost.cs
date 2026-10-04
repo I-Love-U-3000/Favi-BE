@@ -11,6 +11,7 @@ namespace Favi_BE.API.Models.Entities
         public string? Caption { get; set; }  // Optional comment from the sharer
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public int Version { get; set; } = 1;
 
         // Navigation properties
         public Profile Profile { get; set; } = null!;

@@ -14,5 +14,6 @@ public sealed record PostWriteData(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     bool IsArchived,
-    DateTime? DeletedDayExpiredAt
+    DateTime? DeletedDayExpiredAt,
+    int Version = 1
 );

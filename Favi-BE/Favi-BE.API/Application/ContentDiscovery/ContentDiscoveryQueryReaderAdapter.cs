@@ -436,7 +436,6 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     {
         var now = DateTime.UtcNow;
         var recentWindow = now.AddHours(-48);
-        const double lambda = 0.03; // Smooth decay over ~3 days
 
         // 1. Fetch trending candidates (up to 100)
         var candidates = await _uow.Collections.GetTrendingCandidatesAsync(100, ct);
@@ -458,10 +457,12 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             var lastActive = c.UpdatedAt > c.CreatedAt ? c.UpdatedAt : c.CreatedAt;
             var ageHours = Math.Max(0, (now - lastActive).TotalHours);
 
-            // Formula: log2(1 + N_posts) * (1.0 + R_all + 3.0 * R_recent_48h) * e^(-lambda * ageHours)
-            var score = Math.Log2(1.0 + postCount)
-                        * (1.0 + totalReactions + (3.0 * recentReactions))
-                        * Math.Exp(-lambda * ageHours);
+            // Universal Gravity Formula:
+            // Score = log2(1 + N_posts) * (1.0 + R_all + 3.0 * R_recent_48h) / ((ageHours / 24.0) + 2.0)^1.2
+            var gravityDivider = Math.Pow((ageHours / 24.0) + 2.0, 1.2);
+            var score = (Math.Log2(1.0 + postCount)
+                        * (1.0 + totalReactions + (3.0 * recentReactions)))
+                        / gravityDivider;
 
             scored.Add((c, score));
         }
@@ -500,7 +501,8 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
                 post.LocationLatitude, post.LocationLongitude)
             : null,
         post.IsNSFW,
-        post.Comments.Count);
+        post.Comments.Count,
+        post.Version);
 
     private static RepostReadModel MapRepost(Repost repost, int repostCount, bool isRepostedByCurrentUser) => new(
         repost.Id,
@@ -537,5 +539,6 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         c.CreatedAt,
         c.UpdatedAt,
         c.PostCollections.Select(pc => pc.PostId).ToList(),
-        c.PostCollections.Count);
+        c.PostCollections.Count,
+        c.Version);
 }

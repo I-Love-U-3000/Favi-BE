@@ -1,6 +1,7 @@
 using Favi_BE.Common;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Enums;
+using Favi_BE.Modules.Notifications.Application.Commands.DeleteAllReadNotifications;
 using Favi_BE.Modules.Notifications.Application.Commands.DeleteNotification;
 using Favi_BE.Modules.Notifications.Application.Commands.MarkAllNotificationsAsRead;
 using Favi_BE.Modules.Notifications.Application.Commands.MarkNotificationAsRead;
@@ -69,7 +70,16 @@ namespace Favi_BE.Controllers
         }
 
         [Authorize]
-        [HttpDelete("{id}")]
+        [HttpDelete("read")]
+        public async Task<IActionResult> DeleteAllReadNotifications()
+        {
+            var userId = User.GetUserId();
+            var deletedCount = await _mediator.Send(new DeleteAllReadNotificationsCommand(userId));
+            return Ok(new { message = $"Đã xoá {deletedCount} thông báo đã đọc.", count = deletedCount });
+        }
+
+        [Authorize]
+        [HttpDelete("{id:guid}")]
         public async Task<ActionResult> DeleteNotification(Guid id)
         {
             var userId = User.GetUserId();

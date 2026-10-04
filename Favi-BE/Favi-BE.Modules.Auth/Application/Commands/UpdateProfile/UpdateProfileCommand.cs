@@ -11,5 +11,6 @@ public sealed record UpdateProfileCommand(
     string? AvatarUrl,
     string? CoverUrl,
     int? PrivacyLevel,
-    int? FollowPrivacyLevel
+    int? FollowPrivacyLevel,
+    int? Version = null
 ) : IRequest<ProfileCommandResult>;

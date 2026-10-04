@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Entities.JoinTables;
+using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
 
 namespace Favi_BE.Models.Entities
@@ -14,6 +14,7 @@ namespace Favi_BE.Models.Entities
         public PrivacyLevel PrivacyLevel { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public int Version { get; set; } = 1;
 
         public Profile Profile { get; set; } = null!;
         public ICollection<PostCollection> PostCollections { get; set; } = new List<PostCollection>();

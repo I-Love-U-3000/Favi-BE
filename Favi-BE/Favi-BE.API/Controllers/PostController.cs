@@ -26,6 +26,7 @@ using Favi_BE.Modules.ContentPublishing.Application.Commands.UpdatePost;
 using Favi_BE.Modules.ContentPublishing.Application.Contracts.WriteModels;
 using Favi_BE.Modules.ContentPublishing.Domain;
 using Favi_BE.Modules.Engagement.Application.Commands.TogglePostReaction;
+using Favi_BE.Modules.Engagement.Application.Queries.GetBatchPostReactions;
 using Favi_BE.Modules.Engagement.Application.Queries.GetPostReactions;
 using Favi_BE.Modules.Engagement.Application.Queries.GetPostReactors;
 using MediatR;
@@ -116,12 +117,9 @@ namespace Favi_BE.Controllers
             var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
             var (items, total) = await _mediator.Send(new GetNewsFeedQuery(userId, page, actualSize));
-            var responses = new List<PostResponse>();
-            foreach (var p in items)
-            {
-                var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, userId));
-                responses.Add(MapToPostResponse(p, reactions));
-            }
+            var postIds = items.Select(p => p.Id).ToList();
+            var reactionsMap = await _mediator.Send(new GetBatchPostReactionsQuery(postIds, userId));
+            var responses = items.Select(p => MapToPostResponse(p, reactionsMap.GetValueOrDefault(p.Id, EmptyReactions))).ToList();
             return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
@@ -137,17 +135,25 @@ namespace Favi_BE.Controllers
             var userId = User.GetUserId();
             var (items, total) = await _mediator.Send(new GetFeedWithRepostsQuery(userId, page, actualSize));
 
+            var postIds = items
+                .Select(i => i.Kind == FeedItemKind.Post ? i.Post?.Id : i.Repost?.OriginalPostId)
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+            var reactionsMap = await _mediator.Send(new GetBatchPostReactionsQuery(postIds, userId));
+
             var dtos = new List<FeedItemDto>();
             foreach (var item in items)
             {
                 if (item.Kind == FeedItemKind.Post && item.Post is not null)
                 {
-                    var reactions = await _mediator.Send(new GetPostReactionsQuery(item.Post.Id, userId));
+                    var reactions = reactionsMap.GetValueOrDefault(item.Post.Id, EmptyReactions);
                     dtos.Add(new FeedItemDto(FeedItemType.Post, MapToPostResponse(item.Post, reactions), null, item.CreatedAt));
                 }
                 else if (item.Kind == FeedItemKind.Repost && item.Repost is not null)
                 {
-                    var repostReactions = await _mediator.Send(new GetPostReactionsQuery(item.Repost.OriginalPostId, userId));
+                    var repostReactions = reactionsMap.GetValueOrDefault(item.Repost.OriginalPostId, EmptyReactions);
                     dtos.Add(new FeedItemDto(FeedItemType.Repost, null, MapToRepostResponse(item.Repost, repostReactions), item.CreatedAt));
                 }
             }
@@ -165,12 +171,9 @@ namespace Favi_BE.Controllers
         {
             var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var (items, total) = await _mediator.Send(new GetGuestFeedQuery(page, actualSize));
-            var responses = new List<PostResponse>();
-            foreach (var p in items)
-            {
-                var reactions = await _mediator.Send(new GetPostReactionsQuery(p.Id, null));
-                responses.Add(MapToPostResponse(p, reactions));
-            }
+            var postIds = items.Select(p => p.Id).ToList();
+            var reactionsMap = await _mediator.Send(new GetBatchPostReactionsQuery(postIds, null));
+            var responses = items.Select(p => MapToPostResponse(p, reactionsMap.GetValueOrDefault(p.Id, EmptyReactions))).ToList();
             return Ok(PaginationResult<PostResponse>.Create(responses, page, actualSize, total));
         }
 
@@ -239,52 +242,63 @@ namespace Favi_BE.Controllers
             if (post is null)
                 return NotFound(new { code = "POST_NOT_FOUND", message = "Bài viết không tồn tại hoặc đã bị xoá." });
 
-            var relatedPosts = new List<PostResponse>();
+            var candidateMap = new Dictionary<Guid, (PostResponse Post, double Score)>();
+            var sourceTagIds = post.Tags.Select(t => t.Id).ToHashSet();
 
-            // Strategy 1: Get posts with same tags
-            var tagIds = post.Tags.Select(t => t.Id).ToList();
-            if (tagIds.Any())
+            // Strategy 1: Candidate posts with shared tags
+            if (sourceTagIds.Count > 0)
             {
-                foreach (var tagId in tagIds)
+                foreach (var tagId in sourceTagIds)
                 {
                     var tagPosts = await _tags.GetPostsByTagAsync(tagId, userId, 1, actualSize * 2);
                     foreach (var p in tagPosts.Items.Where(p => p.Id != id))
                     {
-                        if (!relatedPosts.Any(rp => rp.Id == p.Id))
-                            relatedPosts.Add(p);
-                    }
-                }
-            }
+                        var candidateTagIds = p.Tags.Select(t => t.Id).ToHashSet();
+                        var intersection = sourceTagIds.Intersect(candidateTagIds).Count();
+                        var union = sourceTagIds.Union(candidateTagIds).Count();
+                        var jaccard = union > 0 ? (double)intersection / union : 0.0;
 
-            // Strategy 2: Semantic search if not enough
-            if (relatedPosts.Count < actualSize && !string.IsNullOrEmpty(post.Caption))
-            {
-                var semanticResult = await _search.SemanticSearchAsync(
-                    new SemanticSearchRequest(post.Caption, 1, actualSize, 50),
-                    userId ?? Guid.Empty);
-
-                foreach (var searchPost in semanticResult.Posts.Where(p => p.Id != id))
-                {
-                    if (!relatedPosts.Any(rp => rp.Id == searchPost.Id))
-                    {
-                        var relatedPost = await _mediator.Send(new GetPostByIdQuery(searchPost.Id, userId));
-                        if (relatedPost is not null)
+                        if (!candidateMap.TryGetValue(p.Id, out var existing) || jaccard * 10.0 > existing.Score)
                         {
-                            var reactions = await _mediator.Send(new GetPostReactionsQuery(searchPost.Id, userId));
-                            relatedPosts.Add(MapToPostResponse(relatedPost, reactions));
+                            candidateMap[p.Id] = (p, jaccard * 10.0);
                         }
                     }
                 }
             }
 
-            relatedPosts.RemoveAll(p => p.Id == id);
+            // Strategy 2: Semantic search to supplement candidates
+            if (candidateMap.Count < actualSize * 2 && !string.IsNullOrEmpty(post.Caption))
+            {
+                var semanticResult = await _search.SemanticSearchAsync(
+                    new SemanticSearchRequest(post.Caption, 1, actualSize * 2, 50),
+                    userId ?? Guid.Empty);
 
-            var paginated = relatedPosts
+                foreach (var searchPost in semanticResult.Posts.Where(p => p.Id != id))
+                {
+                    if (!candidateMap.ContainsKey(searchPost.Id))
+                    {
+                        var relatedPost = await _mediator.Send(new GetPostByIdQuery(searchPost.Id, userId));
+                        if (relatedPost is not null)
+                        {
+                            var reactions = await _mediator.Send(new GetPostReactionsQuery(searchPost.Id, userId));
+                            var mapped = MapToPostResponse(relatedPost, reactions);
+                            candidateMap[searchPost.Id] = (mapped, 1.0);
+                        }
+                    }
+                }
+            }
+
+            var ranked = candidateMap.Values
+                .OrderByDescending(x => x.Score)
+                .Select(x => x.Post)
+                .ToList();
+
+            var paginated = ranked
                 .Skip((page - 1) * actualSize)
                 .Take(actualSize)
                 .ToList();
 
-            return Ok(PaginationResult<PostResponse>.Create(paginated, page, actualSize, relatedPosts.Count));
+            return Ok(PaginationResult<PostResponse>.Create(paginated, page, actualSize, ranked.Count));
         }
 
         // ======================
@@ -353,10 +367,16 @@ namespace Favi_BE.Controllers
         public async Task<IActionResult> Update(Guid id, UpdatePostRequest dto)
         {
             var requesterId = User.GetUserId();
-            var result = await _mediator.Send(new UpdatePostCommand(id, requesterId, dto.Caption, null));
-            return result.Success
-                ? Ok(new { message = "Đã cập nhật bài viết." })
-                : StatusCode(403, new { code = result.ErrorCode ?? "POST_FORBIDDEN_OR_NOT_FOUND", message = result.ErrorMessage ?? "Không thể chỉnh sửa bài viết." });
+            var result = await _mediator.Send(new UpdatePostCommand(id, requesterId, dto.Caption, null, dto.Version));
+            if (!result.Success)
+            {
+                if (result.ErrorCode == "CONCURRENCY_CONFLICT")
+                    return Conflict(new { code = result.ErrorCode, message = result.ErrorMessage });
+                if (result.ErrorCode == "POST_NOT_FOUND")
+                    return NotFound(new { code = result.ErrorCode, message = result.ErrorMessage });
+                return StatusCode(403, new { code = result.ErrorCode ?? "POST_FORBIDDEN_OR_NOT_FOUND", message = result.ErrorMessage ?? "Không thể chỉnh sửa bài viết." });
+            }
+            return Ok(new { message = "Đã cập nhật bài viết." });
         }
 
         // ======================
@@ -632,6 +652,9 @@ namespace Favi_BE.Controllers
 
         // ── Mappers ──────────────────────────────────────────────────────────
 
+        private static readonly Favi_BE.Modules.Engagement.Application.Contracts.ReadModels.ReactionSummaryQueryDto EmptyReactions =
+            new(0, new Dictionary<EngagementReactionType, int>(), null);
+
         private static PostResponse MapToPostResponse(PostReadModel post,
             Favi_BE.Modules.Engagement.Application.Contracts.ReadModels.ReactionSummaryQueryDto reactions)
         {
@@ -656,7 +679,8 @@ namespace Favi_BE.Controllers
                 post.Location is not null
                     ? new LocationDto(post.Location.Name, post.Location.FullAddress, post.Location.Latitude, post.Location.Longitude)
                     : null,
-                post.IsNSFW);
+                post.IsNSFW,
+                post.Version);
         }
 
         private static RepostResponse MapToRepostResponse(

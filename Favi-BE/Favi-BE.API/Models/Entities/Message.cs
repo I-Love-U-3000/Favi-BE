@@ -1,4 +1,4 @@
-﻿using Favi_BE.API.Models.Entities.JoinTables;
+using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.Models.Entities;
 
 namespace Favi_BE.API.Models.Entities
@@ -19,6 +19,7 @@ namespace Favi_BE.API.Models.Entities
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int Version { get; set; } = 1;
         public bool IsEdited { get; set; }
 
         // Navigation property for message reads

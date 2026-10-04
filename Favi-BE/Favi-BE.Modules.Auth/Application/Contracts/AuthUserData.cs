@@ -9,7 +9,8 @@ public sealed record AuthUserData(
     string? DisplayName,
     string? AvatarUrl,
     string Role,
-    bool IsBanned);
+    bool IsBanned,
+    int Version = 1);
 
 /// <summary>
 /// Credential data for password verification.

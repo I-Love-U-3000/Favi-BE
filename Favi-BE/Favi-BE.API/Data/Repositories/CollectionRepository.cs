@@ -57,38 +57,54 @@ namespace Favi_BE.Data.Repositories
         public async Task<List<Collection>> GetTrendingCandidatesAsync(int limit, CancellationToken ct = default)
         {
             var now = DateTime.UtcNow;
-            var window = now.AddDays(-30);
 
-            // Fetch candidate collections that are public, non-banned creator, with posts
+            // 1. Fetch recently active public collections with posts
+            var halfLimit = Math.Max(10, limit / 2);
             var candidates = await _dbSet
+                .AsNoTracking()
+                .AsSplitQuery()
                 .Where(c => c.PrivacyLevel == Favi_BE.Models.Enums.PrivacyLevel.Public
                     && c.PostCollections.Any()
-                    && (!c.Profile.IsBanned || (c.Profile.BannedUntil != null && c.Profile.BannedUntil <= now))
-                    && (c.CreatedAt >= window || c.UpdatedAt >= window))
+                    && (!c.Profile.IsBanned || (c.Profile.BannedUntil != null && c.Profile.BannedUntil <= now)))
                 .Include(c => c.Profile)
                 .Include(c => c.PostCollections)
                 .Include(c => c.Reactions)
                 .OrderByDescending(c => c.UpdatedAt)
-                .Take(limit)
+                .Take(halfLimit)
                 .ToListAsync(ct);
 
-            // Fallback: if not enough recent candidates (e.g. cold start), take top public collections with posts
-            if (candidates.Count < 10)
+            var candidateIds = candidates.Select(c => c.Id).ToHashSet();
+
+            // 2. Fetch highest reacted public collections with posts that are not already included
+            var needed = limit - candidates.Count;
+            if (needed > 0)
             {
-                var candidateIds = candidates.Select(c => c.Id).ToHashSet();
-                var fallback = await _dbSet
-                    .Where(c => c.PrivacyLevel == Favi_BE.Models.Enums.PrivacyLevel.Public
-                        && c.PostCollections.Any()
-                        && (!c.Profile.IsBanned || (c.Profile.BannedUntil != null && c.Profile.BannedUntil <= now))
-                        && !candidateIds.Contains(c.Id))
-                    .Include(c => c.Profile)
-                    .Include(c => c.PostCollections)
-                    .Include(c => c.Reactions)
-                    .OrderByDescending(c => c.CreatedAt)
-                    .Take(limit - candidates.Count)
+                var topCollectionIds = await _context.Reactions
+                    .AsNoTracking()
+                    .Where(r => r.CollectionId != null && !candidateIds.Contains(r.CollectionId.Value))
+                    .GroupBy(r => r.CollectionId!.Value)
+                    .Select(g => new { CollectionId = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .Take(needed)
+                    .Select(x => x.CollectionId)
                     .ToListAsync(ct);
 
-                candidates.AddRange(fallback);
+                if (topCollectionIds.Count > 0)
+                {
+                    var topEngaged = await _dbSet
+                        .AsNoTracking()
+                        .AsSplitQuery()
+                        .Where(c => topCollectionIds.Contains(c.Id)
+                            && c.PrivacyLevel == Favi_BE.Models.Enums.PrivacyLevel.Public
+                            && c.PostCollections.Any()
+                            && (!c.Profile.IsBanned || (c.Profile.BannedUntil != null && c.Profile.BannedUntil <= now)))
+                        .Include(c => c.Profile)
+                        .Include(c => c.PostCollections)
+                        .Include(c => c.Reactions)
+                        .ToListAsync(ct);
+
+                    candidates.AddRange(topEngaged);
+                }
             }
 
             return candidates;

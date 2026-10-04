@@ -10,4 +10,5 @@ public sealed record CollectionReadModel(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     IReadOnlyList<Guid> PostIds,
-    int PostCount);
+    int PostCount,
+    int Version = 1);

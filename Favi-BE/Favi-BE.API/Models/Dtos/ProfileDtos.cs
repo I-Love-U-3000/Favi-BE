@@ -19,7 +19,8 @@ namespace Favi_BE.Models.Dtos
         int? FollowersCount,
         int? FollowingCount,
         int? MutualFriendsCount = null,
-        string? RecommendationReason = null
+        string? RecommendationReason = null,
+        int Version = 1
     );
 
     public record ProfileUpdateRequest(
@@ -29,7 +30,8 @@ namespace Favi_BE.Models.Dtos
         string? AvatarUrl,
         string? CoverUrl,
         PrivacyLevel? PrivacyLevel,
-        PrivacyLevel? FollowPrivacyLevel
+        PrivacyLevel? FollowPrivacyLevel,
+        int? Version = null
     );
 
     public record SocialLinkDto(

@@ -11,5 +11,6 @@ public sealed record CollectionWriteData(
     string? CoverImagePublicId,
     CollectionPrivacy Privacy,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    int Version = 1
 );

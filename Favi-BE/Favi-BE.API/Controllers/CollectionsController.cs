@@ -96,12 +96,16 @@ namespace Favi_BE.Controllers
                 : null;
 
             var result = await _mediator.Send(new UpdateCollectionCommand(
-                id, userId, dto.Title, dto.Description, privacy, coverImageUrl, coverImagePublicId));
+                id, userId, dto.Title, dto.Description, privacy, coverImageUrl, coverImagePublicId, dto.Version));
 
             if (!result.Success)
+            {
+                if (result.ErrorCode == "CONCURRENCY_CONFLICT")
+                    return Conflict(new { code = result.ErrorCode, message = result.ErrorMessage });
                 return result.ErrorCode == "COLLECTION_NOT_FOUND"
                     ? NotFound(new { code = result.ErrorCode, message = result.ErrorMessage })
                     : StatusCode(403, new { code = result.ErrorCode, message = result.ErrorMessage });
+            }
 
             var collection = await _mediator.Send(new GetCollectionByIdQuery(id, userId));
             if (collection is null)
@@ -280,7 +284,8 @@ namespace Favi_BE.Controllers
                 c.UpdatedAt,
                 c.PostIds,
                 c.PostCount,
-                summary);
+                summary,
+                c.Version);
         }
 
         private static PostResponse MapToPostResponse(PostReadModel post, ReactionSummaryQueryDto reactions)
@@ -314,7 +319,8 @@ namespace Favi_BE.Controllers
                 summary,
                 post.CommentsCount,
                 location,
-                post.IsNSFW);
+                post.IsNSFW,
+                post.Version);
         }
     }
 }

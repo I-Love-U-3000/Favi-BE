@@ -1,5 +1,6 @@
 using Favi_BE.API.Models.Dtos;
-using Favi_BE.API.Interfaces.Services;
+using Favi_BE.Modules.Messaging.Application.Queries.GetConversations;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -10,8 +11,7 @@ namespace Favi_BE.API.Hubs
     public class CallHub : Hub
     {
         private readonly ILogger<CallHub> _logger;
-        private readonly IChatService _chatService;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IMediator _mediator;
 
         // Track active calls: conversationId -> (callerId, calleeId, startTime)
         private static readonly Dictionary<string, (string callerId, string calleeId, DateTime startTime)> _activeCalls = new();
@@ -19,11 +19,10 @@ namespace Favi_BE.API.Hubs
         // Track WebRTC offers: conversationId -> (fromUserId, sdpOffer)
         private static readonly Dictionary<string, (string fromUserId, string sdpOffer)> _pendingOffers = new();
 
-        public CallHub(ILogger<CallHub> logger, IChatService chatService, IServiceProvider serviceProvider)
+        public CallHub(ILogger<CallHub> logger, IMediator mediator)
         {
             _logger = logger;
-            _chatService = chatService;
-            _serviceProvider = serviceProvider;
+            _mediator = mediator;
         }
 
         /// <summary>
@@ -37,7 +36,7 @@ namespace Favi_BE.API.Hubs
                 try
                 {
                     // Verify user has access to conversation
-                    var conversations = await _chatService.GetConversationsAsync(userId, 1, 100);
+                    var conversations = await _mediator.Send(new GetConversationsQuery(userId, 1, 100));
                     var hasAccess = conversations.Any(c => c.Id == convId);
 
                     if (hasAccess)
@@ -106,7 +105,7 @@ namespace Favi_BE.API.Hubs
                     _logger.LogInformation($"[CallHub] Parsed IDs - Caller: {callerId}, Callee: {calleeId}, Conversation: {convId}");
 
                     // Verify caller has access to conversation
-                    var conversations = await _chatService.GetConversationsAsync(callerId, 1, 100);
+                    var conversations = await _mediator.Send(new GetConversationsQuery(callerId, 1, 100));
                     var conversation = conversations.FirstOrDefault(c => c.Id == convId);
 
                     if (conversation == null)

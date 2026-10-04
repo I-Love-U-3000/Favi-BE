@@ -22,6 +22,9 @@ internal sealed class UpdateProfileCommandHandler : IRequestHandler<UpdateProfil
         if (authUser is null)
             return ProfileCommandResult.Fail("PROFILE_NOT_FOUND", "Không tìm thấy hồ sơ để cập nhật.");
 
+        if (request.Version.HasValue && request.Version.Value != authUser.Version)
+            return ProfileCommandResult.Fail("CONCURRENCY_CONFLICT", "Hồ sơ đã được chỉnh sửa ở phiên làm việc khác. Vui lòng tải lại dữ liệu mới nhất.");
+
         // Reconstitute the domain aggregate from storage details
         var profileAggregate = new Auth.Domain.Profile(
             authUser.Id,

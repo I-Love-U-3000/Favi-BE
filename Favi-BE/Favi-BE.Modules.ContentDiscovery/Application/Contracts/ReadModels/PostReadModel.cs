@@ -11,4 +11,5 @@ public sealed record PostReadModel(
     IReadOnlyList<TagReadModel> Tags,
     PostLocationReadModel? Location,
     bool IsNSFW,
-    int CommentsCount);
+    int CommentsCount,
+    int Version = 1);

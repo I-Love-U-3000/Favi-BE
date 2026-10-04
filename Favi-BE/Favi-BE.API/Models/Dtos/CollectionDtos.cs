@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Enums;
+using Favi_BE.Models.Enums;
 
 namespace Favi_BE.Models.Dtos
 {
@@ -12,7 +12,8 @@ namespace Favi_BE.Models.Dtos
     public record UpdateCollectionRequest(
         string? Title,
         string? Description,
-        PrivacyLevel? PrivacyLevel
+        PrivacyLevel? PrivacyLevel,
+        int? Version = null
     );
 
     public record CollectionResponse(
@@ -26,7 +27,8 @@ namespace Favi_BE.Models.Dtos
         DateTime UpdatedAt,
         IEnumerable<Guid> PostIds,
         int PostCount,
-        ReactionSummaryDto Reactions
+        ReactionSummaryDto Reactions,
+        int Version = 1
     );
 
 }

@@ -243,5 +243,5 @@ internal sealed class AuthWriteRepositoryAdapter : IAuthWriteRepository
         => await _uow.CompleteAsync();
 
     private static AuthUserData MapUser(Profile p) =>
-        new(p.Id, p.Username, p.DisplayName, p.AvatarUrl, p.Role.ToString().ToLower(), p.IsBanned);
+        new(p.Id, p.Username, p.DisplayName, p.AvatarUrl, p.Role.ToString().ToLower(), p.IsBanned, p.Version);
 }

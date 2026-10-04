@@ -20,6 +20,9 @@ internal sealed class UpdatePostCommandHandler : IRequestHandler<UpdatePostComma
         if (postData is null)
             return PostCommandResult.Fail("POST_NOT_FOUND", "Bài viết không tồn tại.");
 
+        if (request.Version.HasValue && request.Version.Value != postData.Version)
+            return PostCommandResult.Fail("CONCURRENCY_CONFLICT", "Bài viết đã được chỉnh sửa bởi phiên bản khác. Vui lòng tải lại trang.");
+
         // Reconstitute the Domain Post aggregate root
         var post = new ContentPublishing.Domain.Post(
             postData.Id,

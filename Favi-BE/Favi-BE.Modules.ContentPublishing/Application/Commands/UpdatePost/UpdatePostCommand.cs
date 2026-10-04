@@ -8,5 +8,6 @@ public sealed record UpdatePostCommand(
     Guid PostId,
     Guid RequesterId,
     string? Caption,
-    PostPrivacy? Privacy
+    PostPrivacy? Privacy,
+    int? Version = null
 ) : IRequest<PostCommandResult>;

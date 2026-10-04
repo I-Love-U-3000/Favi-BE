@@ -20,5 +20,6 @@ public sealed record ProfileReadModel(
     int FollowersCount,
     int FollowingCount,
     int MutualFriendsCount = 0,
-    string? RecommendationReason = null
+    string? RecommendationReason = null,
+    int Version = 1
 );

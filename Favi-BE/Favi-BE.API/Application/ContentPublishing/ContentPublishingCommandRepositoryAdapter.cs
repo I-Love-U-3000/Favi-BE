@@ -174,7 +174,8 @@ internal sealed class ContentPublishingCommandRepositoryAdapter : IContentPublis
             c.Id, c.ProfileId, c.Title, c.Description,
             c.CoverImageUrl, c.CoverImagePublicId,
             MapCollectionPrivacy(c.PrivacyLevel),
-            c.CreatedAt, c.UpdatedAt
+            c.CreatedAt, c.UpdatedAt,
+            c.Version
         );
     }
 
@@ -268,6 +269,7 @@ internal sealed class ContentPublishingCommandRepositoryAdapter : IContentPublis
     private static PostWriteData MapPost(Favi_BE.Models.Entities.Post p) => new(
         p.Id, p.ProfileId, p.Caption, (PostPrivacy)(int)p.Privacy,
         p.LocationName, p.LocationFullAddress, p.LocationLatitude, p.LocationLongitude,
-        p.CreatedAt, p.UpdatedAt, p.IsArchived, p.DeletedDayExpiredAt
+        p.CreatedAt, p.UpdatedAt, p.IsArchived, p.DeletedDayExpiredAt,
+        p.Version
     );
 }

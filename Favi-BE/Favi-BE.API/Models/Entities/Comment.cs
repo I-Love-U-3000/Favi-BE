@@ -1,4 +1,4 @@
-﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.API.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 
 namespace Favi_BE.Models.Entities
@@ -14,6 +14,7 @@ namespace Favi_BE.Models.Entities
         public Guid? ParentCommentId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public int Version { get; set; } = 1;
 
         public Post Post { get; set; } = null!;
         public Repost? Repost { get; set; }  // Optional: if comment is on a Repost

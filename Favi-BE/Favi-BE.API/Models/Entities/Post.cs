@@ -1,4 +1,4 @@
-﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.API.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
 using System.Xml.Linq;
@@ -13,6 +13,7 @@ namespace Favi_BE.Models.Entities
         public PrivacyLevel Privacy { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public int Version { get; set; } = 1;
 
         public string? LocationName { get; set; }
         public string? LocationFullAddress { get; set; }

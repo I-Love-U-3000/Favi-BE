@@ -44,4 +44,17 @@ public sealed class NotificationCommandRepositoryAdapter : INotificationCommandR
         _dbContext.Notifications.Remove(notification);
         return await _dbContext.SaveChangesAsync(cancellationToken) > 0;
     }
+
+    public async Task<int> DeleteAllReadAsync(Guid recipientId, CancellationToken cancellationToken = default)
+    {
+        var readNotifications = await _dbContext.Notifications
+            .Where(n => n.RecipientProfileId == recipientId && n.IsRead)
+            .ToListAsync(cancellationToken);
+
+        if (readNotifications.Count == 0) return 0;
+
+        _dbContext.Notifications.RemoveRange(readNotifications);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return readNotifications.Count;
+    }
 }

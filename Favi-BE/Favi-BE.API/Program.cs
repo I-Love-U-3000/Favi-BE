@@ -33,6 +33,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<Favi_BE.API.Middleware.IdempotencyMiddleware>();
+
 app.MapControllers();
 
 // ============================================

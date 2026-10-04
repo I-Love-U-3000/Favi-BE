@@ -1,4 +1,4 @@
-﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.API.Models.Entities;
 using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.Models.Entities.JoinTables;
 using Favi_BE.Models.Enums;
@@ -17,6 +17,8 @@ namespace Favi_BE.Models.Entities
         public string? Bio { get; set; }
         public UserRole Role { get; set; } = UserRole.User;
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public int Version { get; set; } = 1;
         public DateTime? LastActiveAt { get; set; }
         public PrivacyLevel PrivacyLevel { get; set; } = PrivacyLevel.Public;
         public PrivacyLevel FollowPrivacyLevel { get; set; } = PrivacyLevel.Public;

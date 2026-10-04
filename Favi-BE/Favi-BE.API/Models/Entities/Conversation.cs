@@ -1,4 +1,4 @@
-﻿using Favi_BE.API.Models.Entities.JoinTables;
+using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.API.Models.Enums;
 
 namespace Favi_BE.API.Models.Entities
@@ -9,6 +9,8 @@ namespace Favi_BE.API.Models.Entities
         public ConversationType Type { get; set; }
 
         public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public int Version { get; set; } = 1;
         public DateTime? MutedUntil { get; set; }
         public DateTime? LastMessageAt { get; set; }
 

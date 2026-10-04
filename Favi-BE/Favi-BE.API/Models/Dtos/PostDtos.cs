@@ -1,4 +1,4 @@
-﻿using Favi_BE.Models.Enums;
+using Favi_BE.Models.Enums;
 
 namespace Favi_BE.Models.Dtos
 {
@@ -24,7 +24,8 @@ namespace Favi_BE.Models.Dtos
     );
 
     public record UpdatePostRequest(
-        string? Caption
+        string? Caption,
+        int? Version = null
     );
 
     // Response
@@ -40,7 +41,8 @@ namespace Favi_BE.Models.Dtos
         ReactionSummaryDto Reactions,
         int CommentsCount,
         LocationDto? Location,
-        bool IsNSFW
+        bool IsNSFW,
+        int Version = 1
     );
 
     public record PostMediaResponse(

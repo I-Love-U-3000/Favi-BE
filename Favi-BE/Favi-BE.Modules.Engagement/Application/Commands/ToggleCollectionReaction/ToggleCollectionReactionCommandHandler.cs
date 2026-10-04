@@ -33,8 +33,20 @@ internal sealed class ToggleCollectionReactionCommandHandler : IRequestHandler<T
                 Type: request.Type,
                 CreatedAt: DateTime.UtcNow), cancellationToken);
 
-            await _repo.SaveAsync(cancellationToken);
-            return ReactionCommandResult.Added(request.Type);
+            try
+            {
+                await _repo.SaveAsync(cancellationToken);
+                return ReactionCommandResult.Added(request.Type);
+            }
+            catch (Exception ex) when (ex.GetType().Name.Contains("DbUpdateException") || ex.InnerException?.Message.Contains("23505") == true)
+            {
+                var current = await _repo.GetCollectionReactionByActorAsync(request.ActorId, request.CollectionId, cancellationToken);
+                if (current is not null)
+                {
+                    return ReactionCommandResult.Added(current.Type);
+                }
+                throw;
+            }
         }
 
         if (existing.Type == request.Type)

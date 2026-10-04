@@ -1,4 +1,4 @@
-﻿using Favi_BE.API.Models.Entities;
+using Favi_BE.API.Models.Entities;
 using Favi_BE.API.Models.Entities.JoinTables;
 using Favi_BE.BuildingBlocks.Application.Data;
 using Favi_BE.Models.Entities;
@@ -467,6 +467,60 @@ namespace Favi_BE.Data
                 b.HasIndex(x => new { x.MessageId, x.Consumer }).IsUnique();
                 b.HasIndex(x => new { x.Status, x.ReceivedOnUtc });
             });
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            ApplyAuditAndVersion();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        public override int SaveChanges()
+        {
+            ApplyAuditAndVersion();
+            return base.SaveChanges();
+        }
+
+        private void ApplyAuditAndVersion()
+        {
+            var now = DateTime.UtcNow;
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    var createdAtProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "CreatedAt");
+                    if (createdAtProp != null && (createdAtProp.CurrentValue == null || (DateTime)createdAtProp.CurrentValue == default))
+                    {
+                        createdAtProp.CurrentValue = now;
+                    }
+
+                    var updatedAtProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedAt");
+                    if (updatedAtProp != null && (updatedAtProp.CurrentValue == null || (DateTime)updatedAtProp.CurrentValue == default))
+                    {
+                        updatedAtProp.CurrentValue = now;
+                    }
+
+                    var versionProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Version");
+                    if (versionProp != null && (int)(versionProp.CurrentValue ?? 0) <= 0)
+                    {
+                        versionProp.CurrentValue = 1;
+                    }
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    var updatedAtProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "UpdatedAt");
+                    if (updatedAtProp != null)
+                    {
+                        updatedAtProp.CurrentValue = now;
+                    }
+
+                    var versionProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Version");
+                    if (versionProp != null && versionProp.CurrentValue is int currentVersion)
+                    {
+                        versionProp.CurrentValue = currentVersion + 1;
+                    }
+                }
+            }
         }
     }
 }
