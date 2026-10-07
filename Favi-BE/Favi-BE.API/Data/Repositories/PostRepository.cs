@@ -1,4 +1,5 @@
 using Favi_BE.Interfaces.Repositories;
+using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -383,12 +384,14 @@ namespace Favi_BE.Data.Repositories
             return (items, total);
         }
 
-        public async Task<List<Post>> GetFeedCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default)
+        public async Task<List<FeedCandidateDto>> GetFeedCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default)
         {
             var now = DateTime.UtcNow;
             var window = now.AddDays(-30);
+            var twoHoursAgo = now.AddHours(-2);
 
             var candidates = await _dbSet
+                .AsNoTracking()
                 .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived &&
                     (
                         p.ProfileId == profileId
@@ -401,19 +404,27 @@ namespace Favi_BE.Data.Repositories
                     )
                     && p.CreatedAt >= window
                 )
-                .Include(p => p.Profile)
-                .Include(p => p.PostMedias)
-                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                .Include(p => p.Comments)
-                .Include(p => p.Reactions)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
+                .Select(p => new FeedCandidateDto(
+                    p.Id,
+                    p.ProfileId,
+                    p.Privacy,
+                    p.CreatedAt,
+                    p.Profile.IsBanned,
+                    p.Profile.BannedUntil,
+                    p.Comments.Count,
+                    p.Reactions.Count,
+                    p.Reactions.Count(r => r.CreatedAt >= twoHoursAgo),
+                    p.PostTags.Count
+                ))
                 .ToListAsync(ct);
 
             if (candidates.Count < 20)
             {
                 var existingIds = candidates.Select(c => c.Id).ToHashSet();
                 var fallback = await _dbSet
+                    .AsNoTracking()
                     .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived &&
                         (
                             p.ProfileId == profileId
@@ -426,13 +437,20 @@ namespace Favi_BE.Data.Repositories
                         )
                         && !existingIds.Contains(p.Id)
                     )
-                    .Include(p => p.Profile)
-                    .Include(p => p.PostMedias)
-                    .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                    .Include(p => p.Comments)
-                    .Include(p => p.Reactions)
                     .OrderByDescending(p => p.CreatedAt)
                     .Take(limit - candidates.Count)
+                    .Select(p => new FeedCandidateDto(
+                        p.Id,
+                        p.ProfileId,
+                        p.Privacy,
+                        p.CreatedAt,
+                        p.Profile.IsBanned,
+                        p.Profile.BannedUntil,
+                        p.Comments.Count,
+                        p.Reactions.Count,
+                        p.Reactions.Count(r => r.CreatedAt >= twoHoursAgo),
+                        p.PostTags.Count
+                    ))
                     .ToListAsync(ct);
 
                 candidates.AddRange(fallback);
@@ -441,10 +459,11 @@ namespace Favi_BE.Data.Repositories
             return candidates;
         }
 
-        public async Task<List<Post>> GetDiscoveryCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default)
+        public async Task<List<FeedCandidateDto>> GetDiscoveryCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default)
         {
             var now = DateTime.UtcNow;
             var window = now.AddDays(-14);
+            var twoHoursAgo = now.AddHours(-2);
 
             var followedIds = await _context.Follows
                 .Where(f => f.FollowerId == profileId)
@@ -452,38 +471,54 @@ namespace Favi_BE.Data.Repositories
                 .ToListAsync(ct);
 
             var candidates = await _dbSet
+                .AsNoTracking()
                 .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
                     && p.ProfileId != profileId
                     && !followedIds.Contains(p.ProfileId)
                     && p.Privacy == PrivacyLevel.Public
                     && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
                     && p.CreatedAt >= window)
-                .Include(p => p.Profile)
-                .Include(p => p.PostMedias)
-                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                .Include(p => p.Comments)
-                .Include(p => p.Reactions)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
+                .Select(p => new FeedCandidateDto(
+                    p.Id,
+                    p.ProfileId,
+                    p.Privacy,
+                    p.CreatedAt,
+                    p.Profile.IsBanned,
+                    p.Profile.BannedUntil,
+                    p.Comments.Count,
+                    p.Reactions.Count,
+                    p.Reactions.Count(r => r.CreatedAt >= twoHoursAgo),
+                    p.PostTags.Count
+                ))
                 .ToListAsync(ct);
 
             if (candidates.Count < 10)
             {
                 var existingIds = candidates.Select(c => c.Id).ToHashSet();
                 var fallback = await _dbSet
+                    .AsNoTracking()
                     .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
                         && p.ProfileId != profileId
                         && !followedIds.Contains(p.ProfileId)
                         && p.Privacy == PrivacyLevel.Public
                         && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
                         && !existingIds.Contains(p.Id))
-                    .Include(p => p.Profile)
-                    .Include(p => p.PostMedias)
-                    .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                    .Include(p => p.Comments)
-                    .Include(p => p.Reactions)
                     .OrderByDescending(p => p.CreatedAt)
                     .Take(limit - candidates.Count)
+                    .Select(p => new FeedCandidateDto(
+                        p.Id,
+                        p.ProfileId,
+                        p.Privacy,
+                        p.CreatedAt,
+                        p.Profile.IsBanned,
+                        p.Profile.BannedUntil,
+                        p.Comments.Count,
+                        p.Reactions.Count,
+                        p.Reactions.Count(r => r.CreatedAt >= twoHoursAgo),
+                        p.PostTags.Count
+                    ))
                     .ToListAsync(ct);
 
                 candidates.AddRange(fallback);
@@ -492,46 +527,79 @@ namespace Favi_BE.Data.Repositories
             return candidates;
         }
 
-        public async Task<List<Post>> GetGuestFeedCandidatesAsync(int limit, CancellationToken ct = default)
+        public async Task<List<FeedCandidateDto>> GetGuestFeedCandidatesAsync(int limit, CancellationToken ct = default)
         {
             var now = DateTime.UtcNow;
             var window = now.AddDays(-14);
+            var twoHoursAgo = now.AddHours(-2);
 
             var candidates = await _dbSet
+                .AsNoTracking()
                 .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
                     && p.Privacy == PrivacyLevel.Public
                     && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
                     && p.CreatedAt >= window)
-                .Include(p => p.Profile)
-                .Include(p => p.PostMedias)
-                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                .Include(p => p.Comments)
-                .Include(p => p.Reactions)
                 .OrderByDescending(p => p.CreatedAt)
                 .Take(limit)
+                .Select(p => new FeedCandidateDto(
+                    p.Id,
+                    p.ProfileId,
+                    p.Privacy,
+                    p.CreatedAt,
+                    p.Profile.IsBanned,
+                    p.Profile.BannedUntil,
+                    p.Comments.Count,
+                    p.Reactions.Count,
+                    p.Reactions.Count(r => r.CreatedAt >= twoHoursAgo),
+                    p.PostTags.Count
+                ))
                 .ToListAsync(ct);
 
             if (candidates.Count < 20)
             {
                 var existingIds = candidates.Select(c => c.Id).ToHashSet();
                 var fallback = await _dbSet
+                    .AsNoTracking()
                     .Where(p => p.DeletedDayExpiredAt == null && !p.IsArchived
                         && p.Privacy == PrivacyLevel.Public
                         && (!p.Profile.IsBanned || (p.Profile.BannedUntil != null && p.Profile.BannedUntil <= now))
                         && !existingIds.Contains(p.Id))
-                    .Include(p => p.Profile)
-                    .Include(p => p.PostMedias)
-                    .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                    .Include(p => p.Comments)
-                    .Include(p => p.Reactions)
                     .OrderByDescending(p => p.CreatedAt)
                     .Take(limit - candidates.Count)
+                    .Select(p => new FeedCandidateDto(
+                        p.Id,
+                        p.ProfileId,
+                        p.Privacy,
+                        p.CreatedAt,
+                        p.Profile.IsBanned,
+                        p.Profile.BannedUntil,
+                        p.Comments.Count,
+                        p.Reactions.Count,
+                        p.Reactions.Count(r => r.CreatedAt >= twoHoursAgo),
+                        p.PostTags.Count
+                    ))
                     .ToListAsync(ct);
 
                 candidates.AddRange(fallback);
             }
 
             return candidates;
+        }
+
+        public async Task<List<Post>> GetPostsByIdsAsync(IEnumerable<Guid> postIds, CancellationToken ct = default)
+        {
+            var idList = postIds.Distinct().ToList();
+            if (idList.Count == 0) return [];
+
+            return await _dbSet
+                .AsNoTracking()
+                .Where(p => idList.Contains(p.Id))
+                .Include(p => p.Profile)
+                .Include(p => p.PostMedias)
+                .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
+                .Include(p => p.Comments)
+                .AsSplitQuery()
+                .ToListAsync(ct);
         }
     }
 }

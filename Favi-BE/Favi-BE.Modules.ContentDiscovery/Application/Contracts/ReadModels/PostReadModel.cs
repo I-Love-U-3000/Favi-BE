@@ -12,4 +12,7 @@ public sealed record PostReadModel(
     PostLocationReadModel? Location,
     bool IsNSFW,
     int CommentsCount,
-    int Version = 1);
+    int Version = 1,
+    string? AuthorUsername = null,
+    string? AuthorDisplayName = null,
+    string? AuthorAvatarUrl = null);

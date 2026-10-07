@@ -1,8 +1,10 @@
 using Favi_BE.API.Models.Entities;
 using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Services;
+using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using Favi_BE.Models.Entities.JoinTables;
+using Favi_BE.Models.Enums;
 using Favi_BE.Modules.ContentDiscovery.Application.Contracts;
 using Favi_BE.Modules.ContentDiscovery.Application.Contracts.ReadModels;
 using LegacyPrivacy = Favi_BE.Models.Enums.PrivacyLevel;
@@ -61,12 +63,12 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     {
         var now = DateTime.UtcNow;
 
-        // 1. Gather candidate posts (70% network, 30% discovery)
+        // Stage 1: Gather lightweight candidate DTOs (70% network, 30% discovery)
         var networkCandidates = await _uow.Posts.GetFeedCandidatesAsync(userId, 200, ct);
         var discoveryCandidates = await _uow.Posts.GetDiscoveryCandidatesAsync(userId, 100, ct);
 
         // Deduplicate candidates
-        var allCandidatesDict = new Dictionary<Guid, Post>();
+        var allCandidatesDict = new Dictionary<Guid, FeedCandidateDto>();
         foreach (var p in networkCandidates) allCandidatesDict[p.Id] = p;
         foreach (var p in discoveryCandidates) allCandidatesDict.TryAdd(p.Id, p);
         var candidates = allCandidatesDict.Values.ToList();
@@ -76,7 +78,14 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             return ([], 0);
         }
 
-        // 2. Extract viewer social signals
+        // Viewer social signals & single viewer check
+        var viewer = await _uow.Profiles.GetByIdAsync(userId);
+        if (viewer == null || (viewer.IsBanned && (!viewer.BannedUntil.HasValue || viewer.BannedUntil > now)))
+        {
+            return ([], 0);
+        }
+        var viewerIsAdmin = viewer.Role == UserRole.Admin;
+
         var followedIds = (await _uow.Follows.GetFolloweeIdsAsync(userId, ct)).ToHashSet();
         var followerIds = (await _uow.Follows.GetFollowerIdsAsync(userId, ct)).ToHashSet();
 
@@ -86,18 +95,24 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             .GroupBy(r => r.Post!.ProfileId)
             .ToDictionary(g => g.Key, g => g.Count());
 
-        // 3. Score candidate posts
-        var scoredPosts = new List<(Post Post, double Score)>();
+        // Score candidate posts in-memory (zero DB queries in loop)
+        var scoredPosts = new List<(FeedCandidateDto Post, double Score)>();
 
         foreach (var post in candidates)
         {
-            if (!await _privacy.CanViewPostAsync(post, userId))
+            if (!viewerIsAdmin && post.IsAuthorBanned && (!post.AuthorBannedUntil.HasValue || post.AuthorBannedUntil > now))
                 continue;
 
             var authorId = post.ProfileId;
             var isSelf = authorId == userId;
             var isFollowed = followedIds.Contains(authorId);
             var isMutual = followerIds.Contains(authorId);
+
+            if (!isSelf && !viewerIsAdmin)
+            {
+                if (post.Privacy == PrivacyLevel.Private) continue;
+                if (post.Privacy == PrivacyLevel.Followers && !isFollowed) continue;
+            }
 
             // A. Social Affinity Score A(u, a) in [1.0, 5.0]
             double affinity = 1.0;
@@ -117,30 +132,10 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             }
 
             // B. Quality & Engagement Score Q(p)
-            var reactions = post.Reactions ?? (ICollection<Reaction>)Array.Empty<Reaction>();
-            double weightedReactions = 0;
-            foreach (var r in reactions)
-            {
-                weightedReactions += r.Type switch
-                {
-                    Favi_BE.Models.Enums.ReactionType.Love => 1.5,
-                    Favi_BE.Models.Enums.ReactionType.Wow => 1.2,
-                    Favi_BE.Models.Enums.ReactionType.Haha => 1.0,
-                    Favi_BE.Models.Enums.ReactionType.Like => 1.0,
-                    Favi_BE.Models.Enums.ReactionType.Sad => 0.8,
-                    Favi_BE.Models.Enums.ReactionType.Angry => 0.5,
-                    _ => 1.0
-                };
-            }
-            var commentCount = post.Comments?.Count ?? 0;
-            var quality = Math.Log10(1.0 + weightedReactions + (2.0 * commentCount));
+            var quality = Math.Log10(1.0 + (1.1 * post.ReactionsCount) + (2.0 * post.CommentsCount));
 
             // C. Topic / Tag Overlap T(u, p)
-            double topicScore = 0.0;
-            if (post.PostTags != null && post.PostTags.Any())
-            {
-                topicScore = Math.Min(1.5, post.PostTags.Count * 0.3);
-            }
+            double topicScore = Math.Min(1.5, post.TagCount * 0.3);
 
             // D. Time Decay (Half-life ~ 14 hours => lambda = 0.05)
             var ageHours = Math.Max(0, (now - post.CreatedAt).TotalHours);
@@ -150,7 +145,7 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             scoredPosts.Add((post, baseScore));
         }
 
-        // 4. Sort and apply Diversity & Anti-Fatigue Damping (damping multiple posts by same author)
+        // Sort and apply Diversity & Anti-Fatigue Damping
         var authorPostCount = new Dictionary<Guid, int>();
         var finalRanked = scoredPosts
             .OrderByDescending(x => x.Score)
@@ -175,7 +170,15 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
 
         var total = finalRanked.Count;
         var skip = (page - 1) * pageSize;
-        var pagePosts = finalRanked.Skip(skip).Take(pageSize).Select(MapPost).ToList();
+        var pageCandidateIds = finalRanked.Skip(skip).Take(pageSize).Select(c => c.Id).ToList();
+
+        // Stage 2: Batch hydrate only the selected page posts
+        var hydratedPosts = await _uow.Posts.GetPostsByIdsAsync(pageCandidateIds, ct);
+        var postMap = hydratedPosts.ToDictionary(p => p.Id);
+        var pagePosts = pageCandidateIds
+            .Where(id => postMap.ContainsKey(id))
+            .Select(id => MapPost(postMap[id]))
+            .ToList();
 
         return (pagePosts, total);
     }
@@ -184,28 +187,25 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         int page, int pageSize, CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
-        var twoHoursAgo = now.AddHours(-2);
 
         var candidates = await _uow.Posts.GetGuestFeedCandidatesAsync(200, ct);
 
-        var scored = new List<(Post Post, double Score)>();
+        var scored = new List<(FeedCandidateDto Post, double Score)>();
         foreach (var post in candidates)
         {
-            if (!await _privacy.CanViewPostAsync(post, null))
+            if (post.Privacy != PrivacyLevel.Public)
                 continue;
 
-            var reactions = post.Reactions ?? (ICollection<Reaction>)Array.Empty<Reaction>();
-            var reactionCount = reactions.Count;
-            var recentReactions = reactions.Count(r => r.CreatedAt >= twoHoursAgo);
-            var commentCount = post.Comments?.Count ?? 0;
+            if (post.IsAuthorBanned && (!post.AuthorBannedUntil.HasValue || post.AuthorBannedUntil > now))
+                continue;
 
             // Velocity in last 2 hours
-            var velocity = recentReactions / 2.0;
+            var velocity = post.RecentReactionsCount / 2.0;
 
             var ageHours = Math.Max(0, (now - post.CreatedAt).TotalHours);
             var decay = Math.Exp(-0.08 * ageHours);
 
-            var score = (1.0 + (1.0 * reactionCount) + (2.5 * commentCount))
+            var score = (1.0 + (1.0 * post.ReactionsCount) + (2.5 * post.CommentsCount))
                         * decay
                         * (1.0 + (0.5 * velocity));
 
@@ -237,7 +237,15 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
 
         var total = finalRanked.Count;
         var skip = (page - 1) * pageSize;
-        var pagePosts = finalRanked.Skip(skip).Take(pageSize).Select(MapPost).ToList();
+        var pageCandidateIds = finalRanked.Skip(skip).Take(pageSize).Select(c => c.Id).ToList();
+
+        // Stage 2: Batch hydrate only the selected page posts
+        var hydratedPosts = await _uow.Posts.GetPostsByIdsAsync(pageCandidateIds, ct);
+        var postMap = hydratedPosts.ToDictionary(p => p.Id);
+        var pagePosts = pageCandidateIds
+            .Where(id => postMap.ContainsKey(id))
+            .Select(id => MapPost(postMap[id]))
+            .ToList();
 
         return (pagePosts, total);
     }
@@ -502,7 +510,10 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             : null,
         post.IsNSFW,
         post.Comments.Count,
-        post.Version);
+        post.Version,
+        post.Profile?.Username,
+        post.Profile?.DisplayName,
+        post.Profile?.AvatarUrl);
 
     private static RepostReadModel MapRepost(Repost repost, int repostCount, bool isRepostedByCurrentUser) => new(
         repost.Id,

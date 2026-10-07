@@ -48,11 +48,19 @@ namespace Favi_BE.Data
             modelBuilder.Entity<StoryView>().HasKey(sv => new { sv.StoryId, sv.ViewerProfileId });
 
             // ===== Post =====
-            modelBuilder.Entity<Post>()
-                .HasOne(p => p.Profile)
-                .WithMany(pf => pf.Posts)
-                .HasForeignKey(p => p.ProfileId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Post>(entity =>
+            {
+                entity.HasOne(p => p.Profile)
+                    .WithMany(pf => pf.Posts)
+                    .HasForeignKey(p => p.ProfileId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(p => new { p.DeletedDayExpiredAt, p.IsArchived, p.CreatedAt })
+                    .HasDatabaseName("IX_Posts_Active_CreatedAt");
+
+                entity.HasIndex(p => new { p.ProfileId, p.DeletedDayExpiredAt, p.IsArchived, p.CreatedAt })
+                    .HasDatabaseName("IX_Posts_Profile_Active_CreatedAt");
+            });
 
             // PostMedia (Post -> PostMedias)
             modelBuilder.Entity<PostMedia>()

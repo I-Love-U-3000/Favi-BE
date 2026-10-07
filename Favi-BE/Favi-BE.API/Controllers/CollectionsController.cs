@@ -320,7 +320,10 @@ namespace Favi_BE.Controllers
                 post.CommentsCount,
                 location,
                 post.IsNSFW,
-                post.Version);
+                post.Version,
+                post.AuthorUsername,
+                post.AuthorDisplayName,
+                post.AuthorAvatarUrl);
         }
     }
 }

@@ -28,6 +28,19 @@ namespace Favi_BE.Models.Dtos
         int? Version = null
     );
 
+    public record FeedCandidateDto(
+        Guid Id,
+        Guid ProfileId,
+        PrivacyLevel Privacy,
+        DateTime CreatedAt,
+        bool IsAuthorBanned,
+        DateTime? AuthorBannedUntil,
+        int CommentsCount,
+        int ReactionsCount,
+        int RecentReactionsCount,
+        int TagCount
+    );
+
     // Response
     public record PostResponse(
         Guid Id,
@@ -42,7 +55,10 @@ namespace Favi_BE.Models.Dtos
         int CommentsCount,
         LocationDto? Location,
         bool IsNSFW,
-        int Version = 1
+        int Version = 1,
+        string? AuthorUsername = null,
+        string? AuthorDisplayName = null,
+        string? AuthorAvatarUrl = null
     );
 
     public record PostMediaResponse(

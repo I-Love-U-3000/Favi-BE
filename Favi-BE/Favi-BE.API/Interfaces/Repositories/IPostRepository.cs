@@ -1,6 +1,8 @@
+using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Favi_BE.Interfaces.Repositories
@@ -38,9 +40,12 @@ namespace Favi_BE.Interfaces.Repositories
         Task<(IEnumerable<Post> Items, int Total)> GetArchivedByProfilePagedAsync(Guid profileId, int skip, int take);
         Task<(IEnumerable<Post> Items, int Total)> GetRecycleBinByProfilePagedAsync(Guid profileId, int skip, int take);
 
-        // Recommendation candidate feeds
-        Task<List<Post>> GetFeedCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default);
-        Task<List<Post>> GetDiscoveryCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default);
-        Task<List<Post>> GetGuestFeedCandidatesAsync(int limit, CancellationToken ct = default);
+        // Recommendation candidate feeds (Stage 1)
+        Task<List<FeedCandidateDto>> GetFeedCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default);
+        Task<List<FeedCandidateDto>> GetDiscoveryCandidatesAsync(Guid profileId, int limit, CancellationToken ct = default);
+        Task<List<FeedCandidateDto>> GetGuestFeedCandidatesAsync(int limit, CancellationToken ct = default);
+
+        // Batch hydration (Stage 2)
+        Task<List<Post>> GetPostsByIdsAsync(IEnumerable<Guid> postIds, CancellationToken ct = default);
     }
 }

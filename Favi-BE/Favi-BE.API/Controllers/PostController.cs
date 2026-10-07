@@ -680,7 +680,10 @@ namespace Favi_BE.Controllers
                     ? new LocationDto(post.Location.Name, post.Location.FullAddress, post.Location.Latitude, post.Location.Longitude)
                     : null,
                 post.IsNSFW,
-                post.Version);
+                post.Version,
+                post.AuthorUsername,
+                post.AuthorDisplayName,
+                post.AuthorAvatarUrl);
         }
 
         private static RepostResponse MapToRepostResponse(
