@@ -133,8 +133,7 @@ namespace Favi_BE.Data.Repositories
                 .Include(p => p.Profile)
                 .Include(p => p.PostMedias)
                 .Include(p => p.PostTags).ThenInclude(pt => pt.Tag)
-                .Include(p => p.Comments).ThenInclude(c => c.Profile)
-                .Include(p => p.Reactions).ThenInclude(r => r.Profile)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync();
         }
 

@@ -29,7 +29,8 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         var post = await _uow.Posts.GetPostWithAllAsync(postId);
         if (post is null || post.DeletedDayExpiredAt is not null) return null;
         if (!await _privacy.CanViewPostAsync(post, viewerId)) return null;
-        return MapPost(post);
+        var commentsCount = await _uow.Comments.CountAsync(c => c.PostId == postId);
+        return MapPostWithCount(post, commentsCount);
     }
 
     public async Task<bool> ProfileExistsAsync(Guid profileId, CancellationToken ct = default)
@@ -486,7 +487,9 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
 
     // ── Mappers ──────────────────────────────────────────────────────────
 
-    private static PostReadModel MapPost(Post post) => new(
+    private static PostReadModel MapPost(Post post) => MapPostWithCount(post, post.Comments?.Count ?? 0);
+
+    private static PostReadModel MapPostWithCount(Post post, int commentsCount) => new(
         post.Id,
         post.ProfileId,
         post.Caption,
@@ -509,7 +512,7 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
                 post.LocationLatitude, post.LocationLongitude)
             : null,
         post.IsNSFW,
-        post.Comments.Count,
+        commentsCount,
         post.Version,
         post.Profile?.Username,
         post.Profile?.DisplayName,

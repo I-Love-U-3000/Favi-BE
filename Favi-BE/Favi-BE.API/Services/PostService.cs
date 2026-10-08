@@ -838,7 +838,7 @@ namespace Favi_BE.Services
                 Medias: medias,
                 Tags: tags,
                 Reactions: summary,
-                CommentsCount: post.Comments?.Count ?? 0,
+                CommentsCount: post.Comments != null && post.Comments.Count > 0 ? post.Comments.Count : await _uow.Comments.CountAsync(c => c.PostId == post.Id),
                 Location: location,
                 IsNSFW: post.IsNSFW
             );

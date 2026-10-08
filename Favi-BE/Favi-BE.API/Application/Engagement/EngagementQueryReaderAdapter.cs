@@ -26,17 +26,38 @@ internal sealed class EngagementQueryReaderAdapter : IEngagementQueryReader
 
         var total = await _db.Comments
             .AsNoTracking()
-            .CountAsync(c => c.PostId == postId, ct);
+            .CountAsync(c => c.PostId == postId && c.ParentCommentId == null, ct);
 
-        var comments = await _db.Comments
+        var rootComments = await _db.Comments
             .AsNoTracking()
-            .Where(c => c.PostId == postId)
+            .Where(c => c.PostId == postId && c.ParentCommentId == null)
             .OrderByDescending(c => c.CreatedAt)
             .Skip(skip)
             .Take(pageSize)
-            .Select(c => new { c.Id, c.PostId, c.RepostId, c.ProfileId, c.Content, c.MediaUrl, c.ParentCommentId, c.CreatedAt, c.UpdatedAt })
+            .Select(c => new CommentRowDto(c.Id, c.PostId, c.RepostId, c.ProfileId, c.Content, c.MediaUrl, c.ParentCommentId, c.CreatedAt, c.UpdatedAt))
             .ToListAsync(ct);
 
+        var rootIds = rootComments.Select(c => c.Id).ToList();
+
+        var allChildComments = new List<CommentRowDto>();
+        var currentParentIds = rootIds;
+        var visitedIds = new HashSet<Guid>(rootIds);
+
+        while (currentParentIds.Count > 0)
+        {
+            var nextLevel = await _db.Comments
+                .AsNoTracking()
+                .Where(c => c.PostId == postId && c.ParentCommentId.HasValue && currentParentIds.Contains(c.ParentCommentId.Value))
+                .OrderBy(c => c.CreatedAt)
+                .Select(c => new CommentRowDto(c.Id, c.PostId, c.RepostId, c.ProfileId, c.Content, c.MediaUrl, c.ParentCommentId, c.CreatedAt, c.UpdatedAt))
+                .ToListAsync(ct);
+
+            if (nextLevel.Count == 0) break;
+            allChildComments.AddRange(nextLevel);
+            currentParentIds = nextLevel.Select(x => x.Id).Where(id => visitedIds.Add(id)).ToList();
+        }
+
+        var comments = rootComments.Concat(allChildComments).ToList();
         var commentIds = comments.Select(c => c.Id).ToList();
 
         var reactions = await _db.Reactions
@@ -230,4 +251,15 @@ internal sealed class EngagementQueryReaderAdapter : IEngagementQueryReader
 
         return new ReactionSummaryQueryDto(byType.Values.Sum(), byType, mine);
     }
+
+    private sealed record CommentRowDto(
+        Guid Id,
+        Guid PostId,
+        Guid? RepostId,
+        Guid ProfileId,
+        string Content,
+        string? MediaUrl,
+        Guid? ParentCommentId,
+        DateTime CreatedAt,
+        DateTime? UpdatedAt);
 }
