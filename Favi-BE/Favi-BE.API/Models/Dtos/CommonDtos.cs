@@ -5,14 +5,15 @@ namespace Favi_BE.Models.Dtos
         int Page,
         int Size,
         bool HasPrevious,
-        bool HasNext
+        bool HasNext,
+        int TotalCount = 0
     )
     {
         public static PaginationResult<T> Create(IReadOnlyList<T> data, int page, int size, int totalCount)
         {
             var hasPrevious = page > 1;
             var hasNext = data.Count > 0 && (long)page * size < totalCount;
-            return new PaginationResult<T>(data, page, size, hasPrevious, hasNext);
+            return new PaginationResult<T>(data, page, size, hasPrevious, hasNext, totalCount);
         }
     }
 
