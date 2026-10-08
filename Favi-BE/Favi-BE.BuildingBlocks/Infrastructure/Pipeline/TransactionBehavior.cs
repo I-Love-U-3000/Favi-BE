@@ -46,6 +46,8 @@ public sealed class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior
                 // Dispatch domain events (Phase A + Phase B) before committing
                 await _domainEventsDispatcher.DispatchEventsAsync(_executionContextAccessor.CorrelationId, null, ct);
 
+                await _dbContext.SaveChangesAsync(ct);
+
                 await transaction.CommitAsync(ct);
                 return response;
             }

@@ -36,9 +36,8 @@ internal sealed class FollowUserCommandHandler : IRequestHandler<FollowUserComma
             new FollowWriteData(relationship.FollowerId, relationship.FolloweeId, relationship.CreatedAt),
             cancellationToken);
 
-        await _repo.SaveAsync(cancellationToken);
-
         _domainEvents.Raise(new UserFollowedDomainEvent(request.FollowerId, request.FolloweeId, DateTime.UtcNow));
+        await _repo.SaveAsync(cancellationToken);
 
         return FollowCommandResult.Success();
     }

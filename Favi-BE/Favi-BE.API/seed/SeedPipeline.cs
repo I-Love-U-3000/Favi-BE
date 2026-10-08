@@ -65,9 +65,11 @@ public static class SeedPipeline
 
         Log("[SeedPipeline] Running Step 3 - Seed Posts + Media...");
 
+        var seedPostsExecuted = false;
         if (!await db.Posts.AnyAsync(cancellationToken) && !await db.PostMedias.AnyAsync(cancellationToken))
         {
             anyStepExecuted = true;
+            seedPostsExecuted = true;
             var step3 = new SeedPostsStep();
             var step3Result = await step3.ExecuteAsync(db, profiles, seedContext, cancellationToken);
             Log($"[SeedPipeline] Step 3 done. Posts: {step3Result.CreatedPosts}, PostMedias: {step3Result.CreatedPostMedias}");
@@ -204,9 +206,9 @@ public static class SeedPipeline
             Log("[SeedPipeline] Step 7b skipped: collections already exist.");
         }
 
-        if (!anyStepExecuted)
+        if (!anyStepExecuted || !seedPostsExecuted)
         {
-            Log("[SeedPipeline] All seed steps skipped: database is already populated.");
+            Log("[SeedPipeline] All core seed steps completed or skipped: database is already populated.");
             Log("[SeedPipeline] Skipping Step 9 (Global Validation Gate) and Step 10 (Export Dataset) on already-seeded database.");
             TriggerBackgroundVectorIndex(serviceProvider);
             return;

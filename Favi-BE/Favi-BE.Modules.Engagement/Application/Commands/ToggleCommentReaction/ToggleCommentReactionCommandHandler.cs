@@ -40,9 +40,8 @@ internal sealed class ToggleCommentReactionCommandHandler : IRequestHandler<Togg
                 Type: request.Type,
                 CreatedAt: DateTime.UtcNow), cancellationToken);
 
-            await _repo.SaveAsync(cancellationToken);
-
             _domainEvents.Raise(new CommentReactionAddedDomainEvent(request.ActorId, request.CommentId, DateTime.UtcNow));
+            await _repo.SaveAsync(cancellationToken);
 
             return ReactionCommandResult.Added(request.Type);
         }

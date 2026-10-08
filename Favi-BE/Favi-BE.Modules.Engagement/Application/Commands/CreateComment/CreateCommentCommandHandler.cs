@@ -41,9 +41,8 @@ internal sealed class CreateCommentCommandHandler : IRequestHandler<CreateCommen
             UpdatedAt: now);
 
         await _repo.AddCommentAsync(commentData, cancellationToken);
-        await _repo.SaveAsync(cancellationToken);
-
         _domainEvents.Raise(new CommentCreatedDomainEvent(request.AuthorId, request.PostId, commentId, now));
+        await _repo.SaveAsync(cancellationToken);
 
         var emptyReactions = new ReactionSummaryQueryDto(0, new Dictionary<Domain.ReactionType, int>(), null);
         var dto = new CommentQueryDto(
