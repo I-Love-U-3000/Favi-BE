@@ -1,4 +1,4 @@
-﻿using Favi_BE.Interfaces;
+using Favi_BE.Interfaces;
 using Favi_BE.Interfaces.Services;
 using Favi_BE.Models.Dtos;
 using Favi_BE.Models.Entities;
@@ -188,8 +188,8 @@ namespace Favi_BE.Services
                 );
             }
 
-            // Fetch posts from database
-            var posts = await _uow.Posts.GetAllAsync();
+            // Fetch only matched posts from database
+            var posts = await _uow.Posts.GetPostsByIdsAsync(postIds);
             var matchedPosts = new List<SearchPostDto>();
 
             // Create score lookup for ordering (handle duplicates by taking highest score)

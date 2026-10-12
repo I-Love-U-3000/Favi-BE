@@ -28,6 +28,10 @@ namespace Favi_BE.Models.Dtos
         int? Version = null
     );
 
+    public record BatchPostsRequest(
+        List<Guid> Ids
+    );
+
     public record FeedCandidateDto(
         Guid Id,
         Guid ProfileId,

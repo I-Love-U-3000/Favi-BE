@@ -6,6 +6,7 @@ public interface IContentDiscoveryQueryReader
 {
     // Post
     Task<PostReadModel?> GetPostByIdAsync(Guid postId, Guid? viewerId, CancellationToken ct = default);
+    Task<IReadOnlyList<PostReadModel>> GetPostsByIdsAsync(IEnumerable<Guid> postIds, Guid? viewerId, CancellationToken ct = default);
     Task<bool> ProfileExistsAsync(Guid profileId, CancellationToken ct = default);
     Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetProfilePostsAsync(Guid profileId, Guid? viewerId, int page, int pageSize, CancellationToken ct = default);
     Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetNewsFeedAsync(Guid userId, int page, int pageSize, CancellationToken ct = default);

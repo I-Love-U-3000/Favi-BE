@@ -33,6 +33,25 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
         return MapPostWithCount(post, commentsCount);
     }
 
+    public async Task<IReadOnlyList<PostReadModel>> GetPostsByIdsAsync(
+        IEnumerable<Guid> postIds, Guid? viewerId, CancellationToken ct = default)
+    {
+        var idList = postIds.Distinct().ToList();
+        if (idList.Count == 0) return [];
+
+        var posts = await _uow.Posts.GetPostsByIdsAsync(idList, ct);
+        var result = new List<PostReadModel>();
+        foreach (var p in posts)
+        {
+            if (p.DeletedDayExpiredAt is not null) continue;
+            if (await _privacy.CanViewPostAsync(p, viewerId))
+            {
+                result.Add(MapPost(p));
+            }
+        }
+        return result;
+    }
+
     public async Task<bool> ProfileExistsAsync(Guid profileId, CancellationToken ct = default)
         => await _uow.Profiles.GetByIdAsync(profileId) is not null;
 

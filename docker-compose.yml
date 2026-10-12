@@ -1,12 +1,32 @@
 services:
-  # ===== Favi Backend (.NET) =====
-  favi-api:
+  # ===== API Gateway & Load Balancer (NGINX L7) =====
+  gateway:
+    image: nginx:alpine
+    container_name: favi-gateway
+    restart: unless-stopped
+    ports:
+      - "5000:80" # http://localhost:5000 (Preserves frontend & Postman compatibility)
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./gateway/conf.d:/etc/nginx/conf.d:ro
+      - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/var/www/seed-assets:ro
+    depends_on:
+      - favi-api-1
+      - favi-api-2
+      - vector-index-api
+    networks:
+      - favi-network
+
+  # ===== Favi Backend Replica 1 (.NET) =====
+  favi-api-1:
     build:
       context: ./Favi-BE
       dockerfile: ./FaviBE.Dockerfile
+    container_name: favi-api-1
+    restart: unless-stopped
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: "Host=favi-postgres;Port=5432;Database=favi;Username=favi;Password=favi;Include Error Detail=true"
+      ConnectionStrings__Default: "Host=favi-postgres;Port=5432;Database=favi;Username=favi;Password=favi;Include Error Detail=true;Maximum Pool Size=100;"
       # JWT (khớp appsettings: Jwt:Key/Issuer/Audience)
       Jwt__Key: uqw9n0eu129nucouno132n21nu39c012uci2903u129ncu293ue32oru32nu3294u290c4u3294cnu39rcuwsidcbjewoibruewiu2398rnuewcnyewiugfnyw8rny398rcu39tu349ony3o8tfyaewo8wayorway8ocrawycruwayruiawbyowuybcraeworcbyawurbhyawuifywao8ryworhyaewuorawurwy8
       Jwt__Issuer: favi.local
@@ -14,19 +34,17 @@ services:
       Jwt_AccessMinutes: 60
       Jwt_RefreshDays: 7
 
-      # Supabase (để HttpClient hoạt động)
+      # Supabase
       Supabase__Url: https://jgounylmgjcmlwyzzzhv.supabase.co
       Supabase__ApiKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnb3VueWxtZ2pjbWx3eXp6emh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzQ2NjAsImV4cCI6MjA3Mzc1MDY2MH0.5cjyGppqNqndilyIjEVnnlhpVPZLQ089Ens0Rur-G_w
-
-      # Nếu vẫn muốn fallback theo code trên:
       SupabaseSecret: VhFfo0qXjH4NmPgASomHxX2RWN+7zUFCV0vgUOi9dXqJ0ETm6Tlh5uu1n9o2gqEH3+yvi1xMdaE0FRX+4b8HvA==
 
-      # Cloudinary (đúng section trong appsettings)
+      # Cloudinary
       CloudinarySettings__CloudName: dumyugxhm
       CloudinarySettings__ApiKey: 751624888575967
       CloudinarySettings__ApiSecret: cMkSP_iSpIxqXhWCKhVhWhsoLq8
 
-      #Vector Index Api
+      # Vector Index Api
       VectorIndex__BaseUrl: http://vector-index-api:8080
       VectorIndex__Enabled: "true"
 
@@ -44,12 +62,67 @@ services:
         condition: service_started
     volumes:
       - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
-    ports:
-      - "5000:8080" # http://localhost:5000
+    networks:
+      - favi-network
+
+  # ===== Favi Backend Replica 2 (.NET) =====
+  favi-api-2:
+    build:
+      context: ./Favi-BE
+      dockerfile: ./FaviBE.Dockerfile
+    container_name: favi-api-2
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: "Host=favi-postgres;Port=5432;Database=favi;Username=favi;Password=favi;Include Error Detail=true;Maximum Pool Size=100;"
+      # JWT (khớp appsettings: Jwt:Key/Issuer/Audience)
+      Jwt__Key: uqw9n0eu129nucouno132n21nu39c012uci2903u129ncu293ue32oru32nu3294u290c4u3294cnu39rcuwsidcbjewoibruewiu2398rnuewcnyewiugfnyw8rny398rcu39tu349ony3o8tfyaewo8wayorway8ocrawycruwayruiawbyowuybcraeworcbyawurbhyawuifywao8ryworhyaewuorawurwy8
+      Jwt__Issuer: favi.local
+      Jwt__Audience: favi.web
+      Jwt_AccessMinutes: 60
+      Jwt_RefreshDays: 7
+
+      # Supabase
+      Supabase__Url: https://jgounylmgjcmlwyzzzhv.supabase.co
+      Supabase__ApiKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnb3VueWxtZ2pjbWx3eXp6emh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgxNzQ2NjAsImV4cCI6MjA3Mzc1MDY2MH0.5cjyGppqNqndilyIjEVnnlhpVPZLQ089Ens0Rur-G_w
+      SupabaseSecret: VhFfo0qXjH4NmPgASomHxX2RWN+7zUFCV0vgUOi9dXqJ0ETm6Tlh5uu1n9o2gqEH3+yvi1xMdaE0FRX+4b8HvA==
+
+      # Cloudinary
+      CloudinarySettings__CloudName: dumyugxhm
+      CloudinarySettings__ApiKey: 751624888575967
+      CloudinarySettings__ApiSecret: cMkSP_iSpIxqXhWCKhVhWhsoLq8
+
+      # Vector Index Api
+      VectorIndex__BaseUrl: http://vector-index-api:8080
+      VectorIndex__Enabled: "true"
+
+      # NSFW Detection
+      NSFW__BaseUrl: http://vector-index-api:8080
+      NSFW__Enabled: "true"
+      NSFW__TimeoutSeconds: "30"
+      NSFW__Threshold: "0.7"
+    depends_on:
+      favi-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      vector-index-api:
+        condition: service_started
+    volumes:
+      - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
+    networks:
+      - favi-network
 
   # ===== Postgres cho Favi =====
   favi-postgres:
     image: postgres:15
+    container_name: favi-postgres
+    command: >
+      postgres
+      -c max_connections=250
+      -c shared_buffers=512MB
+      -c work_mem=16MB
+      -c maintenance_work_mem=64MB
     environment:
       POSTGRES_DB: favi
       POSTGRES_USER: favi
@@ -63,16 +136,19 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    networks:
+      - favi-network
 
   # ===== Vector Index Monolith (FastAPI + OpenCLIP) =====
   vector-index-api:
     build:
       context: ./Vector-index-api
-      dockerfile: ./VectorIndexApi.Dockerfile # <— dùng đúng file bạn nêu
+      dockerfile: ./VectorIndexApi.Dockerfile
+    container_name: favi-vector-api
     environment:
       QDRANT_URL: http://qdrant:6333
-      FRIENDS_URL: http://favi-api:8080 # <— gọi trực tiếp Favi để lấy friends
-      REDIS_URL: redis://redis:6379/0 # nếu bạn đã thêm Redis RL
+      FRIENDS_URL: http://gateway:80
+      REDIS_URL: redis://redis:6379/0
       COLLECTION_NAME: posts_demo
       MODEL_NAME: ViT-B-32
       PRETRAINED: openai
@@ -86,25 +162,79 @@ services:
     volumes:
       - ./Favi-BE/Favi-BE.API/wwwroot/seed-assets:/app/wwwroot/seed-assets:ro
     ports:
-      - "18080:8080" # http://localhost:18080 (dev)
+      - "18080:8080"
+    networks:
+      - favi-network
 
-  # ===== Qdrant + Redis (cho vector) =====
+  # ===== Qdrant + Redis (Vector & Cache) =====
   qdrant:
     image: qdrant/qdrant:latest
+    container_name: favi-qdrant
     ports:
       - "6333:6333"
     volumes:
       - qdrant_storage:/qdrant/storage
+    networks:
+      - favi-network
 
   redis:
     image: redis:7-alpine
+    container_name: favi-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - favi-network
+
+  # ===== Monitoring: NGINX Prometheus Exporter =====
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.1.0
+    container_name: favi-nginx-exporter
+    restart: unless-stopped
+    command:
+      - -nginx.scrape-uri=http://gateway:80/nginx_status
+    depends_on:
+      - gateway
+    networks:
+      - favi-network
+
+  # ===== Monitoring: Prometheus =====
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: favi-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - favi-network
+
+  # ===== Monitoring: Grafana =====
+  grafana:
+    image: grafana/grafana:10.4.1
+    container_name: favi-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3050:3000" # http://localhost:3050 (Frees 3000 and 3001 for frontend Next.js)
+    depends_on:
+      - prometheus
+    networks:
+      - favi-network
 
 volumes:
   favi_pgdata:
   qdrant_storage:
   redis_data:
+  grafana_data:
 
+networks:
+  favi-network:
+    driver: bridge

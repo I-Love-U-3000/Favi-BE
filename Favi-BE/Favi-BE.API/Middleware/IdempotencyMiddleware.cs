@@ -24,7 +24,9 @@ public class IdempotencyMiddleware
         "/api/auth/refresh-token",
         "/api/auth/forgot-password",
         "/api/auth/reset-password",
-        "/api/seed"
+        "/api/seed",
+        "/api/search",
+        "/api/posts/batch"
     };
 
     public IdempotencyMiddleware(
@@ -62,6 +64,13 @@ public class IdempotencyMiddleware
                 await _next(context);
                 return;
             }
+        }
+
+        // We do not apply idempotency policy for files upload
+        if (context.Request.HasFormContentType)
+        {
+            await _next(context);
+            return;
         }
 
         if (!context.Request.Headers.TryGetValue("Idempotency-Key", out var headerVal) || string.IsNullOrWhiteSpace(headerVal))

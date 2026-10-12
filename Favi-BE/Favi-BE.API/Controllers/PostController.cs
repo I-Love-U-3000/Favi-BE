@@ -10,6 +10,7 @@ using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetGuestFeed;
 using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetLatestFeed;
 using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetNewsFeed;
 using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetPostById;
+using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetPostsBatch;
 using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetProfilePosts;
 using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetRecycleBin;
 using Favi_BE.Modules.ContentDiscovery.Application.Queries.GetRepostById;
@@ -78,6 +79,33 @@ namespace Favi_BE.Controllers
 
             var reactions = await _mediator.Send(new GetPostReactionsQuery(id, viewerId));
             return Ok(MapToPostResponse(post, reactions));
+        }
+
+        // ======================
+        // POST: Batch lấy danh sách posts theo IDs
+        // ======================
+        [HttpPost("batch")]
+        public async Task<ActionResult<List<PostResponse>>> GetBatch([FromBody] BatchPostsRequest request)
+        {
+            if (request?.Ids == null || request.Ids.Count == 0)
+                return Ok(new List<PostResponse>());
+
+            if (request.Ids.Count > 100)
+                return BadRequest(new { code = "BATCH_LIMIT_EXCEEDED", message = "Tối đa 100 bài viết mỗi lượt yêu cầu." });
+
+            var viewerId = TryGetUserId();
+            var posts = await _mediator.Send(new GetPostsBatchQuery(request.Ids, viewerId));
+            var postMap = posts.ToDictionary(p => p.Id);
+
+            var validIds = request.Ids.Where(id => postMap.ContainsKey(id)).Distinct().ToList();
+            var reactionsMap = await _mediator.Send(new GetBatchPostReactionsQuery(validIds, viewerId));
+
+            var responses = request.Ids
+                .Where(id => postMap.ContainsKey(id))
+                .Select(id => MapToPostResponse(postMap[id], reactionsMap.GetValueOrDefault(id, EmptyReactions)))
+                .ToList();
+
+            return Ok(responses);
         }
 
         // ======================
@@ -248,9 +276,9 @@ namespace Favi_BE.Controllers
             // Strategy 1: Candidate posts with shared tags
             if (sourceTagIds.Count > 0)
             {
-                foreach (var tagId in sourceTagIds)
+                foreach (var tagId in sourceTagIds.Take(3))
                 {
-                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, userId, 1, actualSize * 2);
+                    var tagPosts = await _tags.GetPostsByTagAsync(tagId, userId, 1, actualSize);
                     foreach (var p in tagPosts.Items.Where(p => p.Id != id))
                     {
                         var candidateTagIds = p.Tags.Select(t => t.Id).ToHashSet();
@@ -263,28 +291,37 @@ namespace Favi_BE.Controllers
                             candidateMap[p.Id] = (p, jaccard * 10.0);
                         }
                     }
+
+                    if (candidateMap.Count >= actualSize * 2) break;
                 }
             }
 
-            // Strategy 2: Semantic search to supplement candidates
-            if (candidateMap.Count < actualSize * 2 && !string.IsNullOrEmpty(post.Caption))
+            // Strategy 2: Semantic search only if insufficient candidates from tags
+            if (candidateMap.Count < actualSize && !string.IsNullOrEmpty(post.Caption))
             {
-                var semanticResult = await _search.SemanticSearchAsync(
-                    new SemanticSearchRequest(post.Caption, 1, actualSize * 2, 50),
-                    userId ?? Guid.Empty);
-
-                foreach (var searchPost in semanticResult.Posts.Where(p => p.Id != id))
+                try
                 {
-                    if (!candidateMap.ContainsKey(searchPost.Id))
+                    var semanticResult = await _search.SemanticSearchAsync(
+                        new SemanticSearchRequest(post.Caption, 1, actualSize - candidateMap.Count, 20),
+                        userId ?? Guid.Empty);
+
+                    foreach (var searchPost in semanticResult.Posts.Where(p => p.Id != id))
                     {
-                        var relatedPost = await _mediator.Send(new GetPostByIdQuery(searchPost.Id, userId));
-                        if (relatedPost is not null)
+                        if (!candidateMap.ContainsKey(searchPost.Id))
                         {
-                            var reactions = await _mediator.Send(new GetPostReactionsQuery(searchPost.Id, userId));
-                            var mapped = MapToPostResponse(relatedPost, reactions);
-                            candidateMap[searchPost.Id] = (mapped, 1.0);
+                            var relatedPost = await _mediator.Send(new GetPostByIdQuery(searchPost.Id, userId));
+                            if (relatedPost is not null)
+                            {
+                                var mapped = MapToPostResponse(relatedPost, EmptyReactions);
+                                candidateMap[searchPost.Id] = (mapped, 1.0);
+                                if (candidateMap.Count >= actualSize) break;
+                            }
                         }
                     }
+                }
+                catch
+                {
+                    // Fallback gracefully on semantic search timeout/error
                 }
             }
 

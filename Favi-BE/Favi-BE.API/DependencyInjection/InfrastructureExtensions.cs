@@ -48,6 +48,15 @@ public static class InfrastructureExtensions
                         "http://localhost:5000",
                         "http://127.0.0.1:5000"
                     )
+                    .SetIsOriginAllowed(origin =>
+                    {
+                        if (string.IsNullOrWhiteSpace(origin)) return false;
+                        if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                        {
+                            return uri.Host is "localhost" or "127.0.0.1";
+                        }
+                        return false;
+                    })
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
@@ -80,7 +89,7 @@ public static class InfrastructureExtensions
             .AddCheck<RedisHealthCheck>(
                 "redis",
                 failureStatus: HealthStatus.Degraded,
-                tags: ["external", "cache"]);
+                tags: ["external", "cache", "ready"]);
 
         services.AddHostedService<PostCleanupService>();
         services.AddHostedService<StoryExpirationService>();

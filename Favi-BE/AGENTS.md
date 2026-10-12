@@ -1,7 +1,7 @@
 # Copilot Instructions
 You have to work as excellent with pure exact because I will use GPT Codex to review your works. 
 
-## Project Guidelines
+## Project Guidelines`
 - User prefers analytical, system-level answers and explicitly does not want file creation or code modifications unless requested.
 - User prefers not to run builds for changes that only modify Markdown/planning documents and do not affect code.
 - When updating planning documents, avoid partial additions that create numbering duplication; document the full end-to-end process consistently across all steps.
