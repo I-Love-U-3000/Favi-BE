@@ -18,26 +18,16 @@ export const options = {
 };
 
 const testUsers = [
-    { email: 'alex_photo@example.com' },
-    { email: 'sarah_art@example.com' },
-    { email: 'mike_travel@example.com' },
-    { email: 'emma_food@example.com' },
-    { email: 'david_tech@example.com' },
-    { email: 'lisa_fitness@example.com' },
-    { email: 'john_music@example.com' },
-    { email: 'anna_style@example.com' },
-    { email: 'chris_gaming@example.com' },
-    { email: 'nina_books@example.com' },
-    { email: 'tom_films@example.com' },
-    { email: 'kate_science@example.com' },
-    { email: 'steve_cars@example.com' },
-    { email: 'amy_design@example.com' },
-    { email: 'pete_sports@example.com' },
-    { email: 'julia_coffee@example.com' },
-    { email: 'mark_pizza@example.com' },
-    { email: 'rachel_comedy@example.com' },
-    { email: 'dan_history@example.com' },
-    { email: 'zoe_nature@example.com' }
+    { email: 'user_00001@seed.local', password: '123456' },
+    { email: 'user_00002@seed.local', password: '123456' },
+    { email: 'user_00003@seed.local', password: '123456' },
+    { email: 'user_00004@seed.local', password: '123456' },
+    { email: 'user_00005@seed.local', password: '123456' },
+    { email: 'user_00006@seed.local', password: '123456' },
+    { email: 'user_00007@seed.local', password: '123456' },
+    { email: 'user_00008@seed.local', password: '123456' },
+    { email: 'user_00009@seed.local', password: '123456' },
+    { email: 'user_00010@seed.local', password: '123456' },
 ];
 
 export default function () {
@@ -52,7 +42,7 @@ export default function () {
     // record LoginDto(string EmailOrUsername, string Password);
     const payload = JSON.stringify({
         EmailOrUsername: randomUser.email,
-        Password: 'Password123!' // Mật khẩu chung đã ghi ở cuối file accounts.txt
+        Password: randomUser.password
     });
 
     const params = {

@@ -48,6 +48,14 @@ dotnet ef database update --project Favi-BE.API --startup-project Favi-BE.API
 dotnet ef migrations script --idempotent --output migration.sql --project Favi-BE.API
 ```
 
+### 2.3 Cơ Chế Khóa Phân Tán Khi Khởi Động Đa Bản Sao (Cluster Startup Advisory Lock)
+Trong môi trường Docker Compose gồm nhiều bản sao API (`favi-api-1`, `favi-api-2`), khi thực hiện cold-start hoặc xóa volume (`docker-compose down -v` rồi `up -d`), cả 2 container sẽ đồng thời gọi `ApplyDatabaseMigrationsAndSeedAsync()`.
+
+Để triệt tiêu hoàn toàn race condition và lỗi xung đột khóa ngoại/trùng lặp bản ghi:
+- Hệ thống áp dụng **PostgreSQL Session-Level Advisory Lock** (`SELECT pg_advisory_lock(742189);`) tại [`StartupTasksExtensions.cs`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.API/DependencyInjection/StartupTasksExtensions.cs).
+- Container nào kết nối trước sẽ nắm giữ khóa độc quyền, thực thi toàn bộ chuỗi migration (bao gồm [`20260423000000_AddUpdatedAtAndVersionToProfile`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.API/Migrations/20260423000000_AddUpdatedAtAndVersionToProfile.cs) bổ sung `UpdatedAt` và `Version` cho bảng `Profiles`) và chạy toàn bộ Seed Pipeline.
+- Container thứ hai bị chặn an toàn tại lệnh khóa; khi được giải phóng (`SELECT pg_advisory_unlock(742189);`), nó kiểm tra thấy schema đã mới nhất và seed data đã hiện diện (`hasExistingProfiles == true`), tự động bỏ qua seed và bắt đầu nhận tải.
+
 ---
 
 ## 3. Kiến Trúc Seed Pipeline & Dữ Liệu Kiểm Thử

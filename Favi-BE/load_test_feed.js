@@ -17,11 +17,11 @@ export const options = {
 // Dưới đây là cách mô phỏng gọi API Login ĐỂ LẤY TOKEN trước khi test feed
 
 const testUsers = [
-    { email: 'alex_photo@example.com' },
-    { email: 'sarah_art@example.com' },
-    { email: 'mike_travel@example.com' },
-    { email: 'emma_food@example.com' },
-    { email: 'david_tech@example.com' }
+    { email: 'user_00001@seed.local', password: '123456' },
+    { email: 'user_00002@seed.local', password: '123456' },
+    { email: 'user_00003@seed.local', password: '123456' },
+    { email: 'user_00004@seed.local', password: '123456' },
+    { email: 'user_00005@seed.local', password: '123456' }
 ];
 
 export default function () {
@@ -33,7 +33,7 @@ export default function () {
     
     const loginPayload = JSON.stringify({
         EmailOrUsername: randomUser.email,
-        Password: 'Password123!'
+        Password: randomUser.password
     });
 
     const loginRes = http.post(loginUrl, loginPayload, {

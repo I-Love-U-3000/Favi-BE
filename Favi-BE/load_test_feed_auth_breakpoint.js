@@ -19,16 +19,16 @@ export const options = {
 };
 
 const testUsers = [
-    { email: 'alex_photo@example.com' },
-    { email: 'sarah_art@example.com' },
-    { email: 'mike_travel@example.com' },
-    { email: 'emma_food@example.com' },
-    { email: 'david_tech@example.com' },
-    { email: 'lisa_fitness@example.com' },
-    { email: 'john_music@example.com' },
-    { email: 'anna_style@example.com' },
-    { email: 'chris_gaming@example.com' },
-    { email: 'nina_books@example.com' },
+    { email: 'user_00001@seed.local', password: '123456' },
+    { email: 'user_00002@seed.local', password: '123456' },
+    { email: 'user_00003@seed.local', password: '123456' },
+    { email: 'user_00004@seed.local', password: '123456' },
+    { email: 'user_00005@seed.local', password: '123456' },
+    { email: 'user_00006@seed.local', password: '123456' },
+    { email: 'user_00007@seed.local', password: '123456' },
+    { email: 'user_00008@seed.local', password: '123456' },
+    { email: 'user_00009@seed.local', password: '123456' },
+    { email: 'user_00010@seed.local', password: '123456' },
 ];
 
 // Setup chạy 1 lần duy nhất trước khi bắt đầu VUs
@@ -40,7 +40,7 @@ export function setup() {
     for (const user of testUsers) {
         const loginPayload = JSON.stringify({
             EmailOrUsername: user.email,
-            Password: 'Password123!'
+            Password: user.password
         });
 
         const loginRes = http.post(`${baseUrl}/auth/login`, loginPayload, {
