@@ -58,7 +58,63 @@ Trong môi trường Docker Compose gồm nhiều bản sao API (`favi-api-1`, `
 
 ---
 
-## 3. Kiến Trúc Seed Pipeline & Dữ Liệu Kiểm Thử
+## 3. Cơ Chế Khóa Lạc Quan & Kiểm Soát Phiên Bản Bản Ghi (Optimistic Concurrency Control)
+
+Để ngăn chặn hiện tượng mất dữ liệu do ghi đè đồng thời (**Lost Update Problem**) khi nhiều người dùng hoặc tiến trình cùng chỉnh sửa một tài nguyên (ví dụ: cập nhật thông tin cá nhân, chỉnh sửa bài viết, sửa thông tin bộ sưu tập):
+
+### 3.1 Quy Chuẩn Cột Phiên Bản Trên Database
+Các bảng thực thể có khả năng bị sửa đổi đồng thời (`Profiles`, `Posts`, `Collections`, `Comments`, `Stories`, `Messages`, `Conversations`, `Reposts`) được chuẩn hóa với 2 trường kỹ thuật:
+- **`Version` (`integer NOT NULL DEFAULT 1`)**: Lưu số hiệu phiên bản hiện tại của bản ghi.
+- **`UpdatedAt` (`timestamp with time zone NOT NULL DEFAULT NOW()`)**: Lưu mốc thời gian bản ghi được sửa đổi lần cuối.
+
+### 3.2 Luồng Kiểm Soát Phiên Bản Ở Tầng Ứng Dụng (Application Layer)
+Trong kiến trúc CQRS của Favi-BE, cơ chế kiểm soát phiên bản hoạt động khép kín theo luồng:
+
+```
+[ Client ]                           [ Command Handler ]                   [ Database ]
+    │                                         │                                  │
+    │── 1. Query Data (kèm Version = N) ─────▶│                                  │
+    │◀─ Trả về Dto (Version = N) ─────────────│                                  │
+    │                                         │                                  │
+    │── 2. Gửi UpdateCommand(Version = N) ───▶│                                  │
+    │                                         │── 3. FindByIdAsync() ───────────▶│
+    │                                         │◀─ Entity(Version = M) ───────────│
+    │                                         │                                  │
+    │                                         ├── M != N? ──▶ Trả 409 Conflict   │
+    │                                         │               (CONCURRENCY_      │
+    │                                         │                CONFLICT)         │
+    │                                         │                                  │
+    │                                         └── M == N? ──▶ Tăng Version = N+1 │
+    │                                                         UpdatedAt = Now()  │
+    │                                                         Save to DB ───────▶│
+    │◀─ 4. Phản hồi thành công (200 OK) ──────┴──────────────────────────────────┘
+```
+
+1. **Truy vấn**: Client đọc dữ liệu từ các Query Readers, nhận về DTO chứa trường `Version` (ví dụ `Version = 1`).
+2. **Gửi lệnh cập nhật**: Khi gửi Command (ví dụ [`UpdateProfileCommand`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.Modules.Auth/Application/Commands/UpdateProfile/UpdateProfileCommandHandler.cs), `UpdatePostCommand`, `UpdateCollectionCommand`), client bắt buộc phải gửi kèm giá trị `Version` hiện tại mà nó đang giữ.
+3. **Đối soát phiên bản**:
+   ```csharp
+   if (request.Version.HasValue && request.Version.Value != entity.Version)
+   {
+       return CommandResult.Fail("CONCURRENCY_CONFLICT", 
+           "Dữ liệu đã được chỉnh sửa ở phiên làm việc khác. Vui lòng tải lại dữ liệu mới nhất.");
+   }
+   ```
+4. **Cập nhật & Tăng phiên bản**: Nếu phiên bản trùng khớp, handler cập nhật dữ liệu nghiệp vụ, đồng thời tự động tăng `Version = Version + 1` và cập nhật `UpdatedAt = DateTime.UtcNow`.
+5. **Mã lỗi phản hồi (HTTP Status)**: Nếu phát hiện xung đột, tầng Controller ánh xạ mã lỗi `CONCURRENCY_CONFLICT` thành **`409 Conflict`**, thông báo cho giao diện người dùng yêu cầu làm mới dữ liệu để tránh ghi đè dữ liệu của người khác.
+
+### 3.3 Lộ Trình Tích Hợp EF Core Concurrency Token (Database-Level)
+Hiện tại hệ thống kiểm tra logic phiên bản ở tầng Application Handler. Khi hoàn thiện các migration mapping sâu vào EF Core DbContext, hệ thống chuẩn hóa thêm cấu hình Concurrency Token ở tầng ORM:
+```csharp
+builder.Entity<Profile>()
+    .Property(p => p.Version)
+    .IsConcurrencyToken();
+```
+Nhờ đó, câu lệnh SQL UPDATE do EF Core phát sinh sẽ chứa điều kiện `WHERE "Id" = @id AND "Version" = @oldVersion`. Nếu bản ghi đã bị sửa đổi ở luồng khác, EF Core sẽ ném ngoại lệ `DbUpdateConcurrencyException`, tăng thêm một lớp bảo vệ toàn vẹn dữ liệu ngay cả khi có truy vấn trực tiếp từ ngoài ứng dụng.
+
+---
+
+## 4. Kiến Trúc Seed Pipeline & Dữ Liệu Kiểm Thử
 
 Để phục vụ kiểm thử tải cao (load testing), đo lường hiệu năng và kiểm thử chức năng giao diện, hệ thống tích hợp sẵn một **Seed Pipeline Tất định (Deterministic Seed Pipeline)**:
 
@@ -90,14 +146,14 @@ Trong môi trường Docker Compose gồm nhiều bản sao API (`favi-api-1`, `
 [ Mandatory Validation Gate ]   ──▶ Kiểm tra tính toàn vẹn, tỷ lệ dữ liệu & Foreign Keys
 ```
 
-### 3.1 Mô Hình Phân Phối Dữ Liệu Thực Tế (90-9-1 Rule & Zipfian Distribution)
+### 4.1 Mô Hình Phân Phối Dữ Liệu Thực Tế (90-9-1 Rule & Zipfian Distribution)
 Không tạo dữ liệu ngẫu nhiên đồng đều (Uniform distribution), vì trong thực tế:
 - 1% người dùng (KOL/Influencer) sở hữu 90% số lượng follower và tương tác.
 - 9% người dùng hoạt động thường xuyên.
 - 90% người dùng chủ yếu là người xem (lurkers).
 Seed pipeline mô phỏng chính xác hiện tượng "Hot User / Hot Post" để kiểm thử hiện tượng tranh chấp khóa (Row Locking) và nghẽn mạng trên database.
 
-### 3.2 Cổng Kiểm Định Bắt Buộc (Mandatory Validation Gate)
+### 4.2 Cổng Kiểm Định Bắt Buộc (Mandatory Validation Gate)
 Trước khi kết thúc quá trình seed dữ liệu, một bộ validator chạy kiểm tra:
 - Không có bất kỳ bản ghi mồ côi (Orphan records) nào bị lỗi Foreign Key.
 - Tất cả bài viết gắn với ít nhất một file media hợp lệ.
