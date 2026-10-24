@@ -1,0 +1,10 @@
+{
+  "1": {
+    "url": "/seed-assets/travel.jpg",
+    "is_nsfw": false
+  },
+  "2": {
+    "url": "/seed-assets/food.jpg",
+    "is_nsfw": false
+  }
+}

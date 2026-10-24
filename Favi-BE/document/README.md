@@ -1,5 +1,7 @@
 # Favi-BE Technical Documentation
 
+- [OASIS snapshot adapter cho nghiên cứu graph](OASIS_ADAPTER.md)
+
 Tài liệu kỹ thuật chính của Favi-BE được lưu trữ tập trung tại thư mục gốc:
 👉 **[../../document/README.md](../../document/README.md)**
 
