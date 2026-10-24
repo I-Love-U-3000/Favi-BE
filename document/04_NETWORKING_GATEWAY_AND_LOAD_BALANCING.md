@@ -1,17 +1,17 @@
-# 04 — NGINX API Gateway, Load Balancing & Mạng Lưới (Favi-BE)
+# 04 — NGINX API Gateway, Load Balancing & Networking (Favi-BE)
 
-## 1. Vai Trò Của NGINX Gateway (L7 Reverse Proxy & Load Balancer)
+## 1. Role of the NGINX Gateway (L7 Reverse Proxy & Load Balancer)
 
-Trong kiến trúc của Favi, NGINX đóng vai trò là **cửa ngõ duy nhất (Single Point of Ingress)** lắng nghe tại cổng `5000` (mapped từ port `80` trong container). 
-Tất cả client từ bên ngoài (Web Next.js, Mobile App, Postman) đều gọi qua Gateway này.
+In the Favi architecture, NGINX acts as the **Single Point of Ingress**, listening on host port `5000` (mapped from container port `80`).
+All external clients (Next.js Web, Mobile Apps, Postman) communicate exclusively through this Gateway.
 
-Cấu hình được chia thành 2 file:
-- `gateway/nginx.conf`: Thiết lập worker, buffer, gzip, các vùng rate limiting zones và connection upgrade cho WebSockets.
-- `gateway/conf.d/gateway.conf`: Định nghĩa các upstream clusters, định tuyến (routing), bảo mật headers, và passive failover.
+The configuration is organized into two files:
+- `gateway/nginx.conf`: Configures workers, buffers, gzip compression, rate-limiting shared memory zones, and WebSocket connection upgrade maps.
+- `gateway/conf.d/gateway.conf`: Defines upstream server clusters, location routing, security headers, and passive failover rules.
 
 ---
 
-## 2. Các Cụm Upstream & Thuật Toán Phân Tải (Load Balancing)
+## 2. Upstream Clusters & Load Balancing Algorithms
 
 ```
                               [ NGINX Gateway ]
@@ -28,53 +28,53 @@ Cấu hình được chia thành 2 file:
 └─────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
 ```
 
-### 2.1 Cụm REST API (`favi_api_cluster`)
-- **Thuật toán**: `least_conn` (ưu tiên chuyển request tới replica có ít active connection nhất).
-- **Thành viên**: `favi-api-1:8080` và `favi-api-2:8080`.
-- **Cơ chế chịu lỗi (Passive Failover)**:
+### 2.1 REST API Cluster (`favi_api_cluster`)
+- **Algorithm**: `least_conn` (routes incoming requests to the replica with the lowest active connection count).
+- **Members**: `favi-api-1:8080` and `favi-api-2:8080`.
+- **Passive Failover Mechanism**:
   ```nginx
   proxy_next_upstream error timeout invalid_header http_502 http_503 http_504;
   proxy_next_upstream_tries 2;
   proxy_next_upstream_timeout 10s;
   ```
-  Nếu một replica bị sập, khởi động lại, hoặc trả về mã lỗi 502/503/504, NGINX sẽ tự động thử lại trên replica còn lại trong vòng 10 giây mà không làm gián đoạn người dùng.
-- **Keepalive connections**: Giữ 64 kết nối mở sẵn để tránh overhead bắt tay TCP liên tục.
+  If a replica crashes, restarts, or returns 502/503/504 errors, NGINX automatically retries on the remaining healthy replica within 10 seconds without failing the user's request.
+- **Keepalive Connections**: Pools 64 idle connections to minimize TCP handshake overhead.
 
-### 2.2 Cụm SignalR Realtime (`favi_signalr_cluster`)
-- **Vấn đề**: Giao thức SignalR thực hiện một bước đàm phán HTTP Negotiate (`/negotiate`) trước khi nâng cấp thành kết nối WebSocket kéo dài. Nếu bước negotiate rơi vào node 1 nhưng WebSocket lại kết nối vào node 2, kết nối sẽ bị từ chối (`404 Connection ID not found`).
-- **Giải pháp**: Sử dụng thuật toán **`ip_hash` (Sticky Sessions)**. Thuật toán này băm địa chỉ IP của Client để đảm bảo mọi request từ cùng một Client luôn đến đúng 1 replica duy nhất.
-- **Cấu hình WebSocket**:
+### 2.2 SignalR Realtime Cluster (`favi_signalr_cluster`)
+- **Challenge**: The SignalR protocol requires an initial HTTP negotiation step (`/negotiate`) prior to upgrading to a persistent WebSocket. If negotiation lands on Node 1 but the subsequent WebSocket upgrade targets Node 2, the connection is rejected (`404 Connection ID not found`).
+- **Solution**: The **`ip_hash` (Sticky Sessions)** algorithm. Hashes the client's IP address to ensure all requests from that client consistently hit the same backend replica.
+- **WebSocket Configuration**:
   - `proxy_http_version 1.1;`
   - `proxy_set_header Upgrade $http_upgrade;`
   - `proxy_set_header Connection $connection_upgrade;`
-  - `proxy_read_timeout 3600s;` (giữ kết nối sống 1 tiếng)
-  - `proxy_buffering off;` (tắt buffer để truyền tải tin nhắn tức thì)
+  - `proxy_read_timeout 3600s;` (keeps long-lived connection active for up to 1 hour)
+  - `proxy_buffering off;` (disables response buffering for zero-latency frame delivery)
 
-### 2.3 Cụm Vector & AI API (`vector_api_cluster`)
-- Chuyển hướng các request tìm kiếm vector và kiểm duyệt nội dung phản cảm:
-  `^/api/v1/(search/vector|nsfw)` sang container FastAPI `vector-index-api:8080`.
+### 2.3 Vector & AI API Cluster (`vector_api_cluster`)
+- Routes AI search and NSFW content moderation requests:
+  `^/api/v1/(search/vector|nsfw)` directly to the FastAPI container `vector-index-api:8080`.
 
 ---
 
-## 3. Hệ Thống Giới Hạn Tần Suất (Rate Limiting Tiers)
+## 3. Rate Limiting Tiers
 
-NGINX sử dụng bộ nhớ dùng chung (10MB cho mỗi zone, lưu trữ được ~160.000 IP riêng biệt) để ngăn chặn tấn công DoS, Brute-force và lạm dụng API:
+NGINX utilizes shared memory zones (10MB per zone, tracking ~160,000 distinct IP addresses) to mitigate DoS, brute-force attacks, and API abuse:
 
-| Zone Name | Rate Cho Phép | Burst (Hàng Đợi) | Endpoints Áp Dụng | Mục Đích |
+| Zone Name | Allowed Rate | Burst Queue | Applicable Endpoints | Target Protection |
 |---|---|---|---|---|
-| `auth_limit` | **10 requests / phút** | `burst=5 nodelay` | `/api/auth/(login\|register\|forgot-password\|reset-password)` | Chống Brute-force mật khẩu & spam tạo tài khoản rác. |
-| `search_limit` | **30 requests / phút** | `burst=10 nodelay` | `/api/v1/(search/vector\|nsfw)` | Bảo vệ tài nguyên tính toán nặng của model AI CLIP/Vector. |
-| `api_limit` | **150 requests / phút** | `burst=30 nodelay` | Toàn bộ các API nghiệp vụ khác (`/api/*`) | Chống cào dữ liệu (scraping) và flooding request. |
+| `auth_limit` | **10 requests / min** | `burst=5 nodelay` | `/api/auth/(login\|register\|forgot-password\|reset-password)` | Prevents credential stuffing & automated spam registration. |
+| `search_limit` | **30 requests / min** | `burst=10 nodelay` | `/api/v1/(search/vector\|nsfw)` | Protects compute-heavy CLIP and vector model resources. |
+| `api_limit` | **150 requests / min** | `burst=30 nodelay` | All standard business APIs (`/api/*`) | Prevents data scraping and API request flooding. |
 
-- Khi vượt quá ngưỡng cho phép, NGINX trả về ngay lập tức HTTP **`429 Too Many Requests`**.
+- When limits are exceeded, NGINX immediately terminates the request with HTTP **`429 Too Many Requests`**.
 
 ---
 
-## 4. Offloading Tài Nguyên Tĩnh & File Uploads
+## 4. Static Asset Offloading & File Upload Limits
 
-### 4.1 Offload Tài Nguyên Tĩnh Hạt Giống (`/seed-assets/`)
-- Thay vì để .NET runtime đọc và stream file ảnh từ ổ cứng làm tốn luồng worker của ASP.NET Core, NGINX đọc trực tiếp từ thư mục mount `/var/www/seed-assets/`.
-- Cấu hình cache trình duyệt vĩnh viễn:
+### 4.1 Static Seed Assets Offload (`/seed-assets/`)
+- Rather than burdening ASP.NET Core worker threads with disk I/O and streaming static seed images, NGINX directly serves them from the mounted volume `/var/www/seed-assets/`.
+- Configured with long-term browser caching:
   ```nginx
   location /seed-assets/ {
       alias /var/www/seed-assets/;
@@ -84,17 +84,17 @@ NGINX sử dụng bộ nhớ dùng chung (10MB cho mỗi zone, lưu trữ đư�
   }
   ```
 
-### 4.2 Tải Lên Đa Phương Tiện (File Upload Limit)
-- Mặc định toàn hệ thống giới hạn body size là `client_max_body_size 2M;`.
-- Riêng các endpoint upload bài viết, avatar, media:
-  `location ~* ^/api/(posts|profile/avatar|media|upload)` được mở rộng lên **`25M`** (`client_max_body_size 25M;`).
+### 4.2 File Upload Limits
+- Global default body size limit is set to `client_max_body_size 2M;`.
+- Post creation, avatar uploads, and media attachments:
+  `location ~* ^/api/(posts|profile/avatar|media|upload)` are granted an extended limit of **`25M`** (`client_max_body_size 25M;`).
 
 ---
 
-## 5. Truy Vết Phân Tán (Distributed Tracing) & Bảo Mật
+## 5. Distributed Tracing & Security Headers
 
-- **Header `X-Request-ID`**: NGINX tự động sinh một mã UUID ngẫu nhiên `$request_id` cho mỗi request (hoặc nhận từ client) và chuyển tiếp tới backend qua header `X-Request-ID`. Backend Serilog log mã này vào mọi trace, và Gateway cũng trả lại header này trong response cho Client. Khi có lỗi, chỉ cần tìm theo Request ID là truy ra toàn bộ log của tất cả các tầng.
-- **Bảo mật Header**:
-  - `X-Content-Type-Options: nosniff` (chống MIME-type sniffing).
-  - `X-Frame-Options: DENY` (chống Clickjacking).
-- **Gzip Compression**: Nén tự động các payload text, JSON, javascript, XML khi dung lượng lớn hơn 1024 bytes (mức nén level 6).
+- **`X-Request-ID` Header**: NGINX generates a unique UUID `$request_id` for each request (or propagates one from the client) and forwards it via `X-Request-ID`. Backend Serilog attaches this ID to all structured logs, and the Gateway echoes it back in client response headers for end-to-end trace correlation.
+- **Security Headers**:
+  - `X-Content-Type-Options: nosniff` (mitigates MIME-type sniffing).
+  - `X-Frame-Options: DENY` (mitigates Clickjacking).
+- **Gzip Compression**: Automatically compresses text, JSON, JavaScript, and XML payloads larger than 1024 bytes (compression level 6).

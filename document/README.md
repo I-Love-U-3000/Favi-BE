@@ -1,26 +1,26 @@
 # Favi-BE Technical Documentation Index
 
-Chào mừng bạn đến với tài liệu kỹ thuật hoàn chỉnh của hệ thống **Favi Backend (Favi-BE)** — nền tảng mạng xã hội chia sẻ hình ảnh hiện đại xây dựng trên kiến trúc **Modular Monolith, DDD, CQRS, Outbox/Inbox và NGINX L7 Gateway**.
+Welcome to the comprehensive technical documentation for the **Favi Backend (Favi-BE)** system — a modern image-sharing social media platform built on a **Modular Monolith, DDD, CQRS, Outbox/Inbox patterns, and NGINX L7 Gateway** architecture.
 
 ---
 
-## Danh mục tài liệu kỹ thuật
+## Technical Documentation Directory
 
-| # | Tài liệu | Mô tả chi tiết |
+| # | Document | Detailed Description |
 |---|---|---|
-| **00** | [00_OVERVIEW_AND_ARCHITECTURE.md](./00_OVERVIEW_AND_ARCHITECTURE.md) | Tổng quan hệ thống, topology Docker, nguyên lý thiết kế, DDD, Modular Monolith & Clean Architecture. |
-| **01** | [01_MODULES_AND_BOUNDED_CONTEXTS.md](./01_MODULES_AND_BOUNDED_CONTEXTS.md) | 9 Bounded Contexts / Modules và BuildingBlocks shared kernel, Aggregate Roots, Event catalog, matrix quan hệ. |
-| **02** | [02_LAYERS_AND_DESIGN_PATTERNS.md](./02_LAYERS_AND_DESIGN_PATTERNS.md) | Cấu trúc phân tầng (Domain - Application - Infrastructure - API Host), MediatR pipeline behaviors, Strangler Fig. |
-| **03** | [03_IDEMPOTENCY_AND_RELIABILITY.md](./03_IDEMPOTENCY_AND_RELIABILITY.md) | Kiến trúc Idempotency 2 lớp: HTTP `Idempotency-Key` qua Redis distributed lock và Async Outbox/Inbox consumer dedup. |
-| **04** | [04_NETWORKING_GATEWAY_AND_LOAD_BALANCING.md](./04_NETWORKING_GATEWAY_AND_LOAD_BALANCING.md) | NGINX API Gateway, Load Balancing (`least_conn`, sticky session `ip_hash` cho SignalR), Rate limiting, Failover. |
-| **05** | [05_SCALING_PERFORMANCE_AND_OBSERVABILITY.md](./05_SCALING_PERFORMANCE_AND_OBSERVABILITY.md) | Chiến lược mở rộng ngang, tối ưu truy vấn PostgreSQL (Indexing, Keyset Pagination, Split Query, Batching, EXPLAIN), Redis caching, Prometheus & Grafana. |
-| **06** | [06_VERSION_CONTROL_AND_DATABASE_MIGRATIONS.md](./06_VERSION_CONTROL_AND_DATABASE_MIGRATIONS.md) | Quy trình Git, EF Core Migrations không downtime, Khóa lạc quan & kiểm soát phiên bản bảng (Optimistic Locking), Seed Pipeline. |
-| **07** | [07_TESTING_AND_BENCHMARKING.md](./07_TESTING_AND_BENCHMARKING.md) | Chiến lược kiểm thử đa tầng: Architecture Tests, Smoke, Functional, k6 Load/Stress/Spike/Soak & đối soát Grafana. |
+| **00** | [00_OVERVIEW_AND_ARCHITECTURE.md](./00_OVERVIEW_AND_ARCHITECTURE.md) | System overview, Docker topology, core architectural principles, DDD, Modular Monolith & Clean Architecture. |
+| **01** | [01_MODULES_AND_BOUNDED_CONTEXTS.md](./01_MODULES_AND_BOUNDED_CONTEXTS.md) | 9 Bounded Contexts / Modules and BuildingBlocks shared kernel, Aggregate Roots, Event catalog, dependency matrix. |
+| **02** | [02_LAYERS_AND_DESIGN_PATTERNS.md](./02_LAYERS_AND_DESIGN_PATTERNS.md) | Layered structure (Domain - Application - Infrastructure - API Host), MediatR pipeline behaviors, Strangler Fig pattern. |
+| **03** | [03_IDEMPOTENCY_AND_RELIABILITY.md](./03_IDEMPOTENCY_AND_RELIABILITY.md) | Two-layer idempotency architecture: HTTP `Idempotency-Key` via Redis distributed lock and Async Outbox/Inbox consumer deduplication. |
+| **04** | [04_NETWORKING_GATEWAY_AND_LOAD_BALANCING.md](./04_NETWORKING_GATEWAY_AND_LOAD_BALANCING.md) | NGINX API Gateway, load balancing (`least_conn`, sticky session `ip_hash` for SignalR), rate limiting, and failover mechanisms. |
+| **05** | [05_SCALING_PERFORMANCE_AND_OBSERVABILITY.md](./05_SCALING_PERFORMANCE_AND_OBSERVABILITY.md) | Horizontal scaling strategies, PostgreSQL query optimization (indexing, keyset pagination, split queries, batching, EXPLAIN), Redis caching, Prometheus & Grafana. |
+| **06** | [06_VERSION_CONTROL_AND_DATABASE_MIGRATIONS.md](./06_VERSION_CONTROL_AND_DATABASE_MIGRATIONS.md) | Git version control workflows, zero-downtime EF Core migrations, Optimistic Locking & table record versioning, deterministic seed pipeline. |
+| **07** | [07_TESTING_AND_BENCHMARKING.md](./07_TESTING_AND_BENCHMARKING.md) | Multi-tiered testing strategy: Architecture tests, smoke tests, functional tests, k6 load/stress/spike/soak tests & Grafana verification. |
 
 ---
 
-## Nguyên tắc bắt buộc đối với Kỹ sư & AI Agent
+## Mandatory Principles for Engineers & AI Agents
 
-1. **Tra cứu trước khi thực thi**: Trước khi thêm tính năng, sửa bug hoặc refactor bất kỳ module nào, bắt buộc đọc kỹ tài liệu liên quan trong thư mục này.
-2. **Cập nhật sau khi thay đổi**: Khi thay đổi logic kiến trúc, API contract, schema hay flow xử lý, phải cập nhật tài liệu tương ứng ngay trong cùng commit/task.
-3. **Tuân thủ ranh giới module**: Tuyệt đối không gọi trực tiếp DB context hay internal services của module khác; mọi giao tiếp liên module bắt buộc qua Integration Events (Outbox/Inbox) hoặc Facade/Contract interfaces.
+1. **Review Before Execution**: Before adding features, fixing bugs, or refactoring any module, thoroughly read the relevant documentation in this directory.
+2. **Synchronous Documentation Updates**: Whenever architectural logic, API contracts, schemas, or processing flows change, update the corresponding documentation within the same commit/task.
+3. **Respect Module Boundaries**: Never directly access DB contexts or internal services of another module; all cross-module interactions must go through Integration Events (Outbox/Inbox) or public Facade/Contract interfaces.

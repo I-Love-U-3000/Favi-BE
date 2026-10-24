@@ -1,160 +1,160 @@
-# 06 — Quản Lý Phiên Bản (Git), Migrations & Seed Pipeline (Favi-BE)
+# 06 — Version Control (Git), Database Migrations & Seed Pipeline (Favi-BE)
 
-## 1. Chiến Lược Quản Lý Phiên Bản (Version Control & Git)
+## 1. Version Control & Git Strategy
 
-Hệ thống Favi-BE áp dụng quy trình kiểm soát phiên bản tiêu chuẩn để đảm bảo mã nguồn luôn ổn định và có khả năng truy vết:
+The Favi-BE codebase adheres to standardized version control protocols ensuring stability and complete traceability:
 
-### 1.1 Quy Chuẩn Đặt Tên Commit (Conventional Commits)
-Mỗi commit phải chỉ rõ loại thay đổi và phạm vi (scope):
+### 1.1 Conventional Commits Specification
+Every commit message must clearly state the change type and affected scope:
 - `feat(auth): add auth session aggregate and query reader`
 - `fix(engagement): prevent race condition on comment reaction toggle`
 - `refactor(socialgraph): extract follow relations into dedicated module`
 - `test(e2e): add k6 scenario for feed scrolling pagination`
 - `docs(arch): update bounded contexts dependency matrix`
 
-### 1.2 Hợp Đồng Rollback Nhị Phân (Binary Rollback Contract)
-- Khi thực hiện di dời nghiệp vụ theo mô hình Strangler Fig, **mỗi slice hoàn chỉnh phải nằm trong đúng 1 Git Commit**.
-- Quy tắc rollback: Trong trường hợp kiểm thử sau deploy phát hiện lỗi hồi quy (regression bug), rollback được thực hiện bằng lệnh duy nhất:
+### 1.2 Binary Rollback Contract
+- When migrating business slices via the Strangler Fig pattern, **each complete slice must reside in exactly one Git Commit**.
+- **Rollback Rule**: In the event post-deployment monitoring detects a regression, rollback is executed via a single command:
   ```bash
   git revert <slice-commit-hash>
   ```
-  Nhờ đó, DI registration và route của module cũ sẽ lập tức hoạt động lại bình thường mà không cần debug vội vã trên production.
+  This immediately re-enables legacy DI registrations and routing cleanly without rushed, error-prone production patching.
 
 ---
 
-## 2. Quy Trình Tiến Hóa Cơ Sở Dữ Liệu (EF Core Migrations)
+## 2. Database Schema Evolution (EF Core Migrations)
 
-### 2.1 Quy Tắc Không Gây Downtime (Zero-Downtime Schema Evolution)
-Khi thay đổi cấu trúc bảng cơ sở dữ liệu trên production:
-1. **Thay đổi có tính chất cộng dồn (Additive Only)**:
-   - Thêm cột mới nullable (`NULL`) hoặc có giá trị mặc định (`DEFAULT`).
-   - Tạo bảng mới.
-   - Không được phép đổi tên hoặc xóa cột ngay lập tức khi ứng dụng cũ vẫn đang chạy.
-2. **Quy trình 3 bước khi đổi tên hoặc xóa cột**:
-   - *Bước 1*: Tạo cột mới, deploy code ghi dữ liệu vào cả cột cũ và mới (Dual-write).
-   - *Bước 2*: Chạy script backfill đồng bộ dữ liệu từ cột cũ sang mới; chuyển toàn bộ luồng đọc sang cột mới.
-   - *Bước 3*: Sau khi kiểm chứng an toàn, tạo migration xóa cột cũ.
+### 2.1 Zero-Downtime Schema Evolution Rules
+When evolving production database schemas:
+1. **Additive Only Changes**:
+   - Add new nullable columns (`NULL`) or columns with safe defaults (`DEFAULT`).
+   - Create new tables.
+   - Immediate renaming or dropping of columns is prohibited while legacy application versions are running.
+2. **Three-Phase Pattern for Renaming / Dropping Columns**:
+   - *Phase 1 (Expand)*: Create new column; deploy code that dual-writes to both old and new columns.
+   - *Phase 2 (Migrate)*: Run backfill scripts to synchronize historic records from old to new column; shift all read operations to the new column.
+   - *Phase 3 (Contract)*: After stability signoff, deploy a migration that drops the deprecated old column.
 
-### 2.2 Các Lệnh EF Core Thường Dùng
-Thực hiện trong thư mục `Favi-BE/Favi-BE`:
+### 2.2 Common EF Core CLI Commands
+Run within `Favi-BE/Favi-BE`:
 ```bash
-# Tạo migration mới cho DbContext
-dotnet ef migrations add <TenMigration> --project Favi-BE.API --startup-project Favi-BE.API
+# Add new migration for DbContext
+dotnet ef migrations add <MigrationName> --project Favi-BE.API --startup-project Favi-BE.API
 
-# Cập nhật database trực tiếp
+# Update database directly (development/staging)
 dotnet ef database update --project Favi-BE.API --startup-project Favi-BE.API
 
-# Xuất file script SQL để DBA review trước khi deploy
+# Generate idempotent SQL script for DBA review prior to production deployment
 dotnet ef migrations script --idempotent --output migration.sql --project Favi-BE.API
 ```
 
-### 2.3 Cơ Chế Khóa Phân Tán Khi Khởi Động Đa Bản Sao (Cluster Startup Advisory Lock)
-Trong môi trường Docker Compose gồm nhiều bản sao API (`favi-api-1`, `favi-api-2`), khi thực hiện cold-start hoặc xóa volume (`docker-compose down -v` rồi `up -d`), cả 2 container sẽ đồng thời gọi `ApplyDatabaseMigrationsAndSeedAsync()`.
+### 2.3 Multi-Replica Startup Advisory Lock (Cluster Startup Coordination)
+In Docker Compose environments comprising multiple API replicas (`favi-api-1`, `favi-api-2`), cold-starts or fresh deployments (`docker-compose down -v && docker-compose up -d`) trigger simultaneous invocations of `ApplyDatabaseMigrationsAndSeedAsync()`.
 
-Để triệt tiêu hoàn toàn race condition và lỗi xung đột khóa ngoại/trùng lặp bản ghi:
-- Hệ thống áp dụng **PostgreSQL Session-Level Advisory Lock** (`SELECT pg_advisory_lock(742189);`) tại [`StartupTasksExtensions.cs`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.API/DependencyInjection/StartupTasksExtensions.cs).
-- Container nào kết nối trước sẽ nắm giữ khóa độc quyền, thực thi toàn bộ chuỗi migration (bao gồm [`20260423000000_AddUpdatedAtAndVersionToProfile`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.API/Migrations/20260423000000_AddUpdatedAtAndVersionToProfile.cs) bổ sung `UpdatedAt` và `Version` cho bảng `Profiles`) và chạy toàn bộ Seed Pipeline.
-- Container thứ hai bị chặn an toàn tại lệnh khóa; khi được giải phóng (`SELECT pg_advisory_unlock(742189);`), nó kiểm tra thấy schema đã mới nhất và seed data đã hiện diện (`hasExistingProfiles == true`), tự động bỏ qua seed và bắt đầu nhận tải.
+To prevent race conditions, duplicate seed records, and foreign key deadlocks:
+- The system employs a **PostgreSQL Session-Level Advisory Lock** (`SELECT pg_advisory_lock(742189);`) implemented in [`StartupTasksExtensions.cs`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.API/DependencyInjection/StartupTasksExtensions.cs).
+- The first container to acquire the lock executes the migration pipeline (including [`20260423000000_AddUpdatedAtAndVersionToProfile`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.API/Migrations/20260423000000_AddUpdatedAtAndVersionToProfile.cs) adding `UpdatedAt` and `Version` to `Profiles`) and completes the Seed Pipeline.
+- The secondary container is held at the lock boundary; once released (`SELECT pg_advisory_unlock(742189);`), it checks that migrations are current and seed data is present (`hasExistingProfiles == true`), automatically bypasses seed generation, and begins accepting live traffic.
 
 ---
 
-## 3. Cơ Chế Khóa Lạc Quan & Kiểm Soát Phiên Bản Bản Ghi (Optimistic Concurrency Control)
+## 3. Optimistic Concurrency Control & Record Versioning
 
-Để ngăn chặn hiện tượng mất dữ liệu do ghi đè đồng thời (**Lost Update Problem**) khi nhiều người dùng hoặc tiến trình cùng chỉnh sửa một tài nguyên (ví dụ: cập nhật thông tin cá nhân, chỉnh sửa bài viết, sửa thông tin bộ sưu tập):
+To prevent data corruption caused by concurrent overwrites (**Lost Update Problem**) when multiple clients or processes concurrently modify the same entity (e.g., editing user profiles, updating post captions, modifying collection metadata):
 
-### 3.1 Quy Chuẩn Cột Phiên Bản Trên Database
-Các bảng thực thể có khả năng bị sửa đổi đồng thời (`Profiles`, `Posts`, `Collections`, `Comments`, `Stories`, `Messages`, `Conversations`, `Reposts`) được chuẩn hóa với 2 trường kỹ thuật:
-- **`Version` (`integer NOT NULL DEFAULT 1`)**: Lưu số hiệu phiên bản hiện tại của bản ghi.
-- **`UpdatedAt` (`timestamp with time zone NOT NULL DEFAULT NOW()`)**: Lưu mốc thời gian bản ghi được sửa đổi lần cuối.
+### 3.1 Database Column Conventions
+Entity tables subject to concurrent modifications (`Profiles`, `Posts`, `Collections`, `Comments`, `Stories`, `Messages`, `Conversations`, `Reposts`) standardize on two technical columns:
+- **`Version` (`integer NOT NULL DEFAULT 1`)**: Stores the current monotonically increasing revision number.
+- **`UpdatedAt` (`timestamp with time zone NOT NULL DEFAULT NOW()`)**: Tracks the exact timestamp of the latest mutation.
 
-### 3.2 Luồng Kiểm Soát Phiên Bản Ở Tầng Ứng Dụng (Application Layer)
-Trong kiến trúc CQRS của Favi-BE, cơ chế kiểm soát phiên bản hoạt động khép kín theo luồng:
+### 3.2 Application-Level Concurrency Verification Workflow
+Within the CQRS command pipeline, version verification operates as follows:
 
 ```
 [ Client ]                           [ Command Handler ]                   [ Database ]
     │                                         │                                  │
-    │── 1. Query Data (kèm Version = N) ─────▶│                                  │
-    │◀─ Trả về Dto (Version = N) ─────────────│                                  │
+    │── 1. Query Data (includes Version = N) ─▶│                                 │
+    │◀─ Returns Dto (Version = N) ────────────│                                  │
     │                                         │                                  │
-    │── 2. Gửi UpdateCommand(Version = N) ───▶│                                  │
+    │── 2. Send UpdateCommand(Version = N) ──▶│                                  │
     │                                         │── 3. FindByIdAsync() ───────────▶│
     │                                         │◀─ Entity(Version = M) ───────────│
     │                                         │                                  │
-    │                                         ├── M != N? ──▶ Trả 409 Conflict   │
+    │                                         ├── M != N? ──▶ Return 409 Conflict│
     │                                         │               (CONCURRENCY_      │
     │                                         │                CONFLICT)         │
     │                                         │                                  │
-    │                                         └── M == N? ──▶ Tăng Version = N+1 │
+    │                                         └── M == N? ──▶ Incr Version = N+1 │
     │                                                         UpdatedAt = Now()  │
     │                                                         Save to DB ───────▶│
-    │◀─ 4. Phản hồi thành công (200 OK) ──────┴──────────────────────────────────┘
+    │◀─ 4. Success Response (200 OK) ─────────┴──────────────────────────────────┘
 ```
 
-1. **Truy vấn**: Client đọc dữ liệu từ các Query Readers, nhận về DTO chứa trường `Version` (ví dụ `Version = 1`).
-2. **Gửi lệnh cập nhật**: Khi gửi Command (ví dụ [`UpdateProfileCommand`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.Modules.Auth/Application/Commands/UpdateProfile/UpdateProfileCommandHandler.cs), `UpdatePostCommand`, `UpdateCollectionCommand`), client bắt buộc phải gửi kèm giá trị `Version` hiện tại mà nó đang giữ.
-3. **Đối soát phiên bản**:
+1. **Query**: Client queries the resource and receives a DTO containing the current `Version` (e.g., `Version = 1`).
+2. **Dispatch Mutation**: When sending an update command (e.g., [`UpdateProfileCommand`](file:///c:/Users/MINH%20QUANG/Favi/Favi-BE/Favi-BE/Favi-BE.Modules.Auth/Application/Commands/UpdateProfile/UpdateProfileCommandHandler.cs), `UpdatePostCommand`, `UpdateCollectionCommand`), the client transmits its known `Version`.
+3. **Version Check**:
    ```csharp
    if (request.Version.HasValue && request.Version.Value != entity.Version)
    {
        return CommandResult.Fail("CONCURRENCY_CONFLICT", 
-           "Dữ liệu đã được chỉnh sửa ở phiên làm việc khác. Vui lòng tải lại dữ liệu mới nhất.");
+           "The record was modified in another session. Please refresh and try again.");
    }
    ```
-4. **Cập nhật & Tăng phiên bản**: Nếu phiên bản trùng khớp, handler cập nhật dữ liệu nghiệp vụ, đồng thời tự động tăng `Version = Version + 1` và cập nhật `UpdatedAt = DateTime.UtcNow`.
-5. **Mã lỗi phản hồi (HTTP Status)**: Nếu phát hiện xung đột, tầng Controller ánh xạ mã lỗi `CONCURRENCY_CONFLICT` thành **`409 Conflict`**, thông báo cho giao diện người dùng yêu cầu làm mới dữ liệu để tránh ghi đè dữ liệu của người khác.
+4. **Increment & Commit**: If versions match, the handler applies updates, increments `Version = Version + 1`, and sets `UpdatedAt = DateTime.UtcNow`.
+5. **Client Response**: If conflict is detected, controllers map `CONCURRENCY_CONFLICT` to HTTP **`409 Conflict`**, prompting the client application to refresh its view before re-submitting changes.
 
-### 3.3 Lộ Trình Tích Hợp EF Core Concurrency Token (Database-Level)
-Hiện tại hệ thống kiểm tra logic phiên bản ở tầng Application Handler. Khi hoàn thiện các migration mapping sâu vào EF Core DbContext, hệ thống chuẩn hóa thêm cấu hình Concurrency Token ở tầng ORM:
+### 3.3 Database-Level Concurrency Tokens (EF Core Roadmap)
+Complementing application handler checks, entities configured with EF Core Concurrency Tokens enforce database-level validation:
 ```csharp
 builder.Entity<Profile>()
     .Property(p => p.Version)
     .IsConcurrencyToken();
 ```
-Nhờ đó, câu lệnh SQL UPDATE do EF Core phát sinh sẽ chứa điều kiện `WHERE "Id" = @id AND "Version" = @oldVersion`. Nếu bản ghi đã bị sửa đổi ở luồng khác, EF Core sẽ ném ngoại lệ `DbUpdateConcurrencyException`, tăng thêm một lớp bảo vệ toàn vẹn dữ liệu ngay cả khi có truy vấn trực tiếp từ ngoài ứng dụng.
+EF Core generates SQL statements formatted as `WHERE "Id" = @id AND "Version" = @oldVersion`. If the row was modified concurrently, zero rows are affected and EF Core throws `DbUpdateConcurrencyException`, protecting database integrity even against external raw SQL updates.
 
 ---
 
-## 4. Kiến Trúc Seed Pipeline & Dữ Liệu Kiểm Thử
+## 4. Deterministic Seed Pipeline & Test Data Architecture
 
-Để phục vụ kiểm thử tải cao (load testing), đo lường hiệu năng và kiểm thử chức năng giao diện, hệ thống tích hợp sẵn một **Seed Pipeline Tất định (Deterministic Seed Pipeline)**:
+To support high-concurrency stress testing, realistic UI testing, and benchmarks, the system includes a **Deterministic Seed Pipeline**:
 
 ```
-[ Step 0: Constants & Context ] ──▶ Đọc config, khởi tạo seed context
+[ Step 0: Constants & Context ] ──▶ Read configurations, initialize deterministic PRNG
               │
               ▼
-[ Step 1: Users & Profiles ]    ──▶ Tạo tài khoản mẫu với phân phối avatar thực tế
+[ Step 1: Users & Profiles ]    ──▶ Generate test profiles with realistic avatar distributions
               │
               ▼
-[ Step 2: Social Graph ]        ──▶ Tạo quan hệ Follow theo phân phối Power-Law (Zipf)
+[ Step 2: Social Graph ]        ──▶ Establish Follow relationships using Power-Law (Zipf)
               │
               ▼
-[ Step 3: Posts & Media ]       ──▶ Chèn bài viết, liên kết ảnh tĩnh từ /seed-assets/
+[ Step 3: Posts & Media ]       ──▶ Insert posts linked to static assets in /seed-assets/
               │
               ▼
-[ Step 4: Engagement ]          ──▶ Tạo cây bình luận phân cấp và lượt thích
+[ Step 4: Engagement ]          ──▶ Generate hierarchical comment trees and reaction distributions
               │
               ▼
-[ Step 5: Tags & Collections ]  ──▶ Gắn hashtags và gom nhóm bộ sưu tập
+[ Step 5: Tags & Collections ]  ──▶ Associate hashtags and curated collections
               │
               ▼
-[ Step 6: Notifications ]       ──▶ Sinh thông báo mẫu cho người dùng
+[ Step 6: Notifications ]       ──▶ Seed notification inboxes across accounts
               │
               ▼
-[ Step 7: Stories ]             ──▶ Tạo stories còn hạn (< 24h) và đã hết hạn
+[ Step 7: Stories ]             ──▶ Create active (< 24h) and expired stories
               │
               ▼
-[ Mandatory Validation Gate ]   ──▶ Kiểm tra tính toàn vẹn, tỷ lệ dữ liệu & Foreign Keys
+[ Mandatory Validation Gate ]   ──▶ Validate referential integrity, counts & FK consistency
 ```
 
-### 4.1 Mô Hình Phân Phối Dữ Liệu Thực Tế (90-9-1 Rule & Zipfian Distribution)
-Không tạo dữ liệu ngẫu nhiên đồng đều (Uniform distribution), vì trong thực tế:
-- 1% người dùng (KOL/Influencer) sở hữu 90% số lượng follower và tương tác.
-- 9% người dùng hoạt động thường xuyên.
-- 90% người dùng chủ yếu là người xem (lurkers).
-Seed pipeline mô phỏng chính xác hiện tượng "Hot User / Hot Post" để kiểm thử hiện tượng tranh chấp khóa (Row Locking) và nghẽn mạng trên database.
+### 4.1 Realistic Data Distribution Models (90-9-1 Rule & Zipfian Power-Law)
+Rather than naive uniform distributions, seed data simulates actual social dynamics:
+- 1% of accounts (Influencers/Creators) hold 90% of followers and engagement.
+- 9% of accounts are regular active participants.
+- 90% of accounts are passive consumers (lurkers).
+This exposes the database to realistic "Hot User / Hot Post" row-locking contention and hotspot indexing scenarios during benchmark runs.
 
-### 4.2 Cổng Kiểm Định Bắt Buộc (Mandatory Validation Gate)
-Trước khi kết thúc quá trình seed dữ liệu, một bộ validator chạy kiểm tra:
-- Không có bất kỳ bản ghi mồ côi (Orphan records) nào bị lỗi Foreign Key.
-- Tất cả bài viết gắn với ít nhất một file media hợp lệ.
-- Số lượng followers/following trên bảng `profiles` khớp chính xác 100% với số dòng trong bảng `follows`.
+### 4.2 Mandatory Validation Gate
+Prior to completing the seed routine, an automated integrity suite validates:
+- Zero orphan records with invalid foreign keys.
+- Every post links to at least one valid media attachment.
+- Follower/following counter denormalizations on `profiles` match table counts in `follows` with 100% precision.

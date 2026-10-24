@@ -1,134 +1,134 @@
-# 03 — Cơ Chế Idempotency & Độ Tin Cậy Dữ Liệu (Favi-BE)
+# 03 — Idempotency Architecture & Data Reliability (Favi-BE)
 
-## 1. Tổng Quan Kiến Trúc Idempotency 2 Lớp
+## 1. Two-Layer Idempotency Overview
 
-Trong một mạng xã hội chịu tải cao, người dùng thường click đúp (double-click), mạng chập chờn gửi lại request (network retry), hoặc hàng đợi gửi lặp message (at-least-once delivery). Favi-BE bảo vệ toàn vẹn dữ liệu bằng **Kiến trúc Idempotency 2 lớp**:
+In a high-throughput social network, users frequently double-click action buttons, mobile clients retry dropped HTTP connections, and asynchronous queues redeliver messages under at-least-once delivery guarantees. Favi-BE protects system state and data integrity via a **Two-Layer Idempotency Architecture**:
 
-1. **Lớp Đồng bộ (HTTP API Gateway / Middleware Level)**: Bảo vệ tất cả mutating endpoints chống trùng lặp request từ Client.
-2. **Lớp Bất đồng bộ (Messaging / Consumer Level)**: Bảo vệ Outbox/Inbox processor chống trùng lặp xử lý sự kiện tích hợp.
+1. **Synchronous Layer (HTTP API Gateway / Middleware Level)**: Guards all state-mutating endpoints against duplicate HTTP requests from clients.
+2. **Asynchronous Layer (Messaging / Consumer Level)**: Guards background Outbox/Inbox processors against redundant processing of integration events.
 
 ```
-[ Lớp 1: HTTP Request ]
+[ Layer 1: HTTP Request ]
 Client ──▶ Header: Idempotency-Key ──▶ IdempotencyMiddleware (Redis Lock / Cache)
                                                │
-                                      (Nếu mới & hợp lệ)
+                                      (If fresh & valid)
                                                ▼
                                       Command Handler & SaveChanges
-                                               │ (Cùng DB Transaction)
+                                               │ (Unified DB Transaction)
                                       ┌────────┴────────┐
                                       ▼                 ▼
                                 [ Data State ]   [ Outbox Event ]
                                                         │
-[ Lớp 2: Event Processing ]                             ▼
+[ Layer 2: Event Processing ]                            ▼
 OutboxProcessor ──▶ Inbox Pattern ──▶ IInbox.TryStartProcessing(msgId, consumer)
                                                │
-                                      (Nếu chưa xử lý)
+                                      (If unprocessed)
                                                ▼
                                   Notification / Side Effect
 ```
 
 ---
 
-## 2. Chi Tiết Lớp 1: HTTP API `IdempotencyMiddleware`
+## 2. Layer 1 Deep Dive: HTTP API `IdempotencyMiddleware`
 
-Được triển khai tại `Favi-BE.API/Middleware/IdempotencyMiddleware.cs`.
+Implemented at `Favi-BE.API/Middleware/IdempotencyMiddleware.cs`.
 
-### 2.1 Quy Tắc Bắt Buộc Header
-- **Áp dụng**: Tất cả các HTTP verbs thay đổi trạng thái: `POST`, `PUT`, `PATCH`, `DELETE` có đường dẫn bắt đầu bằng `/api/`.
-- **Header bắt buộc**: `Idempotency-Key` (chuỗi định danh ngẫu nhiên do Client sinh ra, ví dụ UUIDv4, tối đa 128 ký tự).
-- **Trường hợp loại trừ (Excluded Prefixes)**:
-  - Endpoints xác thực: `/api/auth/login`, `/api/auth/register`, `/api/auth/refresh-token`, `/api/auth/forgot-password`, `/api/auth/reset-password`.
-  - Health checks & Docs: `/health`, `/scalar`, `/openapi`.
-  - Realtime Hubs: `/chatHub`, `/notificationHub`, `/callHub`.
+### 2.1 Header Enforcement Rules
+- **Scope**: All state-mutating HTTP methods: `POST`, `PUT`, `PATCH`, `DELETE` targeting routes with the `/api/` prefix.
+- **Required Header**: `Idempotency-Key` (a client-generated unique string, e.g., UUIDv4, max 128 characters).
+- **Excluded Prefixes (Bypass list)**:
+  - Authentication endpoints: `/api/auth/login`, `/api/auth/register`, `/api/auth/refresh-token`, `/api/auth/forgot-password`, `/api/auth/reset-password`.
+  - Health checks & API Docs: `/health`, `/scalar`, `/openapi`.
+  - Realtime WebSocket Hubs: `/chatHub`, `/notificationHub`, `/callHub`.
   - Batch operations / search: `/api/search`, `/api/posts/batch`, `/api/seed`.
-  - File upload dạng Multipart (`context.Request.HasFormContentType = true`).
+  - Multipart file uploads (`context.Request.HasFormContentType = true`).
 
-### 2.2 Mã Lỗi Phản Hồi
-- Nếu thiếu header `Idempotency-Key`: Trả về `400 Bad Request` với mã lỗi `MISSING_IDEMPOTENCY_KEY`.
-- Nếu key dài hơn 128 ký tự: Trả về `400 Bad Request` với mã lỗi `INVALID_IDEMPOTENCY_KEY`.
+### 2.2 Error Codes & Responses
+- Missing `Idempotency-Key` header: Returns `400 Bad Request` with error code `MISSING_IDEMPOTENCY_KEY`.
+- Key length exceeds 128 characters: Returns `400 Bad Request` with error code `INVALID_IDEMPOTENCY_KEY`.
 
-### 2.3 Cơ Chế Khóa Phân Tán (Redis Distributed Lock)
-1. Tạo Redis Cache Key theo format:
+### 2.3 Distributed Locking Mechanism (Redis)
+1. Redis Cache Key format:
    ```
    favi:idempotency:{userId}:{idempotencyKey}
    ```
-   *(Với người dùng chưa đăng nhập, `userId` là `"anon"`)*.
+   *(For unauthenticated requests, `userId` defaults to `"anon"`)*.
 
-2. **Chống Concurrency Race Condition**:
-   - Khi request đến, middleware thực hiện:
+2. **Concurrency Race Condition Prevention**:
+   - Upon request arrival, the middleware executes:
      ```csharp
      var acquired = await db.StringSetAsync(cacheKey, "IN_FLIGHT", TimeSpan.FromSeconds(60), When.NotExists);
      ```
-   - Nếu `acquired == false` (tức là request cùng key đang được một luồng khác xử lý):
-     Hệ thống ngay lập tức trả về **`409 Conflict`** với payload:
+   - If `acquired == false` (indicating an identical request key is actively being processed by another thread):
+     The system immediately returns **`409 Conflict`** with payload:
      ```json
      {
        "statusCode": 409,
        "code": "IDEMPOTENT_OPERATION_IN_PROGRESS",
-       "message": "Yêu cầu trước đó đang được xử lý, vui lòng chờ."
+       "message": "The previous operation is currently in progress. Please wait."
      }
      ```
 
-3. **Lưu Kết Quả Phản Hồi (Response Caching)**:
-   - Nếu handler thực thi thành công trả về HTTP Status `2xx`:
-     Hệ thống serialize `(StatusCode, ContentType, ResponseBody)` và lưu đè vào Redis key đó với **TTL = 5 phút** (`TimeSpan.FromMinutes(5)`).
-   - Khi Client gửi lại đúng `Idempotency-Key` trong vòng 5 phút:
-     Middleware đọc cache từ Redis và phát lại y hệt response cũ mà **không thực thi lại Handler hay chèn thêm dữ liệu vào Database**.
+3. **Response Caching (Replay)**:
+   - When the handler executes successfully with a `2xx` HTTP status code:
+     The middleware serializes `(StatusCode, ContentType, ResponseBody)` and caches it in Redis with **TTL = 5 minutes** (`TimeSpan.FromMinutes(5)`).
+   - If the client retries with the same `Idempotency-Key` within 5 minutes:
+     The middleware intercepts the request and replays the cached response **without re-executing the handler or inserting duplicate records into the database**.
 
-4. **Tự Động Mở Khóa Khi Lỗi (Rollback on Failure)**:
-   - Nếu handler trả về status code không phải `2xx` (ví dụ `400`, `500`) hoặc ném ngoại lệ không xử lý:
-     Middleware ngay lập tức xóa key `favi:idempotency:...` khỏi Redis (`await db.KeyDeleteAsync(cacheKey)`).
-   - Mục đích: Cho phép người dùng hoặc client sửa thông tin và retry lại ngay lập tức mà không bị kẹt lỗi 409.
+4. **Automatic Lock Release on Errors (Rollback on Failure)**:
+   - If the handler returns a non-2xx status code (e.g., `400`, `500`) or throws an unhandled exception:
+     The middleware immediately deletes the Redis key (`await db.KeyDeleteAsync(cacheKey)`).
+   - **Rationale**: Allows the client to correct invalid inputs and retry immediately without being blocked by false-positive 409 conflicts.
 
 ---
 
-## 3. Chi Tiết Lớp 2: Messaging & Consumer Idempotency (Outbox + Inbox)
+## 3. Layer 2 Deep Dive: Messaging & Consumer Idempotency (Outbox + Inbox)
 
-### 3.1 Vấn Đề Gốc
-Trước đây, các hàm như `PostService.ToggleReactionAsync` gọi trực tiếp `INotificationService` trong transaction. Nếu notification lỗi, không có retry; nếu SignalR push xong mà DB commit thất bại thì sinh ra thông báo ma (ghost notification).
+### 3.1 The Core Problem
+Previously, operations like `PostService.ToggleReactionAsync` invoked `INotificationService` directly inside the database transaction. If the notification service timed out, the transaction failed; conversely, if SignalR emitted the push before the DB commit succeeded, ghost notifications were created.
 
-### 3.2 Giải Pháp Outbox Nguyên Tử
-Mọi sự kiện tích hợp (Integration Event) đều được lưu vào bảng `OutboxMessages` **trong cùng 1 DbContext SaveChanges / Database Transaction** với dữ liệu chính:
+### 3.2 Atomic Outbox Pattern
+Every integration event is saved to the `OutboxMessages` table **inside the exact same DbContext SaveChanges / Database Transaction** as the aggregate root state change:
 
 ```csharp
-// Trong Command Handler
+// Inside Command Handler
 _postRepository.Add(reaction);
 await _outbox.AddAsync(new PostReactionToggledIntegrationEvent(postId, userId), cancellationToken);
-await _unitOfWork.SaveChangesAsync(cancellationToken); // COMMIT CÙNG NHAU
+await _unitOfWork.SaveChangesAsync(cancellationToken); // ATOMIC COMMIT
 ```
 
-### 3.3 Đảm Bảo Idempotency Tại Consumer với Bảng Inbox
-`OutboxProcessor` định kỳ đọc các message chưa gửi và dispatch đến consumer. Vì cơ chế network có thể retry dẫn đến duplicate delivery, mỗi consumer bắt buộc sử dụng `IInbox`:
+### 3.3 Consumer Idempotency via the Inbox Table
+The background `OutboxProcessor` polls unhandled messages and publishes them to consumers. Because network delivery can produce duplicates, every consumer must guard execution with `IInbox`:
 
 ```csharp
 public async Task Handle(PostReactionToggledIntegrationEvent notification, CancellationToken ct)
 {
     var consumerName = nameof(PostReactionToggledNotificationConsumer);
     
-    // 1. Kiểm tra idempotency gate: Khóa đơn vị (MessageId, ConsumerName)
+    // 1. Idempotency Gate: Check composite lock (MessageId, ConsumerName)
     var started = await _inbox.TryStartProcessingAsync(notification.Id, consumerName, ct);
     if (!started)
     {
-        // Đã được xử lý hoặc đang được consumer này xử lý -> bỏ qua an toàn
+        // Already processed or actively in progress by this consumer -> safely exit
         return;
     }
 
     try
     {
-        // 2. Thực thi side-effect (Tạo thông báo, đẩy SignalR)
+        // 2. Execute side effect (Create notification, push SignalR)
         await _notificationRepository.AddAsync(...);
         await _realtimeGateway.PushNotificationAsync(...);
 
-        // 3. Đánh dấu đã xử lý thành công
+        // 3. Mark processed
         await _inbox.MarkProcessedAsync(notification.Id, consumerName, ct);
     }
     catch (Exception ex)
     {
-        // Khi lỗi, Inbox cho phép retry ở chu kỳ poll kế tiếp
+        // Mark failed to allow retry on next poll cycle
         await _inbox.MarkFailedAsync(notification.Id, consumerName, ex.Message, ct);
         throw;
     }
 }
 ```
 
-**Nguyên lý bất biến**: Cặp khóa `(messageId, consumerName)` là đơn vị idempotency duy nhất. Một message có thể gửi tới 5 consumers khác nhau, mỗi consumer tự bảo vệ trạng thái của riêng mình mà không bị ảnh hưởng chéo.
+**Architectural Invariant**: The composite key `(messageId, consumerName)` constitutes the unique idempotency boundary. A single event can be handled by multiple independent consumers without cross-consumer interference.
