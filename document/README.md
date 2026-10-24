@@ -16,6 +16,7 @@ Welcome to the comprehensive technical documentation for the **Favi Backend (Fav
 | **05** | [05_SCALING_PERFORMANCE_AND_OBSERVABILITY.md](./05_SCALING_PERFORMANCE_AND_OBSERVABILITY.md) | Horizontal scaling strategies, PostgreSQL query optimization (indexing, keyset pagination, split queries, batching, EXPLAIN), Redis caching, Prometheus & Grafana. |
 | **06** | [06_VERSION_CONTROL_AND_DATABASE_MIGRATIONS.md](./06_VERSION_CONTROL_AND_DATABASE_MIGRATIONS.md) | Git version control workflows, zero-downtime EF Core migrations, Optimistic Locking & table record versioning, deterministic seed pipeline. |
 | **07** | [07_TESTING_AND_BENCHMARKING.md](./07_TESTING_AND_BENCHMARKING.md) | Multi-tiered testing strategy: Architecture tests, smoke tests, functional tests, k6 load/stress/spike/soak tests & Grafana verification. |
+| **08** | [08_ERROR_HANDLING_AND_ERROR_CODES.md](./08_ERROR_HANDLING_AND_ERROR_CODES.md) | Standard error response envelope, middleware exception handling, and comprehensive error codes catalog across all modules. |
 
 ---
 
