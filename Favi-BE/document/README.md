@@ -1,5 +1,9 @@
 # Favi-BE Technical Documentation
 
+- [Đề tài nghiên cứu và tiến độ sau ba feature](RESEARCH_STATUS.md)
+
+- [Cold-start feed và onboarding chủ đề](COLD_START_FEED.md)
+
 Tài liệu kỹ thuật chính của Favi-BE được lưu trữ tập trung tại thư mục gốc:
 👉 **[../../document/README.md](../../document/README.md)**
 

@@ -1,0 +1,46 @@
+name: Cold-start backend gate
+
+on:
+  pull_request:
+    paths:
+      - 'Favi-BE/**'
+      - '.github/workflows/cold-start.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Favi-BE/**'
+      - '.github/workflows/cold-start.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cold-start-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+      - name: Build, test, upgrade, rollback and HTTP E2E
+        shell: pwsh
+        working-directory: Favi-BE
+        run: ./tools/cold-start-smoke/verify.ps1
+      - name: Keep gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cold-start-gate
+          path: |
+            Favi-BE/.tools/cold-start-gate.json
+            Favi-BE/.tools/cold-start-upgrade/checks.json
+            Favi-BE/.tools/cold-start-upgrade-existing/checks.json
+          retention-days: 7

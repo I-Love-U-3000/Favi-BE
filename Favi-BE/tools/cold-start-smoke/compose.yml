@@ -1,0 +1,19 @@
+name: favi-cold-start-smoke
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: favi_smoke
+      POSTGRES_PASSWORD: local_smoke_only
+      POSTGRES_DB: favi_cold_smoke
+    ports:
+      - "127.0.0.1:15439:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U favi_smoke -d favi_cold_smoke"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:16389:6379"

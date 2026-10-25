@@ -15,11 +15,13 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
 {
     private readonly IUnitOfWork _uow;
     private readonly IPrivacyGuard _privacy;
+    private readonly IColdStartQueryReader _coldStart;
 
-    public ContentDiscoveryQueryReaderAdapter(IUnitOfWork uow, IPrivacyGuard privacy)
+    public ContentDiscoveryQueryReaderAdapter(IUnitOfWork uow, IPrivacyGuard privacy, IColdStartQueryReader coldStart)
     {
         _uow = uow;
         _privacy = privacy;
+        _coldStart = coldStart;
     }
 
     // ── Post ─────────────────────────────────────────────────────────────
@@ -81,6 +83,8 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     public async Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)> GetNewsFeedAsync(
         Guid userId, int page, int pageSize, CancellationToken ct = default)
     {
+        var cold = await GetColdStartFeedAsync(userId, page, pageSize, ct);
+        if (cold.HasValue) return cold.Value;
         var now = DateTime.UtcNow;
 
         // Stage 1: Gather lightweight candidate DTOs (70% network, 30% discovery)
@@ -375,6 +379,10 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
     public async Task<(IReadOnlyList<FeedItemReadModel> Items, int TotalCount)> GetFeedWithRepostsAsync(
         Guid userId, int page, int pageSize, CancellationToken ct = default)
     {
+        var cold = await GetColdStartFeedAsync(userId, page, pageSize, ct);
+        if (cold.HasValue)
+            return (cold.Value.Items.Select(p => new FeedItemReadModel(
+                FeedItemKind.Post, p, null, p.CreatedAt)).ToList(), cold.Value.TotalCount);
         var (posts, _) = await _uow.Posts.GetFeedPagedAsync(userId, 0, 200);
         var reposts = await _uow.Reposts.GetFeedRepostsAsync(userId, 0, 200);
 
@@ -410,6 +418,21 @@ internal sealed class ContentDiscoveryQueryReaderAdapter : IContentDiscoveryQuer
             .ToList();
 
         return (paged, total);
+    }
+
+    private async Task<(IReadOnlyList<PostReadModel> Items, int TotalCount)?> GetColdStartFeedAsync(
+        Guid userId, int page, int pageSize, CancellationToken ct)
+    {
+        if (page < 1 || pageSize < 1 || pageSize > 100)
+            throw new ArgumentOutOfRangeException(nameof(page), "Page >= 1 and pageSize in [1,100] required.");
+        var ids = await _coldStart.GetRankedPostIdsAsync(userId, ct);
+        if (ids is null) return null;
+        var posts = await _coldStart.LoadVisiblePostsAsync(userId, ids, ct);
+        var map = posts.ToDictionary(p => p.Id);
+        var visible = ids.Where(map.ContainsKey).Select(id => map[id]).ToList();
+        // Filter before paging; do not sort by CreatedAt after recommendation ranking.
+        var skip = ((long)page - 1) * pageSize;
+        return (skip >= visible.Count ? [] : visible.Skip((int)skip).Take(pageSize).ToList(), visible.Count);
     }
 
     // ── Collection ───────────────────────────────────────────────────────
