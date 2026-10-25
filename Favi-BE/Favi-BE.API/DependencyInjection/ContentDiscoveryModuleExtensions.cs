@@ -10,6 +10,8 @@ public static class ContentDiscoveryModuleDiExtensions
     public static IServiceCollection AddContentDiscoveryModule(this IServiceCollection services)
     {
         services.AddScoped<IContentDiscoveryQueryReader, ContentDiscoveryQueryReaderAdapter>();
+        services.AddScoped<IColdStartQueryReader, ColdStartQueryReader>();
+        services.AddScoped<IGraphCandidateSource, NoGraphCandidateSource>();
 
 
 

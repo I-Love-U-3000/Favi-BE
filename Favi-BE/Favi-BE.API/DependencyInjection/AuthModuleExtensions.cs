@@ -9,6 +9,7 @@ public static class AuthModuleDiExtensions
     public static IServiceCollection AddAuthModule(this IServiceCollection services)
     {
         services.AddScoped<IAuthWriteRepository, AuthWriteRepositoryAdapter>();
+        services.AddScoped<IProfileInterestsStore, ProfileInterestsStore>();
         services.AddScoped<IJwtTokenService, JwtTokenServiceAdapter>();
         services.AddScoped<IAuthQueryReader, AuthQueryReaderAdapter>();
         services.AddScoped<IAuthFacade, Favi_BE.Modules.Auth.Application.AuthFacade>();

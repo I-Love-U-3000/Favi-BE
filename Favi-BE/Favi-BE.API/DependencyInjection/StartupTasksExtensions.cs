@@ -81,7 +81,10 @@ public static class StartupTasksExtensions
                 }
             }
 
-            await Favi_BE.API.Seed.SeedPipeline.InitializeAsync(app.Services);
+            // Integration tests may provide a small fixture instead of the large benchmark seed.
+            // Migrations and the real middleware/auth pipeline still run normally.
+            if (app.Configuration.GetValue("Seeding:Enabled", true))
+                await Favi_BE.API.Seed.SeedPipeline.InitializeAsync(app.Services);
         }
         finally
         {

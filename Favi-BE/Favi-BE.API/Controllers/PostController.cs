@@ -140,11 +140,14 @@ namespace Favi_BE.Controllers
         [Authorize]
         [HttpGet("feed")]
         public async Task<ActionResult<PaginationResult<PostResponse>>> GetPersonalFeed(
-            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, 100)] int size = 10,
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, 100)] int? pageSize = null,
+            CancellationToken cancellationToken = default)
         {
             var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetNewsFeedQuery(userId, page, actualSize));
+            var (items, total) = await _mediator.Send(new GetNewsFeedQuery(userId, page, actualSize), cancellationToken);
             var postIds = items.Select(p => p.Id).ToList();
             var reactionsMap = await _mediator.Send(new GetBatchPostReactionsQuery(postIds, userId));
             var responses = items.Select(p => MapToPostResponse(p, reactionsMap.GetValueOrDefault(p.Id, EmptyReactions))).ToList();
@@ -157,11 +160,14 @@ namespace Favi_BE.Controllers
         [Authorize]
         [HttpGet("feed-with-reposts")]
         public async Task<ActionResult<PaginationResult<FeedItemDto>>> GetFeedWithReposts(
-            [FromQuery] int page = 1, [FromQuery] int size = 10, [FromQuery] int? pageSize = null)
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, 100)] int size = 10,
+            [FromQuery, System.ComponentModel.DataAnnotations.Range(1, 100)] int? pageSize = null,
+            CancellationToken cancellationToken = default)
         {
             var actualSize = pageSize.HasValue && pageSize.Value > 0 ? pageSize.Value : (size > 0 ? size : 10);
             var userId = User.GetUserId();
-            var (items, total) = await _mediator.Send(new GetFeedWithRepostsQuery(userId, page, actualSize));
+            var (items, total) = await _mediator.Send(new GetFeedWithRepostsQuery(userId, page, actualSize), cancellationToken);
 
             var postIds = items
                 .Select(i => i.Kind == FeedItemKind.Post ? i.Post?.Id : i.Repost?.OriginalPostId)

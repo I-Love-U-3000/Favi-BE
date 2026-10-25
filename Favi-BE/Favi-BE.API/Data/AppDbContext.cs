@@ -34,12 +34,24 @@ namespace Favi_BE.Data
         public DbSet<StoryView> StoryViews { get; set; }
         public DbSet<Repost> Reposts { get; set; }
         public DbSet<EmailAccount> EmailAccounts { get; set; }
+        public DbSet<Favi_BE.Modules.Auth.Domain.ProfileInterests> ProfileInterests { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
         public DbSet<InboxMessage> InboxMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Favi_BE.Modules.Auth.Domain.ProfileInterests>(b =>
+            {
+                b.ToTable("ProfileInterests");
+                b.HasKey(p => p.Id);
+                b.Property(p => p.Id).HasColumnName("ProfileId").ValueGeneratedNever();
+                b.Property(p => p.Topics).HasColumnType("text[]").IsRequired();
+                b.Property(p => p.Version).IsConcurrencyToken();
+                b.Ignore(p => p.DomainEvents);
+                b.HasOne<Profile>().WithMany().HasForeignKey(p => p.Id).OnDelete(DeleteBehavior.Cascade);
+            });
 
             // ===== Composite keys =====
             modelBuilder.Entity<PostTag>().HasKey(pt => new { pt.PostId, pt.TagId });
@@ -523,7 +535,9 @@ namespace Favi_BE.Data
                     }
 
                     var versionProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Version");
-                    if (versionProp != null && versionProp.CurrentValue is int currentVersion)
+                    // This aggregate owns its version increment; do not increment twice.
+                    if (entry.Entity is not Favi_BE.Modules.Auth.Domain.ProfileInterests &&
+                        versionProp != null && versionProp.CurrentValue is int currentVersion)
                     {
                         versionProp.CurrentValue = currentVersion + 1;
                     }
