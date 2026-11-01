@@ -1,5 +1,17 @@
 # OASIS → Favi integration smoke
 
+## Recommended dataset flow
+
+For recommendation/graph workloads, use `./tools/oasis-smoke/run-dataset.ps1`.
+The default versioned JSON profile creates1000users and a300-post opening catalog
+through public OASIS actions, without inference or a model service. All exposures
+and interactions are recorded in strict sequence for later temporal evaluation.
+Use `-Config tools/oasis-smoke/configs/smoke.json -VerifyFavi` for the smaller
+end-to-end integration profile; `-Seed` creates an independent replicate.
+Configuration, one-time setup, modeling assumptions and artifact contracts:
+[DATA_GENERATION_FLOW.md](../../document/DATA_GENERATION_FLOW.md).
+The autonomous/native runners below are separate behavior experiments.
+
 ## Actual OASIS engine mode
 
 The official source is cloned under ignored `.tools/oasis-upstream`, pinned to

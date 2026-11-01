@@ -1,5 +1,12 @@
 # Cộng đồng xã hội nhỏ bằng hybrid ABM và OASIS
 
+Flow mặc định cho **dataset benchmark** hiện là
+[DATA_GENERATION_FLOW.md](DATA_GENERATION_FLOW.md): cấu hình JSON, catalog lớn
+hơn, không inference trong vòng lặp, event/exposure history có validator. Runner
+hybrid LLM trong tài liệu này giữ nguyên làm thí nghiệm nội dung; không phải
+profile mặc định benchmark. Population helper nay nhận topic_count, mặc định3
+giữ protocol cũ; flow dataset chọn8topics từ config.
+
 ## Phạm vi và cơ sở
 
 Đây là mô hình thử nghiệm kỹ thuật cho Favi, không phải mô hình tâm lý đã hiệu

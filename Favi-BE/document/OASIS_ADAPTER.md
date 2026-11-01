@@ -1,5 +1,11 @@
 # OASIS snapshot adapter cho Favi
 
+Flow sinh dữ liệu benchmark mặc định được hướng dẫn tại
+[DATA_GENERATION_FLOW.md](DATA_GENERATION_FLOW.md). Flow xuất event/exposure
+history riêng; adapter ở đây vẫn chỉ xuất current-state snapshot. Gate HTTP nay
+đọc đủ các trang followers/comments/feed; với catalog lớn, feed kiểm bounded safe
+subset theo hợp đồng production, không ép feed phải trả toàn bộ catalog.
+
 ## Kiểm chứng tích hợp với main có cold-start
 
 Đã chạy engine OASIS upstream thật bằng ManualAction (không LLM inference) và

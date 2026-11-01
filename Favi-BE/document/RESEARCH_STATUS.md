@@ -314,3 +314,16 @@ rows,18tool requests bị từ chối; native empty-feed và physical FK DDL bug
 ghi rõ. Nhiều tương tác hơn nhưng không phải single-variable A/B hoặc bằng chứng
 mô phỏng xã hội đã calibration. Chi tiết và toàn bộ evidence trong
 [OASIS_NATIVE_FULL_RUN.md](OASIS_NATIVE_FULL_RUN.md).
+
+## Flow dataset mặc định cho benchmark — 01/11/2026
+
+Chọn controlled hybrid ABM + corpus tổng hợp có seed + public OASIS actions;
+không LLM trong vòng lặp. JSON config version1, wrapper một lệnh, immutable output,
+manifest checker và ordered exposure/event history giúp chạy lại và dùng dataset
+cũ. Đây là workload graph, chưa benchmark relevance trên người thật/nội dung ảnh.
+
+Profile mặc định đã chạy1000users/80ticks trong259,406giây:374posts,3660likes,
+2511follows,644comments,12678activation exposures;605users có >=3distinct likes
+trong cả lượt. Gate đạt65unit tests và19982PostgreSQL/import/HTTP checks. Chưa
+train/evaluate Popularity/PPR/LightGCN hoặc chọn temporal cutoffs. Chi tiết config,
+setup, dữ liệu và cách dùng lại trong [DATA_GENERATION_FLOW.md](DATA_GENERATION_FLOW.md).

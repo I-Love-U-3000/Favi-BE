@@ -33,7 +33,7 @@ class Person:
         return data
 
 
-def population(seed, size=100):
+def population(seed, size=100, topic_count=3):
     if size < 100 or size % 100:
         raise ValueError("Population must be a multiple of 100 for exact 90/9/1 role counts")
     rng = random.Random(seed)
@@ -41,10 +41,10 @@ def population(seed, size=100):
     rng.shuffle(roles)
     people = []
     for index, role in enumerate(roles):
-        weights = [rng.gammavariate(0.6, 1) for _ in TOPICS]
+        weights = [rng.gammavariate(0.6, 1) for _ in range(topic_count)]
         total = sum(weights)
         people.append(Person(index, role, [w / total for w in weights],
-                             [rng.random() for _ in TOPICS], rng.uniform(.15, .45),
+                             [rng.random() for _ in range(topic_count)], rng.uniform(.15, .45),
                              rng.uniform(.05, .2), rng.uniform(.2, .9),
                              rng.choice(LENSES), rng.choice(("a concise question", "a practical suggestion", "a cautious counterpoint"))))
     return people

@@ -4,6 +4,8 @@
 
 - [OASIS native: CAMEL memory, TwHIN-BERT và model local GPU](OASIS_NATIVE_FULL_RUN.md)
 
+- [Flow mặc định sinh dataset cho benchmark recommender và graph](DATA_GENERATION_FLOW.md)
+
 - [Cộng đồng nhỏ: phân phối hành vi, trạng thái tâm lý giả lập và ngân sách LLM](SMALL_SOCIAL_COMMUNITY.md)
 
 - [OASIS engine thật: simulation → PostgreSQL → API Favi](OASIS_SIMULATOR_VERIFICATION.md)
