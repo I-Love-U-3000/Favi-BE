@@ -1,5 +1,15 @@
 # Favi-BE Technical Documentation
 
+- [Agent tự chọn danh tính, cảm xúc, sự kiện và hành động](FREE_SOCIAL_AGENTS.md)
+
+- [OASIS native: CAMEL memory, TwHIN-BERT và model local GPU](OASIS_NATIVE_FULL_RUN.md)
+
+- [Cộng đồng nhỏ: phân phối hành vi, trạng thái tâm lý giả lập và ngân sách LLM](SMALL_SOCIAL_COMMUNITY.md)
+
+- [OASIS engine thật: simulation → PostgreSQL → API Favi](OASIS_SIMULATOR_VERIFICATION.md)
+
+- [OASIS adapter và kiểm chứng tích hợp PostgreSQL/API](OASIS_ADAPTER.md)
+
 - [Đề tài nghiên cứu và tiến độ sau ba feature](RESEARCH_STATUS.md)
 
 - [Cold-start feed và onboarding chủ đề](COLD_START_FEED.md)

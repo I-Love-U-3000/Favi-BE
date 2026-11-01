@@ -1,5 +1,30 @@
 # Đề tài nghiên cứu Favi và tiến độ triển khai
 
+## OASIS engine thật — cập nhật 31/10/2026
+
+Sau review Terra High đã sửa harness isolation/cleanup, provenance thực thi,
+race port API và namespace snapshot. Bổ sung lockfile cùng regression tests.
+Retest đạt 12 adapter tests + 7 provenance tests + 48 checks tích hợp; Docker
+sentinel và listener API không bị lượt test khác chạm vào. Chưa commit/push/merge.
+Không thay đổi kết luận chất lượng mô hình/agent hoặc thuật toán recommendation;
+lượt này tiếp tục là OASIS ManualAction, không LLMAction. Xem báo cáo simulator.
+
+Đã chạy upstream OASIS 0.2.5/commit ba892e0 bằng ManualAction với ba agents,
+SQLite và trace do engine tạo; đưa qua adapter/PostgreSQL/API đạt 12 tests + 48
+checks. Chưa LLMAction hoặc kết quả đánh giá agent/recommender. Hai lỗi khai báo
+FK upstream đã được ghi nhận, logical references user/post hợp lệ. Chi tiết tại
+[OASIS_SIMULATOR_VERIFICATION.md](OASIS_SIMULATOR_VERIFICATION.md). Chưa merge/push.
+
+## Bổ sung kiểm chứng OASIS ngày 31/10/2026
+
+Adapter `b325c8e` đã chạy cùng main có cold-start (`ab875e9`) trên nhánh tích hợp
+riêng: 12 Python tests + 48 checks PostgreSQL/import/HTTP pass. Đã kiểm chứng SQL
+replay, rollback lỗi FK, mapping và dữ liệu đọc qua API/hai feed lọc NSFW. Source
+vẫn là fixture tổng hợp, chưa simulator OASIS/LLM thật; chưa push/merge OASIS.
+Các nhận định "chưa PostgreSQL import thật" ở báo cáo lịch sử phía dưới được cập
+nhật bởi [báo cáo tích hợp mới](OASIS_INTEGRATION_VERIFICATION.md). Không có thêm
+kết quả nghiên cứu thuật toán graph hoặc đánh giá agent từ lượt kiểm tra này.
+
 ## Trạng thái tích hợp cold-start local
 
 Cold-start được squash vào main local từ feature `7859ded`, tách biệt OASIS và
@@ -245,4 +270,47 @@ preload trước nhận request, có GET /nsfw/ready. Client .NET thật đã g�
 Ảnh mẫu COCO là ảnh thường nhưng violence score khoảng 0,234 nên bị review với
 ngưỡng safe 0,2: đây là bằng chứng còn cần calibration, không phải accuracy đã đạt.
 Hướng dẫn chạy lại nằm trong tools/cold-start-smoke/README.md và trên moderation
-branch tại tools/moderation-smoke/README.md. OASIS vẫn chưa chạy simulator thật.
+branch tại tools/moderation-smoke/README.md. Ghi nhận này thuộc ngày 25/10; OASIS
+đã chạy engine, LLMAction và cộng đồng hybrid thật trong các lượt ngày 31/10/2026.
+Xem [báo cáo simulator](OASIS_SIMULATOR_VERIFICATION.md) và
+[mô hình cộng đồng nhỏ](SMALL_SOCIAL_COMMUNITY.md) cho kết quả, giả định và giới hạn.
+
+## Cộng đồng hybrid nhỏ — 31/10/2026
+
+Đã thực thi 100 tài khoản/20 ticks với vai trò 90/9/1, homophily, memory riêng,
+bounded-confidence opinions và fatigue/trust giả lập. Bản cuối sinh 4 posts,
+65 likes, 218 follows (200 bootstrap), 4 comments từ 4 authors bằng 12 local LLM
+calls/3.171 tokens; code chọn hành động và valid IDs, LLM chỉ sinh văn bản.
+30 unit tests và 853 PostgreSQL/HTTP checks đạt. Đây là smoke research model,
+chưa calibration người thật, frontend, load test hoặc production deployment.
+
+## Agent tự quyết — 01/11/2026
+
+Thêm chế độ tự chọn identity/emotion/goal, trải nghiệm riêng, hành động và nghỉ;
+không role/topic/quota gán sẵn. Default local qwen3:4b, raw state/memory riêng,
+event membership chỉ do từng người tự chọn trong simulator. Bản cuối đã qua42
+unit tests và35 PostgreSQL/HTTP checks. Các lượt trước: 1.7B thiên về đăng bài,
+4B với format cũ thiên về chờ; không sửa dữ liệu để che kết quả này. Đây là quyền
+tự quyết kỹ thuật, chưa phải hành vi người thật đã được kiểm định.
+Xem [thiết kế, kết quả và audit](FREE_SOCIAL_AGENTS.md).
+
+Lượt10 người/4 vòng đã hoàn tất: 16 posts, 18 follows, 2 comments, 0 likes,
+4 wait; 50 local calls/58.679 tokens, không invalid decision. 42 unit tests và264
+PostgreSQL/HTTP checks đạt. Chất lượng chưa đạt tự nhiên: 6 duplicate post rows
+(sau lowercase+trim), 2 comments trùng nguyên văn từ cùng ID5 vào cùng post11.
+Giữ nguyên dữ liệu, không thêm hành vi để che hạn chế này.
+
+## OASIS native trên GPU — 01/11/2026
+
+Đã chạy10người/4vòng bằng LLMAction/CAMEL memory thật, TwHIN-BERT và Qwen3:8b
+hoàn toàn trên GPU cho generation. Sinh35bài gốc +6repost/quote,30comments từ cả
+10người,9likes,3follows,1group/7messages,2private reflections. 148local requests
+dùng880.581tokens (28requests là native memory summaries). 50unit tests và551
+PostgreSQL/import/HTTP checks đạt cho Favi subset10users/35posts/9likes/3follows/
+30comments. Groups/repost/quote chỉ giữ raw, chưa import đầy đủ vào Favi.
+
+Chất lượng chưa tự nhiên:10duplicate original post rows,12duplicate comment
+rows,18tool requests bị từ chối; native empty-feed và physical FK DDL bugs được
+ghi rõ. Nhiều tương tác hơn nhưng không phải single-variable A/B hoặc bằng chứng
+mô phỏng xã hội đã calibration. Chi tiết và toàn bộ evidence trong
+[OASIS_NATIVE_FULL_RUN.md](OASIS_NATIVE_FULL_RUN.md).
