@@ -217,7 +217,11 @@ During k6 test execution, engineers monitor live cluster telemetry:
 ### 6.1 Grafana Monitoring Dashboard
 - **Access URL**: `http://localhost:3050` (Credentials: `admin` / `admin`).
 - **Target Dashboard**: **Favi Cluster Performance & Gateway Overview** (`/d/favi-overview`).
+### 6.1 Grafana Monitoring Dashboard
+- **Access URL**: `http://localhost:3050` (Credentials: `admin` / `admin`).
+- **Target Dashboard**: **Favi Cluster Performance & Gateway Overview** (`/d/favi-overview`).
 - **Inspection Window**: Set time range to **Last 5 minutes**, auto-refresh rate to **5s**.
+- **Observability Reference**: See **[09_MONITORING_PROMETHEUS_AND_GRAFANA.md](./09_MONITORING_PROMETHEUS_AND_GRAFANA.md)** for complete metric definitions, PromQL queries, and alerting rules.
 
 ### 6.2 Key Monitored Telemetry Metrics
 

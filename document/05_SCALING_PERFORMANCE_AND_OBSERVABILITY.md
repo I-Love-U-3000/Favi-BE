@@ -127,6 +127,9 @@ favi-postgres:
 
 ## 5. Observability Stack & Health Monitoring
 
+> [!TIP]
+> For a comprehensive deep-dive into Prometheus configuration, NGINX exporter metric mappings, Grafana Infrastructure-as-Code dashboard provisioning, PromQL formulas, and alerting rules, see **[09_MONITORING_PROMETHEUS_AND_GRAFANA.md](./09_MONITORING_PROMETHEUS_AND_GRAFANA.md)**.
+
 The system includes a pre-configured observability pipeline for real-time performance tracking:
 
 ```
