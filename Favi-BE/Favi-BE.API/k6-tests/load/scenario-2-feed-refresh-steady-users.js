@@ -31,7 +31,7 @@ export default function () {
 
   check(res, {
     'feed status is 200': (r) => r.status === 200,
-    'feed has items': (r) => Array.isArray(r.json('items')),
+    'feed has items': (r) => Array.isArray(r.json('items') || r.json('data')),
   });
 
   sleep(randomIntBetween(2, 5));

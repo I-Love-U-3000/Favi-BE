@@ -2,7 +2,7 @@
 import http from 'k6/http';
 import { parse } from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 
-export const BASE_URL = __ENV.BASE_URL || 'https://localhost:7138';
+export const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 const SEED_OUTPUT_DIR = __ENV.SEED_OUTPUT_DIR || '../../seed-output';
 
 function loadCsv(fileName) {
