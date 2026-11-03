@@ -47,3 +47,14 @@ You must work with exceptional precision and system-level depth because GPT Code
 - User prefers analytical, system-level answers with complete listings instead of abbreviations or ellipsis (`...`).
 - When updating planning/architecture documents, ensure the full end-to-end process is consistently documented.
 - Rollback Strategy: Strangler Fig migrations must follow binary per-slice commits so that any regression can be rolled back cleanly via `git revert <slice-commit>`.
+
+---
+
+## 5. Git Hygiene & Plan File Tracking Protocol
+- **Strictly Exclude `.md` Plan Files from Git**: All `.md` plan files (including implementation plans, task breakdown plans, architectural scratchpads, `*plan*.md`, or agent planning notes) **MUST NEVER be tracked in Git, committed, or pushed to the remote GitHub repository**.
+- **Distinction from Technical Documentation**: Only formal, long-lived system specifications designated for the `document/` folder belong in version control. Transient or task-oriented `.md` plan files are strictly local working artifacts.
+- **Staging Verification & Prevention**:
+  - Never stage plan files (`git add <file>.md` for plans is strictly prohibited).
+  - Before executing any commit, verify via `git status` that no `.md` plan files are staged. If any plan file is inadvertently staged, immediately unstage it using `git restore --staged <file>` or `git reset HEAD <file>`.
+  - Maintain entries in `.gitignore` or `.git/info/exclude` (e.g., `*plan*.md`, `*.plan.md`) to prevent accidental tracking.
+

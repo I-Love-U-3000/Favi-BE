@@ -12,7 +12,7 @@
 
 export const SANITY_CONFIG = {
   // Base Configuration
-  BASE_URL: __ENV.BASE_URL || 'https://localhost:7138',
+  BASE_URL: __ENV.BASE_URL || 'http://localhost:5000',
   SEED_OUTPUT_DIR: __ENV.SEED_OUTPUT_DIR || '../../seed-output',
 
   // Common Headers
