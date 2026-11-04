@@ -1,4 +1,4 @@
-param([string] $Python = '.tools/python/cpython-3.11.14-windows-x86_64-none/python.exe', [switch] $Simulator, [string] $ExistingRunDirectory)
+param([string] $Python = '.tools/python/cpython-3.11.14-windows-x86_64-none/python.exe', [switch] $Simulator, [string] $ExistingRunDirectory, [string] $ExperimentalArtifact, [switch] $SkipToolTests)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $solutionRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
@@ -34,8 +34,11 @@ try {
     if ($Simulator -and $ExistingRunDirectory) { throw 'Choose Simulator or ExistingRunDirectory' }
     if (-not (Test-Path -LiteralPath $Python)) { throw 'Pass -Python with a working Python 3.10+ executable path' }
     $report['revision'] = (& git rev-parse HEAD).Trim()
-    Invoke-Check $Python @('-m', 'unittest', 'discover', '-s', 'tools/oasis_adapter', '-p', 'test_*.py', '-v')
-    Invoke-Check $Python @('-m', 'unittest', 'discover', '-s', 'tools/oasis-smoke', '-p', 'test_*.py', '-v')
+    $report['toolTestsSkipped'] = [bool]$SkipToolTests
+    if (-not $SkipToolTests) {
+        Invoke-Check $Python @('-m', 'unittest', 'discover', '-s', 'tools/oasis_adapter', '-p', 'test_*.py', '-v')
+        Invoke-Check $Python @('-m', 'unittest', 'discover', '-s', 'tools/oasis-smoke', '-p', 'test_*.py', '-v')
+    }
     if ($ExistingRunDirectory) {
         $existingRoot = (Resolve-Path -LiteralPath $ExistingRunDirectory).Path
         $report.source = 'existing snapshot; see original provenance for simulation mode'
@@ -57,7 +60,9 @@ try {
     }
     $composeAttempted = $true
     Invoke-Check 'docker' @('compose', '--project-name', $composeProject, '-f', 'tools/oasis-smoke/compose.yml', 'up', '-d', '--wait', '--wait-timeout', '60')
-    Invoke-Check 'dotnet' @('tools/oasis-smoke/bin/Debug/net10.0/OasisSmoke.dll', (Join-Path $runRoot 'export'))
+    $runArguments = @('tools/oasis-smoke/bin/Debug/net10.0/OasisSmoke.dll', (Join-Path $runRoot 'export'))
+    if ($ExperimentalArtifact) { $runArguments += (Resolve-Path -LiteralPath $ExperimentalArtifact).Path }
+    Invoke-Check 'dotnet' $runArguments
     $report.passed = $true
 }
 catch { $report['error'] = $_.Exception.Message; throw }

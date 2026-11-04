@@ -37,17 +37,17 @@ async def generate(config, output, upstream):
         raise RuntimeError("OASIS environment is missing; follow DATA_GENERATION_FLOW.md setup")
     source = verify_runtime_source(upstream, Path(spec.origin).parent, PINNED)
     locked = verify_dependency_lock(Path(__file__).with_name("requirements-oasis.lock.txt"))
+    from dataset_fast import FastFeed, initial_edges_fast, install_indexes
     harness = output / "harness"
     harness.mkdir()
-    for name in ("generate_dataset.py", "dataset_policy.py", "dataset_channel.py", "community_policy.py", "native_projection.py", "source_provenance.py", "requirements-oasis.lock.txt"):
+    for name in ("generate_dataset.py", "dataset_policy.py", "dataset_channel.py", "dataset_fast.py", "community_policy.py", "native_projection.py", "source_provenance.py", "requirements-oasis.lock.txt"):
         (harness / name).write_bytes(Path(__file__).with_name(name).read_bytes())
     harness_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in harness.iterdir()}
     os.chdir(output)
     (output / "log").mkdir()
     import oasis
-    from camel.models import StubModel
-    from camel.types import ModelType
-    from oasis import AgentGraph, SocialAgent, UserInfo, ActionType
+    from oasis import ActionType
+    from oasis.social_agent.agent_action import SocialAction
     from oasis.clock.clock import Clock
     from oasis.social_platform.platform import Platform
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oasis_adapter"))
@@ -56,21 +56,15 @@ async def generate(config, output, upstream):
     people = population(config["seed"], config["users"], len(config["topics"]))
     write_json(output / "population.initial.json", [p.record() for p in people])
     rng = random.Random(config["seed"] + 2)
-    graph = AgentGraph()
-    stub = StubModel(model_type=ModelType.STUB)
     actions = {k: v for k, v in (("post", ActionType.CREATE_POST), ("comment", ActionType.CREATE_COMMENT), ("like", ActionType.LIKE_POST), ("follow", ActionType.FOLLOW))}
-    agents = []
-    for p in people:
-        agent = SocialAgent(agent_id=p.id, user_info=UserInfo(user_name=f"benchmark_{p.id}", name=f"Member {p.id:05d}",
-            description=f"Synthetic {p.role}", profile=None, recsys_type="reddit"), agent_graph=graph, model=stub,
-            available_actions=list(actions.values()))
-        graph.add_agent(agent)
-        agents.append(agent)
     database = output / "oasis.db"
     os.environ["OASIS_DB_PATH"] = str(database)
     platform = Platform(db_path=str(database), channel=DatasetChannel(), recsys_type="reddit", sandbox_clock=Clock(k=1),
                         start_time=datetime.now(timezone.utc).replace(tzinfo=None))
-    env = oasis.make(agent_graph=graph, platform=platform, database_path=str(database))
+    engine = install_indexes(platform.db)
+    write_json(output / "engine.json", engine)
+    agents = [SocialAction(p.id, platform.channel) for p in people]
+    platform_task = asyncio.create_task(platform.running())
     events, posts = [], []
     event_file = (output / "events.jsonl").open("w", encoding="utf-8")
     def emit(tick, user, kind, **fields):
@@ -82,7 +76,9 @@ async def generate(config, output, upstream):
         with closing(sqlite3.connect(database.as_uri() + "?mode=ro", uri=True)) as db:
             return db.execute(sql).fetchall()
     async def execute(person, kind, arguments):
-        result = await agents[person.id].perform_action_by_data(actions[kind], **arguments)
+        # Public SocialAction API performs the same channel request without rebuilding
+        # every LLM tool schema or retaining unused ChatAgent memory per mutation.
+        result = await getattr(agents[person.id], actions[kind].value)(**arguments)
         if not isinstance(result, dict) or not result.get("success"):
             raise RuntimeError(f"OASIS rejected {kind}: {result}")
         return result
@@ -93,16 +89,20 @@ async def generate(config, output, upstream):
         emit(tick, person.id, "post", post_id=post_id, topic=topic, content=text)
         posts.append({"id": post_id, "author": person.id, "topic": topic, "opinion": person.opinion[topic]})
     try:
-        await env.reset()
+        for p in people:
+            result = await agents[p.id].sign_up(user_name=f"benchmark_{p.id}", name=f"Member {p.id:05d}", bio=f"Synthetic {p.role}")
+            if not result.get("success"):
+                raise ValueError(f"Native signup failed: {result}")
         if rows("SELECT user_id,agent_id FROM user ORDER BY user_id") != [(p.id, p.id) for p in people]:
             raise RuntimeError("Pinned OASIS user/agent mapping changed")
-        for a, b in initial_edges(people, config["seed"]):
+        for a, b in initial_edges_fast(people, config["seed"]):
             await execute(people[a], "follow", {"followee_id": b})
             emit(-1, a, "follow", target_user_id=b)
             people[a].follows.add(b)
         creators = [p for p in people if p.role == "creator"]
         for index in range(config["initial_posts"]):
             await publish(creators[index % len(creators)], index % len(config["topics"]), -1)
+        feed_sampler = FastFeed(posts)
         for tick in range(config["ticks"]):
             order = people.copy()
             rng.shuffle(order)
@@ -110,7 +110,7 @@ async def generate(config, output, upstream):
                 person.fatigue *= .75
                 if rng.random() >= config["activity"][person.role] * (1 - person.fatigue):
                     continue
-                feed = sample_feed(person, posts, people, config, rng)
+                feed = feed_sampler.sample(person, config, rng)
                 exposure = emit(tick, person.id, "exposure", post_ids=[p["id"] for p in feed]) if feed else None
                 for post in feed:
                     person.seen.add(post["id"])
@@ -137,7 +137,8 @@ async def generate(config, output, upstream):
             write_json(output / "progress.json", {"completed_ticks": tick + 1, "events": len(events), "posts": len(posts)})
     finally:
         event_file.close()
-        await env.close()
+        await platform.channel.write_to_receive_queue((None, None, ActionType.EXIT))
+        await platform_task
 
     audit = audit_events(events, config)
     archive, source_audit = audit_database(database)
@@ -179,11 +180,14 @@ def main():
     parser.add_argument("--upstream", type=Path, default=Path(".tools/oasis-upstream"))
     parser.add_argument("--seed", type=int)
     parser.add_argument("--validate-config", action="store_true")
+    parser.add_argument("--timeout-seconds", type=int, default=1800)
     args = parser.parse_args()
     config = json.loads(args.config.read_text(encoding="utf-8-sig"))
     if args.seed is not None:
         config["seed"] = args.seed
     validate_config(config)
+    if not 60 <= args.timeout_seconds <= 14400:
+        parser.error("timeout-seconds must be between60 and14400")
     if args.validate_config:
         print(json.dumps(config, indent=2))
         return
@@ -193,7 +197,7 @@ def main():
     if args.output.exists():
         parser.error("Output already exists; choose a new directory")
     try:
-        asyncio.run(asyncio.wait_for(generate(config, args.output, args.upstream), timeout=1800))
+        asyncio.run(asyncio.wait_for(generate(config, args.output, args.upstream), timeout=args.timeout_seconds))
     except Exception as error:
         if args.output.exists() and not (args.output / "dataset-manifest.json").exists():
             failure = args.output / "failure.json"

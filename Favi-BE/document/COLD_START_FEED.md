@@ -1,5 +1,10 @@
 # Cold-start feed và onboarding chủ đề
 
+Endpoint EASE/PPR thử nghiệm mới nằm ở route riêng và mặc định tắt; cold fallback
+vẫn dùng contract/ranker mô tả bên dưới. Xem
+[EXPERIMENTAL_RECOMMENDER_FEED.md](EXPERIMENTAL_RECOMMENDER_FEED.md) cho cấu hình,
+giới hạn artifact, lọc hiện trạng và kết quả kiểm thử HTTP.
+
 Plan: [COLD_START_PLAN.md](COLD_START_PLAN.md). Branch độc lập từ main, không cần
 OASIS hoặc moderation branch. Không có training hay graph engine chạy giả trong backend.
 

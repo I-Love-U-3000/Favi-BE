@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "ease_regularization": [1.0, 10.0, 100.0, 1000.0],
+  "ppr_alpha": [0.5, 0.85, 0.95],
+  "lightgcn_layers": [1, 2],
+  "lightgcn_learning_rates": [0.001, 0.01],
+  "lightgcn_dimensions": 64,
+  "lightgcn_regularization": 0.0001,
+  "lightgcn_max_epochs": 300,
+  "lightgcn_check_every": 10,
+  "lightgcn_patience": 5,
+  "training_seed": 20261103,
+  "test_training_seeds": [20261103, 20261104, 20261105]
+}

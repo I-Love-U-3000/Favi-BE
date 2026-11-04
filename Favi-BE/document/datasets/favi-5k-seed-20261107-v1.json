@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "dataset_id": "favi-5k-seed-20261107-v1",
+  "seed": 20261107,
+  "config": "tools/oasis-smoke/configs/favi-5k.json",
+  "resolved_config": ".tools/datasets/favi-5k-seed-20261107-v1/config.resolved.json",
+  "bundle": ".tools/datasets/favi-5k-seed-20261107-v1",
+  "archive": ".tools/dataset-archives/favi-5k-seed-20261107-v1.zip",
+  "archive_receipt": ".tools/dataset-archives/favi-5k-seed-20261107-v1.zip.json",
+  "archive_bytes": 61583173,
+  "counts": {
+    "users": 5000,
+    "posts": 2000,
+    "likes": 136752,
+    "follows": 28582,
+    "comments": 19991
+  },
+  "exposure_events": 476544,
+  "total_events": 663869,
+  "users_with_at_least_5_likes": 5000,
+  "ticks": 500,
+  "suggested_temporal_cutoffs": [
+    300,
+    400
+  ],
+  "events_sha256": "57fdf1c5be5fc1bff551f46d2fdc390f63da346fa44505be3b993f7dfe61f289",
+  "sqlite_sha256": "9c395634bfad6d0fa8b540829337167529a01632bdc8f644b991120d3e8ecd3f",
+  "archive_sha256": "3c7e74feaaff946b44580ea212f6cdcedada0d56ac6705827ff59c927eda8e69",
+  "elapsed_seconds": 1108.375,
+  "status": "verified-ready",
+  "integration": {
+    "passed": null,
+    "note": "Native OASIS/event parity/adapter verified; no PostgreSQL/HTTP gate in action 1"
+  },
+  "full_recommender_benchmark": {
+    "validation_users": 4956,
+    "role": "primary fresh dataset seed",
+    "report": "document/MULTISEED_RECOMMENDER_BENCHMARK.md",
+    "machine_report": "document/benchmarks/multiseed-5k-20261103.json",
+    "test_users": 4955,
+    "run": ".tools/benchmarks/multiseed-5k-20261107-001"
+  },
+  "scope": "Fixed-scale synthetic likes-only recommender stability; not independent real-world validation"
+}

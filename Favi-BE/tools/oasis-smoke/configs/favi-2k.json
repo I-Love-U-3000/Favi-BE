@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "seed": 20261104,
+  "users": 2000,
+  "initial_posts": 750,
+  "max_posts": 1000,
+  "ticks": 500,
+  "feed_size": 5,
+  "exploration": 0.5,
+  "topics": ["food", "transport", "photography", "technology", "nature", "art", "sports", "books"],
+  "activity": {"reader": 0.16, "contributor": 0.65, "creator": 0.9},
+  "quality": {"min_likes": 50000, "min_warm_users": 1600, "warm_min_likes": 5}
+}

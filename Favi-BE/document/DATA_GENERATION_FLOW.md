@@ -94,7 +94,9 @@ requires a new experiment configuration/revision, not editing old output.
    archive harness; no runtime upstream patch or arbitrary SQLite inserts.
 2. Seed exact90/9/1 roles and private preferences. OASIS registers users. Confirm
    user_id=agent_id mapping for this pinned runtime before using public actions.
-   StubModel only satisfies SocialAgent construction; no model inference occurs.
+   The scaled runner uses public SocialAction clients and Platform.running directly,
+   including native sign_up and EXIT, without unused ChatAgent/StubModel objects.
+   Earlier env.reset dispatch remains in archived historical harnesses.
 3. Bootstrap2distinct homophily-weighted follows per user (baseline.1+affinity^3).
    Creators publish the configured initial catalog, round-robin creators/topics.
    Bootstrap events have tick=-1 and bootstrap=true. They are setup, not labels.
@@ -121,7 +123,15 @@ requires a new experiment configuration/revision, not editing old output.
    cannot be lost. Each waiter has45s timeout and cancellation cleanup; duplicate
    replies fail. EXIT requires no reply. Engine writes remain sequential and
    unmodified; this optimizes transport rather than bypassing OASIS validation.
-   Overall generation has a30minute timeout. Harness archives the channel source.
+   Default generation has a30minute timeout; `-TimeoutSeconds` can explicitly
+   extend it up to4hours for larger provisioning. Harness archives the channel source.
+   Mutations call the original public SocialAction methods bound to each actor ID,
+   avoiding SocialAgent.perform_action_by_data rebuilding all tool schemas and
+   retaining unused LLM memory on every action. Registration uses native sign_up
+   in ascending actor order; OASIS owns table definitions, data writes and source trace.
+   The larger profiles add declared nonunique lookup indexes before registration,
+   as specified in [FAVI_DATASET_SCALES.md](FAVI_DATASET_SCALES.md). This is
+   a dispatch optimization, not a change to behavior policy or source validation.
 8. Close engine; validate all logical FK links and known physical DDL diagnostics,
    temporal event order, prior exposures, unique positives and exact graph/catalog/
    comment equality against final SQLite. Enforce quality thresholds before export.
@@ -156,7 +166,9 @@ validation. Do not use final popularity/follows or private latent preferences as
 ranking features. Latent preferences are simulation state, not observed labels.
 Comments/follows are distinct signals; do not silently relabel them as likes.
 
-The flow does not yet train models, select cutoffs, calculate nDCG or prove that
+Generation itself does not train models or select evaluation cutoffs. The separate
+[offline evaluator](RECOMMENDER_BENCHMARK.md) now measures Popularity and the
+existing Favi formula with a fixed temporal protocol; it does not prove that
 LightGCN will beat Popularity. Warm-user count is based on the whole run; actual
 train/test eligible counts must be measured after splitting. Keep several seeds
 and report synthetic-policy bias when comparing algorithms. Same config/seed/
@@ -164,6 +176,13 @@ harness reproduces semantic event bytes; wall-clock source timestamps, UUID
 namespace/output path and duration can differ. Confirm event SHA256 on reruns.
 
 ## Verification evidence — 01/11/2026
+
+Provisioning profile `configs/favi-5k.json` targets5000users,1500initial posts,
+max2000posts,500ticks and at least100000distinct likes/4000users with5likes.
+Reader activity is explicitly.16 (other profiles remain.12); no extra actions are
+fabricated to meet the gate. Large output is stored under `.tools/datasets` with
+raw SQLite, event history, Favi snapshot/SQL/CSV and integrity manifest. Run with
+`-Config tools/oasis-smoke/configs/favi-5k.json -TimeoutSeconds 7200`.
 
 Default profile run `.tools/datasets/benchmark-default-20261101`:
 

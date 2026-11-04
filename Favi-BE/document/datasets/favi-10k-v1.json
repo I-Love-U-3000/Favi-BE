@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "dataset_id": "favi-10k-v1",
+  "seed": 20261105,
+  "config": "tools/oasis-smoke/configs/favi-10k.json",
+  "bundle": ".tools/datasets/favi-10k-v1",
+  "archive": ".tools/dataset-archives/favi-10k-v1.zip",
+  "archive_receipt": ".tools/dataset-archives/favi-10k-v1.zip.json",
+  "archive_bytes": 127999464,
+  "counts": {
+    "users": 10000,
+    "posts": 4000,
+    "likes": 277340,
+    "follows": 58957,
+    "comments": 40891
+  },
+  "exposure_events": 953107,
+  "total_events": 1334295,
+  "users_with_at_least_5_likes": 10000,
+  "ticks": 500,
+  "suggested_temporal_cutoffs": [
+    300,
+    400
+  ],
+  "events_sha256": "a6affe8405e58f39ca4cc7560d2ee93b81dcd816fe958c9f382415721c15c3a8",
+  "sqlite_sha256": "2c6c3b55bf7d63a5300300b5fccd6862750c01c6a9beaca7695ad60e6e469c3c",
+  "archive_sha256": "a6d709244ab5740dbbefeb46d338b7ed1370fc599e3bf34de0e7a1034d5f2c79",
+  "elapsed_seconds": 2149.906,
+  "status": "verified-ready",
+  "integration": {
+    "passed": null,
+    "note": "Native OASIS and adapter validation passed; full Favi application/API gate not run for this scale"
+  },
+  "popularity_readiness": {
+    "test_likes": 54650,
+    "validation_users": 9907,
+    "test_recall_at_10": 0.0027081084259145995,
+    "test_ndcg_at_10": 0.001853130841888203,
+    "validation_likes": 55415,
+    "test_users": 9903,
+    "train_likes": 167275,
+    "report": ".tools/benchmarks/favi-10k-v1-popularity-readiness/report.json"
+  },
+  "scope": "Synthetic graph/ranking workloads; template text and media URL metadata, not real images or human relevance labels",
+  "full_recommender_benchmark": {
+    "report": "document/THREE_SCALE_RECOMMENDER_BENCHMARK.md",
+    "machine_report": "document/benchmarks/three-scale-20261103.json",
+    "formula_run": ".tools/benchmarks/scales-20261103-10k-formula",
+    "expanded_run": ".tools/benchmarks/scales-20261103-10k-expanded",
+    "verified": true,
+    "protocol": "K=10; global tick cutoffs 300/400; validation-only tuning; LightGCN 3 training seeds"
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "external_benchmark": {
+    "passed": true,
+    "report": "document/benchmarks/movielens-100k-20261103.json",
+    "raw_run": ".tools/benchmarks/movielens-100k-expanded-001",
+    "test_users": 290,
+    "warm_users": 97,
+    "cold_users": 193,
+    "all_user_ndcg_winner": "popularity",
+    "warm_ndcg_winner": "ppr",
+    "warm_ndcg_ppr": 0.12489494045753505,
+    "warm_ndcg_popularity": 0.11874932479012115,
+    "note": "Full precision scores and frozen protocol are preserved in the external report; no post-test protocol revision."
+  },
+  "experimental_feed": {
+    "functional_verification_passed": true,
+    "enabled_by_default": false,
+    "artifact": ".tools/feed-experiment/native-001/artifact.json",
+    "artifact_sha256": "2c854f303d5f02714454768c7ef69dd33c8618d220df089054a629b19ce708e9",
+    "trained_viewer_rows": 67,
+    "source_fixture_users": 100,
+    "source_fixture_posts": 31,
+    "source_model_cutoff_tick": 24,
+    "gates": [
+      {
+        "mode": "disabled-default",
+        "passed": true,
+        "checks": 1544,
+        "experimental_requests": 2,
+        "cleanup_error": null,
+        "run": ".tools/oasis-smoke/b6fbd7eea6444bb9977cb5b527793ab4"
+      },
+      {
+        "mode": "fresh-ease-ppr",
+        "passed": true,
+        "checks": 1767,
+        "experimental_requests": 79,
+        "cleanup_error": null,
+        "run": ".tools/oasis-smoke/e341e7c8f86d4eae8d275275756c0534",
+        "run_report_sha256": "ca2fd75ec3737ec159c9e9a15c816d158113d1dd46bbff56d4332ecf31ed1aea",
+        "checks_sha256": "c55ccf41d486e8f48c44145bb76cb6a66b60cf86a1216aefed0c0f077a966f3e",
+        "experimental_report_sha256": "81ef042c5752b2eb5df15449f6dc7021db25cc22db8bf95625a6a855b25c84c0"
+      },
+      {
+        "mode": "stale-artifact",
+        "passed": true,
+        "checks": 1553,
+        "experimental_requests": 3,
+        "cleanup_error": null,
+        "run": ".tools/oasis-smoke/ca739d82e974491a962018deb61f90ff"
+      }
+    ],
+    "http_diagnostics": {
+      "sample_definition": "20 sequential warm real HTTP requests per method, pageSize=10, before fixture mutations; descriptive bounded-fixture measurement, not a concurrent load test or SLA",
+      "percentiles": "median and nearest-rank p95",
+      "ease": {
+        "requests": 20,
+        "p50_ms": 13.7173,
+        "p95_ms": 15.0005,
+        "mean_ms": 14.17226,
+        "min_ms": 12.3375,
+        "max_ms": 21.1142,
+        "raw_latency_ms": [
+          13.8949,
+          21.1142,
+          14.7931,
+          14.5827,
+          13.0501,
+          12.3375,
+          13.7518,
+          13.6828,
+          13.6484,
+          15.0005,
+          12.9714,
+          12.766,
+          14.2784,
+          13.5587,
+          13.9016,
+          13.5828,
+          13.483,
+          14.7428,
+          14.7111,
+          13.5934
+        ],
+        "author_diversity": 0.1,
+        "max_author_share": 1,
+        "mean_age_hours": 14.002198326083334
+      },
+      "ppr": {
+        "requests": 20,
+        "p50_ms": 13.59565,
+        "p95_ms": 14.7671,
+        "mean_ms": 13.727305,
+        "min_ms": 11.6867,
+        "max_ms": 18.1448,
+        "raw_latency_ms": [
+          13.1759,
+          14.7166,
+          13.324,
+          13.5082,
+          18.1448,
+          12.3929,
+          11.6867,
+          11.9849,
+          13.1771,
+          14.1139,
+          12.8788,
+          13.6831,
+          12.488,
+          14.0093,
+          13.4253,
+          14.3003,
+          14.7671,
+          14.2098,
+          14.1825,
+          14.3769
+        ],
+        "author_diversity": 0.1,
+        "max_author_share": 1,
+        "mean_age_hours": 14.002291903888889
+      }
+    },
+    "coverage": [
+      "real model order and source-ID/GUID mapping",
+      "stable paging",
+      "anonymous 401 and disabled 404",
+      "invalid method/pagination 400",
+      "current Like/Love and save exclusions",
+      "post/profile privacy",
+      "NSFW",
+      "archive",
+      "soft delete",
+      "own posts",
+      "active author ban",
+      "banned viewer",
+      "cold fallback",
+      "new warm viewer without model row",
+      "last positive removed",
+      "empty safe model pool",
+      "stale model fallback"
+    ],
+    "limits": [
+      "Bounded fixture and saved ranks, not online dense inference",
+      "No large-scale load or online relevance claim",
+      "MovieLens models are not deployed",
+      "Extended HTTP measurement completed; no claim of online relevance, concurrency capacity or large-scale latency"
+    ],
+    "earlier_successful_fresh_gate": {
+      "mode": "fresh-ease-ppr",
+      "passed": true,
+      "checks": 1687,
+      "experimental_requests": 39,
+      "cleanup_error": null,
+      "run": ".tools/oasis-smoke/bf5e482125224856badc77a6ff95d4b9"
+    },
+    "initial_three_request_diagnostics": {
+      "sample_definition": "Initial page 1, page 2 and repeated page 1 before fixture mutations; 3 requests per method, not a load or SLA benchmark",
+      "ease": {
+        "requests": 3,
+        "p50_ms": 18.344,
+        "p95_ms": 53.8638,
+        "first_page_author_diversity": 0.2,
+        "first_page_max_author_share": 1.0,
+        "first_page_mean_age_hours": 5.56317846825
+      },
+      "ppr": {
+        "requests": 3,
+        "p50_ms": 16.7841,
+        "p95_ms": 24.0138,
+        "first_page_author_diversity": 0.2,
+        "first_page_max_author_share": 1.0,
+        "first_page_mean_age_hours": 5.5632019882499995
+      }
+    }
+  },
+  "tests": {
+    "python_smoke_and_benchmark": 91,
+    "python_adapter": 12,
+    "dotnet_unit": 24,
+    "architecture_and_privacy": 67,
+    "postgresql_http_checks": 4864,
+    "cumulative_http_checks_including_superseded_fresh_run": 6551
+  },
+  "storage": {
+    "results_saved_locally": true,
+    "committed_or_pushed": false,
+    "raw_artifacts_git_ignored": true,
+    "closeout_source_archive": ".tools/handovers/actions23-closeout-001.zip",
+    "closeout_archive_receipt": ".tools/handovers/actions23-closeout-001.zip.json"
+  },
+  "power_action": {
+    "sleep_requested_by_user": true,
+    "sleep_executed": false,
+    "sleep_status_file": ".tools/feed-experiment/gates-002/sleep-status.json",
+    "note": "One-off sleep attempt only after verified closeout and saved source/report backup; authoritative OS status is kept separately so data/report hashes stay immutable"
+  }
+}

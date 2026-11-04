@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "generation_config": "tools/oasis-smoke/configs/favi-5k.json",
+  "protocol": "tools/oasis-smoke/configs/recommenders/popularity.json",
+  "search_config": "tools/oasis-smoke/configs/recommenders/expanded.json",
+  "primary_datasets": [
+    {"seed": 20261106, "dataset": ".tools/datasets/favi-5k-seed-20261106-v1", "benchmark": ".tools/benchmarks/multiseed-5k-20261106-001", "archive": ".tools/dataset-archives/favi-5k-seed-20261106-v1.zip"},
+    {"seed": 20261107, "dataset": ".tools/datasets/favi-5k-seed-20261107-v1", "benchmark": ".tools/benchmarks/multiseed-5k-20261107-001", "archive": ".tools/dataset-archives/favi-5k-seed-20261107-v1.zip"},
+    {"seed": 20261108, "dataset": ".tools/datasets/favi-5k-seed-20261108-v1", "benchmark": ".tools/benchmarks/multiseed-5k-20261108-001", "archive": ".tools/dataset-archives/favi-5k-seed-20261108-v1.zip"}
+  ],
+  "reference": {"seed": 20261101, "dataset": ".tools/datasets/favi-5k-v1", "benchmark": ".tools/benchmarks/scales-20261103-5k-expanded", "archive": ".tools/dataset-archives/favi-5k-v1.zip"}
+}

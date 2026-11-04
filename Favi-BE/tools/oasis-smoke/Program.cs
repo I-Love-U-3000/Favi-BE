@@ -15,8 +15,9 @@ catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode =
 
 static async Task RunAsync(string[] args)
 {
-    if (args.Length != 1) throw new ArgumentException("Pass the fixture export directory");
+    if (args.Length is < 1 or > 2) throw new ArgumentException("Pass fixture export directory and optional experimental artifact");
     var exportRoot = Path.GetFullPath(args[0]);
+    var experimentalArtifact = args.Length == 2 ? Path.GetFullPath(args[1]) : null;
     var snapshot = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(exportRoot, "snapshot.json"))).RootElement.Clone();
     var sql = await File.ReadAllTextAsync(Path.Combine(exportRoot, "favi-seed.sql"));
     var root = Directory.GetCurrentDirectory();
@@ -145,6 +146,13 @@ static async Task RunAsync(string[] args)
             ["CloudinarySettings__CloudName"] = "smoke", ["CloudinarySettings__ApiKey"] = "smoke", ["CloudinarySettings__ApiSecret"] = "smoke",
             ["Seeding__Enabled"] = "false", ["VectorIndex__Enabled"] = "false", ["NSFW__Enabled"] = "false"
         }) start.Environment[pair.Key] = pair.Value;
+        if (experimentalArtifact is not null)
+        {
+            start.Environment["ExperimentalFeed__Enabled"] = "true";
+            start.Environment["ExperimentalFeed__ArtifactPath"] = experimentalArtifact;
+            start.Environment["ExperimentalFeed__ArtifactSha256"] = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(experimentalArtifact)));
+        }
         process = Process.Start(start) ?? throw new InvalidOperationException("Cannot start test API");
         var listening = new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
         stdout = CaptureOutput(process, listening); stderr = process.StandardError.ReadToEndAsync();
@@ -193,6 +201,7 @@ static async Task RunAsync(string[] args)
             // Production feeds have bounded candidate pools; they are not catalog exports.
             Check(safePosts.Length <= 60 ? ids.SetEquals(safeIds) : posts.Length > 0, endpoint + " exposes the full small catalog or a nonempty bounded large-catalog slate");
         }
+        await ExperimentalFeedChecks.RunAsync(client.BaseAddress!, snapshot, experimentalArtifact, () => Db(database), Check, logs);
         passed = true;
         Console.WriteLine($"PASS: {checks.Count} PostgreSQL/import/HTTP checks; see source provenance beside snapshot.");
 
@@ -246,7 +255,8 @@ static async Task RunAsync(string[] args)
     async Task Import(string name, string script)
     {
         await using var connection = new NpgsqlConnection(Connection(name)); await connection.OpenAsync();
-        await using var command = new NpgsqlCommand(script, connection); await command.ExecuteNonQueryAsync();
+        await using var command = new NpgsqlCommand(script, connection) { CommandTimeout = 300 };
+        await command.ExecuteNonQueryAsync();
     }
     async Task<string> DatabaseSnapshot()
     {

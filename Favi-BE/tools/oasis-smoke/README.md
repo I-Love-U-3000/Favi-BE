@@ -1,5 +1,14 @@
 # OASIS → Favi integration smoke
 
+Independent interaction-data validation now has an explicit `--dataset-kind
+movielens100k` input in `run_expanded_benchmark.py`; see
+[EXTERNAL_RECOMMENDER_BENCHMARK.md](../../document/EXTERNAL_RECOMMENDER_BENCHMARK.md).
+`build_feed_artifact.py` exports verified EASE/PPR NPZ ranks through native GUID
+mappings. Pass `-ExperimentalArtifact <absolute-artifact-path>` to `verify.ps1`
+for the opt-in HTTP experiment; omit it to verify default-disabled behavior.
+Serving configuration, limits, checked gates and result locations are in
+[EXPERIMENTAL_RECOMMENDER_FEED.md](../../document/EXPERIMENTAL_RECOMMENDER_FEED.md).
+
 ## Recommended dataset flow
 
 For recommendation/graph workloads, use `./tools/oasis-smoke/run-dataset.ps1`.
@@ -11,6 +20,44 @@ end-to-end integration profile; `-Seed` creates an independent replicate.
 Configuration, one-time setup, modeling assumptions and artifact contracts:
 [DATA_GENERATION_FLOW.md](../../document/DATA_GENERATION_FLOW.md).
 The autonomous/native runners below are separate behavior experiments.
+
+The larger reusable Favi dataset profile is `configs/favi-5k.json`; provision with
+`-Config tools/oasis-smoke/configs/favi-5k.json -TimeoutSeconds 7200`. Canonical
+local storage and reuse instructions are in
+[FAVI_BENCHMARK_DATASET.md](../../document/FAVI_BENCHMARK_DATASET.md).
+The full three-scale evaluation protocol and result tables are recorded in
+[THREE_SCALE_RECOMMENDER_BENCHMARK.md](../../document/THREE_SCALE_RECOMMENDER_BENCHMARK.md).
+For fixed-scale seed stability, use `configs/recommenders/multiseed.json` and
+`summarize_multiseed_benchmark.py`; see
+[MULTISEED_RECOMMENDER_BENCHMARK.md](../../document/MULTISEED_RECOMMENDER_BENCHMARK.md).
+Additional 2,000-user and 10,000-user profiles, execution details and validation
+contracts are documented in [FAVI_DATASET_SCALES.md](../../document/FAVI_DATASET_SCALES.md).
+`package_dataset.py --dataset <stored-bundle> --output <new-archive.zip>` verifies
+the bundle, creates a portable ZIP and reads back every member to check hashes;
+the adjacent .zip.json receipt marks a successfully verified archive.
+
+For offline ranking evaluation, run `benchmark_recommenders.py --dataset
+<existing-dataset> --output <new-benchmark-directory>` with this Python environment.
+It verifies dataset integrity, evaluates Popularity and the current warm-feed
+formula port on the same temporal candidates/targets and writes per-user results,
+latency/allocation measurements and a hash manifest. Protocol configuration lives
+under configs/recommenders; dataset-generation profiles stay at configs/*.json.
+See [RECOMMENDER_BENCHMARK.md](../../document/RECOMMENDER_BENCHMARK.md) for results
+and the distinction between offline scoring and production feed behavior.
+
+`run_formula_benchmark.py --dataset <stored-dataset> --output <new-run>` tunes
+12predeclared Formula V2 configurations using validation labels only, persists
+the selection, then compares Popularity/V1/V2 on the same temporal test population.
+It records author concentration, ranking quality/cost and paired user bootstrap
+intervals. See [FORMULA_V2_BENCHMARK.md](../../document/FORMULA_V2_BENCHMARK.md).
+
+`run_expanded_benchmark.py --dataset <stored-dataset> --output <new-run>` adds
+validation-selected EASE, exact bipartite PPR and CPU LightGCN with3test training
+seeds. Use `--formula-run <completed-formula-run>` to attach verified historical
+V1/V2 references, separately labeled for their additional signals. Numeric model
+search settings live in configs/recommenders/expanded.json. Existing dependencies
+are locked; inference computes scores per query rather than caching all-user scores.
+See [EXPANDED_RECOMMENDER_BENCHMARK.md](../../document/EXPANDED_RECOMMENDER_BENCHMARK.md).
 
 ## Actual OASIS engine mode
 
