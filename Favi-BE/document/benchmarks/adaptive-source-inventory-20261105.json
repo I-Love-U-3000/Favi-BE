@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "276e085b7a29bcd5c570cba6cadbc25059985425",
+  "state": "uncommitted pilot development; file hashes describe current sources",
+  "files": [
+    {
+      "path": "Favi-BE/Favi-BE.API/Application/ContentDiscovery/ColdStartQueryReader.cs",
+      "sha256": "8957748454d4578eae31c58de46cdf8bc9bde5b90d3dcd3481f36402256362ec"
+    },
+    {
+      "path": "Favi-BE/Favi-BE.API/Application/ContentDiscovery/ContentDiscoveryQueryReaderAdapter.cs",
+      "sha256": "d5388145c778f61fc428dfc1fca62d06c6c281131eb2cf633b442e3cf8b425b5"
+    },
+    {
+      "path": "Favi-BE/Favi-BE.API/Application/ContentDiscovery/ExperimentalFeedQueryReader.cs",
+      "sha256": "67e53bfe10b068d3222cccb97d8c4bc6ea90b6b8039d3f353db9e2b137eb3a7f"
+    },
+    {
+      "path": "Favi-BE/Favi-BE.API/Application/ContentDiscovery/ExperimentalFeedSnapshot.cs",
+      "sha256": "3dc945bb841e5629c46f9460611270c2b047c98ef097d6f3af399ae7d5cfb559"
+    },
+    {
+      "path": "Favi-BE/Favi-BE.API/Application/ContentDiscovery/NoGraphCandidateSource.cs",
+      "sha256": "bba29495ad2e3deef980225cff8ee0d0bbdec671118a8a009b693a42d5e5e01a"
+    },
+    {
+      "path": "Favi-BE/Favi-BE.Modules.Auth/Domain/InterestTopics.cs",
+      "sha256": "0e8b0344f5e35b1d8a3d5f9f54e997a5507ba9459fe23ef07afa7d29808a627d"
+    },
+    {
+      "path": "Favi-BE/tools/oasis_adapter/.gitignore",
+      "sha256": "6d85d1e2bc7087dea9f531439d11f2e14e6a9d6f2d9a4133d7ec526414bf7522"
+    },
+    {
+      "path": "Favi-BE/tools/oasis_adapter/adapter.py",
+      "sha256": "06f0913d2b9e89f8060676bde74b01b2c0c8c006adba53b1fc2a32677600f973"
+    },
+    {
+      "path": "Favi-BE/tools/oasis_adapter/media-map.example.json",
+      "sha256": "3b29483a42398e65898c05ca13ad1afaee73cb7da7833084c1ba696a23417925"
+    },
+    {
+      "path": "Favi-BE/tools/oasis_adapter/test_adapter.py",
+      "sha256": "5d2ab64d04fc98586f830f1465ad8ecd282eb474565199ffbd9ad874a49ee9e8"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/adaptive_onboarding.py",
+      "sha256": "506139640b26932ffe1b961cb0532cc023f5740bf0f2077d9f9860ee6708bfc0"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/analyze_adaptive_cohorts.py",
+      "sha256": "bc816864997b02b4a55dfb4fc86c682c04ffec0c6e2ea9ace9a827302d723bb8"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/benchmark_recommenders.py",
+      "sha256": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/build_feed_artifact.py",
+      "sha256": "363981e24471210c84499eab492cd6eb14d8eb73b0add39040d6321cda6abcfa"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/check_dataset.py",
+      "sha256": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/collaborative_models.py",
+      "sha256": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/community_policy.py",
+      "sha256": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/compose.yml",
+      "sha256": "8ba18ae02642e0a3f9335c1a85021e0f91b2f752c7430cda21d6e534236a187b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/adaptive-pilot-long.json",
+      "sha256": "caf0a5c73ef0a7256ca0c53f9acae967a647e2812ec31071e3c9d0a04fac626f"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/adaptive-pilot.json",
+      "sha256": "b76517b70f9de018dfa8ccb8c1705540fc50ebbb988d18ac13188d17a1e16cb3"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/benchmark.json",
+      "sha256": "4f7aa3e5231a380755b39d3ab9efd152542235b833155d3808deea169ceb67af"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/favi-10k.json",
+      "sha256": "fae84afc77222a7308b5ae217cde1032623ff9750cca98abe4d98ad0656bea6c"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/favi-2k.json",
+      "sha256": "da1f480f4e7b502ea2fe1a06c2286b841f8e38c00f68e809db66a3981815f0fc"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/favi-5k.json",
+      "sha256": "182d9753afea7294a089ca4382f96713019dfe4d5ac5bfbe267ed00614159b33"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/recommenders/expanded.json",
+      "sha256": "92bd9f6ce8b4e88a78b96d37e03f1d2bd95d071a1e059260b106d39755e5f18c"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/recommenders/multiseed.json",
+      "sha256": "efa6303af096b1ad16f05e65560f40ac2a4b57567c77539fe2b7050e308d96ab"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/recommenders/popularity.json",
+      "sha256": "f0790a6dbea950f1e4e5368c4295ffe9fb6b8841eb4b6741d149902a380a1a6b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/configs/smoke.json",
+      "sha256": "a48a5be034693e68d1683d815c9cc5b3948cfbade09d78c11c41df38b55ee9e1"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/dataset_channel.py",
+      "sha256": "8f407002f516c8be4cfecd2133cbc37018cb47130c876fd1979da0e1405d2cab"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/dataset_fast.py",
+      "sha256": "f7ae0f832b331dc11ff4a539bf0e1818b25a865e5a950f53c29f28e77066f1e2"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/dataset_policy.py",
+      "sha256": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/ExperimentalFeedChecks.cs",
+      "sha256": "1f4e0c969779745a67de4bdd7e3eadac63999b3df4827aef82858001ac0d6bcc"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/free_society.py",
+      "sha256": "434fe30663a0f1ce54625dc6a1870e85bd0b9300be5c1de37fa384d0166d017f"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/generate_dataset.py",
+      "sha256": "fb72573b933355a5fad7ed2fcd7fb40cf0d73e605f7b6af5e95842550286a9f6"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/movielens_dataset.py",
+      "sha256": "843af71797b01b1c46d8a3238ea5d6ec251f97b5068e2b9a64787860c716e638"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/native_projection.py",
+      "sha256": "8fc9311c6ae75779524b2d6b374d184686a71a99563ef713b90f52c9151171b5"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/native_tools.py",
+      "sha256": "5a3c459ed0f646e22a416f5642f8516631a2cdb06b4e7017199eeedebf098dea"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/native-8b.Modelfile",
+      "sha256": "00f480efd2b021d170992388cc09438696411b8796d66e15ad949d52cc718458"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/OasisSmoke.csproj",
+      "sha256": "019e397878f097eddb074b04e42c9f0135769c5c3cf5a777a20fed9e136c164d"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/package_dataset.py",
+      "sha256": "2e3e37877ac04ff221c571b35130be504138bd636f44b0320f576968c428bc89"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/prepare_fixture.py",
+      "sha256": "f5b415b024cde47d3a10464a2daf06441da551273e820c7f58b79cea9de8ab1b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/prepare_native_recsys.py",
+      "sha256": "b7085c9c739fecb7416d68335eb7b2925095ba7b6ddd1ea6a4852c6423f80294"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/Program.cs",
+      "sha256": "7451270c66e6ea215cfd4a0d611c3055058e3b446f71c46b44fe23011b6fc9ec"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/README.md",
+      "sha256": "6e65f6c958195e7d061fb2a7582a43d6acb42fd290ba6f302cec554cdd19b75f"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/requirements-oasis.lock.txt",
+      "sha256": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/review_community.py",
+      "sha256": "37ebabe19ede9f24e9e9c03418cc23163de79672147d44c59e1729952011fc9d"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/review_native.py",
+      "sha256": "6f9f84b2b1ea2327c1df60972d050330d16f1e82d6bb6e45ebcec03d181aed9c"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_autonomous.py",
+      "sha256": "41c0920dd177b6059a2782d55855880eb1daad560a4f3528ec96a1f50dd14f2d"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_community.py",
+      "sha256": "491fb3fe537d9399220142a91ff5761663a2bebbbbcf05b3a097b4f25470f4ff"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_expanded_benchmark.py",
+      "sha256": "ab7edfae7c7a1cb89a10feb94e67710ee88ac26f359826b204006e8f17cc8e1d"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_formula_benchmark.py",
+      "sha256": "5af6a05554fcdcf85705234889b5865365e08fceb4ca971141d667fd567da9e7"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_free_society.py",
+      "sha256": "fc7d3724f6cdc2137096bba668433e842f5bb441143e1c9f8d9b6ab0cc076197"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_oasis_native.py",
+      "sha256": "72066d77e9fc7ed0dd8429bf26d61fd6588adf362bb16bec723619e7bb4d1814"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run_simulator.py",
+      "sha256": "a7677f4a49a46e01034a8dd9721cb1f5ff78864ce863cd63d666f42cc7d85cdb"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/run-dataset.ps1",
+      "sha256": "bc7e6f57c6ff923333c6c989bd5ab5364fed79007effd105f3884fdd8154a3f4"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/source_provenance.py",
+      "sha256": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/summarize_multiseed_benchmark.py",
+      "sha256": "203235ec2ed07457f8a6583d2791ec94d4efee2c5113c677bb3b20c88737d75b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_adaptive_cohorts.py",
+      "sha256": "deb729d5ea77706191682df5d46065e6e806512982d6e24464b6da82a82d3f54"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_adaptive_onboarding.py",
+      "sha256": "ba7bdb5e5dd7d36a26601a5d30b27b45bb0757a53fb9c41f88a8ca2db4c6fabf"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_benchmark_recommenders.py",
+      "sha256": "b3e2f37086280380ec173c8089a5c3af7fe16ef745d601a8c8114072e061a0d9"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_collaborative_models.py",
+      "sha256": "afe5c3e7643358d9159f0a030f99273632d6624b463f749495be03ee989a24e4"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_comment_diversity.py",
+      "sha256": "8e28e1c27ddb4feb0711901c349debbdc6344833d62fa5449687678b42c00ff7"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_community_policy.py",
+      "sha256": "1d026e92a2a10ab485d744f64a44f044ae38135a705980bf45967762b5b8f068"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_dataset_channel.py",
+      "sha256": "4b96c36f2252382f7ad949f2ef5e12cfca3c8e6c7806f170edf02b977a06960f"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_dataset_fast.py",
+      "sha256": "fb82553ce9584b1e8162c6827a66d8038add1a9956012d168125e98c0a1bbddf"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_dataset_integrity.py",
+      "sha256": "fd9c7978e98669cdbef915e2b288a0effe6e9e96e16158253aa0f3c4be254bf6"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_dataset_policy.py",
+      "sha256": "a9a7102222e65c7eb333d4af4aec1bcedc74bf6ef2ae85ef58a2988d85e522a3"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_feed_artifact.py",
+      "sha256": "4be5210581fcceaca4915272c6a8e7fb3ac4060eee841a9d9acdf187c8802626"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_free_society.py",
+      "sha256": "be29d870a00a786ad66d45eab3beb5ab4f3aba40ea3f906ce859128a7bfa8eae"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_movielens_dataset.py",
+      "sha256": "029e331994ab28f1b7f5330f99dfd605b4be714012e24a5813f4d0aab846e54b"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_multiseed_summary.py",
+      "sha256": "b150f223b66d4b603ca1aaab78cb927c574292c99435fb2645f39272d81f9de2"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_native_projection.py",
+      "sha256": "baf3f9f6d02e3993d4e0a738a9e411710682ed46a9ee04eb175215342ddced40"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_native_tools.py",
+      "sha256": "d413681c38d293ccd8ffe28e2f5c3daea537c6ac0c8a4e957a25e9f0d7b2c528"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test_source_provenance.py",
+      "sha256": "6378cddebebb524dd2d0cf6ff4d9cebf9e2607cfd74f7f7dface37cb1d947ccf"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test-api-isolation.ps1",
+      "sha256": "7eff4b5a1bc56da967c440dea53e41b1dbae9a36fdd12f4b908438046b021109"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/test-isolation.ps1",
+      "sha256": "8b08485a44bf9d96a20f812fd63ac7eecf1883ea6aa73e9470eaaa70556c70f1"
+    },
+    {
+      "path": "Favi-BE/tools/oasis-smoke/verify.ps1",
+      "sha256": "4cf1fd630304809451c06ba3c99c44a4580aaf5b7ef866de0707320b7562733c"
+    }
+  ]
+}

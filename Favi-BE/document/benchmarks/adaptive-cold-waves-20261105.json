@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "dataset": ".tools\\datasets\\adaptive-cold-waves-20261105-001",
+  "integrity": {
+    "verified_files": 28,
+    "events_sha256": "f4582120586812623191d6e0836254d27f80dd314047bb1d83e6895ed9604613",
+    "quality": {
+      "events": 61830,
+      "posts": 500,
+      "likes": 11427,
+      "follows": 1412,
+      "exposures": 46188,
+      "warm_users": 892,
+      "quality_passed": true
+    }
+  },
+  "minimum_target_users": 30,
+  "phases": {
+    "validation": {
+      "cutoff": 300,
+      "end": 400,
+      "not_arrived": 300,
+      "cohorts": {
+        "C0": {
+          "users": 98,
+          "with_target": 93,
+          "without_target": 5,
+          "targets": 368,
+          "excluded_targets": 29
+        },
+        "C1": {
+          "users": 96,
+          "with_target": 94,
+          "without_target": 2,
+          "targets": 351,
+          "excluded_targets": 31
+        },
+        "C2": {
+          "users": 97,
+          "with_target": 92,
+          "without_target": 5,
+          "targets": 371,
+          "excluded_targets": 34
+        },
+        "C3": {
+          "users": 0,
+          "with_target": 0,
+          "without_target": 0,
+          "targets": 0,
+          "excluded_targets": 0
+        },
+        "T1": {
+          "users": 9,
+          "with_target": 7,
+          "without_target": 2,
+          "targets": 53,
+          "excluded_targets": 14
+        },
+        "T2": {
+          "users": 13,
+          "with_target": 13,
+          "without_target": 0,
+          "targets": 33,
+          "excluded_targets": 5
+        },
+        "W1": {
+          "users": 343,
+          "with_target": 321,
+          "without_target": 22,
+          "targets": 879,
+          "excluded_targets": 118
+        },
+        "W2": {
+          "users": 44,
+          "with_target": 44,
+          "without_target": 0,
+          "targets": 366,
+          "excluded_targets": 70
+        }
+      },
+      "gate_passed": false
+    },
+    "test": {
+      "cutoff": 400,
+      "end": 500,
+      "not_arrived": 0,
+      "cohorts": {
+        "C0": {
+          "users": 102,
+          "with_target": 96,
+          "without_target": 6,
+          "targets": 351,
+          "excluded_targets": 51
+        },
+        "C1": {
+          "users": 98,
+          "with_target": 94,
+          "without_target": 4,
+          "targets": 372,
+          "excluded_targets": 31
+        },
+        "C2": {
+          "users": 100,
+          "with_target": 97,
+          "without_target": 3,
+          "targets": 385,
+          "excluded_targets": 36
+        },
+        "C3": {
+          "users": 0,
+          "with_target": 0,
+          "without_target": 0,
+          "targets": 0,
+          "excluded_targets": 0
+        },
+        "T1": {
+          "users": 53,
+          "with_target": 50,
+          "without_target": 3,
+          "targets": 149,
+          "excluded_targets": 32
+        },
+        "T2": {
+          "users": 157,
+          "with_target": 141,
+          "without_target": 16,
+          "targets": 403,
+          "excluded_targets": 68
+        },
+        "W1": {
+          "users": 434,
+          "with_target": 398,
+          "without_target": 36,
+          "targets": 1317,
+          "excluded_targets": 255
+        },
+        "W2": {
+          "users": 56,
+          "with_target": 56,
+          "without_target": 0,
+          "targets": 360,
+          "excluded_targets": 113
+        }
+      },
+      "gate_passed": false
+    }
+  },
+  "gate_passed": false
+}

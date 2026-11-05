@@ -27,7 +27,7 @@ def write_json(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-async def generate(config, output, upstream):
+async def generate(config, output, upstream, adaptive=False, arrival_policy="uniform", scenario="main"):
     started = time.monotonic()
     output, upstream = output.resolve(), upstream.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -54,6 +54,22 @@ async def generate(config, output, upstream):
     from adapter import export
 
     people = population(config["seed"], config["users"], len(config["topics"]))
+    onboarding = None
+    if adaptive:
+        from adaptive_onboarding import TOPICS, plan, preferences
+        if tuple(config["topics"]) != TOPICS:
+            raise ValueError("Adaptive generation requires production topic catalog in order")
+        onboarding = plan(config["users"], config["seed"], config["ticks"], arrival_policy)
+        if arrival_policy == "lifecycle-v2":
+            for mode in ('informative', 'noisy', 'independent'):
+                write_json(output / f"onboarding.{mode}.json", preferences(onboarding, people, mode))
+            onboarding = preferences(onboarding, people, 'informative')
+        if scenario == "sparse-topic":
+            onboarding = [{**r, 'topics': ['music'] if r['topics'] else []} for r in onboarding]
+        write_json(output / "adaptive-policy.json", {"arrival_policy": arrival_policy, "scenario": scenario, "declared_preferences": "informative-v1" if arrival_policy == "lifecycle-v2" else "random-independent-v1", "native_accounts": "bootstrap", "activity_arrival": "logical"})
+        write_json(output / "onboarding.json", onboarding)
+        (harness / "adaptive_onboarding.py").write_bytes(Path(__file__).with_name("adaptive_onboarding.py").read_bytes())
+        harness_hashes["adaptive_onboarding.py"] = hashlib.sha256((harness / "adaptive_onboarding.py").read_bytes()).hexdigest()
     write_json(output / "population.initial.json", [p.record() for p in people])
     rng = random.Random(config["seed"] + 2)
     actions = {k: v for k, v in (("post", ActionType.CREATE_POST), ("comment", ActionType.CREATE_COMMENT), ("like", ActionType.LIKE_POST), ("follow", ActionType.FOLLOW))}
@@ -83,6 +99,8 @@ async def generate(config, output, upstream):
             raise RuntimeError(f"OASIS rejected {kind}: {result}")
         return result
     async def publish(person, topic, tick):
+        if scenario == "sparse-topic" and topic == 9 and sum(p['topic'] == 9 for p in posts) >= 9:
+            topic = 0
         text = content("post", config["topics"][topic], person.id, len(posts) + 1)
         result = await execute(person, "post", {"content": text})
         post_id = result["post_id"]
@@ -96,10 +114,14 @@ async def generate(config, output, upstream):
         if rows("SELECT user_id,agent_id FROM user ORDER BY user_id") != [(p.id, p.id) for p in people]:
             raise RuntimeError("Pinned OASIS user/agent mapping changed")
         for a, b in initial_edges_fast(people, config["seed"]):
+            if onboarding and (onboarding[a]["arrival_tick"] != -1 or onboarding[b]["arrival_tick"] != -1):
+                continue
             await execute(people[a], "follow", {"followee_id": b})
             emit(-1, a, "follow", target_user_id=b)
             people[a].follows.add(b)
-        creators = [p for p in people if p.role == "creator"]
+        creators = [p for p in people if p.role == "creator" and (not onboarding or onboarding[p.id]["arrival_tick"] == -1)]
+        if not creators:
+            raise ValueError("No bootstrap creators")
         for index in range(config["initial_posts"]):
             await publish(creators[index % len(creators)], index % len(config["topics"]), -1)
         feed_sampler = FastFeed(posts)
@@ -107,6 +129,8 @@ async def generate(config, output, upstream):
             order = people.copy()
             rng.shuffle(order)
             for person in order:
+                if onboarding and onboarding[person.id]["arrival_tick"] > tick:
+                    continue
                 person.fatigue *= .75
                 if rng.random() >= config["activity"][person.role] * (1 - person.fatigue):
                     continue
@@ -141,6 +165,13 @@ async def generate(config, output, upstream):
         await platform_task
 
     audit = audit_events(events, config)
+    if onboarding:
+        for event in events:
+            if event["tick"] < onboarding[event["user_id"]]["arrival_tick"]:
+                raise ValueError("Action before logical arrival")
+            if event["kind"] == "follow" and event["tick"] < onboarding[event["target_user_id"]]["arrival_tick"]:
+                raise ValueError("Follow target before logical arrival")
+        write_json(output / "adaptive-validation.json", {"passed": True, "users": len(onboarding), "semantics": "logical activity arrival; native accounts provisioned at bootstrap"})
     archive, source_audit = audit_database(database)
     # Require history and final engine state to agree, not only equal row counts.
     actual_likes = {(r["user_id"], r["post_id"]) for r in archive["like"]}
@@ -181,7 +212,14 @@ def main():
     parser.add_argument("--seed", type=int)
     parser.add_argument("--validate-config", action="store_true")
     parser.add_argument("--timeout-seconds", type=int, default=1800)
+    parser.add_argument("--adaptive", action="store_true")
+    parser.add_argument("--arrival-policy", choices=("uniform", "cutoff-waves-v1", "lifecycle-v2"), default="uniform")
+    parser.add_argument("--scenario", choices=("main", "sparse-topic"), default="main")
     args = parser.parse_args()
+    if args.arrival_policy != "uniform" and not args.adaptive:
+        parser.error("arrival-policy requires --adaptive")
+    if args.scenario != "main" and not args.adaptive:
+        parser.error("scenario requires --adaptive")
     config = json.loads(args.config.read_text(encoding="utf-8-sig"))
     if args.seed is not None:
         config["seed"] = args.seed
@@ -197,7 +235,7 @@ def main():
     if args.output.exists():
         parser.error("Output already exists; choose a new directory")
     try:
-        asyncio.run(asyncio.wait_for(generate(config, args.output, args.upstream), timeout=args.timeout_seconds))
+        asyncio.run(asyncio.wait_for(generate(config, args.output, args.upstream, args.adaptive, args.arrival_policy, args.scenario), timeout=args.timeout_seconds))
     except Exception as error:
         if args.output.exists() and not (args.output / "dataset-manifest.json").exists():
             failure = args.output / "failure.json"

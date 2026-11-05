@@ -227,3 +227,76 @@ the full dataset was retested. Small-catalog paging gate also passed1543checks.
 NU1903 SignalR.Common9.0.11 warning remains; this is offline/integration readiness,
 not production release approval. All integration-owned Compose resources cleaned
 up; no model service was started for this flow. Raw generated files remain ignored.
+# Adaptive onboarding preparation — 05/11/2026
+
+Lifecycle-v2 pilot implementation: `--adaptive --arrival-policy lifecycle-v2`
+allocates 30% bootstrap, 15% immediately before each cutoff, and 20% before
+each cutoff at 10/30/60-tick offsets. Topic count cycles by `(user // 3) % 3`
+to avoid perfectly confounding topic count with the offset group `user % 3`.
+This does not guarantee every finite stratum is exactly balanced.
+Creators are not forcibly moved: bootstrap creator presence is fail-closed
+and role distributions require inspection before confirmatory freeze.
+
+Main onboarding uses initial latent-interest top topics as synthetic informative
+self-report. All modes are archived as `onboarding.informative/noisy/independent.json`;
+noisy replaces ceil(n/2) slots (one of one or two of three), explicitly rounding
+the nominal 50% corruption rate upward for small lists. Initial latent state
+is generator provenance only. Declared preferences do not affect exposure in
+this version, so alternate sidecars support ranking replay, not behavioral effects.
+
+`--scenario sparse-topic` maps nonempty actual preferences to music and caps
+music at nine posts; subsequent music post intentions become travel. This
+deliberately changes content distribution. Alternate preference sidecars remain
+pre-scarcity provenance and must not be interpreted as sparse actual preferences.
+Analyzer independently recomputes onboarding and verifies the cap. Main requires
+C0/C1/C2/T1/T2/W1/W2; sparse requires C3; other cells are explicitly N/A for
+gate purposes but counts remain visible. Combined readiness requires both
+scenario gates. Tags are controlled simulator topic metadata, not imported
+production PostTags; API parity remains a separate gate.
+
+Pilot config: `configs/adaptive-lifecycle-v2.json`, 5.000 users/2.000 post cap/
+500 ticks. Source changes during a run do not alter its archived harness;
+record analyzer source hash separately from generation harness hashes.
+
+Cold expansion uses `--adaptive --arrival-policy cutoff-waves-v1`: 40% user IDs
+start at -1, 30% at validation cutoff minus one tick, and 30% at test cutoff
+minus one tick. Within each wave, topic counts cycle 0/1/3 independently of
+labels. One tick of natural activity is allowed before classification; users
+are not forcibly kept cold and likes are not deleted. This is a controlled
+stress population, not a claim about real arrival rates. The selected policy
+is saved in manifest-hashed `adaptive-policy.json`; read-back cohort analysis
+recomputes the plan and requires equality. Default uniform arrival remains
+available. Run all policy comparisons on pilot data before freezing protocol.
+
+Follow-up: `generate_dataset.py --adaptive` now writes `onboarding.json`, delays
+actor activity until logical arrival and limits bootstrap follows/posts to
+bootstrap participants. Native accounts still exist from bootstrap. Use
+`configs/adaptive-pilot-long.json` for the 1.000-user/500-tick exploratory pilot.
+`analyze_adaptive_cohorts.py --dataset <bundle> --output <new-report.json>` first
+verifies the complete manifest and independently audits arrival constraints.
+It uses 60/20/20 chronological windows, excludes own/prior-positive/future items,
+and reports each cohort's total users, users with/without targets, distinct
+targets and excluded targets. C3 takes priority over C1/C2 when fewer than ten
+eligible items match declared topics. All eight cohorts require at least thirty
+target-bearing users per phase for the pilot gate. Missing cohorts fail the
+gate rather than disappearing from the table. Output must be a new path.
+This audit does not claim production tag import or cold-ranker parity.
+
+`tools/oasis-smoke/adaptive_onboarding.py` defines a separate deterministic
+arrival/preference plan for the forthcoming adaptive dataset. It uses the ten
+production topics; a regression compares them with `InterestTopics.cs`. The
+first half of user IDs arrive at bootstrap tick -1, the rest uniformly during
+the simulation. Declared topic counts are sampled from 0/1/3 independently of
+latent interests. This deliberately models uninformative onboarding as a stress
+condition, not accurate self-reporting or a natural population distribution.
+The current policy has no preference changes after arrival.
+
+Validation requires exactly one row per user, valid topic membership, unique
+topics and ordered integer arrival/preference timestamps. At request cutoff t,
+only arrivals and preferences strictly before t are visible; an unknown user
+returns None, while an existing user without visible preferences returns [].
+The component does not yet delay native OASIS actions, change event/export
+schemas, or guarantee sufficient target-bearing cohorts. Those integration
+gates must pass before generating the confirmatory datasets. Four unit tests
+passed on 05/11/2026, including production catalog parity and temporal leakage
+boundaries. Historical generation behavior below remains version 1.

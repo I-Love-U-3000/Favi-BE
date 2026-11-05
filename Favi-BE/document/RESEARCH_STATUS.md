@@ -1,5 +1,43 @@
 # Đề tài nghiên cứu Favi và tiến độ triển khai
 
+## Lifecycle-v2 — pilot data gate PASS, 05/11/2026
+
+Đã implement và chạy main + sparse-topic, mỗi bộ 5k users/2k posts/500 ticks.
+Tất cả tám nhóm bắt buộc có >=30 target users ở cả validation/test; không hạ
+ngưỡng hoặc chọn user theo future labels. 98 regression tests pass.
+[Báo cáo tiếng Việt](benchmarks/adaptive-lifecycle-v2-20261105/REPORT_VI.md)
+ghi số liệu, giới hạn và bước tiếp theo. Đây là data readiness, chưa có điểm
+adaptive, formula parity mới hoặc confirmatory freeze.
+
+## Cold expansion — 05/11/2026
+
+Đã chạy OASIS với cold waves; cold/general, một topic và nhiều topics đều đủ
+92–97 users có target mỗi phase. 97 tests pass, read-back 28 files pass.
+Gate tổng chưa đạt vì transition validation thiếu và C3 vắng. Xem
+[report cold waves](benchmarks/adaptive-cold-waves-20261105.md).
+
+## Adaptive onboarding — 05/11/2026
+
+Đã nối opt-in `--adaptive` vào generator và chạy OASIS thật: 1.000 users,
+30 ticks, 45 posts, 898 likes, generator audit pass; 95 regression tests pass.
+Lịch sử pilot có cold/transition nhưng thiếu W2 và W1 ít mẫu, chưa đạt gate
+cohort cho benchmark chính. Theo dõi [milestones](ADAPTIVE_MILESTONES.md).
+
+Đã thêm policy arrival/preference deterministic và validator độc lập, dùng đúng
+10 topics production. Bốn tests mới pass: catalog parity, deterministic/variation,
+timestamp visibility và dữ liệu hỏng. Chưa nối policy vào OASIS action loop;
+chưa sinh pilot có targets hoặc chạy benchmark adaptive. Chi tiết trong
+[data generation flow](DATA_GENERATION_FLOW.md).
+
+## Adaptive milestone — preflight 04/11/2026
+
+Đã commit nền benchmark/experimental feed và checkout `codex/adaptive-recommender-v1`.
+Đã replay benchmark fixture nhỏ và đóng gói/đọc lại 25 archive members thành công.
+[Preflight report](benchmarks/adaptive-preflight-20261104.md) ghi kết quả, checksum,
+related work ban đầu và khoảng cách 8 topics simulator/10 topics production.
+Protocol còn draft; chưa có kết quả adaptive. Người dùng cho phép tiếp tục không
+dừng chờ review từng bước; mục tiêu và cách làm việc được lưu trong AGENTS.md.
+
 ## Kế hoạch tiếp theo — 04/11/2026
 
 Đã lập [execution plan gợi ý thích ứng cold → warm](ADAPTIVE_RECOMMENDER_EXECUTION_PLAN.md).

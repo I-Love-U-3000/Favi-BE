@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "arrival_counts": {
+    "-1": 1500,
+    "299": 750,
+    "399": 750,
+    "290": 334,
+    "270": 333,
+    "240": 333,
+    "370": 334,
+    "340": 333,
+    "390": 333
+  },
+  "roles_by_wave": {
+    "-1": {
+      "reader": 1346,
+      "contributor": 141,
+      "creator": 13
+    },
+    "299": {
+      "reader": 669,
+      "contributor": 74,
+      "creator": 7
+    },
+    "399": {
+      "reader": 683,
+      "contributor": 54,
+      "creator": 13
+    },
+    "290": {
+      "reader": 296,
+      "contributor": 36,
+      "creator": 2
+    },
+    "270": {
+      "reader": 300,
+      "contributor": 30,
+      "creator": 3
+    },
+    "240": {
+      "reader": 307,
+      "creator": 4,
+      "contributor": 22
+    },
+    "370": {
+      "reader": 304,
+      "contributor": 28,
+      "creator": 2
+    },
+    "340": {
+      "reader": 298,
+      "contributor": 33,
+      "creator": 2
+    },
+    "390": {
+      "reader": 297,
+      "contributor": 32,
+      "creator": 4
+    }
+  },
+  "topics": [
+    "travel",
+    "food",
+    "sports",
+    "city",
+    "nature",
+    "technology",
+    "lifestyle",
+    "art",
+    "fitness",
+    "music"
+  ],
+  "config_sha256": "fdd6e64830e6e0f8e00abf84a3efbc2cc1936829c29be223c85d5db1a0cc1fe1",
+  "label_based_selection": false,
+  "bootstrap_creators": 13
+}

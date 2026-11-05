@@ -1,5 +1,10 @@
 # Protocol adaptive-v1 — bản review
 
+Revision ngày 05/11/2026: đọc [kế hoạch tổng thể](../ADAPTIVE_FINAL_REVISION.md).
+Protocol này chưa freeze. Gate yêu cầu C3 trong mọi dataset bên dưới được thay
+bằng gate theo scenario: main C0/C1/C2/T1/T2/W1/W2, sparse-topic C3 riêng.
+Population, informative/noisy và audit phải implement/kiểm chứng trước freeze.
+
 Ngày: 04/11/2026. Trạng thái: draft để review, chưa đóng băng và chưa chạy experiment. Đây là đầu ra đầu tiên của bước 1 trong [execution plan](../ADAPTIVE_RECOMMENDER_EXECUTION_PLAN.md).
 
 ## Câu hỏi và đối chứng

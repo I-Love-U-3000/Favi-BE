@@ -1,5 +1,7 @@
 # Favi-BE Technical Documentation
 
+- [Milestones adaptive và cách đọc báo cáo tiến độ](ADAPTIVE_MILESTONES.md)
+
 - [Execution plan: nghiên cứu và triển khai gợi ý thích ứng cold → warm](ADAPTIVE_RECOMMENDER_EXECUTION_PLAN.md)
 
 - [Agent tự chọn danh tính, cảm xúc, sự kiện và hành động](FREE_SOCIAL_AGENTS.md)

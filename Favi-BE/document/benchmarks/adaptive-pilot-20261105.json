@@ -1,0 +1,22 @@
+{
+  "dataset": ".tools\\datasets\\adaptive-pilot-20261105-001",
+  "cutoffs": {
+    "18": {
+      "T2": 93,
+      "C2": 162,
+      "C0": 170,
+      "C1": 151,
+      "T1": 240,
+      "W1": 5
+    },
+    "24": {
+      "T2": 148,
+      "C2": 166,
+      "C0": 146,
+      "C1": 149,
+      "T1": 294,
+      "W1": 6
+    }
+  },
+  "note": "Pilot history counts only; not target-bearing cohort gate or relevance benchmark"
+}

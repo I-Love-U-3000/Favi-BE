@@ -1,5 +1,9 @@
 # Copilot & Agent Operating Instructions
 
+## User context required on resume
+
+Read the parent `../AGENTS.md` section "Persistent user preferences and research goal" before continuing. It records the user's communication style, Favi thesis objective, model reasoning limits, and authorization to continue milestones without routine review pauses. Later user instructions take precedence.
+
 You must work with exceptional precision and system-level depth because GPT Codex and rigorous code review tools will inspect and validate your output.
 
 ---
