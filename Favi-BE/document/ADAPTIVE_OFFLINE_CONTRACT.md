@@ -66,3 +66,9 @@ Formula V2 đã được thêm; xem benchmarks/ADAPTIVE_RUNNER_20261108.md.
 V2 giữ zero-tag historical semantics; observed tag count1 chỉ áp dụng V1.
 Runner chọn validation-only, persist selection trước test và refit theo epoch
 đã khóa. Không đổi production reader hay các kết quả benchmark lịch sử.
+
+Secondary fixed-selection replay dùng `run_adaptive_replay.py`; xem
+benchmarks/ADAPTIVE_REPLAY_20261108.md. Primary predictions phải replay đúng
+ranked IDs; sidecars giữ cùng population, báo cả primary/current cohorts.
+No-topics giữ general fallback; no-routing giữ cấu hình R và đặt threshold1.
+Sparse informative sidecar là pre-scarcity metadata, khác primary music-only.

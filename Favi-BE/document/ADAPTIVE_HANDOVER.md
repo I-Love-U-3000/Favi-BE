@@ -1,3 +1,46 @@
+# Fixed-selection replay runner ready — 08/11/2026
+
+Milestone mới: tools/oasis-smoke/run_adaptive_replay.py +4meaningful tests;
+đọc benchmarks/ADAPTIVE_REPLAY_20261108.md trước chạy. Không sửa original
+runner/feed/model/config; primary practical gate vẫn FAIL. Chưa chạy replay
+trên6datasets5k. Original ranking commit b70fc9a vẫn là evidence gốc.
+
+Tests:13tests replay+original runner PASS (EASE fixture ban đầu), sau nâng
+fixture replay thành real LightGCN ba seeds/exact10epochs thì4replay tests
+PASS; primary predictions khớp từng ID, refit cache3fits, không retune.
+Một lần fixture assertion cold cohort sai (user2đã có validation like), sửa
+thêm zero-positive user3có heldout target; không liên quan dataset/score thật.
+Một CLI test sai relative Python path đã sửa; không numerical job còn chạy.
+Git diff --check PASS; root nul cũ giữ nguyên. Milestone title
+`feat(research): add fixed-selection adaptive robustness replay`.
+
+Runner kiểm original manifest/source drift/selection prefix+protocol+onboarding,
+qualified gate/lock, output mới; primary predictions phải khớp original mọi
+method/optimizer. Sidecars informative/noisy/independent giữ identity/timeline;
+report paired population, overlap và primary/current cohorts. Sparse primary
+music-only khác informative sidecar pre-scarcity: báo rõ, không sửa metadata.
+No-topics xóa primary topics nhưng giữ general cold fallback (B1/R);
+R-no-routing threshold1 giữ R config/epoch. Tất cả original9methods trên
+primary+3sidecars; shared refit cache; exact epochs/optimizer seeds frozen.
+
+NEXT CHAT: kiểm Git/process/lease rồi claim. Review runner/tests/docs trước
+execution; chuẩn bị batch tuần tự6qualified datasets, original ranking folders
+ở .tools/benchmarks/adaptive-confirmatory-ranking-20261108/<dataset-name>.
+Kiểm hashes gốc against tracked ranking batch/manifest và dataset ZIP receipts
+trước chạy. Output mới .tools/benchmarks/adaptive-replay-20261108; giữ fail/logs,
+stop on failure. Có thể primary replay cost đáng kể vì kiểm đủ9methods nhưng
+không retune. Không rerun6ranking/tuning/111tests/parity/pilot vô cớ.
+Lưu batch/source/lock/CLI inventory, report main/sparse riêng, gộp optimizer
+trước dataset, paired deltas/cohort transitions; kiểm toán metrics từ per-user.
+Lưu ZIP all members readback, tracked report/evidence, commit riêng, handover
+rồi chat mới. Sau đó full cost/HTTP lifecycle/fallback/privacy/resource gates.
+Không gọi sample<=1000 là full5k serving, không merge/deploy tự ý.
+
+User cho làm liên tục đến12:00ngày08/11Asia/Saigon, không dừng07:00;
+không subagents, không automation/quota reset cycles mới. Lease sẽ handoff-ready
+sau commit, exact hash xem git/lease. Numerics/.NET/Docker/Git commit dùng
+require_escalated tránh sandbox DLL. CLI Python từ solution .tools/oasis-env/
+Scripts/python.exe; từ tools/oasis-smoke dùng ../../.tools/oasis-env/Scripts/python.exe.
 # Confirmatory ranking completed: practical gate FAIL — 08/11/2026
 
 Milestone hoàn tất: sáu main/sparse seeds20261111/12/13 đều PASS, không failed
