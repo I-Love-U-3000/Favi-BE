@@ -60,3 +60,9 @@ cohort bằng đúng data gate. Không retune bằng test; baseline pilot là ex
 
 Không có DB/API changes, HTTP authorization verification mới, model superiority
 claim hay causal engagement estimate trong milestone này.
+
+Implementation 08/11/2026: common-candidate collaborative/router runner và
+Formula V2 đã được thêm; xem benchmarks/ADAPTIVE_RUNNER_20261108.md.
+V2 giữ zero-tag historical semantics; observed tag count1 chỉ áp dụng V1.
+Runner chọn validation-only, persist selection trước test và refit theo epoch
+đã khóa. Không đổi production reader hay các kết quả benchmark lịch sử.

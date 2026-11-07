@@ -12,8 +12,8 @@ def source_guid(value):
 
 class AdaptiveFeed:
     def __init__(self, events, cutoff, onboarding, *, warm_model=None, threshold=1,
-                 method='formula', hours_per_tick=1.0):
-        if threshold not in (1, 5) or method not in ('formula', 'popularity', 'topic-only', 'collaborative'):
+                 method='formula', hours_per_tick=1.0, parameters=None):
+        if threshold not in (1, 5) or method not in ('formula', 'formula-v2', 'popularity', 'topic-only', 'collaborative'):
             raise ValueError('Unsupported route')
         if method == 'collaborative' and (warm_model is None or warm_model.cutoff != cutoff):
             raise ValueError('Collaborative model required at same cutoff')
@@ -24,6 +24,8 @@ class AdaptiveFeed:
         self.onboarding = {r['user_id']: r for r in onboarding}
         self.warm_model, self.threshold, self.method = warm_model, threshold, method
         self.hours_per_tick = hours_per_tick
+        self.v2 = (Ranker(events, cutoff, 'favi_formula_v2', hours_per_tick, parameters)
+                   if method == 'formula-v2' else None)
 
     def candidates(self, user):
         row = self.onboarding.get(user)
@@ -72,6 +74,8 @@ class AdaptiveFeed:
             return sorted(self.candidates(user), key=lambda i: (-self.likes[i], i))[:k]
         if self.method == 'collaborative':
             return self.warm_model.rank(user, k)
+        if self.method == 'formula-v2':
+            return self.v2.rank(user, k)
         followed = {source_guid(a + 1) for a in self.base.follows.get(user, ())}
         followers = {source_guid(a + 1) for a, followed_ids in self.base.follows.items() if user in followed_ids}
         interactions = {source_guid(author + 1): count for (viewer, author), count in self.base.author_interactions.items() if viewer == user}

@@ -1,3 +1,30 @@
+# Runner checkpoint — 08/11/2026
+
+Common-candidate adaptive runner milestone implemented; commit with this heading.
+Read benchmarks/ADAPTIVE_RUNNER_20261108.md and current frozen protocol in full.
+111 Python tests PASS, including9 new runner tests; real numerical fixture uses
+EASE/PPR/LightGCN, orchestration fixture mocks data gate/lock/tuning explicitly.
+Dependency lock130packages matched; source inventory16files and source ZIP
+readback PASS: .tools/benchmarks/adaptive-runner-readiness-20261108/readiness.json.
+ZIP SHA256 5142e8a93fcdd8a0d1b17774822dc0cd7f8cb8b01f5b1c4e946bc0e3c50a6827.
+
+NEXT SESSION: claim lease after git/process check; generate confirmatory main
+and sparse-topic datasets seeds20261111/12/13 (still ungenerated/unobserved).
+Read generator/docs/previous pilot commands before executing. Runner/source/lock
+readiness now PASS; individual dataset gates/archive ZIP readback still mandatory.
+Run no confirmatory benchmark until all six dataset gates pass. Keep failed
+seeds/logs; stop batch if gate fail, no seed substitution or lowering cohort gates.
+Record frozen source/config/lock inventories and CLI for dataset generation.
+Then run tools/oasis-smoke/run_adaptive_benchmark.py on each qualified dataset.
+Runner reports selected B1/R, family threshold1, V2, Popularity/topic-only/V1.
+Robustness sidecars/ablations, cross-dataset main-only primary practical gate,
+optimizer hierarchy report, full cost/HTTP serving remain subsequent work.
+No claim of recommendation improvement has been made. No confirmatory data or
+ranking generated in runner session. Existing pilot baseline/parity not rerun.
+Git preexisting root nul preserved. No background Python/.NET jobs after tests.
+No PR/push/merge/deploy. Continue milestone-per-commit with fresh sessions as
+user requested, no subagents, no additional quota reset cycles. Numerical CLI
+require_escalated to avoid sandbox DLL popups. Preserve all prior limitations.
 # Handover: Favi adaptive research
 
 ## Protocol design checkpoint — 08/11/2026
