@@ -1,3 +1,109 @@
+# Confirmatory ranking completed: practical gate FAIL — 08/11/2026
+
+Milestone hoàn tất: sáu main/sparse seeds20261111/12/13 đều PASS, không failed
+run, đổi seed, hạ gate, sửa runner/config hoặc retune theo test. Session39337
+exit0; không Python/.NET jobs còn chạy khi kiểm cuối. Lease sẽ handoff-ready
+sau commit. Source khi chạy e72dcd3; milestone commit title:
+`docs(research): report confirmatory adaptive ranking and failed practical gate`.
+Exact milestone hash xem git log/lease sau commit (không tự nhúng hash vào commit).
+
+Báo cáo đầy đủ: benchmarks/adaptive-confirmatory-ranking-20261108/REPORT_VI.md.
+Main R−B1 mean+.00033478391982297295, dataset sample std.0006613260216200848;
+seed deltas+.00048101599650505165/−.00038741935586277323/+.0009107551188266404.
+Win/tie/loss2/0/1; mean gain<.001 nên practical gate FAIL. Cohort mean loss budget
+PASS; cold0,T1+.0015088938715433523,T2+.0011140598523477648,
+W1−.0000036888890630823686,W2−.00019890089367366934. Bác bỏ claim lợi ích
+thực dụng của joint R trong thiết kế này; không claim significance/causal/novelty.
+Main11/13 B1 EASElambda1000/threshold1,R same/threshold5. Main12 B1 LightGCN
+2layers/lr.001/290epochs/threshold1,R2layers/lr.01/60epochs/threshold5:
+delta gồm joint model/config/routing selection, cần ablation để cô lập routing.
+Sparse ba seeds R=B1/threshold1; overall/C3delta0, C3users704/675/671; prediction
+files B1/R tương ứng giống từng byte. Sparse C3 loss budget PASS nhưng không
+thay robustness/HTTP gate. Optimizer seeds20261103/04/05 gộp trong dataset trước.
+
+Independent arithmetic audit PASS78result records: mọi per-user nDCG/Recall,
+cohort means/users, common population, selected trial membership, hierarchical
+means/std và identical-choice prediction bytes. Selection/source/manifests đều
+được kiểm readback;130dependency lock/source drift checks PASS. Không rerun111
+regression/parity/pilot vì runner không đổi. Tracked summary/batch/audit/archive
+và6report/selection/tuning/manifest folders ở cạnh REPORT_VI.md; scripts snapshots
+ở scripts/. Raw/logs/source ZIP ở solution
+.tools/benchmarks/adaptive-confirmatory-ranking-20261108. ZIP225members/28,774,737
+bytes ở .tools/dataset-archives/adaptive-confirmatory-ranking-20261108.zip,
+SHA256d9c113d50ad147db42b092f990b46a3879d2a65cca3f082fe0b5f467629aa102;
+all members readback PASS. Không rerun batch trên output cũ. Elapsed mỗi dataset
+2040.18–2280.33s gồm orchestration/polling, chưa full training/HTTP cost.
+
+NEXT CHAT: kiểm Git/process/lease rồi claim. Đọc frozen protocol/config, report
+ranking mới và ADAPTIVE_OFFLINE_CONTRACT. Làm robustness informative/noisy/
+independent và ablations bỏ topics/bỏ routing giữ selection chính, không retune.
+Main primary gate đã FAIL: không sửa method theo test rồi tiếp tục gọi cùng
+holdout confirmatory. Refit exact epochs/optimizer hierarchy/cache/candidates/
+targets phải giữ. Sidecar thay preferences/cohort chứ không đổi population;
+báo paired users, overlap và cohort chuyển. Có thể chia milestone replay runner
+và execution/report nếu cần nhưng tiếp tục không chờ review thường lệ. Sau đó
+full cost/HTTP lifecycle/fallback/privacy/resource gates theo protocol còn phải làm.
+HTTP existing implementation/artifact contract cần inspect trước đề xuất thay đổi.
+Không claim sample<=1000users là full5k serving. Không merge/deploy tự ý.
+Tiếp trong window đã cho phép đến12:00 ngày08/11 Asia/Saigon, không dừng07:00;
+không subagents hoặc thêm reset/quota/automation cycles. Numerics/.NET/Docker và
+Git commit require_escalated theo handover. Root nul cũ giữ nguyên.
+Các progress/PID snapshots dưới đây là lịch sử, lease hiện tại mới có hiệu lực.
+# Ranking progress: five of six; main gain gate fails — 08/11/2026
+
+Session39337 vẫn chạy sparse20261113 cuối batch. KHÔNG mở batch mới.
+Main20261113 PASS:4919target users, B1.012381678230342584,
+R.013292433349169224, delta+.0009107551188266404. B1/R EASElambda1000,
+threshold1/5. Ba main deltas: +.000481015996505052,
+−.000387419355862771,+.0009107551188266404; mean~+.000334784 <.001.
+Vì vậy main practical gain gate FAIL dù2/3seeds dương. Chưa tính report
+cohort mean/optimizer hierarchy chính thức; đợi all6PASS rồi summarize.py.
+Đây kết quả âm cho claim lợi ích thực dụng trong thiết kế frozen này, không
+retune/đổi ngưỡng/đổi seed để cứu claim. Không causal/user-experience claim.
+Bốn dataset trước đềuPASS; latest PID/status ở lease/batch.json.
+Sau sparse cuối: source/selection/manifest validation, summary và independent
+arithmetic check, tracked full report/evidence, docs sync, commit riêng rồi chat
+mới cho robustness/ablations/cost/HTTP. Không sửa protocol/runner đã quan sát test.
+# Ranking progress: four of six — 08/11/2026
+
+Session39337 vẫn chạy, KHÔNG mở batch mới; lease live20giây/lần.
+Main20261112 PASS2160.20s:4935target users, B1mean nDCG.014114471621929407,
+Rmean.013727052266066636, delta−.000387419355862771. B1 LightGCN2layers/
+lr.001/290epochs/threshold1; R2layers/lr.01/60epochs/threshold5.
+Đây joint selection, không delta thuần routing; phải làm ablations sau.
+Sparse20261112 PASS:4931target users/C3=675, B1/R cùng LightGCN2layers/
+lr.01/50epochs/threshold1; overall/C3delta0. Main20261111/sparse20261111
+đã PASS ở checkpoint dưới. Hiện main20261113 đang chạy, sau đó sparse20261113.
+Xem batch.json/lease để lấy PID/thời gian mới nhất. Chưa commit ranking,
+chưa chạy summarize.py; require six PASS. Không retune sau test đã quan sát.
+# Ranking progress: two of six — 08/11/2026
+
+Batch session39337 vẫn chạy, lease live20giây/lần; KHÔNG start batch mới.
+Main20261111 PASS2040.18s, test4921users, R−B1 nDCG+.000481015996505052.
+B1 EASElambda1000/threshold1, R same/threshold5; gainT1+.002065828046046301,
+T2+.0015130775824735796, cold/warm0. Sparse20261111 PASS2060.18s, B1/R
+cùng EASElambda1000/threshold1. Chưa kết luận primary practical gate.
+Đã chuyển main20261112. State/log/actual PID xem batch.json/lease bên dưới;
+PID first-child ở checkpoint cũ không còn hiện hành. Source không đổi.
+Script summarize.py trong batch folder đã chuẩn bị, CHỈ chạy khi cả6PASS.
+Nó kiểm hashes/seeds/populations và hierarchy, không retune. Cần kiểm/review
+summary trước tạo tracked report; chưa chạy script, chưa commit ranking.
+# Active confirmatory ranking batch — 08/11/2026
+
+Batch đang chạy, KHÔNG mở worker/batch khác. Session39337, parent Python
+PID26068 (venv launcher4404); first child launcher29384/actual16828. Lease
+`.tools/adaptive-worker.json` cập nhật20giây/lần, chứa PID launcher hiện tại.
+State/log/source archive: `.tools/benchmarks/adaptive-confirmatory-ranking-20261108`.
+CLI từ solution: `.tools/oasis-env/Scripts/python.exe -X utf8
+.tools/benchmarks/adaptive-confirmatory-ranking-20261108/run_batch.py`.
+KHÔNG chạy lại CLI trên output này. Sáu preflight source/manifest/ZIP receipts/
+all members readback PASS trước ranking. Source commit e72dcd3. Batch tuần tự,
+stop on failure, frozen inventory so sau từng run. Hiện validation main20261111;
+chưa quan sát test. Không sửa runner/config theo scores. Đọc batch.json/log
+để lấy trạng thái mới; các PID trên chỉ là snapshot, lease là hiện tại.
+Sau batch: đọc reports, kiểm frozen selection/manifests, báo main/sparse riêng,
+optimizer hierarchy, lưu tracked evidence/report, commit milestone rồi chat mới.
+Robustness/ablations/practical gate/fullcost/HTTP vẫn còn. Không subagents.
 # Updated work-window authorization — 08/11/2026
 
 User bổ sung trong chat generation: sau phiên 02:00–07:00 tiếp tục làm luôn

@@ -1,3 +1,12 @@
+# Execution outcome — 08/11/2026
+
+[Cả sáu confirmatory ranking runs](adaptive-confirmatory-ranking-20261108/REPORT_VI.md)
+đã hoàn tất/PASS technical checks. Main practical gate FAIL: mean R−B1 nDCG@10
++0.000334784 <0.001, dù2/3seeds dương và cohort loss budget PASS. Sparse R=B1,
+C3delta0; independent audit PASS78result records và ZIP225members readback.
+Không runner/config changes hoặc retune trong execution. Robustness/ablations,
+full cost và HTTP gates vẫn pending. Những trạng thái chưa chạy bên dưới là
+snapshot implementation/generation cũ, đã được execution report này thay thế.
 # Common-candidate adaptive runner — 08/11/2026
 
 Cập nhật sau milestone generation: [cả sáu confirmatory datasets](adaptive-confirmatory-data-20261108/REPORT_VI.md)

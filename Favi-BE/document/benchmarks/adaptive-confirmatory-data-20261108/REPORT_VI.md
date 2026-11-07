@@ -1,3 +1,6 @@
+Execution tiếp theo đã hoàn tất: xem [confirmatory ranking report](../adaptive-confirmatory-ranking-20261108/REPORT_VI.md).
+Sáu runs PASS technical checks nhưng main practical gain gate FAIL. Các câu
+chưa chạy ranking trong báo cáo generation dưới đây mô tả thời điểm chốt data gate.
 # Confirmatory lifecycle-v2: data gate PASS
 
 08/11/2026, Asia/Saigon. Protocol adaptive-v1-20261108. Cả sáu dataset
