@@ -3,7 +3,7 @@ import argparse
 from collections import Counter, defaultdict
 import json
 from pathlib import Path
-from adaptive_onboarding import TOPICS, plan, preferences, validate, visible_preferences
+from adaptive_onboarding import TOPICS, plan, preferences, validate, visible_preferences, classify_cohort
 from check_dataset import verify
 
 COHORTS = ('C0', 'C1', 'C2', 'C3', 'T1', 'T2', 'W1', 'W2')
@@ -74,13 +74,8 @@ def analyze(root):
                 continue
             eligible = {i for i, p in items.items() if p['user_id'] != user and i not in history[user]}
             n = len(history[user])
-            if n:
-                cohort = 'T1' if n == 1 else 'T2' if n < 5 else 'W1' if n < 20 else 'W2'
-            elif not topics:
-                cohort = 'C0'
-            else:
-                matching = sum(config['topics'][items[i]['topic']] in topics for i in eligible)
-                cohort = 'C3' if matching < 10 else 'C1' if len(topics) == 1 else 'C2'
+            matching = sum(config['topics'][items[i]['topic']] in topics for i in eligible)
+            cohort = classify_cohort(n, topics, matching)
             targets = future[user] & eligible
             counts[cohort].update(users=1, with_target=bool(targets), without_target=not targets,
                                   targets=len(targets), excluded_targets=len(future[user] - eligible))

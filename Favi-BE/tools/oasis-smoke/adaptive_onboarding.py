@@ -77,3 +77,11 @@ def visible_preferences(row, cutoff):
     if row["arrival_tick"] >= cutoff:
         return None
     return list(row["topics"]) if row["preference_tick"] < cutoff else []
+
+
+def classify_cohort(positive_count, declared_topics, matching_items):
+    if positive_count:
+        return 'T1' if positive_count == 1 else 'T2' if positive_count < 5 else 'W1' if positive_count < 20 else 'W2'
+    if not declared_topics:
+        return 'C0'
+    return 'C3' if matching_items < 10 else 'C1' if len(declared_topics) == 1 else 'C2'

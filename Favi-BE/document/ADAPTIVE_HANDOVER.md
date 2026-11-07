@@ -1,5 +1,18 @@
 # Handover: Favi adaptive research
 
+## Latest checkpoint — 08/11/2026
+
+Primitive parity committed 6c2083e. Offline cold pool adapter/evaluator pilot
+PASS, new commit pending. Read ADAPTIVE_OFFLINE_CONTRACT.md and
+benchmarks/ADAPTIVE_BASELINE_PILOT_20261108.md. Main/sparse pilot baseline runs
+completed: candidate/target fingerprints and per-cohort denominators match.
+101 full Python tests plus subsequently added bounded-pool test passed (4
+adapter tests). No Python/.NET job currently active. NEXT: freeze protocol/grid
+and implement collaborative/router runner; confirmatory seeds still ungenerated.
+Older pending-reader notes below are superseded by this checkpoint.
+Lease solution `.tools/adaptive-worker.json`: update each checkpoint, mark
+handoff-ready before a fresh session. Scheduled 02:00 task must avoid overlap.
+
 Updated 07/11/2026 Asia/Saigon. Read root and nested AGENTS.md first.
 
 ## User authorization

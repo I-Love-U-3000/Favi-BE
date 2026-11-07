@@ -1,5 +1,12 @@
 # Đề tài nghiên cứu Favi và tiến độ triển khai
 
+## Offline adapter/evaluator — 08/11/2026
+
+Pilot baseline main/sparse hoàn tất; candidates/targets và denominator cohort
+khớp data gate. [Report](benchmarks/ADAPTIVE_BASELINE_PILOT_20261108.md) giữ
+kết quả exploratory và giới hạn; [contract](ADAPTIVE_OFFLINE_CONTRACT.md) phân
+biệt rõ offline với production SQL/HTTP. Chưa chạy collaborative/router mới.
+
 ## Baseline ranking parity — 07/11/2026
 
 524 C#/Python checks pass (20 warm/25 cold fixtures); 13 tests .NET ColdStart
