@@ -3,7 +3,7 @@
 ## Latest checkpoint — 08/11/2026
 
 Primitive parity committed 6c2083e. Offline cold pool adapter/evaluator pilot
-PASS, new commit pending. Read ADAPTIVE_OFFLINE_CONTRACT.md and
+PASS, committed 82f4fb4. Read ADAPTIVE_OFFLINE_CONTRACT.md and
 benchmarks/ADAPTIVE_BASELINE_PILOT_20261108.md. Main/sparse pilot baseline runs
 completed: candidate/target fingerprints and per-cohort denominators match.
 101 full Python tests plus subsequently added bounded-pool test passed (4
@@ -12,6 +12,24 @@ and implement collaborative/router runner; confirmatory seeds still ungenerated.
 Older pending-reader notes below are superseded by this checkpoint.
 Lease solution `.tools/adaptive-worker.json`: update each checkpoint, mark
 handoff-ready before a fresh session. Scheduled 02:00 task must avoid overlap.
+
+Fresh-session starting action: inspect git status (expected only root nul),
+claim worker lease, read configs/recommenders/expanded.json and multiseed docs,
+then freeze statistical protocol separately from implementation debugging.
+Do not rerun completed parity/pilot without a new concern. Build collaborative
+runner on InteractionData/fit_ease/fit_ppr/fit_lightgcn using AdaptiveFeed wrapper;
+keep same cutoff/candidates/targets and cold fallback. Selection sees validation
+only; save/hash choices before test. Existing expanded runner's tuning used
+likes-only rows without arrival-aware filtering: don't blindly reuse its score
+selection as the new adaptive system selection. Declare warm model search and
+threshold search budget explicitly; keep optimizer-seed hierarchy in reporting.
+Formula V2 was in original proposed scope but new contract runner doesn't yet
+support it: either implement with fixed validation grid or document a protocol
+scope revision before confirmatory test. Do not silently omit it.
+Confirmatory data seeds 20261111/12/13 still unused; generator frozen at 3bb48b3
+except helper classify_cohort added later (generation behavior unchanged).
+Both pilot baseline tests were observed: exploratory only. No PR/push yet;
+user permits commit-per-milestone, so lack of PR does not block progress.
 
 Updated 07/11/2026 Asia/Saigon. Read root and nested AGENTS.md first.
 
