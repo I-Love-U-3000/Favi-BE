@@ -1,5 +1,12 @@
 # Đề tài nghiên cứu Favi và tiến độ triển khai
 
+## Baseline ranking parity — 07/11/2026
+
+524 C#/Python checks pass (20 warm/25 cold fixtures); 13 tests .NET ColdStart
+pass. Pure ranking parity, chưa bao gồm cold reader SQL pool hoặc HTTP mới.
+[Report](benchmarks/BASELINE_PARITY_20261107.md) và
+[handover](ADAPTIVE_HANDOVER.md) ghi phạm vi, source và bước tiếp theo.
+
 ## Lifecycle-v2 — pilot data gate PASS, 05/11/2026
 
 Đã implement và chạy main + sparse-topic, mỗi bộ 5k users/2k posts/500 ticks.
