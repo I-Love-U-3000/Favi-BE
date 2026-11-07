@@ -39,6 +39,13 @@ pilot và scenario thiếu nội dung riêng, không chạy benchmark chính s�
 
 ## M3 — Kết quả chọn phương pháp
 
+Cập nhật 08/11/2026: protocol và common-candidate runner đã khóa/kiểm chứng
+tại 2ea65f8 (111 tests PASS). [Sáu dataset confirmatory](benchmarks/adaptive-confirmatory-data-20261108/REPORT_VI.md)
+main/sparse-topic × seeds20261111/12/13 PASS integrity/cohort/ZIP readback.
+Không thay seed/hạ gate; chưa chạy ranking/tuning model trên các dataset này.
+M3 chưa hoàn tất: tiếp theo chạy benchmark validation-only theo frozen protocol,
+sau đó robustness, main-only practical gate và báo hierarchy optimizer/dataset.
+
 Đầu ra: cùng dữ liệu và cùng tiêu chí, so Popularity, công thức Favi, EASE/PPR/LightGCN và chính sách chuyển ở 1 hoặc 5 positives. Chọn cấu hình bằng validation, test chỉ dùng đánh giá. Đạt khi tái lập được, không leakage, đối chứng công bằng. Kết luận có thể là không cần router mới.
 
 ## M4 — Feed thật và chi phí

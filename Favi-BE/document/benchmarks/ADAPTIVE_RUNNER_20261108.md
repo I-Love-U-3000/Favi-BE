@@ -1,5 +1,9 @@
 # Common-candidate adaptive runner — 08/11/2026
 
+Cập nhật sau milestone generation: [cả sáu confirmatory datasets](adaptive-confirmatory-data-20261108/REPORT_VI.md)
+đã PASS integrity/cohort/ZIP readback; runner benchmark chưa chạy. Những câu
+"chưa sinh" bên dưới mô tả trạng thái tại checkpoint implementation trước đó.
+
 Implementation: tools/oasis-smoke/run_adaptive_benchmark.py; protocol adaptive-v1-20261108.
 Không thay production API, database hoặc benchmark cũ.
 

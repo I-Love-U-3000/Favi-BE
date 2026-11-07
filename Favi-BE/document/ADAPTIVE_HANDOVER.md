@@ -1,3 +1,57 @@
+# Updated work-window authorization — 08/11/2026
+
+User bổ sung trong chat generation: sau phiên 02:00–07:00 tiếp tục làm luôn
+đến hết phiên 07:00–12:00 ngày 08/11/2026, giờ Asia/Saigon. Đây là cập nhật
+cho giới hạn một quota window bên dưới: tiếp tục cả hai phiên đã cho phép,
+không tự tạo thêm chu kỳ reset. Vẫn commit từng milestone, lưu handover và
+chuyển chat mới giữa các mốc; không subagents hoặc dừng chờ review thường lệ.
+
+Automation mới đã tạo theo yêu cầu user: `favi-ti-p-t-c-07-00-n-12-00`,
+07:00 một lần ngày 08/11/2026, Sol Low, ACTIVE lúc tạo. Tiếp progress mới nhất
+từ handover, kiểm lease/process trước nhận việc, không overlap: worker còn chạy
+thì automation kết thúc thay vì mở batch khác. Không reset quota. Automation
+02:00 cũ vẫn giữ nguyên; chưa đến giờ chạy khi kiểm lúc 00:58 ngày 08/11.
+
+# Confirmatory generation checkpoint — 08/11/2026
+
+Milestone hoàn tất: cả main và sparse-topic seeds 20261111/20261112/20261113
+đã sinh và PASS integrity/policy/cohort tại cutoff300/400 cùng ZIP readback.
+Không thay seed, hạ gate, sửa generator hoặc chạy ranking/tuning model. Không
+có failed run trong batch. Mỗi bundle 5.000users/2.000posts/500ticks; mỗi ZIP
+32members được đọc lại SHA256. Minimum required cell208target users, gate30.
+
+Báo cáo: benchmarks/adaptive-confirmatory-data-20261108/REPORT_VI.md cùng
+generation.json và12gate/archive JSON. Source commit khi sinh: 2ea65f8;
+milestone commit chứa checkpoint này có title `docs(research): qualify six
+confirmatory adaptive datasets`; lấy exact hash bằng git log/lease sau commit.
+Source/config/lock/CLI inventory và130dependencies trong generation.json.
+Source ZIP và script batch freeze ở solution
+.tools/benchmarks/adaptive-generation-20261108/frozen-source.zip; raw/logs ở
+.tools/datasets/adaptive-confirmatory-{main|sparse}-{seed} và
+.tools/benchmarks/adaptive-generation-20261108. ZIP/receipts ở
+.tools/dataset-archives/adaptive-confirmatory-{main|sparse}-{seed}.zip[.json].
+Batch CLI: `.tools/oasis-env/Scripts/python.exe -X utf8
+.tools/benchmarks/adaptive-generation-20261108/generate_batch.py` từ solution;
+không rerun script trên outputs cũ. Generation elapsed từng dataset509.594–562s;
+đây không phải model/HTTP benchmark. Source drift check sau mỗi dataset PASS.
+Không rerun111tests hoặc parity/pilot: source không đổi, gate thực tế đủ6lượt.
+
+NEXT CHAT: kiểm Git/process/lease rồi claim lease; đọc protocol/config frozen,
+ADAPTIVE_RUNNER_20261108.md và report dataset mới. Kiểm hash/source inventories,
+dataset manifests và receipts trước dùng. Chạy run_adaptive_benchmark.py tuần
+tự trên cả6qualified datasets với output mới; giữ mọi lỗi/log, dừng batch khi
+fail. Lưu frozen selection validation-only trước test, exact-epoch refit,
+optimizer seeds20261103/04/05; không retune theo test. Sau đó báo riêng main
+và sparse; main-only practical gate, robustness/ablations, optimizer hierarchy,
+cost/HTTP còn phải hoàn thành, có thể chia milestone kế tiếp. Không claim
+superiority từ data gate. Data cohorts đã quan sát nhưng ranking chưa quan sát.
+
+Batch process session83140 đã kết thúc exit0, không Python/.NET jobs còn chạy
+khi kiểm cuối. Lease chuyển handoff-ready trước chat mới. Root nul cũ giữ nguyên.
+Không push/PR/merge/deploy. Giữ work-window/automation no-overlap ở phần trên;
+không subagents; numerical CLI require_escalated để tránh sandbox DLL popups.
+Các checkpoint ungenerated bên dưới là lịch sử đã được mốc này thay thế.
+
 # Runner checkpoint — 08/11/2026
 
 Common-candidate adaptive runner milestone implemented; commit with this heading.

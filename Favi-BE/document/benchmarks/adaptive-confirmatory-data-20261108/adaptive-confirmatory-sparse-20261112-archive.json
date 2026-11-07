@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "archive": "adaptive-confirmatory-sparse-20261112.zip",
+  "sha256": "5ad25b8980194129e36d6b0250ea98f8811fb3d5bf3ed97d3350f849bd409de0",
+  "bytes": 31402783,
+  "members": 32,
+  "dataset_directory": "adaptive-confirmatory-sparse-20261112",
+  "events_sha256": "3df741e7c05bea49e0158abd14da84a692ffb87da29922b75bd962f4cfa2e791",
+  "quality": {
+    "events": 347213,
+    "posts": 2000,
+    "likes": 66455,
+    "follows": 10445,
+    "exposures": 257270,
+    "warm_users": 4121,
+    "quality_passed": true
+  },
+  "verification": "Every archived member read back and SHA256-compared with source manifest"
+}
