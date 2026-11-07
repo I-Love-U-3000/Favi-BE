@@ -1,52 +1,133 @@
-# Protocol adaptive-v1 — bản review
+# Protocol adaptive-v1 — thiết kế khóa ngày 08/11/2026
 
-Revision ngày 05/11/2026: đọc [kế hoạch tổng thể](../ADAPTIVE_FINAL_REVISION.md).
-Protocol này chưa freeze. Gate yêu cầu C3 trong mọi dataset bên dưới được thay
-bằng gate theo scenario: main C0/C1/C2/T1/T2/W1/W2, sparse-topic C3 riêng.
-Population, informative/noisy và audit phải implement/kiểm chứng trước freeze.
-
-Ngày: 04/11/2026. Trạng thái: draft để review, chưa đóng băng và chưa chạy experiment. Đây là đầu ra đầu tiên của bước 1 trong [execution plan](../ADAPTIVE_RECOMMENDER_EXECUTION_PLAN.md).
+Protocol ID adaptive-v1-20261108; config máy đọc:
+`tools/oasis-smoke/configs/recommenders/adaptive-v1.json`.
+Bản này thay draft 04/11 và revision 05/11; không sửa benchmark lịch sử.
+Thiết kế và grid khóa trước confirmatory data. Execution gate còn yêu cầu
+runner tests/source inventory/dependency lock/archive readback; chưa gọi gate
+PASS chỉ vì config tồn tại. Related work: [bảng đối chiếu](adaptive-related-work.md).
 
 ## Câu hỏi và đối chứng
 
-Kiểm tra liệu trì hoãn chuyển từ topic/general sang collaborative đến 5 positives có tốt hơn chuyển ngay sau positive đầu tiên. Đối chứng chính chuyển ở 1 positive; phương pháp đề xuất chọn ngưỡng trong `{1,5}` bằng validation. Cả hai chọn warm model từ EASE/PPR/LightGCN với cùng ngân sách. Ngưỡng 1 nằm trong tập ứng viên để phương pháp có thể chọn giữ nguyên baseline.
+RQ chính: chọn ngưỡng chuyển topic/general sang collaborative trong {1,5} có
+lợi ích thực dụng so với chuyển ở positive đầu tiên không? Baseline B1 chọn
+model/parameters/epoch tại threshold1; router R chọn chung threshold/model/
+parameters/epoch từ cùng grid. Threshold1 là tập con. Cả hai chọn theo toàn bộ
+validation users có target, không chỉ warm users; không tái dùng selection từ
+evaluator likes-only cũ thiếu arrival-aware filtering.
 
-Popularity, Formula V1 hiện tại, Formula V2 và topic-only là đối chứng bổ sung. Phải kiểm chứng parity công thức C#/Python trước khi gọi kết quả offline là kết quả công thức Favi.
+Đối chứng bổ sung: raw Popularity, topic-only cho mọi user, Formula V1 source
+parity chuyển tại 1 positive, Formula V2 tuned chuyển tại 1. Báo cả từng family
+EASE/PPR/LightGCN threshold1, dù B1 không chọn. CF fit chỉ dùng likes; cold
+fallback nhận observed topics giống nhau. Formula còn dùng follows/comments:
+đây là so hệ thống khác tín hiệu, không phép so thuật toán cùng input tuyệt đối.
 
-So thuật toán dùng likes-only. So hệ thống ghi rõ topics/follows/comments bổ sung. Production Like/Love/save được kiểm thử hành vi riêng; chưa coi benchmark likes-only đại diện đầy đủ các tín hiệu đó.
+V1 dùng observed single-tag count=1 theo ADAPTIVE_OFFLINE_CONTRACT.md. V2 giữ
+đúng heuristic lịch sử FORMULA_V2_BENCHMARK.md: tag count=0,
+Q=log10(1+1.1*likes+2*comments), affinity A lịch sử,
+score=(social_weight*A+1.5*Q)*exp(-decay*ageHours); không V1 damping;
+cap null hoặc hard cap2 không relax. Topics chỉ dùng cho cold fallback.
+Đây là khác biệt khai báo trước test; V2 không có claim production parity.
 
-## Dữ liệu và thời gian
+## Dữ liệu, thời gian và gates
 
-Dataset mới tên `favi-adaptive-v1-5k-seed-{seed}`, 5.000 users, 2.000 posts, 500 ticks. Ba seed xác nhận: 20261111, 20261112, 20261113; pilot seed 20261110. Dữ liệu cũ chỉ dùng thăm dò. Không thay seed do điểm thấp hoặc lỗi; lưu lỗi và sửa pipeline có version trước khi chạy lại toàn bộ.
+Ba seed chưa quan sát 20261111/20261112/20261113, mỗi seed main+sparse-topic,
+5.000 users/2.000 maximum posts/500 ticks/10 topics. Generator lifecycle-v2
+đã pilot tại 3bb48b3; helper classify_cohort thêm sau không đổi generation.
+Lưu resolved configs/CLI/source/lock/archive hashes. Pilot20261110 đã quan sát
+baseline test, luôn exploratory, không gộp vào confirmatory averages.
 
-Train lịch sử tick <300; validation yêu cầu feed tại tick 300, target ở [300,400); test yêu cầu feed tại tick 400, target ở [400,500). Refit cấu hình đã chọn bằng lịch sử <400 trước test. Chỉ item đã tồn tại và hợp lệ tại request mới nằm trong candidates hoặc target. Report số future-item targets bị loại. Timestamp ties không bị chia qua hai phía cutoff.
+Train prefix <300; validation request300/targets[300,400); refit <400;
+test request400/targets[400,500). Tick=1 giờ. Selector chỉ nhận events <400;
+features chỉ có trước request, gồm arrival/item/preference, không latent data.
+Eligible chung loại own/prior-positive/future items. Targets là distinct likes
+held-out giao eligible; no-target là N/A và báo riêng. Mọi trial/method cùng
+candidate/target/user fingerprints ở mỗi phase. Score ties source ID tăng dần;
+V1 giữ stable source-ordered input theo parity, cold giữ dedup/round-robin/
+soft cap/relax/fallback. Bounded cold pool có thể bỏ sót relevant target trong
+full eligible; không đổi target denominator để che retrieval loss.
 
-Features gồm lịch sử trước request, topic đã khai báo trước request và metadata item đã tồn tại. Không dùng latent interests hay future likes làm feature. Generator phải lưu user arrival, timestamp lựa chọn topic, tags và exposure policy; chưa giả định generator hiện tại đáp ứng những điều này.
+C0=0 positive/0 topic; C1=0/1; C2=0/2–10; C3=0/có topic nhưng <10 matching
+eligible items, ưu tiên C3 trước C1/C2. T1=1 positive; T2=2–4; W1=5–19;
+W2>=20. Main yêu cầu C0/C1/C2/T1/T2/W1/W2; sparse yêu cầu C3. Mỗi nhóm >=30
+target users tại cả cutoff300/400. Gate kiểm 100% referential integrity,
+exposure trước feedback, timestamp/arrival/topic/ID/manifest và ZIP readback.
+Confirmatory gate fail: giữ seed/log, báo thiếu, dừng benchmark batch đến khi
+có revision minh bạch. Không thay seed, sửa label, chọn subset theo future
+label hoặc hạ gate. Không claim bảo toàn cohort thiếu mẫu.
 
-Cohort phân theo trạng thái tại request: C0 không positive/không topic; C1 không positive/1 topic; C2 không positive/2–10 topics; C3 không positive/có topic nhưng hợp lệ ít hơn 10 bài khớp. C3 ưu tiên phân loại trước C1/C2 để các nhóm loại trừ nhau. T1 có 1 positive; T2 có 2–4; W1 có 5–19; W2 có ít nhất 20. Các nhóm có lịch sử vẫn giữ topic để phương pháp chuyển tiếp sử dụng.
+## Search và selection khóa trước test
 
-Gate yêu cầu toàn bộ tham chiếu, ID, timestamp và topic hợp lệ, không future features, cohort inventory đầy đủ. Pilot phải có tối thiểu 30 users có target hợp lệ mỗi cohort tại mỗi cutoff; nếu thiếu thì điều chỉnh thiết kế trước khi đóng băng. Trên seed xác nhận, cohort dưới ngưỡng vẫn báo cáo nhưng không dùng để tuyên bố bảo toàn chất lượng cohort. User không có target là N/A, báo denominator và lý do riêng.
+Grid order theo thứ tự liệt kê, Cartesian product trái sang phải:
 
-## Chọn cấu hình và đo
+| Family | Grid | Budget |
+|---|---|---|
+| EASE | lambda [1,10,100,1000] | 4 fits, mỗi fit score thresholds [1,5] |
+| PPR | alpha [.5,.85,.95] | 3 fits, mỗi fit score thresholds [1,5] |
+| LightGCN | layers [1,2] × learning rate [.001,.01]; dim64/L2=.0001 | 4 trajectories seed20261103, tối đa300 epochs/check mỗi10/patience5 |
+| Formula V2 | social [.5,1.5,2.5] × decay [0,.005] × cap [null,2] | 12 trials, threshold1 |
 
-nDCG@10 macro theo user có target là metric chính. Báo riêng từng cohort và trung bình đều cohort như metric phụ, không đổi metric chính sau khi xem test. Recall@10, catalog coverage, feed rỗng, đa dạng tác giả, tuổi bài và chi phí là metric phụ. Các phương pháp dùng chung eligibility/candidate/target fingerprints và tie-break PostId tăng dần khi bằng điểm.
+EASE/PPR fits dùng chung giữa thresholds. LightGCN checkpoint đánh giá cả hai
+thresholds, lưu best epoch và stale riêng; dừng khi cả hai stale>=5 hoặc epoch300.
+Tối đa30 checkpoints/trajectory, 120 states/240 threshold evaluations. Threshold
+đã stale vẫn được score khi threshold kia tiếp tục. Không tuning optimizer
+seed/dim/L2/patience/topic pool; không che epoch search dưới tên chỉ 4 configs.
 
-Mỗi warm model tối đa 8 cấu hình validation, dùng cùng grid cho baseline và router; grid cụ thể phải được lưu trước chạy. LightGCN dùng optimizer seeds 20261103/20261104/20261105, gộp trong từng dataset trước. Router chọn theo nDCG validation toàn tập; hòa trong 1e-12 ưu tiên ngưỡng 1, rồi thứ tự EASE/PPR/LightGCN. Không chọn theo test hoặc per-user oracle.
+Chọn max validation macro nDCG@10. Lấy các records cách max <=1e-12 làm tập hòa,
+rồi threshold1, family EASE/PPR/LightGCN, grid index, epoch nhỏ nhất. Không dùng
+Recall phá hòa. Trong family/threshold dùng nDCG rồi grid/epoch; V2 dùng nDCG
+rồi grid index. B1 và R chọn độc lập trên cùng records; R không bị buộc dùng
+warm config của B1. Hàm chọn phải so với global max để tránh tolerance drift.
 
-Tiêu chí giá trị thực dụng đề xuất: tăng ít nhất 0,001 nDCG tuyệt đối trung bình ba dataset, chênh lệch không âm trên ít nhất 2/3 dataset; không cohort đủ mẫu nào giảm quá 0,002 tuyệt đối trung bình. Đây là ngưỡng quyết định kỹ thuật để review, không phải ngưỡng ý nghĩa thống kê hoặc mức hài lòng đã được xác thực. Báo mọi chênh lệch, kể cả khi không đạt. Ba dataset chỉ hỗ trợ mô tả độ ổn định.
+Persist selection.json gồm cấu hình/epochs, prefix/config/source hashes trước
+bất kỳ test evaluation nào, kiểm hash không đổi sau test. Refit parameters và
+epoch trên prefix<400, không early stop bằng test. LightGCN test ba seeds
+20261103/20261104/20261105 cho mỗi cấu hình được chọn, cache cấu hình trùng để
+B1/R dùng cùng fit ở cùng seed. Không chọn best test optimizer. Validation chỉ
+seed20261103 là giới hạn phải report. Không truyền events>=400 vào selector.
 
-Sau test, bất kỳ sửa phương pháp dựa trên điểm test nào làm lượt đó thành exploratory; xác nhận tiếp cần seed holdout mới. Ablation bỏ topics/bỏ chuyển tiếp và robustness sở thích sai/exposure khác phải có config revision trước khi chạy; chưa thuộc lượt xác nhận chính này.
+## Metrics và tiêu chí bác bỏ
 
-## Serving và giới hạn kết luận
+Primary: macro user nDCG@10 trên main lifecycle users có target. Secondary:
+Recall@10, từng cohort, mean đều cohort, coverage, empty/short feeds, author
+diversity/max share, tuổi bài và chi phí. Sparse là scenario riêng; không gộp
+users hoặc average main/sparse tạo primary win. Báo denominators, no-target,
+future-target exclusions và cold pool misses.
 
-Offline full catalog không tương đương serving top 300. Đo HTTP là bước sau, trên stack riêng và sample trong giới hạn artifact đã có. Ngân sách đề xuất để review: warm request p95 <=100 ms tại concurrency 10 với 1.000 requests sau 100 warm-up, không lỗi quyền truy cập; đo cold-process riêng tối thiểu 5 restart, không dùng 5 mẫu để tuyên bố p99. Ghi cấu hình máy, kích thước artifact, peak memory và thời gian rebuild. Mốc này là mục tiêu lab, chưa phải SLA production.
+Gộp optimizer seeds trong mỗi dataset/config trước, sau đó delta R−B1 từng
+dataset và mean đều ba dataset seeds, sample std/min/max và win/tie/loss.
+Không coi9optimizer runs là9datasets, không gộp validation/test requests làm
+mẫu độc lập. Báo optimizer std riêng dataset std; ba seeds chỉ mô tả ổn định.
 
-Simulator replay không chứng minh tăng engagement hoặc quan hệ nhân quả. MovieLens chỉ kiểm tra thêm interaction ranking, không đại diện onboarding Favi. Không tuyên bố novelty trước khi hoàn tất related work.
+Practical gate: main mean delta>=.001 tuyệt đối, delta>=0 trên >=2/3 seeds,
+không cohort main đủ mẫu nào mean delta<−.002. Đây là engineering thresholds
+để loại gain quá nhỏ và tránh che thiệt hại cohort; không mức satisfaction,
+statistical significance hoặc power đã xác thực. Không đạt thì bác bỏ claim
+lợi ích thực dụng trong thiết kế này. Sparse C3 báo riêng, cùng loss budget.002;
+fail thì không claim fallback an toàn toàn scenario. Không đổi metric sau test.
 
-## Provenance và việc còn lại trước freeze
+Robustness informative chính; noisy/independent sidecars dùng cùng events/
+candidates/targets và cấu hình informative đã khóa, không retune. Báo overlap,
+cohort theo sidecar và paired users; chuyển cohort không phải đổi population.
+Bỏ topics/bỏ routing là secondary ablations giữ selection chính, không thêm
+grid sau test. Exposure chưa phụ thuộc declared topics: sidecar replay không
+đo tác động hành vi hay causal engagement uplift.
 
-Commit nền quan sát: `c6880937995c3feb0179d14247ba2e8d4e4012cf`; working tree có nhiều thay đổi chưa commit. Commit này không đại diện đầy đủ source experiment.
+## Serving, provenance và giới hạn
 
-Trước freeze còn bắt buộc: inventory/hash cả source chưa commit và configs/dependency locks; kiểm tra đọc lại archive; replay fixture nhỏ; parity công thức; bảng related work về preference elicitation, hybrid chuyển tiếp, temporal leakage và exposure bias; grid validation cụ thể; config generator/cohort pilot. Chưa hoàn tất những mục này thì chưa chạy batch xác nhận. Các ngưỡng đề xuất phía trên cần được review trước test.
+HTTP sau offline: fresh user chọn/bỏ topic, positive đầu tiên/transition/warm,
+new item/user, artifact missing/stale và quyền bài đổi sau export. Kiểm JWT,
+idempotency, optimistic version, ban/NSFW/archive/delete/own/prior positives.
+Giữ module boundary/facades và DI extensions. Lab: concurrency10, 100 warmup
++1000 measured requests, warm p95<=100ms, không lỗi quyền; >=5 cold-process
+restarts, không claim p99 từ5mẫu. Báo direct/gateway, máy, artifact size,
+load/rebuild và peak process RAM. Giữ <=1000users/16MiB/300candidates per
+user-method; sample serving không được gọi là full5k deployment.
 
-Tài liệu nền: [cold feed](../COLD_START_FEED.md), [multiseed](../MULTISEED_RECOMMENDER_BENCHMARK.md), [external benchmark](../EXTERNAL_RECOMMENDER_BENCHMARK.md), [experimental serving](../EXPERIMENTAL_RECOMMENDER_FEED.md).
+Trước confirmatory, runner tests prefix/arrival/population/frozen selection/
+refit/optimizer hierarchy/V2/router ties phải pass. Lưu source/config/lock
+inventory và archive readback. Sửa lỗi trước confirmatory test phải ghi revision;
+sửa method sau quan sát test biến run thành exploratory và cần holdout mới.
+Không tạo thêm chu kỳ quota reset. Replay synthetic không chứng minh novelty
+hoặc trải nghiệm thật. Primitive parity không bao gồm SQL/HTTP; HTTP timing
+không thay offline relevance. Không merge/deploy tự ý.

@@ -1,5 +1,33 @@
 # Handover: Favi adaptive research
 
+## Protocol design checkpoint — 08/11/2026
+
+Protocol/search design is now frozen as adaptive-v1-20261108 in
+benchmarks/adaptive-protocol-v1.md and
+tools/oasis-smoke/configs/recommenders/adaptive-v1.json (relative to solution).
+Related work table: benchmarks/adaptive-related-work.md.
+Working-file config SHA256 4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46;
+Git newline normalization may change checkout bytes: hash actual archived bytes.
+JSON parsed and grid counts checked with PowerShell; git diff --check PASS.
+This milestone changes design/docs/config only, no numerical tests needed.
+
+NEXT SESSION: implement runner according to this protocol, not old expanded
+selection. No confirmatory dataset or ranking run occurred in this session.
+Execution gate NOT frozen/PASS yet: runner/source/lock inventory and meaningful
+replay tests must finish before confirmatory data/benchmark. Read latest protocol
+fully, especially joint threshold/model/config/epoch selection, tolerance tie
+relative to global max, dual-threshold LightGCN patience/checkpoints, V2 historical
+zero-tag definition and main-only primary aggregation. V2 stays in scope with
+12 configs and same cold fallback at threshold1. No silent omission.
+
+No active child jobs. Lease owner protocol-freeze-session will mark handoff-ready.
+Git status before this milestone was only preexisting root nul. No PR/push/merge
+or deployment. Continue using fresh session per user instruction each milestone;
+no subagents. Confirmatory seeds20261111/12/13 remain ungenerated/unobserved.
+The prior checkpoint below describes completed code/pilot evidence and remains
+valid except that protocol design/grid/related-work gap is now addressed.
+
+
 ## Latest checkpoint — 08/11/2026
 
 Primitive parity committed 6c2083e. Offline cold pool adapter/evaluator pilot
