@@ -42,6 +42,11 @@ This standard-library-only command checks all declared file hashes, rejects path
 escapes/incomplete bundles and revalidates temporal history, config fingerprint
 and quality. SHA256 checks detect accidental changes, not a signature proving
 authorship. Retain the entire directory, not only CSVs, when sharing an experiment.
+Bounded CLI tests under PYTHONOPTIMIZE=0/1/2 confirm that reuse and packaging still
+reject tested hash/coverage/path/config/exposure/quality faults; these gates use
+explicit exceptions. This does not independently revalidate every SQLite/export
+record. See benchmarks/adaptive-validation-runtime-20261108/REPORT_VI.md for scope
+and the separate fixture/ManualAction assertion correction.
 `-VerifyFavi` additionally runs isolated PostgreSQL/Redis/API verification; the
 offline benchmark dataset does not require Docker. No production API/database is
 written. The wrapper creates no persistent service.

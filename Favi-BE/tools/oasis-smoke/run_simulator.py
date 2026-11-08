@@ -78,14 +78,16 @@ async def simulate(root, upstream):
     finally:
         await env.close()
     with sqlite3.connect(f"file:{database.as_posix()}?mode=ro", uri=True) as db:
-        assert db.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
+        if db.execute("PRAGMA integrity_check").fetchall() != [("ok",)]:
+            raise ValueError("SQLite integrity check failed")
         supported_fk_checks = {table: db.execute(f'PRAGMA foreign_key_check("{table}")').fetchall()
                                for table in ("user", "post", "like", "follow", "comment")}
         # Pinned upstream incorrectly declares like.post_id -> tweet(post_id),
         # while its own create_post/like actions operate on post. Do not rewrite
         # source schema: validate every logical reference below and report DDL bugs.
         for table, failures in supported_fk_checks.items():
-            assert not failures or (table == "like" and all(row[2] == "tweet" for row in failures)), supported_fk_checks
+            if failures and not (table == "like" and all(row[2] == "tweet" for row in failures)):
+                raise ValueError(f"Unexpected physical FK failures: {supported_fk_checks}")
         semantic_queries = {
             "post.user": 'SELECT p.post_id FROM post p LEFT JOIN user u ON u.user_id=p.user_id WHERE u.user_id IS NULL',
             "like.user/post": 'SELECT l.like_id FROM "like" l LEFT JOIN user u ON u.user_id=l.user_id LEFT JOIN post p ON p.post_id=l.post_id WHERE u.user_id IS NULL OR p.post_id IS NULL',
@@ -93,11 +95,13 @@ async def simulate(root, upstream):
             "comment.user/post": 'SELECT c.comment_id FROM comment c LEFT JOIN user u ON u.user_id=c.user_id LEFT JOIN post p ON p.post_id=c.post_id WHERE u.user_id IS NULL OR p.post_id IS NULL',
         }
         semantic_fk_checks = {name: db.execute(query).fetchall() for name, query in semantic_queries.items()}
-        assert all(not failures for failures in semantic_fk_checks.values()), semantic_fk_checks
+        if any(semantic_fk_checks.values()):
+            raise ValueError(f"Semantic FK failures: {semantic_fk_checks}")
         ignored_schema_issue = None
         try:
             all_fk_failures = db.execute("PRAGMA foreign_key_check").fetchall()
-            assert not all_fk_failures, all_fk_failures
+            if all_fk_failures:
+                raise ValueError(f"Physical FK failures: {all_fk_failures}")
         except sqlite3.OperationalError as error:
             # Report known upstream mismatch; do not rewrite upstream or source DB.
             ignored_schema_issue = str(error)
@@ -107,7 +111,8 @@ async def simulate(root, upstream):
                   for table in ("user", "post", "like", "follow", "comment")}
         trace_counts = dict(Counter(row[0] for row in db.execute("SELECT action FROM trace")))
         post_ids = [row[0] for row in db.execute("SELECT post_id FROM post ORDER BY post_id")]
-    assert counts == {"user": 3, "post": 3, "like": 3, "follow": 1, "comment": 1}, counts
+    if counts != {"user": 3, "post": 3, "like": 3, "follow": 1, "comment": 1}:
+        raise ValueError(f"Unexpected simulator counts: {counts}")
     media = {str(post_id): {"url": f"/seed-assets/oasis-{post_id}.jpg", "is_nsfw": index == 1}
              for index, post_id in enumerate(post_ids)}
     media_path = root / "media.json"
@@ -119,9 +124,11 @@ async def simulate(root, upstream):
     # for changed data, even though test databases are isolated.
     run_id = "oasis-engine-manual-" + root.name
     manifest = export(database, media_path, run_id, root / "export")
-    assert hashlib.sha256(database.read_bytes()).hexdigest() == before
+    if hashlib.sha256(database.read_bytes()).hexdigest() != before:
+        raise ValueError("Adapter changed source SQLite")
     for filename, checksum in manifest["files"].items():
-        assert hashlib.sha256((root / "export" / filename).read_bytes()).hexdigest() == checksum
+        if hashlib.sha256((root / "export" / filename).read_bytes()).hexdigest() != checksum:
+            raise ValueError(f"Export checksum mismatch: {filename}")
     provenance = {"source": "upstream OASIS engine", "mode": "ManualAction", "llm_inference": False,
         "oasis_version": oasis.__version__, "oasis_commit": commit, "run_id": run_id, "counts": counts,
         "runtime_source": source_identity, "locked_dependencies": locked_versions,

@@ -32,13 +32,17 @@ media = root / "media.json"
 media.write_text(json.dumps({str(key): {"url": f"/seed-assets/oasis-{key}.jpg", "is_nsfw": key == 18} for key in (15, 18, 22)}), encoding="utf-8")
 before = hashlib.sha256(database.read_bytes()).hexdigest()
 manifest = export(database, media, "oasis-favi-integration-v1", root / "export")
-assert hashlib.sha256(database.read_bytes()).hexdigest() == before, "Adapter changed source SQLite"
+if hashlib.sha256(database.read_bytes()).hexdigest() != before:
+    raise ValueError("Adapter changed source SQLite")
 for name, checksum in manifest["files"].items():
-    assert hashlib.sha256((root / "export" / name).read_bytes()).hexdigest() == checksum
-assert manifest["graph_like_edges"] == 2
+    if hashlib.sha256((root / "export" / name).read_bytes()).hexdigest() != checksum:
+        raise ValueError(f"Export checksum mismatch: {name}")
+if manifest["graph_like_edges"] != 2:
+    raise ValueError("Unexpected safe graph edge count")
 snapshot = json.loads((root / "export" / "snapshot.json").read_text(encoding="utf-8"))
 safe_ids = {p["id"] for p in snapshot["posts"] if not p["is_nsfw"]}
 with (root / "export" / "user_post_edges.csv").open(encoding="utf-8", newline="") as stream:
     edges = list(csv.DictReader(stream))
-assert {(edge["user_id"], edge["post_id"]) for edge in edges} == {(like["user_id"], like["post_id"]) for like in snapshot["likes"] if like["post_id"] in safe_ids}
+if {(edge["user_id"], edge["post_id"]) for edge in edges} != {(like["user_id"], like["post_id"]) for like in snapshot["likes"] if like["post_id"] in safe_ids}:
+    raise ValueError("Safe graph edges differ from snapshot likes")
 print("PASS fixture export, source unchanged, manifest checksums and safe graph edge count")
