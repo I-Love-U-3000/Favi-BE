@@ -40,6 +40,15 @@ def restore(archive, target):
         path.write_bytes(archive.read(name))
 
 
+def run_audit(script, output, log):
+    # Archived audits rely on assert. Ignore PYTHONOPTIMIZE/PYTHONPATH and
+    # user site packages without changing the archived script bytes.
+    run = subprocess.run([sys.executable, '-I', '-B', str(script)],
+                         cwd=output, capture_output=True, text=True, encoding='utf-8')
+    log.write_text(run.stdout+run.stderr, encoding='utf-8')
+    require(run.returncode == 0, str(script)+' failed; see retained log: '+str(log))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True,
@@ -104,10 +113,7 @@ def main():
         require(original_summary == read(bench / name / 'summary.json'),
                 name+' archived versus tracked summary drift')
         for script in scripts:
-            run = subprocess.run([sys.executable, '-B', str(folder / script)],
-                                 cwd=output, capture_output=True, text=True, encoding='utf-8')
-            (output / (name+'-'+script+'.log')).write_text(run.stdout+run.stderr, encoding='utf-8')
-            require(run.returncode == 0, name+'/'+script+' failed; see retained log')
+            run_audit(folder / script, output, output / (name+'-'+script+'.log'))
         require(read(folder / 'summary.json') == original_summary, name+' regenerated summary drift')
         audit = read(folder / 'audit.json')
         require(audit['status'] == 'PASS', name+' arithmetic audit')

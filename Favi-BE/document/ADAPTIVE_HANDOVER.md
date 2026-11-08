@@ -1,3 +1,21 @@
+# Archived audit isolation — 08/11/2026
+
+Fixed proven false-pass risk: audit_readiness children now use -I -B so
+PYTHONOPTIMIZE cannot remove historical assertions and PYTHONPATH cannot inject
+startup code. Archived scripts/ZIP bytes unchanged. Two focused stdlib tests
+PASS for optimize1/2, injection rejection, retained failure logs and valid audit.
+Full restore-003 with outer PYTHONOPTIMIZE=1 PASS10ZIP/974members/127nestedsource,
+ranking/replay six datasets and archived/tracked semantic equality. New receipt
+isolation-summary.json; old receipt retained. M5 consistency and portability
+LF/CRLF/BOM plus both tamper negatives PASS. Workflow now includes readiness
+paths and Python3.11 isolation tests on Windows/Linux; hosted status pending
+until observed. No model/API/DB/Docker run; all negative conclusions unchanged.
+
+Branch codex/adaptive-audit-isolation, base codex/adaptive-evidence-ci(PR9).
+Exact commit/PR/hosted results recorded in ignored lease after publication.
+User requests continuous useful action until current quota; quota is not visible,
+so do not claim detection or manufacture work. No merge/deploy/subagents/reset
+or automation. Read root preferences and current reports before next work.
 # Adaptive evidence CI — 08/11/2026
 
 Next authorized action identified a concrete missing regression gate: M5 derived

@@ -60,7 +60,25 @@ Sau đó chạy **bản script trong archive**: ranking `summarize.py`, `audit.p
 replay `summarize_audit.py`. Summary tái sinh phải bằng JSON cũ theo cấu trúc và
 giá trị. Không yêu cầu bytes whitespace giống nhau. Không gọi trainer, API,
 Docker, batch hoặc generator. Output/logs được giữ trong R; output cũ bị từ chối.
-Không chạy Python với `-O` vì script audit lịch sử dùng `assert`.
+Tiến trình con chạy bằng `sys.executable -I -B`: isolated mode bỏ qua biến
+`PYTHON*`, user site packages và script directory trong import path; `-B` tránh
+ghi bytecode. Vì audit lịch sử dùng `assert`, chỉ `-B` là chưa đủ: biến
+`PYTHONOPTIMIZE=1` hoặc `2` có thể khiến dữ liệu sai vẫn thoát mã0. `-I` giữ
+assertions hoạt động ngay cả khi tiến trình cha nhận biến này, đồng thời bỏ
+`PYTHONPATH` có thể chèn startup code. Đây là cô lập cấu hình Python, không phải
+sandbox hệ điều hành; chỉ chạy archive đã kiểm hash và tin cậy. Không sửa bytes
+script trong archive. stdout/stderr luôn được ghi trước khi kiểm exit code.
+
+Kiểm thử độc lập không cần raw ZIP:
+
+```powershell
+.tools/oasis-env/Scripts/python.exe -B -X utf8 -m unittest discover -s document/benchmarks/adaptive-defense-readiness-20261108 -p test_isolation.py -v
+```
+
+Hai test kiểm môi trường optimize1/2, `sitecustomize` chèn qua `PYTHONPATH`,
+AssertionError và log lỗi được giữ, cùng đường chạy hợp lệ dùng stdlib. Workflow
+`adaptive-evidence.yml` chạy fixture này trên Windows/Linux với Python3.11;
+CI không có raw archives nên không thay phép khôi phục đầy đủ trên workspace.
 
 Phép thử này chứng minh khả năng khôi phục và kiểm lại số học từ raw predictions
 cùng metadata đã lưu. Nó không chứng minh có thể tái fit bit-for-bit trên mọi
@@ -104,6 +122,13 @@ Kiểm thử âm: output đã tồn tại bị từ chối trước khi ghi; s�
 report này, M5 và milestone index resolve. Không huấn luyện hoặc chạy HTTP lại.
 
 ## Khoảng trống giữ nguyên
+
+Lượt sửa cô lập tiến trình: [receipt riêng](isolation-summary.json) ghi PASS
+mười ZIP/974members và hai audits đủ sáu datasets, summary bằng archived/tracked.
+Output `.tools/defense-readiness/restore-003` được tạo mới với môi trường cha
+`PYTHONOPTIMIZE=1`; ba logs audit được giữ. Receipt `summary.json` cũ không đổi.
+Hai unittest PASS; M5 consistency và LF/CRLF/BOM cùng hai tamper negatives PASS.
+Không thay archives, frozen results, seeds, selection hoặc gates.
 
 Không có training peak RAM/search-only timing gốc; không phục hồi bằng chạy mới.
 Không có actual R empty learned-history row trong artifact250 để chứng minh
