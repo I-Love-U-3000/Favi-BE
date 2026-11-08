@@ -171,6 +171,16 @@ metadata; image bytes/frontend rendering and NGINX static asset serving are not
 tested. Vector/NSFW services and benchmark seeding are disabled on test API.
 
 Reports, snapshot, SQL, source and logs: `.tools/oasis-smoke/<runGUID>/`.
+Before any PostgreSQL connection, the C# importer validates the copied export's
+schema-1 adapter manifest: all six required files, unique exact names, raw-byte
+SHA256 and the snapshot's logical UTF-8 payload hash (platform newlines normalized).
+SQL and snapshot are consumed from the same checked bytes. This applies to
+ExistingRunDirectory too; previously that path copied exports without checksum
+verification. Hashes anchor integrity to the supplied manifest, not authorship
+or protection against coordinated manifest/payload edits. ExportIntegrityTests
+exercise this gate without Docker; they do not replace SQL/HTTP integration.
+verify.ps1 also runs the same gate with `OasisSmoke.dll <export> --verify-export-only`
+before starting Compose. This read-only mode performs no database/HTTP execution.
 Each run has `run.json` with its unique Compose project `favi-oasis-<GUID>` and
 whether Compose startup was attempted. `latest.json` is only the last completed
 run summary; use per-run evidence for concurrent/failing runs. Process must exit 0.

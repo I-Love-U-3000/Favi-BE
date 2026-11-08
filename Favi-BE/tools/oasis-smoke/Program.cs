@@ -15,13 +15,19 @@ catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode =
 
 static async Task RunAsync(string[] args)
 {
-    if (args.Length is < 1 or > 2) throw new ArgumentException("Pass fixture export directory and optional experimental artifact");
+    if (args.Length is < 1 or > 2) throw new ArgumentException("Pass fixture export directory and optional experimental artifact or --verify-export-only");
     var exportRoot = Path.GetFullPath(args[0]);
+    var verifiedExport = Favi.OasisSmoke.ExportIntegrity.Read(exportRoot);
+    if (args.Length == 2 && args[1] == "--verify-export-only")
+    {
+        Console.WriteLine("PASS export manifest coverage and checksums; no database/HTTP execution");
+        return;
+    }
     var experimentalArtifact = args.Length == 2 ? Path.GetFullPath(args[1]) : null;
     var adaptive = experimentalArtifact is not null && JsonDocument.Parse(await File.ReadAllTextAsync(experimentalArtifact))
         .RootElement.GetProperty("schemaVersion").GetInt32() == 2;
-    var snapshot = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(exportRoot, "snapshot.json"))).RootElement.Clone();
-    var sql = await File.ReadAllTextAsync(Path.Combine(exportRoot, "favi-seed.sql"));
+    var snapshot = JsonDocument.Parse(verifiedExport.Snapshot).RootElement.Clone();
+    var sql = verifiedExport.Sql;
     var root = Directory.GetCurrentDirectory();
     var apiDir = Path.Combine(root, "Favi-BE.API");
     var logs = Path.Combine(Path.GetDirectoryName(exportRoot)!, "report");

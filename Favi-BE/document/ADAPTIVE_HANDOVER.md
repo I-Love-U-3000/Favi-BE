@@ -1,3 +1,30 @@
+# Native projection compatibility correction — 08/11/2026
+
+PR17 hosted backend42453236283 SUCCESS at a69e137, but Codex review found native
+projection rejected by adapter-only gate. Actual old CLI native-full export
+failed missing manifest.json. Gate now supports exact native mode/two raw hashes
+as well as unchanged adapter six-file schema/logicalhash contract; both manifest
+formats together rejected. 23focused tests/build PASS; actual native pilot/full
+read-only preflight PASS. No SQL/HTTP/Docker/model rerun or frozen evidence edits.
+Copilot quota exhausted; do not claim no review findings. See import integrity
+report. Runtime review remains pending: dataset checker/generator use explicit
+raises, smoke fixture/simulator asserts need end-to-end assessment, not inferred
+bypass. Current Git/publication state in ignored lease. No merge/deploy/subagents.
+
+# Copy/import checksum gate — 08/11/2026
+
+Confirmed ExistingRunDirectory copied exports without checksum enforcement;
+new fixture/simulator had earlier checks, C# importer read SQL/snapshot directly.
+Added shared C# gate linked into unit tests: six required unique exact filenames,
+raw SHA256 and logical snapshot hash; consume checked SQL/snapshot bytes. verify
+runs --verify-export-only before Compose; importer checks again before PostgreSQL.
+17tests PASS; smoke build PASS; all6original exports PASS read-only; changed copied
+SQL rejected by actual CLI and verify.ps1 with composeAttempted=false. No SQL/API/
+Docker/model/holdout run, frozen changes or authenticity claim. Report
+benchmarks/ADAPTIVE_IMPORT_INTEGRITY_20261108.md. Existing NU1903/EF warnings remain.
+PR16 backend42452826449 SUCCESS/no review threads. Publication in ignored lease.
+Continue useful bounded review; no merge/deploy/subagents/reset/automation.
+
 # Independent mapping identity audit — 08/11/2026
 
 All6confirmatory datasets PASS exhaustive CSV/source-ID/GUID/snapshot namespace

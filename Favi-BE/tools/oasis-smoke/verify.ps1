@@ -51,8 +51,11 @@ try {
     }
     else { Invoke-Check $Python @('tools/oasis-smoke/prepare_fixture.py', $runRoot) }
     Invoke-Check 'dotnet' @('build', 'tools/oasis-smoke/OasisSmoke.csproj', '-m:1', '-nodeReuse:false', '-v:quiet')
+    # Validate the copied export before starting Compose. The importer checks
+    # again and consumes its checked bytes before any PostgreSQL connection.
+    Invoke-Check 'dotnet' @('tools/oasis-smoke/bin/Debug/net10.0/OasisSmoke.dll', (Join-Path $runRoot 'export'), '--verify-export-only')
     $report['runnerSourceSha256'] = @{}
-    foreach ($source in @('Program.cs', 'ExperimentalFeedChecks.cs', 'AdaptiveFeedChecks.cs', 'AdaptiveGatewayProbe.cs')) {
+    foreach ($source in @('Program.cs', 'ExportIntegrity.cs', 'ExperimentalFeedChecks.cs', 'AdaptiveFeedChecks.cs', 'AdaptiveGatewayProbe.cs')) {
         $report.runnerSourceSha256[$source] = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $PSScriptRoot $source)).Hash.ToLowerInvariant()
     }
     $report['runnerAssemblySha256'] = (Get-FileHash -Algorithm SHA256 -LiteralPath 'tools/oasis-smoke/bin/Debug/net10.0/OasisSmoke.dll').Hash.ToLowerInvariant()

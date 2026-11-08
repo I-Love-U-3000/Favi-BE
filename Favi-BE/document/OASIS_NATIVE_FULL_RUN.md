@@ -100,6 +100,11 @@ explicit, chưa kiểm bytes/moderation. API gate chỉ chứng minh projected s
 Unit tests kiểm non-mutating projection, dangling reference không bị giấu bởi
 filter, clock mapping, temporal ordering và tool contract/private isolation.
 Kiểm chứng Favi bằng verify.ps1 -ExistingRunDirectory sau khi engine.close.
+Gate trước Compose nhận `projection-manifest.json` với mode native chính xác,
+yêu cầu hai entry duy nhất `snapshot.json` và `favi-seed.sql`, kiểm SHA256 raw
+bytes rồi importer dùng chính bytes đã kiểm. Native projection không cần CSV
+hoặc manifest adapter. Có đồng thời hai định dạng manifest sẽ bị từ chối.
+Checksum kiểm thay đổi bytes, không chứng minh người tạo hoặc chống sửa đồng bộ.
 
 ## Thực thi
 
