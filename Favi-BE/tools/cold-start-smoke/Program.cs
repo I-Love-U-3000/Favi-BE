@@ -115,6 +115,15 @@ await using (var db = new AppDbContext(options))
     }
 }
 
+await AdaptiveColdPoolChecks.RunAsync(connection, Check);
+if (args.Contains("--adaptive-pool-only"))
+{
+    await File.WriteAllTextAsync(Path.Combine(logs, "adaptive-pool-checks.json"),
+        JsonSerializer.Serialize(checks, new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine($"PASS: {checks.Count} migration/adaptive PostgreSQL checks; no API process started.");
+    return;
+}
+
 var start = new ProcessStartInfo("dotnet") { WorkingDirectory = apiDir,
     UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
     CreateNoWindow = true };

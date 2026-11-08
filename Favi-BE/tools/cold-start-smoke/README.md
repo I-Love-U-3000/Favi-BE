@@ -23,6 +23,19 @@ chạy trên môi trường staging riêng trước phát hành production.
 
 ## Kiểm chứng trước merge: nâng cấp và cold → warm
 
+Gate còn chạy regression PostgreSQL cho adaptive threshold5:64bài public không
+tag,4positive distinct từ Like/Love/save (có một Like+save trùng bài). Reader phải
+lấy đủ60bài chưa tương tác, lọc positive trước LIMIT60; threshold1 vẫn warm.
+Fixture tạm archive catalog cũ trong transaction riêng và rollback toàn bộ thay
+đổi trước khi chạy HTTP. Không ghi đè dataset/artifact hoặc số đo lịch sử.
+Để kiểm riêng migrations và regression SQL này sau build, dùng
+`dotnet tools/cold-start-smoke/bin/Debug/net10.0/ColdStartSmoke.dll --upgrade --adaptive-pool-only`.
+Chế độ này cần stack smoke đã bật như dưới, ghi `adaptive-pool-checks.json` ở
+`.tools/cold-start-upgrade`, không khởi động API và không chạy HTTP/load test.
+Lượt sửa pool08/11/2026 PASS11checks gồm9migration và2reader checks;
+raw log `.tools/cold-pool-eligibility-postgres.log`. Hosted gate vẫn chạy đầy đủ
+hai biến thể upgrade và HTTP, không dùng chế độ chỉ pool.
+
 Chạy bằng CLI ngoài sandbox nếu sandbox chặn loopback hoặc tiến trình .NET:
 
 ```powershell
