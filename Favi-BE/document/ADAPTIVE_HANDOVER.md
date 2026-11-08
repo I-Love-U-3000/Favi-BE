@@ -1,3 +1,21 @@
+# Adaptive evidence CI — 08/11/2026
+
+Next authorized action identified a concrete missing regression gate: M5 derived
+evidence checks had no dedicated hosted Windows/Linux CI. Added repository-root
+.github/workflows/adaptive-evidence.yml: read-only checkout, -Check before fixture
+tests, LF/CRLF/BOM positives and text/metric tamper negatives, bounded5min/job,
+separate7day results artifacts. No raw archive/model/DB/Docker/Python requirement.
+Read M5 REPORT_VI section CI cho evidence đã tracked for triggers and limitations.
+Existing cold-start workflow unchanged. PR8 metadata mergeable true/no review
+threads; combined status API empty did NOT mean no Actions: separate workflow
+API confirms backend run42445795196 completed success for7feadf7. Do not confuse
+status contexts with Actions checks. No merge/deploy or branch protection change.
+
+Branch codex/adaptive-evidence-ci, base codex/adaptive-evidence-portability(PR8).
+GitHub publication authorized in root AGENTS. Exact commit/PR and hosted results
+go into ignored lease after execution; never claim new hosted checks PASS before
+observing them. No subagents/automation/reset. Frozen JSON/results unchanged.
+
 # PR6 checkout portability correction — 08/11/2026
 
 User confirmed working-style preferences and requested next action. Expanded root

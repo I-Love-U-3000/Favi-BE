@@ -1,0 +1,60 @@
+name: Adaptive evidence consistency
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/adaptive-evidence.yml'
+      - 'Favi-BE/document/benchmarks/adaptive-thesis-evidence-20261108/**'
+      - 'Favi-BE/document/benchmarks/adaptive-confirmatory-ranking-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-replay-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-cost-audit-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-http-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-serving-export-20261108/provenance.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/adaptive-evidence.yml'
+      - 'Favi-BE/document/benchmarks/adaptive-thesis-evidence-20261108/**'
+      - 'Favi-BE/document/benchmarks/adaptive-confirmatory-ranking-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-replay-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-cost-audit-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-http-20261108/summary.json'
+      - 'Favi-BE/document/benchmarks/adaptive-serving-export-20261108/provenance.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: adaptive-evidence-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  evidence:
+    name: Evidence (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: Favi-BE
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check tracked tables without regenerating them
+        run: ./document/benchmarks/adaptive-thesis-evidence-20261108/build-evidence.ps1 -Check
+      - name: Check newline portability and tamper rejection
+        run: ./document/benchmarks/adaptive-thesis-evidence-20261108/test-portability.ps1 -Output .tools/evidence-ci
+      - name: Keep verification results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adaptive-evidence-${{ matrix.os }}
+          path: Favi-BE/.tools/evidence-ci/results.txt
+          if-no-files-found: warn
+          retention-days: 7
