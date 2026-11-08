@@ -183,10 +183,12 @@ Workflow `.github/workflows/adaptive-evidence.yml` tại repository root chạy
 hai jobs Windows/Linux bằng PowerShell7: kiểm bảng tracked bằng `-Check` trước,
 sau đó kiểm fixtures LF/CRLF/BOM và hai trường hợp sửa nội dung. Không tự sinh
 lại bảng để che drift. Trigger là pull request hoặc push vào main có thay đổi
-workflow, gói M5, hoặc một trong năm JSON inputs; có `workflow_dispatch` khi
+workflow, gói M5, gói defense-readiness hoặc một trong năm JSON inputs; có `workflow_dispatch` khi
 workflow có mặt trên default branch. Mỗi job timeout5phút; fail-fast tắt để
 giữ kết quả cả hai OS. Jobs chỉ cần quyền contents:read, không secrets, model,
-raw archives, Docker, database hay Python environment riêng.
+raw archives, Docker hoặc database. Step audit isolation dùng setup-python3.11
+và hai unittest stdlib với `PYTHONOPTIMIZE=1`; fixture kiểm assertions và chặn
+startup injection qua `PYTHONPATH`, giữ log lỗi. Chi tiết ở report readiness.
 
 `results.txt` chứa các checks đã hoàn tất và được upload riêng theo OS, giữ7ngày;
 nếu script fail trước khi ghi file thì step failure/log là bằng chứng, artifact
