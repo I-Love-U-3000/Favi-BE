@@ -149,6 +149,34 @@ hoặc toàn gateway proof. Mặc định experiment vẫn tắt; không merge/d
 
 ## Chỉ mục tái lập và thứ tự đọc
 
+### Kiểm bảng qua các kiểu Git checkout
+
+Sửa review PR#6 ngày08/11/2026: phần hash trong TABLES_VI dùng fingerprint
+văn bản chuẩn hóa UTF-8 không BOM và CRLF→LF. Trước đó bảng ghi hash raw CRLF,
+nên checkout LF báo drift dù nội dung JSON không đổi. Phép chuẩn hóa hiện chỉ
+thống nhất encoding/BOM và cặp xuống dòng; không parse/serialize lại JSON,
+không bỏ spaces, không đổi thứ tự fields hoặc giá trị. SHA256 được tính trên
+UTF-8 bytes của text đã chuẩn hóa. Do đó thay nội dung vẫn đổi fingerprint.
+
+Hash chuẩn hóa này chỉ phục vụ kiểm bảng tổng hợp qua checkout. Hash raw bytes
+của dữ liệu, archive, manifest và receipt lịch sử giữ nguyên; không thay chúng
+bằng normalized hashes. Mọi bảng metric và kết luận giữ nguyên. Không áp dụng
+`.gitattributes` rộng lên frozen evidence để ép viết lại bytes lịch sử.
+
+Kiểm bằng PowerShell7 từ solution, output mới:
+
+```powershell
+& document/benchmarks/adaptive-thesis-evidence-20261108/test-portability.ps1 -Output .tools/evidence-portability/test-002
+& document/benchmarks/adaptive-thesis-evidence-20261108/build-evidence.ps1 -Check
+```
+
+Lượt thực tế `test-001`: LF, CRLF và UTF-8 BOM/CRLF đều PASS cùng bảng;
+thêm space vào JSON provenance hợp lệ bị báo drift, sửa metric bị kiểm số học
+từ chối. Fixtures chỉ là bản sao của năm inputs, không sửa frozen JSON/ZIP hoặc
+chạy model/HTTP. Logs kết quả ở output `results.txt`. Chuẩn hóa không bảo đảm
+file còn được lưu, tính đúng của raw experiment hoặc clean-machine full-stack
+reproducibility; vẫn cần audits và receipts riêng bên dưới.
+
 [Rà soát tái lập sau M5](../adaptive-defense-readiness-20261108/REPORT_VI.md)
 ghi ánh xạ gốc ZIP, phụ thuộc đường dẫn của script và phép thử khôi phục raw
 predictions vào cây riêng. Không chạy batch/summarizer trực tiếp trên bằng chứng

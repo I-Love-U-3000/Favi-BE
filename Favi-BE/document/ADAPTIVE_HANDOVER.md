@@ -1,3 +1,30 @@
+# PR6 checkout portability correction — 08/11/2026
+
+User confirmed working-style preferences and requested next action. Expanded root
+AGENTS.md durable preferences: independent system reasoning, self-questioning,
+plain outcome-first explanations, initiative, meaningful updates and learning
+questions only when useful. Read these at every resume; no infallible memory claim.
+
+Actual open PR6 P2 finding: M5 tables used raw CRLF hashes and falsely drifted on
+LF Git checkout. Fixed only derived table fingerprints to canonical UTF-8 no BOM,
+CRLF-to-LF; raw archive/manifest/receipt/source JSON bytes remain unchanged.
+No global gitattributes normalization of historical evidence. Numeric table rows
+unchanged. Read benchmarks/adaptive-thesis-evidence-20261108/REPORT_VI.md section
+Kiểm bảng qua các kiểu Git checkout and build-evidence.ps1/test-portability.ps1.
+Actual test .tools/evidence-portability/test-001: LF/CRLF/BOM-CRLF PASS; valid JSON
+with changed non-EOL whitespace rejected; altered metric rejected. M5 consistency
+PASS. No model/API/Docker rerun or frozen result changes. All negative conclusions
+and missing measurements retained. PR2..7 review threads queried: only PR6 has
+the portability finding; do not claim other PRs were reviewed or CI passed.
+
+Milestone branch codex/adaptive-evidence-portability, base codex/adaptive-defense-readiness
+(PR7). Tested commit/PR recorded in ignored lease after publication. No merge/deploy.
+Latest user requests continued useful work; no need routine review. The user
+subsequently granted ongoing GitHub authorization: "approve toàn quyền lên github
+của tôi". Read root AGENTS.md; push/open/update PRs for authorized Favi milestones
+without per-commit permission. No auto-merge/deploy; report actual automatic
+approval blocks specifically, never bypass. No subagents/automation/reset.
+
 # Post-M5 defense and evidence restoration — 08/11/2026
 
 Read benchmarks/adaptive-defense-readiness-20261108/REPORT_VI.md, summary.json
