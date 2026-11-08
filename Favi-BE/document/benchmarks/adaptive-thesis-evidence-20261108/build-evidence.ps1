@@ -9,6 +9,12 @@ function Near($actual, $expected, $label) {
     if ([Math]::Abs($actual - $expected) -gt 1e-12) { throw "Mismatch: $label" }
 }
 function F($value) { ([double]$value).ToString('F9', $culture) }
+function Source-TextHash($path) {
+    # Checkout-independent text fingerprint; original archive hashes stay byte-exact.
+    $text = [IO.File]::ReadAllText($path, [Text.UTF8Encoding]::new($false, $true)).Replace("`r`n", "`n")
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes($text)
+    [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+}
 $ranking = Read-Json 'adaptive-confirmatory-ranking-20261108/summary.json'
 $replay = Read-Json 'adaptive-replay-20261108/summary.json'
 $cost = Read-Json 'adaptive-cost-audit-20261108/summary.json'
@@ -69,14 +75,14 @@ foreach ($name in @('original_search_seconds','original_validation_fit_only_seco
 Near (Mean @($cost.runs | ForEach-Object { $_.elapsed_seconds })) ($cost.total_elapsed_seconds / 6) 'elapsed sum'
 Near (($cost.runs.unique_refits.seconds | Measure-Object -Sum).Sum) $cost.total_unique_refit_seconds 'unique refits'
 $lines.Add('')
-$lines.Add('## Nguồn và SHA256 của đúng bytes đầu vào')
+$lines.Add('## Nguồn và SHA256 văn bản UTF-8/LF')
 $lines.Add('')
-$lines.Add('Hash xác nhận file đã dùng để tổng hợp, không xác nhận telemetry chưa được đo. Raw archive nằm ở .tools, không được nhúng trong gói này.')
+$lines.Add('Hash văn bản chuẩn hóa UTF-8 không BOM và CRLF thành LF để kiểm cùng nội dung qua Git checkout; không parse/serialize lại JSON hoặc bỏ whitespace khác. Đây không phải hash bytes archive gốc. Hash bytes lịch sử giữ ở manifests/receipts. Raw archive nằm ở .tools; hash không xác nhận telemetry chưa được đo.')
 $lines.Add('')
 $lines.Add('| File tương đối từ document/benchmarks | SHA256 |')
 $lines.Add('|---|---|')
 foreach ($relative in @('adaptive-confirmatory-ranking-20261108/summary.json','adaptive-replay-20261108/summary.json','adaptive-cost-audit-20261108/summary.json','adaptive-http-20261108/summary.json','adaptive-serving-export-20261108/provenance.json')) {
-    $hash = (Get-FileHash (Join-Path $root $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+    $hash = Source-TextHash (Join-Path $root $relative)
     $lines.Add("| $relative | $hash |")
 }
 $content = ($lines -join "`n") + "`n"

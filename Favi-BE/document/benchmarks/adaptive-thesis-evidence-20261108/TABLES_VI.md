@@ -49,14 +49,14 @@ C0/C1/C2: 0 positive, lần lượt 0/1/2–10 topics; T1: 1 positive; T2: 2–4
 | independent | 0.011613138 | 0.010113557 | -0.001499580 |
 | no-topics | 0.011579665 | 0.010141730 | -0.001437935 |
 
-## Nguồn và SHA256 của đúng bytes đầu vào
+## Nguồn và SHA256 văn bản UTF-8/LF
 
-Hash xác nhận file đã dùng để tổng hợp, không xác nhận telemetry chưa được đo. Raw archive nằm ở .tools, không được nhúng trong gói này.
+Hash văn bản chuẩn hóa UTF-8 không BOM và CRLF thành LF để kiểm cùng nội dung qua Git checkout; không parse/serialize lại JSON hoặc bỏ whitespace khác. Đây không phải hash bytes archive gốc. Hash bytes lịch sử giữ ở manifests/receipts. Raw archive nằm ở .tools; hash không xác nhận telemetry chưa được đo.
 
 | File tương đối từ document/benchmarks | SHA256 |
 |---|---|
-| adaptive-confirmatory-ranking-20261108/summary.json | de13b34af274a6e8dcd9da89e6c528c76c28bd11b8d73706d25e132642544b93 |
-| adaptive-replay-20261108/summary.json | 6f58ff0361f1d62a821630c0a81fc87aa5420c8c756093cb7ae7c9a06ef55bef |
-| adaptive-cost-audit-20261108/summary.json | 61823241d9b1ff658566c424380ff8256b2aebf76f5edcf4fcf5fd931e290cdf |
-| adaptive-http-20261108/summary.json | d40306ea9fcc21af0761ad7449ee1c5fa1a5f09af404f4d2f05fcf0d7eb322ad |
-| adaptive-serving-export-20261108/provenance.json | 5c09ab1f1e3401e6b636ae00f8d15f3ac743da459c0b21541193fa1227af3b56 |
+| adaptive-confirmatory-ranking-20261108/summary.json | 41fdbc3e000926159896c9b35fdeb10be479f93b13608cd6be80a254866ab2df |
+| adaptive-replay-20261108/summary.json | 75fc97be9aa3950eaee4111b40798e7fbac857acee0536b1e5a3bc40b3526f1c |
+| adaptive-cost-audit-20261108/summary.json | d1224473bd39cd8814f513471271835494dc3180a5f6b3da195c3b3202e68fb9 |
+| adaptive-http-20261108/summary.json | 929c6e657ff2e89ef1a2966f2f098914a523c97eb2939400cd74150351b2b986 |
+| adaptive-serving-export-20261108/provenance.json | 4467afa9300c56175c4a9a6cdc234593fc0fcef3f3ff4fa9a12192f33736622b |
