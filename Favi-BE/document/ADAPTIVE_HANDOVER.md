@@ -1,3 +1,17 @@
+# Independent mapping identity audit — 08/11/2026
+
+All6confirmatory datasets PASS exhaustive CSV/source-ID/GUID/snapshot namespace
+equality:30000users/12000posts. No demonstrated identity defect. Independent
+stdlib audit plus permutation/duplicate/checksum/namespace and CRLF controls.
+Read benchmarks/ADAPTIVE_MAPPING_IDENTITY_20261108.md. Initial raw-byte checksum
+assumption corrected: adapter hashes logical payload before Windows write_text.
+No frozen source/data/archive/result changes; no numerical/SQL/HTTP rerun.
+PR15 evidence42452493717/backend42452493819 both SUCCESS. Receipt ignored
+.tools/mapping-identity-audit.json. Branch codex/adaptive-snapshot-identity-review.
+Next useful scope: review native smoke's copy/import checksum enforcement versus
+documented guarantees before claiming gap; preserve historical evidence and only
+fix demonstrated defects. No merge/deploy/subagents/reset/automation.
+
 # Export GUID mapping coverage — 08/11/2026
 
 Bounded review found build_feed_artifact.py in ranking batch frozen-source.zip;
