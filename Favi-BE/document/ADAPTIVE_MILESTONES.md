@@ -1,5 +1,13 @@
 # Favi adaptive: đọc tiến độ và kết quả
 
+M5 tổng hợp08/11/2026: [gói bằng chứng khóa luận tiếng Việt](benchmarks/adaptive-thesis-evidence-20261108/REPORT_VI.md)
+nối RQ/method/results/negative findings, claim→evidence, chi phí và chỉ mục tái lập.
+[Bảng sinh từ JSON](benchmarks/adaptive-thesis-evidence-20261108/TABLES_VI.md)
+giữ đủ methods, cohort/history và robustness. Script PowerShell kiểm consistency
+không rerun model/HTTP. M5 là hoàn tất tổng hợp bằng chứng hiện có, không toàn bộ
+khóa luận hoặc PASS relevance/serving/resource: primary/gateway FAIL và telemetry
+training chưa đo vẫn còn. Chưa có cơ sở thay B1 bằng R mặc định.
+
 Cập nhật08/11/2026: ranking và robustness đã có bằng chứng; primary practical
 relevance FAIL. HTTP lifecycle/SQL PASS, direct lab latency PASS, gateway load
 FAIL429. [Kiểm toán chi phí](benchmarks/adaptive-cost-audit-20261108/REPORT_VI.md)
