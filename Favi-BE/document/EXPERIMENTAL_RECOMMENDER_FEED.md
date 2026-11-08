@@ -2,6 +2,10 @@
 
 ## Scope and isolation
 
+Adaptive B1/R uses a separate schema2 exporter; see
+[adaptive serving contract](ADAPTIVE_SERVING_CONTRACT.md). The legacy endpoint
+below still accepts only schema1 EASE/PPR and must not be used to claim R serving.
+
 Action 3 adds an authenticated opt-in experimental feed endpoint. It does not
 replace `/api/posts/feed` or `/api/posts/feed-with-reposts`, and defaults to
 disabled. Serve only Favi synthetic model artifacts; MovieLens models/data are

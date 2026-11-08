@@ -1,3 +1,36 @@
+# Bounded adaptive exporter ready — 08/11/2026
+
+Milestone build_adaptive_artifact.py/schema2 finished; read ADAPTIVE_SERVING_CONTRACT.md
+and benchmarks/adaptive-serving-export-20261108/REPORT_VI.md. Two meaningful unittest
+cases PASS, real EASE/PPR/LightGCN fits and immutable top10 replay in fixture.
+Actual main20261111 export250users PASS preflight/gate/source/lock/prefix/GUID/
+refit prediction/manifest. B1/R EASElambda1000 thresholds1/5. Artifact11867251bytes,
+SHA2567120ed20ae9c8db81bf897411be349581bdc2d6e297f613f04a9986af0a43824.
+Original1000user attempt rejected16MiB, retained inputs; do not rerun old outputs.
+Success .tools/feed-experiment/adaptive-export-20261108-main11-250; failed sibling
+adaptive-export-20261108-main11. ZIP .tools/dataset-archives/adaptive-serving-export-20261108.zip
+6members/readback PASS, SHA256dd4f6acb56fe2304382240f4b776f06be8a45bc3c5da434e1db4c3ea19daca20.
+Tracked evidence/report and contract synced. New diff check PASS; historical archive
+blank-EOF warning from79ad77b not rewritten. No Python/.NET job after export.
+
+NEXT: schema2 .NET loading/routing/controller and current-count cold retrieval
+extension, preserve legacy schema1 and production threshold1/default disabled.
+Read contract and inspect ColdStartQueryReader (currently returns null at first
+Like/Love OR save); need distinct current positive post count for threshold5,
+current topic retrieval for sparse positives, never bypass viewer eligibility.
+Schema2 B1/R warm ranks may be empty for users absent in fitted data; fallback
+explicitly, do not treat zero-score arbitrary predictions as learned history.
+No source-guid integer substitution. Need loader tests before actual HTTP smoke.
+Then isolated lifecycle/privacy/fallback/resource gates incl topic version and
+idempotency,10concurrency100warmup+1000measured,5process restarts,direct/gateway
+separate. Full original training/search/refit/export/load/peak RAM cost remains
+pending; current export refit0.365270s/state32521008bytes is not full cost/RAM.
+Sample250users is not full5k deployment; <=1000users/16MiB/300candidates stays.
+Primary practical gate FAIL unchanged, no retune/model/seed/gate revisions.
+Continue without routine review, no subagents/schedule/merge/deploy; user triggers
+reset. Fresh chat between milestones through create_thread, authorized until12:00
+08/11Asia/Saigon. Numerical/.NET/Docker/commit require_escalated. Preserve root nul.
+Check Git/lease/process before claiming. Exact commit recorded in lease after commit.
 # Replay audited and archived — 08/11/2026
 
 Six fixed-selection replays completed PASS at07:01:16 Asia/Saigon. Resumed after
