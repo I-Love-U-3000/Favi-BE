@@ -1,0 +1,93 @@
+{
+  "status": "PASS",
+  "scope": "Saved validation grid, dual patience and global-max selection only; no model rerun",
+  "datasets": [
+    {
+      "scenario": "main",
+      "seed": 20261111,
+      "trials": 196,
+      "choices": 6,
+      "terminal_epochs": [
+        300,
+        130,
+        300,
+        120
+      ]
+    },
+    {
+      "scenario": "main",
+      "seed": 20261112,
+      "trials": 190,
+      "choices": 6,
+      "terminal_epochs": [
+        300,
+        110,
+        300,
+        110
+      ]
+    },
+    {
+      "scenario": "main",
+      "seed": 20261113,
+      "trials": 192,
+      "choices": 6,
+      "terminal_epochs": [
+        300,
+        120,
+        290,
+        120
+      ]
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261111,
+      "trials": 206,
+      "choices": 6,
+      "terminal_epochs": [
+        300,
+        190,
+        300,
+        110
+      ]
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261112,
+      "trials": 184,
+      "choices": 6,
+      "terminal_epochs": [
+        300,
+        140,
+        240,
+        110
+      ]
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261113,
+      "trials": 200,
+      "choices": 6,
+      "terminal_epochs": [
+        300,
+        140,
+        230,
+        200
+      ]
+    }
+  ],
+  "config_sha256": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+  "inputs_sha256": {
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/tuning.json": "9957b7b7ebdfd6861906832cb449a6fa627c060a5adffdfd3ab9b8255a9b9285",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/selection.json": "4e7682477e8174388dd7e084b4fa833862bbcf6e3738a054fbbb0a872718f1bc",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/tuning.json": "882ff3dbc7b11aae9916275fc80cf211b423518370891064af3cf32ef07795cd",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/selection.json": "0fad86c577fe8896d868c1a1f56ad85dd6fb3c0f80712baa90d5655adee17e35",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/tuning.json": "d6a54996da356719e7d8b433bdf03957e53505390d2b8f2652a7400bfcd6ad4d",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/selection.json": "e8896641c7d6e811c0b887c4c5b001fc23c8097dd77b9b90965aa4875e323704",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/tuning.json": "2cc6e5d54d3942383a3ec87284f62b543fdc50ab10a9047602bc5b51aa51542b",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/selection.json": "45b575ee91d89e6f981cb103e2ac171bee60c6fd0607570f4f19e39ecb91d418",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/tuning.json": "11b003997e8e248dace4d81b163760469ea0299bb65db5725a594602950ceb50",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/selection.json": "113c6ead7a6a7ac0c2966828aebf57ecf435aaff26d8524ecdfc9336df215737",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/tuning.json": "31fc3d1e4b6da277f530fe5236b3f68e4f0725ea06039861a5106510ab35884c",
+    "document/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/selection.json": "d46b176bf5f7c491071bdc749c4bb75b7da7a5e323256e47153e282fa4749acb"
+  }
+}

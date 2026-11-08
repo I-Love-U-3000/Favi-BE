@@ -1,3 +1,24 @@
+# Independent method/selection audit — 08/11/2026
+
+Reviewed protocol against runner/feed/evaluator/models/onboarding/analyzer/replay
+and ranking/replay aggregation plus M5/cost/readiness claims. No demonstrated
+method defect found in reviewed scope; this is not proof of absence of leakage.
+Concrete audit gap: historical ranking audit checks selected trial membership,
+not whether it wins frozen global-max tie selection. Added independent stdlib
+audit in benchmarks/adaptive-method-integrity-20261108: all1168validation records,
+36choices/six datasets PASS; grid/parameters/paired thresholds/continuous epochs,
+strict dual patience stopping and global-max tolerance checked without model imports.
+7tests PASS including suboptimal-but-member/missing/duplicate/grid/checkpoint/
+premature-stop/continued-after-patience/nonfinite/population negatives and tolerance drift. M5 consistency PASS. Source/frozen
+results/archives/negative conclusions unchanged; no numerical/HTTP/Docker rerun.
+CI adds Windows/Linux selection audit and receipt, triggers on inputs/config.
+Raw receipt hashes are workspace diagnostics, not cross-checkout EOL baselines.
+
+Branch codex/adaptive-method-integrity-review, base PR11 artifact-schema-integrity.
+Publication/hosted status in ignored lease after actual observation. User says
+continue until quota; quota not introspectable. No merge/deploy/subagents/reset/
+automation. Do not manufacture a next experiment/branch/chat absent useful scope.
+
 # Required artifact fields — 08/11/2026
 
 Confirmed loader gap with checksum-valid malformed fixtures: omitted score
