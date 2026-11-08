@@ -1,5 +1,13 @@
 # Adaptive serving artifact schema 2
 
+Historical cost audit completed08/11/2026:
+`benchmarks/adaptive-cost-audit-20261108/REPORT_VI.md` and `summary.json`.
+Six original elapsed totals12641.235283s;33unique cached refits199.635498s.
+Original search-only time and training peak process RAM were never recorded;
+remain unavailable, not inferred from model-state bytes/export/API memory.
+Audit completion does not pass total resource gates; gateway load remains FAIL.
+No retraining, retuning or HTTP rerun in this audit.
+
 08/11/2026. Export implementation: `tools/oasis-smoke/build_adaptive_artifact.py`.
 This is a separate artifact from legacy schema1 EASE/PPR; the HTTP
 loader now validates both schemas and serves B1/R explicitly. Default disabled

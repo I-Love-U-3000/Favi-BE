@@ -1,5 +1,14 @@
 # Favi adaptive: đọc tiến độ và kết quả
 
+Cập nhật08/11/2026: ranking và robustness đã có bằng chứng; primary practical
+relevance FAIL. HTTP lifecycle/SQL PASS, direct lab latency PASS, gateway load
+FAIL429. [Kiểm toán chi phí](benchmarks/adaptive-cost-audit-20261108/REPORT_VI.md)
+xác nhận sáu lượt gốc12641.235283s,33unique refits199.635498s. Search-only time
+và peak RAM training gốc không được ghi; audit hoàn tất với khoảng trống đã nêu,
+không coi M4 toàn bộ PASS. Các ghi chú chưa chạy trong phần lịch sử bên dưới
+được thay thế bởi reports ranking/replay/HTTP/cost mới nhất. Tiếp theo M5: gói
+kết luận khóa luận, bảng claim→evidence và giới hạn, không retune cứu kết quả.
+
 Kế hoạch điều hành hiện tại: [final revision 05/11/2026](ADAPTIVE_FINAL_REVISION.md).
 Thay cách vá từng cohort bằng ma trận scenario và gate tổng trước benchmark.
 
