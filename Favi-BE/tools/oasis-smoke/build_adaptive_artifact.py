@@ -29,6 +29,21 @@ def verify_export_inputs(ranking, required):
     return verify_manifest(ranking)
 
 
+def verify_mapping_inputs(dataset):
+    """Anchor consumed GUID maps to the supplied dataset manifest."""
+    manifest_path = dataset / 'dataset-manifest.json'
+    manifest = read(manifest_path)
+    declared = manifest.get('files', {})
+    files = {name.replace('\\', '/'): digest for name, digest in declared.items()}
+    required = {'export/users.csv', 'export/posts.csv'}
+    if manifest.get('schema_version') != 1 or len(files) != len(declared) or not required <= files.keys():
+        raise ValueError('Incomplete mapping manifest coverage')
+    for name in sorted(required):
+        if sha(dataset / name) != files[name]:
+            raise ValueError('Source GUID mapping changed: ' + name)
+    return sha(manifest_path)
+
+
 def export_rows(data, onboarding, models, users, posts, max_users):
     """Save warm ranks even below threshold: live routing belongs to HTTP."""
     if not 1 <= max_users <= 1000:
@@ -72,6 +87,7 @@ def build(dataset, ranking, output, max_users=1000, optimizer_seed=20261103):
     for name in SOURCE_NAMES:
         if sha(Path(__file__).with_name(name)) != read(ranking / 'source-inventory.json')[name]:
             raise ValueError('Frozen source drift: ' + name)
+    mapping_manifest_hash = verify_mapping_inputs(dataset)
     gate = analyze(dataset)
     if not gate['gate_passed']:
         raise ValueError('Dataset gate failed')
@@ -105,6 +121,7 @@ def build(dataset, ranking, output, max_users=1000, optimizer_seed=20261103):
     # Preserve failure evidence after preflight; no overwrite on retry.
     save(output / 'inputs.json', dict(dataset=str(dataset), ranking=str(ranking),
          ranking_manifest_sha256=manifest_hash, selection_sha256=selection_hash,
+         dataset_manifest_sha256=mapping_manifest_hash,
          optimizer_seed=optimizer_seed, max_users=max_users))
     for label, choice in choices.items():
         seed = optimizer_seed if choice['family'] == 'lightgcn' else None
@@ -142,6 +159,8 @@ def build(dataset, ranking, output, max_users=1000, optimizer_seed=20261103):
     (output / 'artifact.json').write_bytes(encoded)
     if sha(ranking / 'selection.json') != selection_hash or verify_export_inputs(ranking, required) != manifest_hash:
         raise ValueError('Input evidence changed during export')
+    if verify_mapping_inputs(dataset) != mapping_manifest_hash:
+        raise ValueError('Dataset manifest changed during export')
     save(output / 'provenance.json', dict(schema_version=2, artifact_sha256=sha(output / 'artifact.json'),
          artifact_bytes=len(encoded), users=len(rows), sample_rule='ascending arrived source IDs',
          source_mapping_sha256=mapping_hash, selection_sha256=selection_hash, methods=methods,

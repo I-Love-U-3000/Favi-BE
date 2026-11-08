@@ -1,3 +1,24 @@
+# Export GUID mapping coverage — 08/11/2026
+
+Bounded review found build_feed_artifact.py in ranking batch frozen-source.zip;
+archived/current bytes SHA256363981e24471210c84499eab492cd6eb14d8eb73b0add39040d6321cda6abcfa
+match. Helper absence from per-run14source inventory is not source loss.
+Concrete separate defect: shared dataset checker mandatory set omits both GUID
+CSVs. Exporter reached refit in6omission controls before correction. Current
+schema2 exporter now requires/checks both CSV entries in supplied dataset manifest,
+normalizes legacy backslashes/rejects collisions, saves manifest hash in inputs,
+and rechecks both CSV hashes/manifest identity after export. Frozen checker and
+inventories/archive/results unchanged. Not authenticity or independent SQL parity.
+Final3tests PASS with real EASE/PPR/LightGCN fits/replay,6omissions+6CSV mutations+
+3manifest mutations and existing21ranking omissions. Qualification/lock/tuning
+remain mocked in small orchestration. Actual dataset read-only mapping check PASS.
+Raw .tools/mapping-coverage-{before,after,final,actual}.log. No holdout/artifact/HTTP
+rerun. PR14 backend42452124827 SUCCESS/no review threads at observed check.
+Branch codex/adaptive-export-source-provenance based on PR14/378d699. Publication
+state in ignored lease. Continue useful authorized work; no quota API; no merge,
+deploy/subagents/reset/automation. Next bounded review: snapshot/CSV identity
+consistency versus imported SQL, inspect adapter/import validators before claiming
+a gap; no coordinated-tampering authenticity claim and no frozen source rewrite.
 # Export ranking-manifest coverage — 08/11/2026
 
 Concrete defect reproduced: removing any of six consumed ranking entries still
