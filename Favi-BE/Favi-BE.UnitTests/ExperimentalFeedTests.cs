@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Favi_BE.API.Application.ContentDiscovery;
 using Microsoft.Extensions.Options;
 
@@ -7,6 +8,35 @@ namespace Favi_BE.UnitTests;
 
 public sealed class ExperimentalFeedTests
 {
+    [Theory]
+    [InlineData("score")]
+    [InlineData("epoch")]
+    [InlineData("optimizerSeed")]
+    public void MissingRequiredFieldsCannotBecomeValidDefaultValues(string field)
+    {
+        var post = new RankedExperimentPost(Guid.NewGuid(), 0);
+        var method = new ExperimentMethod("ease", 1,
+            new() { ["value"] = JsonSerializer.SerializeToElement(1000) }, 0, null);
+        var artifact = Artifact([new(Guid.NewGuid(), Ranks: new() { ["B1"] = [post], ["R"] = [] })]) with
+        {
+            SchemaVersion = 2,
+            Methods = new() { ["B1"] = method, ["R"] = method with { Threshold = 5 } }
+        };
+        WithArtifact(artifact, options =>
+        {
+            Assert.True(new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System).Enabled);
+            var json = JsonNode.Parse(File.ReadAllBytes(options.ArtifactPath))!;
+            var target = field == "score" ? json["users"]![0]!["ranks"]!["B1"]![0]!.AsObject() :
+                json["methods"]!["B1"]!.AsObject();
+            Assert.True(target.Remove(field));
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(json);
+            File.WriteAllBytes(options.ArtifactPath, bytes);
+            options.ArtifactSha256 = Convert.ToHexString(SHA256.HashData(bytes));
+            Assert.Throws<JsonException>(() =>
+                new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System));
+        });
+    }
+
     [Fact]
     public void DisabledSnapshotDoesNotReadConfiguredMissingFile()
     {

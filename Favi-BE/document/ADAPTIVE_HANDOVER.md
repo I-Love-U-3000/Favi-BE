@@ -1,3 +1,28 @@
+# Required artifact fields — 08/11/2026
+
+Confirmed loader gap with checksum-valid malformed fixtures: omitted score
+became0; omitted optimizerSeed became null, both accepted. Omitted epoch was
+already rejected semantically (do not claim all3were accepted). Enabled local
+RespectRequiredConstructorParameters in snapshot JSON options, requiring every
+nonoptional constructor field including nullable fields; schema-specific optional
+record fields retain defaults. Explicit score0/solver epoch0/null still valid.
+Before3fixtures fail (2no exception,1different exception); final26focused .NET
+ExperimentalFeedTests/ColdStart PASS. Raw TRX in .tools/schema-integrity and logs
+.tools/schema-integrity-*.log. Actual unchanged250user11867251byte artifact loads
+B1=1/R=5; single364.4894ms diagnostic is not a benchmark. Existing nullable/EF
+conflict/NU1903 warnings remain. No HTTP/model/Docker rerun or production change.
+Read ADAPTIVE_SERVING_CONTRACT.md schema-presence correction. Research conclusions
+and archives unchanged. Branch codex/adaptive-artifact-schema-integrity, base
+codex/adaptive-audit-isolation(PR10). Commit/PR/hosted status in ignored lease.
+
+Previous PR10 commit4d679f50950b839de3cafb4b886df12287be42aa completed hosted
+Windows/Linux evidence42447939205 SUCCESS2artifacts/backend42447939203 SUCCESS,
+mergeable/no review threads at check. No merge/deploy/subagents/automation/reset.
+User renewed continuous useful work until quota; quota unavailable. Next useful
+bounded review: independently inspect evaluation/selection/replay code against
+frozen protocol for leakage, metric aggregation or invalid claim boundaries;
+read docs before code, preserve frozen sources/results and avoid new experiments
+on observed holdouts. Only implement corrections with a demonstrated defect.
 # Archived audit isolation — 08/11/2026
 
 Fixed proven false-pass risk: audit_readiness children now use -I -B so
