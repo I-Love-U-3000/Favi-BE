@@ -4,8 +4,9 @@
 
 Adaptive B1/R uses a separate schema2 exporter; see
 [adaptive serving contract](ADAPTIVE_SERVING_CONTRACT.md). The legacy endpoint
-below accepts schema1 EASE/PPR and schema2 B1/R. Adaptive HTTP lifecycle and
-resource gates remain pending; historical EASE/PPR results do not prove R gates.
+below accepts schema1 EASE/PPR and schema2 B1/R. Adaptive lifecycle/SQL and direct
+lab latency now pass; gateway load fails at the unchanged rate limit. See the
+schema2 report below; historical EASE/PPR results remain separate evidence.
 
 Action 3 adds an authenticated opt-in experimental feed endpoint. It does not
 replace `/api/posts/feed` or `/api/posts/feed-with-reposts`, and defaults to
@@ -64,6 +65,17 @@ virtual-clock content can be old. No freshness improvement is claimed merely by
 recording age. HTTP latency must be measured through real localhost requests.
 
 ## Verification and limits
+
+Schema2 B1/R verification is recorded in
+[adaptive HTTP report](benchmarks/adaptive-http-20261108/REPORT_VI.md).
+Actual main20261111 GUIDs, PostgreSQL UNION threshold/dedup, current eligibility,
+topics/version/idempotency, new user/item, stale and fail-closed startup pass.
+Direct concurrency10/100warmup/1000measured p95 is57.2082ms B1/57.4861ms R.
+The unchanged150/minute NGINX rate rejects almost all measured gateway requests;
+gateway load gate FAIL, not a successful low-latency feed result. Five separate
+API startups and workload peak working set are reported separately from original
+training/search cost, which remains incomplete. Artifact250users is not full5k.
+The schema1 historical results below remain separate and unchanged.
 
 Use an isolated PostgreSQL/Redis/API stack with a unique Compose project,
 loopback ports, a fresh database and test-only JWT signing key. Build/run .NET
