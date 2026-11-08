@@ -13,6 +13,28 @@ from test_adaptive_benchmark import fixture
 
 
 class AdaptiveArtifactTests(unittest.TestCase):
+    def test_mapping_manifest_hashes_and_identity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            dataset = Path(folder)
+            (dataset / 'export').mkdir()
+            files = {}
+            for name in ('export/users.csv', 'export/posts.csv'):
+                (dataset / name).write_bytes(b'original')
+                files[name] = benchmark.sha(dataset / name)
+            manifest = dataset / 'dataset-manifest.json'
+            benchmark.save(manifest, dict(schema_version=1, files=files))
+            identity = exporter.verify_mapping_inputs(dataset)
+            for name in files:
+                (dataset / name).write_bytes(b'changed')
+                with self.assertRaisesRegex(ValueError, 'mapping changed'):
+                    exporter.verify_mapping_inputs(dataset)
+                (dataset / name).write_bytes(b'original')
+            benchmark.save(manifest, dict(schema_version=1, files={k.replace('/', '\\'): v for k, v in files.items()}))
+            self.assertNotEqual(identity, exporter.verify_mapping_inputs(dataset))
+            benchmark.save(manifest, dict(schema_version=1, files={**files, 'export\\users.csv': files['export/users.csv']}))
+            with self.assertRaisesRegex(ValueError, 'mapping manifest coverage'):
+                exporter.verify_mapping_inputs(dataset)
+
     def test_warm_ranks_below_threshold_and_unknown_history_are_distinct(self):
         events, rows, _ = fixture()
         data = InteractionData(events, 300)
@@ -52,6 +74,9 @@ class AdaptiveArtifactTests(unittest.TestCase):
                         writer.writerow([source, target])
                         writer.writerows((i, str(uuid.UUID(int=i+100))) for i in ids)
                 config_path = root / 'config.json'
+                mapping_files = {name: benchmark.sha(dataset / name) for name in
+                                 ('export/users.csv', 'export/posts.csv')}
+                benchmark.save(dataset / 'dataset-manifest.json', dict(schema_version=1, files=mapping_files))
                 benchmark.save(config_path, config)
                 choice = dict(family=family, parameters=parameters, epoch=epoch, threshold=1)
                 choices = dict(B1=choice, R={**choice, 'threshold': 5})
@@ -69,6 +94,40 @@ class AdaptiveArtifactTests(unittest.TestCase):
                 self.assertEqual(artifact['users'][3]['ranks']['R'], [])
                 self.assertEqual(artifact['users'][0]['userId'], str(uuid.UUID(int=100)))
                 exporter.verify_manifest(output)
+                for missing in mapping_files:
+                    with self.subTest(missing_mapping_manifest_entry=missing):
+                        benchmark.save(dataset / 'dataset-manifest.json', dict(schema_version=1,
+                            files={k: v for k, v in mapping_files.items() if k != missing}))
+                        with patch.object(exporter, 'analyze', return_value=gate), patch.object(exporter, 'verify_dependency_lock', return_value={}), patch.object(exporter, 'refit', side_effect=AssertionError('Refit must not start')):
+                            with self.assertRaisesRegex(ValueError, 'mapping manifest coverage'):
+                                exporter.build(dataset, ranking, root / ('missing-mapping-' + Path(missing).name))
+                        self.assertFalse((root / ('missing-mapping-' + Path(missing).name)).exists())
+                benchmark.save(dataset / 'dataset-manifest.json', dict(schema_version=1, files=mapping_files))
+                for name in mapping_files:
+                    path = dataset / name
+                    original_bytes = path.read_bytes()
+                    def changed_mapping(*args, **kwargs):
+                        model = benchmark.refit(*args, **kwargs)
+                        path.write_bytes(original_bytes + b'\n')
+                        return model
+                    with self.subTest(mapping_changed_during_refit=name):
+                        changed_output = root / ('changed-mapping-' + path.name)
+                        with patch.object(exporter, 'analyze', return_value=gate), patch.object(exporter, 'verify_dependency_lock', return_value={}), patch.object(exporter, 'refit', side_effect=changed_mapping):
+                            with self.assertRaisesRegex(ValueError, 'mapping changed'):
+                                exporter.build(dataset, ranking, changed_output, 4)
+                        self.assertFalse((changed_output / 'manifest.json').exists())
+                    path.write_bytes(original_bytes)
+                manifest_path = dataset / 'dataset-manifest.json'
+                manifest_bytes = manifest_path.read_bytes()
+                def changed_manifest(*args, **kwargs):
+                    model = benchmark.refit(*args, **kwargs)
+                    manifest_path.write_bytes(manifest_bytes + b'\n')
+                    return model
+                with patch.object(exporter, 'analyze', return_value=gate), patch.object(exporter, 'verify_dependency_lock', return_value={}), patch.object(exporter, 'refit', side_effect=changed_manifest):
+                    with self.assertRaisesRegex(ValueError, 'Dataset manifest changed'):
+                        exporter.build(dataset, ranking, root / 'changed-dataset-manifest', 4)
+                self.assertFalse((root / 'changed-dataset-manifest' / 'manifest.json').exists())
+                manifest_path.write_bytes(manifest_bytes)
                 with self.subTest(manifest_coverage=family):
                     manifest_path = ranking / 'manifest.json'
                     manifest = exporter.read(manifest_path)

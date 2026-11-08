@@ -29,8 +29,26 @@ the supplied manifest, not an authenticity signature against coordinated edits.
 Historical runner/replay sources, manifests, archives, artifacts and research
 results are unchanged. This correction does not resolve every provenance concern:
 the mapping helper imported from build_feed_artifact.py is outside the original
-ranking source inventory; the readiness report already states the export ZIP is
-not a self-contained clean-machine release.
+per-run ranking source inventory. A subsequent read-only check found it in the
+batch frozen-source.zip with SHA256 equal to the current helper; it was not lost
+from the archived source. The export ZIP remains a non-self-contained release.
+
+Mapping coverage correction08/11/2026: dataset qualification verifies listed
+file hashes but its mandatory set does not include the two CSV GUID maps. The
+current schema2 exporter separately requires export/users.csv and export/posts.csv
+in dataset-manifest.json, normalizes legacy backslash names, rejects duplicate
+normalized names and verifies both hashes before qualification/refit. It saves
+the dataset manifest identity in inputs.json and rechecks CSV bytes and manifest
+identity after export. Missing coverage previously reached refit in six negative
+controls across EASE/PPR/LightGCN. These now reject before output creation; six
+CSV mutations during real refits also prevent a success manifest. Three unittest
+cases PASS, including real fits/replay; qualification/lock/tuning are still mocked
+in the small orchestration fixture. Direct read-only mapping verification on the
+original main20261111 dataset also PASS. Raw logs: .tools/mapping-coverage-*.log.
+This anchors mappings to a supplied manifest, not an authenticity signature or
+independent proof that coordinated CSV/manifest edits match the imported SQL.
+Frozen dataset checker/source inventories, archives, artifacts and research
+results remain unchanged; no original holdout/export/HTTP rerun.
 
 Require original ranking manifest readback, frozen protocol/source inventory,
 dependency lock, dataset qualification, selection/report digest, prefix and

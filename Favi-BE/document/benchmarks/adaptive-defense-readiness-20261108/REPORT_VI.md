@@ -123,6 +123,16 @@ report này, M5 và milestone index resolve. Không huấn luyện hoặc chạy
 
 ## Khoảng trống giữ nguyên
 
+Rà soát nguồn helper08/11/2026: `tools/oasis-smoke/build_feed_artifact.py` có
+trong `frozen-source.zip` của ranking batch. SHA256 bytes archived và hiện tại
+cùng `363981e24471210c84499eab492cd6eb14d8eb73b0add39040d6321cda6abcfa`.
+Do đó việc helper không thuộc inventory14file mỗi ranking run không có nghĩa
+nguồn helper đã thất lạc. Export ZIP vẫn không tự chứa pipeline. Phép kiểm chỉ
+đọc không chạy lại model hoặc sửa ZIP; log `.tools/mapping-coverage-actual.log`.
+Exporter hiện tại còn bắt buộc checksum hai CSV ánh xạ trong dataset manifest;
+xem [serving contract](../../ADAPTIVE_SERVING_CONTRACT.md). Sửa gate hiện tại
+không thay bằng chứng export250 hoặc đưa thêm claim tái lập trên máy sạch.
+
 Lượt sửa cô lập tiến trình: [receipt riêng](isolation-summary.json) ghi PASS
 mười ZIP/974members và hai audits đủ sáu datasets, summary bằng archived/tracked.
 Output `.tools/defense-readiness/restore-003` được tạo mới với môi trường cha
