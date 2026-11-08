@@ -105,6 +105,15 @@ không JOIN trực tiếp UUID giữa các run-id.
 
 ## Validation gate và tính tái lập
 
+Smoke importer kiểm `export/manifest.json` schema 1 trước kết nối PostgreSQL,
+bao gồm bản sao từ `-ExistingRunDirectory`. Sáu file output phải có entry duy nhất,
+đúng SHA-256 raw bytes; entry ngoài danh sách hoặc thiếu bị từ chối. Snapshot còn
+được kiểm `snapshot_sha256` trên UTF-8 logical payload (CRLF/CR về LF theo adapter).
+Importer giữ và dùng đúng bytes SQL/snapshot vừa kiểm, không đọc lại file sau gate.
+Đây là integrity so với manifest được cung cấp, không chứng minh tác giả hoặc
+chống sửa đồng bộ cả payload và manifest. Các kiểm PostgreSQL/replay/HTTP vẫn cần
+chạy riêng; unit tests của gate không chứng minh SQL đã được thực thi.
+
 - Mở SQLite read-only trong một read transaction, đọc cả dữ liệu WAL đã commit.
 - Yêu cầu đủ năm bảng nguồn; bảng rỗng hợp lệ, ngoại trừ user phải có ít nhất một hàng.
 - Kiểm tra tất cả ID, timestamp, tham chiếu, self-follow, duplicate like/follow,

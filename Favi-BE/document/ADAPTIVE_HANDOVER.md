@@ -1,3 +1,17 @@
+# Copy/import checksum gate — 08/11/2026
+
+Confirmed ExistingRunDirectory copied exports without checksum enforcement;
+new fixture/simulator had earlier checks, C# importer read SQL/snapshot directly.
+Added shared C# gate linked into unit tests: six required unique exact filenames,
+raw SHA256 and logical snapshot hash; consume checked SQL/snapshot bytes. verify
+runs --verify-export-only before Compose; importer checks again before PostgreSQL.
+17tests PASS; smoke build PASS; all6original exports PASS read-only; changed copied
+SQL rejected by actual CLI and verify.ps1 with composeAttempted=false. No SQL/API/
+Docker/model/holdout run, frozen changes or authenticity claim. Report
+benchmarks/ADAPTIVE_IMPORT_INTEGRITY_20261108.md. Existing NU1903/EF warnings remain.
+PR16 backend42452826449 SUCCESS/no review threads. Publication in ignored lease.
+Continue useful bounded review; no merge/deploy/subagents/reset/automation.
+
 # Independent mapping identity audit — 08/11/2026
 
 All6confirmatory datasets PASS exhaustive CSV/source-ID/GUID/snapshot namespace

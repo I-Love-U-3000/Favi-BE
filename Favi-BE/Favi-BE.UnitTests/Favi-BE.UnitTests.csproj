@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Compile Include="../tools/oasis-smoke/ExportIntegrity.cs" Link="Smoke/ExportIntegrity.cs" />
   </ItemGroup>
 
   <ItemGroup>
