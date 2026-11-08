@@ -69,6 +69,19 @@ class AdaptiveArtifactTests(unittest.TestCase):
                 self.assertEqual(artifact['users'][3]['ranks']['R'], [])
                 self.assertEqual(artifact['users'][0]['userId'], str(uuid.UUID(int=100)))
                 exporter.verify_manifest(output)
+                with self.subTest(manifest_coverage=family):
+                    manifest_path = ranking / 'manifest.json'
+                    manifest = exporter.read(manifest_path)
+                    suffix = '-20261103' if family == 'lightgcn' else ''
+                    for missing in ('selection.json', 'protocol.json', 'source-inventory.json',
+                                    'report.json', f'test-B1{suffix}-users.jsonl', f'test-R{suffix}-users.jsonl', 'ALL'):
+                        with self.subTest(missing_manifest_entry=missing):
+                            benchmark.save(manifest_path, {} if missing == 'ALL' else {k: v for k, v in manifest.items() if k != missing})
+                            with patch.object(exporter, 'analyze', return_value=gate), patch.object(exporter, 'verify_dependency_lock', return_value={}), patch.object(exporter, 'refit', side_effect=AssertionError('Refit must not start')):
+                                with self.assertRaisesRegex(ValueError, 'manifest coverage'):
+                                    exporter.build(dataset, ranking, root / ('missing-' + missing))
+                            self.assertFalse((root / ('missing-' + missing)).exists())
+                    benchmark.save(manifest_path, manifest)
                 with self.assertRaisesRegex(ValueError, 'fresh output'):
                     exporter.build(dataset, ranking, output)
                 with self.assertRaisesRegex(ValueError, 'first declared seed'):

@@ -1,3 +1,18 @@
+# Export ranking-manifest coverage — 08/11/2026
+
+Concrete defect reproduced: removing any of six consumed ranking entries still
+reached refit because verify_manifest only verifies listed entries. Current
+schema2 exporter now requires protocol/source-inventory/selection/report and
+exact B1/R predictions (fixed optimizer suffix for LightGCN), verifies listed
+hashes and rechecks coverage/identity after export. Before six negative controls
+FAIL; after suite covers21omission/empty controls across EASE/PPR/LightGCN plus
+real fits/replay. Full qualification/lock/tuning remain mocked in that small
+orchestration fixture; no original model/holdout/export/API rerun. Historical
+runner/replay/source inventories/archive/artifact/results unchanged. Not an
+authenticity signature; mapping helper source outside ranking inventory remains
+a separate bounded review item, export ZIP already documented non-self-contained.
+No merge/deploy/subagents/reset/automation. Exact test/publication state in lease.
+
 # Adaptive cold-pool eligibility correction — 08/11/2026
 
 User renewed continuous action until quota; do not stop for routine milestone
