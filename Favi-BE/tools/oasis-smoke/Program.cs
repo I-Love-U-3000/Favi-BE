@@ -18,6 +18,8 @@ static async Task RunAsync(string[] args)
     if (args.Length is < 1 or > 2) throw new ArgumentException("Pass fixture export directory and optional experimental artifact");
     var exportRoot = Path.GetFullPath(args[0]);
     var experimentalArtifact = args.Length == 2 ? Path.GetFullPath(args[1]) : null;
+    var adaptive = experimentalArtifact is not null && JsonDocument.Parse(await File.ReadAllTextAsync(experimentalArtifact))
+        .RootElement.GetProperty("schemaVersion").GetInt32() == 2;
     var snapshot = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(exportRoot, "snapshot.json"))).RootElement.Clone();
     var sql = await File.ReadAllTextAsync(Path.Combine(exportRoot, "favi-seed.sql"));
     var root = Directory.GetCurrentDirectory();
@@ -153,11 +155,34 @@ static async Task RunAsync(string[] args)
             start.Environment["ExperimentalFeed__ArtifactSha256"] = Convert.ToHexString(
                 System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(experimentalArtifact)));
         }
+        var startupTimer=Stopwatch.StartNew();
         process = Process.Start(start) ?? throw new InvalidOperationException("Cannot start test API");
         var listening = new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
         stdout = CaptureOutput(process, listening); stderr = process.StandardError.ReadToEndAsync();
         var address = await listening.Task.WaitAsync(TimeSpan.FromSeconds(30));
         apiUrl = address.ToString();
+        var restarts=new List<object>();
+        if(adaptive)
+        {
+            for(var index=0;index<5;index++)
+            {
+                using var probe=new HttpClient{BaseAddress=address,Timeout=TimeSpan.FromSeconds(60)};
+                using var ready=await probe.GetAsync("/health/live");ready.EnsureSuccessStatusCode();
+                var startedMs=startupTimer.Elapsed.TotalMilliseconds;
+                process.Refresh();
+                restarts.Add(new{index,processId=process.Id,startToHealthMs=startedMs,peakWorkingSetBytes=process.PeakWorkingSet64});
+                if(index==4)break;
+                process.Kill(entireProcessTree:true);await process.WaitForExitAsync();
+                await File.WriteAllTextAsync(Path.Combine(logs,$"api-restart-{index}.log"),await stdout+await stderr);
+                process.Dispose();startupTimer.Restart();
+                process=Process.Start(start)??throw new InvalidOperationException("Cannot restart test API");
+                listening=new TaskCompletionSource<Uri>(TaskCreationOptions.RunContinuationsAsynchronously);
+                stdout=CaptureOutput(process,listening);stderr=process.StandardError.ReadToEndAsync();
+                address=await listening.Task.WaitAsync(TimeSpan.FromSeconds(60));
+            }
+            apiUrl=address.ToString();
+            await File.WriteAllTextAsync(Path.Combine(logs,"adaptive-restarts.json"),JsonSerializer.Serialize(new{count=5,os=System.Runtime.InteropServices.RuntimeInformation.OSDescription,cpuCount=Environment.ProcessorCount,runtime=System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,artifactBytes=new FileInfo(experimentalArtifact!).Length,restarts},new JsonSerializerOptions{WriteIndented=true}));
+        }
         using var client = new HttpClient { BaseAddress = address, Timeout = TimeSpan.FromSeconds(20) };
         for (var attempt = 0; ; attempt++)
         {
@@ -168,6 +193,8 @@ static async Task RunAsync(string[] args)
         }
         var registration = await Request("POST", "/api/auth/register", new { email = $"oasis_{suffix}@example.test", password = "LocalSmoke123!", username = "viewer_" + suffix, displayName = "Oasis viewer" });
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", registration.GetProperty("accessToken").GetString());
+        if (!adaptive)
+        {
         foreach (var user in snapshot.GetProperty("users").EnumerateArray())
         {
         var authorId = user.GetProperty("id").GetGuid();
@@ -201,7 +228,25 @@ static async Task RunAsync(string[] args)
             // Production feeds have bounded candidate pools; they are not catalog exports.
             Check(safePosts.Length <= 60 ? ids.SetEquals(safeIds) : posts.Length > 0, endpoint + " exposes the full small catalog or a nonempty bounded large-catalog slate");
         }
+        }
         await ExperimentalFeedChecks.RunAsync(client.BaseAddress!, snapshot, experimentalArtifact, () => Db(database), Check, logs);
+        if(adaptive)
+        {
+            var originalPath=start.Environment["ExperimentalFeed__ArtifactPath"];
+            var originalHash=start.Environment["ExperimentalFeed__ArtifactSha256"];
+            foreach(var scenario in new[]{"missing-artifact","wrong-checksum"})
+            {
+                start.Environment["ExperimentalFeed__ArtifactPath"]=scenario=="missing-artifact"?Path.Combine(logs,Guid.NewGuid()+"-missing.json"):originalPath;
+                start.Environment["ExperimentalFeed__ArtifactSha256"]=scenario=="wrong-checksum"?new string('0',64):originalHash;
+                using var rejected=Process.Start(start)??throw new InvalidOperationException("Cannot start negative startup probe");
+                var rejectedOut=rejected.StandardOutput.ReadToEndAsync();var rejectedError=rejected.StandardError.ReadToEndAsync();
+                try {await rejected.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));}
+                finally {if(!rejected.HasExited){rejected.Kill(true);await rejected.WaitForExitAsync();}}
+                var output=await rejectedOut+await rejectedError;
+                await File.WriteAllTextAsync(Path.Combine(logs,$"api-{scenario}.log"),output);
+                Check(rejected.ExitCode!=0&&!output.Contains("Now listening on:"),scenario+" fails closed before listening");
+            }
+        }
         passed = true;
         Console.WriteLine($"PASS: {checks.Count} PostgreSQL/import/HTTP checks; see source provenance beside snapshot.");
 
@@ -242,6 +287,7 @@ static async Task RunAsync(string[] args)
     {
         if (process != null)
         {
+            if(adaptive&&!process.HasExited) {process.Refresh();await File.WriteAllTextAsync(Path.Combine(logs,"adaptive-process-memory.json"),JsonSerializer.Serialize(new{processId=process.Id,peakWorkingSetBytes=process.PeakWorkingSet64,workingSetBytes=process.WorkingSet64,privateMemoryBytes=process.PrivateMemorySize64}));}
             if (!process.HasExited) process.Kill(entireProcessTree: true);
             await process.WaitForExitAsync();
             await File.WriteAllTextAsync(Path.Combine(logs, "api.log"), await stdout! + await stderr!);

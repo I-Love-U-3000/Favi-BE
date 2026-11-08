@@ -1,3 +1,48 @@
+# Adaptive HTTP lifecycle and resource evidence — 08/11/2026
+
+Meaningful milestone completes schema2 operational HTTP checks and frozen lab
+measurement, not a production release. Read ADAPTIVE_SERVING_CONTRACT.md and
+benchmarks/adaptive-http-20261108/REPORT_VI.md/summary.json. Fresh final run
+a82952222e0243599448477ec5b72e08 PASS113848 PostgreSQL/import/HTTP checks (63
+lifecycle HTTP requests plus separate load); stale23c76fb1b6f8485899f9d99ee5a43912
+PASS113757checks/17lifecycle HTTP requests. Earlier development runs retained.
+Actual native main11 GUIDs imported; SQL UNION/distinct4-to5, duplicate Like/save,
+save-only, topics/version/idempotency, new item/user, privacy/ban/NSFW/archive/
+delete/own/positives, missing/empty/stale fallbacks and missing/checksum fail-closed
+startup verified. Artifact250users has no empty R rank row: empty learned-history
+row remains unit-fixture evidence, not actual-row HTTP claim. Production unchanged.
+
+Direct frozen10concurrency100warmup+1000measured per method: B1p95=57.2082ms,
+Rp95=57.4861ms PASS<=100ms. Gateway lab single upstream keeps150/minute,burst30:
+B1measured1000x429; R999x429+1x200, gateway gate FAIL. Fast429 not feed latency;
+do not retune limiter/gate or claim total serving PASS. Five unique process starts
+per fresh/stale run; fresh start-to-health2422.4788..3073.2132ms, final API peak
+working set258326528bytes. Includes host/DB/JIT; not load-only/training RAM or disk
+cache-cold benchmark. No multi-replica/TLS/SignalR/fullgateway verification.
+
+23focused .NET regression PASS, build0errors, known SignalRNU1903/EF conflict
+warnings remain. ZIP.tools/dataset-archives/adaptive-http-20261108.zip57members,
+1328928bytes,SHA25698559218e45e2a840a14e36b19668d6d3aa8aa820d8607797e3927395fd5ed41;
+all members hash/size readback PASS. Includes final source/binary inventories,
+raw reports/logs, machine/image digests, evidence script. Stale copy only timestamp
+changed, semantic comparison PASS; original artifact unchanged. Raw console logs
+.tools/adaptive-http-run-001/002/003.log,adaptive-http-run-stale-001.log and
+regression.log. Check final lease for exact commit/PR/next branch after commit.
+
+NEXT meaningful milestone: audit full original search/training/refit/export/load
+cost and peak RAM from retained provenance; distinguish unavailable historical
+measurements instead of inventing them. Read frozen protocol and original reports/
+runner before deciding whether a strictly fixed-config cost-only rerun is needed.
+No retune/relevance rerun/source/seed/gate changes. Export refit0.365270s and model
+state32521008bytes are not full cost/peak RAM. Preserve primary practical FAIL,
+negative robustness and synthetic/sample-only limits. Keep gatewayFAIL as evidence.
+No more HTTP reruns without new concerns. No API worker or test containers after
+cleanup; Docker Desktop was started for lab and remains running. Existing MSBuild
+nodes/root nul preserved. Check Git/lease/processes before claim. No subagents,
+automation/reset/merge/deploy. Continue authorized work until12:00Asia/Saigon.
+Group meaningful milestones into tested commit+PR, checkout next branch/fresh chat.
+Numerical/.NET/Docker/commit require_escalated; PowerShell login:false.
+
 # Schema2 loader and live routing ready — 08/11/2026
 
 Meaningful milestone groups loader/controller/B1-R routing and tests.23 .NET

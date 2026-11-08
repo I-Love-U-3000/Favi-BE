@@ -51,6 +51,13 @@ try {
     }
     else { Invoke-Check $Python @('tools/oasis-smoke/prepare_fixture.py', $runRoot) }
     Invoke-Check 'dotnet' @('build', 'tools/oasis-smoke/OasisSmoke.csproj', '-m:1', '-nodeReuse:false', '-v:quiet')
+    $report['runnerSourceSha256'] = @{}
+    foreach ($source in @('Program.cs', 'ExperimentalFeedChecks.cs', 'AdaptiveFeedChecks.cs', 'AdaptiveGatewayProbe.cs')) {
+        $report.runnerSourceSha256[$source] = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $PSScriptRoot $source)).Hash.ToLowerInvariant()
+    }
+    $report['runnerAssemblySha256'] = (Get-FileHash -Algorithm SHA256 -LiteralPath 'tools/oasis-smoke/bin/Debug/net10.0/OasisSmoke.dll').Hash.ToLowerInvariant()
+    $report['apiAssemblySha256'] = (Get-FileHash -Algorithm SHA256 -LiteralPath 'Favi-BE.API/bin/Debug/net9.0/Favi-BE.API.dll').Hash.ToLowerInvariant()
+    if ($ExperimentalArtifact) { $report['artifactSha256'] = (Get-FileHash -Algorithm SHA256 -LiteralPath $ExperimentalArtifact).Hash.ToLowerInvariant() }
     # Fixed loopback ports are intentionally serial. Fail before touching Compose
     # if any are busy. A bind race still only cleans this run's unique project.
     foreach ($port in @(15449, 16399)) {

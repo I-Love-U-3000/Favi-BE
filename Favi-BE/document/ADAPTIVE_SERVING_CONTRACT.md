@@ -65,12 +65,54 @@ may appear through fallback/current cold retrieval; frozen warm ranks cannot
 include them until rebuild. Current topics affect cold retrieval immediately.
 Warm scores remain frozen: live positive count routes and filters, not retrains.
 
-HTTP lifecycle, topic optimistic version/idempotency, fallback/privacy and
-resource tests remain pending. Frozen lab gate:10concurrent,100warmup+1000measured,
+HTTP lifecycle, topic optimistic version/idempotency and PostgreSQL tests now
+pass; direct lab latency passes, rate-limited gateway load fails. See
+`benchmarks/adaptive-http-20261108/REPORT_VI.md` and `summary.json` for evidence.
+Frozen lab gate:10concurrent,100warmup+1000measured,
 at least5process restarts, warm p95<=100ms; direct/gateway results separate.
 Original training/search/refit/export/load and process peak RAM must be reported
 separately. Passing exporter tests does not satisfy these gates, change primary
 practical FAIL or prove real-user relevance.
+
+### Schema2 HTTP verification runner
+
+`tools/oasis-smoke/ExperimentalFeedChecks.cs` dispatches schema2 artifacts to
+`AdaptiveFeedChecks`, retaining the legacy schema1 checks. The isolated runner
+imports the original native GUID snapshot into fresh PostgreSQL/Redis, verifies
+transaction rollback and replay, and checks rank GUID membership. Schema2 skips
+the legacy exhaustive profile/post HTTP catalog walk; database import validation
+remains exhaustive. It is an operational lifecycle fixture, not offline replay:
+one original ranked viewer's live positives are reset and added deterministically
+in the disposable database to test counts 0 through 5, including a duplicate
+Like/save and distinct saves alone. No source dataset, artifact scores, selection,
+training inputs or frozen research results are changed.
+
+The runner checks authentication/input bounds, current filtering, original rank
+order before pagination, topic version/idempotent replay, fresh user/item/topic
+changes, missing/empty model fallbacks and ban. It writes raw HTTP results to
+`adaptive-http.json`. Fresh-process observations (five separate processes) record
+start-to-health and peak working set at readiness in `adaptive-restarts.json`;
+these include host startup/database work and are not artifact-load-only timings
+or disk-cache-cold measurements. The final process memory report includes the
+HTTP workload; OS peak working set is resident process memory, not managed heap
+or full training/search RAM.
+
+Each B1/R direct load uses concurrency10,100warmup+1000measured, records every
+latency and validates response source/positive exclusion/NSFW. Nearest-rank p95
+is sample950 of1000 sorted ascending. Failed latency gates are retained without
+skipping subsequent privacy checks. Functional smoke success alone does not
+mean resource gates pass.
+
+`AdaptiveGatewayProbe` uses a uniquely named disposable NGINX single-upstream
+container with loopback publication and the production REST rate150/minute and
+burst30. It runs the same request counts, reports status counts and requires all
+requests successful and safe for the latency gate. A quick429 cannot pass this
+gate. Gateway errors and cleanup failures are retained separately. This limited
+lab proxy does not verify production multi-replica failover, TLS, SignalR sticky
+sessions or all gateway routes; production gateway configuration is unchanged.
+Transport results must remain separate. The two methods share the gateway IP
+rate bucket, as real requests from the same client do; it is not reset between
+methods. No rate-limit bypass or post-hoc tuning is allowed to manufacture PASS.
 
 ## Verification
 
@@ -93,8 +135,11 @@ evidence nor a latency distribution. Raw commands/logs/probe source remain in
 `.tools/adaptive-loader-probe`, `.tools/adaptive-loader-probe.log` and
 `.tools/adaptive-loader-tests.log`. Existing NU1903 SignalR and EF relational
 version-conflict warnings remain; this milestone did not update dependencies.
-Actual isolated HTTP, PostgreSQL translation, topic version/idempotency, stale
-lifecycle,5restarts,10concurrency100+1000 and full cost/peak RAM remain pending.
+Subsequent schema2 HTTP milestone verifies isolated PostgreSQL UNION/HTTP,
+topic version/idempotency, stale lifecycle,5restarts and10concurrency100+1000.
+Direct latency passes; NGINX single-upstream gateway load fails on429 at the
+unchanged150/minute rate. Full original training/search cost/peak RAM remains
+pending; measured API process working set does not replace that evidence.
 
 Two unittest cases include real EASE/PPR/LightGCN fits, refit cache, exact original
 prediction replay, source GUID identity, unknown-history empty rows, prior-like

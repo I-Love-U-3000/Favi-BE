@@ -1,0 +1,537 @@
+{
+  "artifactSha256": "7120ed20ae9c8db81bf897411be349581bdc2d6e297f613f04a9986af0a43824",
+  "files": [
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/run.json",
+      "bytes": 596,
+      "sha256": "70ad03571615f3ea170b8312143074e34552731f15bd5f30f53ef700837a0903"
+    },
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/report/adaptive-http.json",
+      "bytes": 3063942,
+      "sha256": "aff2f351975af4d89c6670b22eb3c3e1915fe6c275aa0b7d6e23ac113d975818"
+    },
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/report/adaptive-load-B1.json",
+      "bytes": 61089,
+      "sha256": "2145914fb8ea0916877554eae79f05e215a40b2c645ab638a1a40a39662f179a"
+    },
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/report/adaptive-load-R.json",
+      "bytes": 61075,
+      "sha256": "f77ea8abcc0570e2fe32769c0638270c1c7e433d1717bb14e8de06bef6fd6927"
+    },
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/report/api.log",
+      "bytes": 2136442,
+      "sha256": "2da0e45c8cf90afc499be639e2620b1d7834ad34a3989c41f1e88c61170aa96a"
+    },
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/report/checks.json",
+      "bytes": 6646321,
+      "sha256": "738dedf3f7ac84ae95f1c4989bb8c9bc13afec5b232a5c31817ba9daa48e3050"
+    },
+    {
+      "path": ".tools/oasis-smoke/3f4eb39d684241439724c42c3b0561fd/report/experimental-feed.json",
+      "bytes": 365,
+      "sha256": "38ebb3936f5aca1dc9d5262250e1fd347201505f86c61ef8123ec8511e429468"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/run.json",
+      "bytes": 596,
+      "sha256": "fd75028a4abf080d7cdc4fd5443b3929d2a74df75c574361478566ed485fd467"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-gateway-B1.json",
+      "bytes": 82173,
+      "sha256": "86eec6a92a37ff006c025a2a435ec9a358daf8196f3764b3dc76dfc583d7e1ef"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-gateway-R.json",
+      "bytes": 82171,
+      "sha256": "92635660dc3a9889bd233cc303a5e3b95a7dd60cfd5093138b7f628c9508e843"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-http.json",
+      "bytes": 3516097,
+      "sha256": "032e102c506597161a57e590713b30b0e1587abb446fed4098f4a7d95dcbe95b"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-load-B1.json",
+      "bytes": 61083,
+      "sha256": "ccb4404050512e74782756593ad3c7c3b9cc331529ae5a729ffb6410374a5413"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-load-R.json",
+      "bytes": 61075,
+      "sha256": "e27985f0ab1fea53b8e2b0036b97321893d4bdbb2d1f4d1f21357ad87ad73d6f"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-nginx.conf",
+      "bytes": 580,
+      "sha256": "64a5caabcdd2b849e292bb0290cfab021a195bdbb30edb0a9e1a6f99293873ab"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-process-memory.json",
+      "bytes": 110,
+      "sha256": "b2b667741e7edba77d12c96523b0b7a2bf3cca04a626616342e37ec2ba8e9b2a"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/adaptive-restarts.json",
+      "bytes": 849,
+      "sha256": "e7d938fa816e913bd4841e03c6b4d975c28f6e1616a2de162c6ce014eff0fdc9"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/api-restart-0.log",
+      "bytes": 1859,
+      "sha256": "04cc9ca71758669b26a540430ebdd627d9cc724e2ae970c18d17b798f6151003"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/api-restart-1.log",
+      "bytes": 1689,
+      "sha256": "2b92285222f9406f0af3f6b7bbfaec0501c1a932a81ab36c086e76ff1584d086"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/api-restart-2.log",
+      "bytes": 1689,
+      "sha256": "40dd02262e9819a378c5a36634ad96b6ba9dc59bbe0249d6750f265c5adbe583"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/api-restart-3.log",
+      "bytes": 1689,
+      "sha256": "2c4f75f798d3ebac2797a70720e3fe4927a94cffd3519376fda528a1fbddba49"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/api.log",
+      "bytes": 2175661,
+      "sha256": "3ff919c43fd123019b22608a575a2ffa0316e0009147f34d9833853ff4cc2948"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/checks.json",
+      "bytes": 6647675,
+      "sha256": "91e1a12c7d584a46ede85ffca34b5dcbcb14b49a68bd1b860a9203ddf596c17e"
+    },
+    {
+      "path": ".tools/oasis-smoke/0e3beedbc24d44bba78568b1229452bb/report/experimental-feed.json",
+      "bytes": 364,
+      "sha256": "7e38d99c6e15e3cb76a4a83d1965490a30a661c308e99fa91a60f55204e5b7db"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/run.json",
+      "bytes": 1291,
+      "sha256": "eb6a8677feaae7ade2bea719a497ab38abb693a05e7edb59e0fe8e6c72c4e653"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-gateway-B1.json",
+      "bytes": 82199,
+      "sha256": "f657ecb83bdc25faaf3bc8a7550bb549a4288c318e373e1037c844e981e8099f"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-gateway-R.json",
+      "bytes": 82180,
+      "sha256": "73ec91b08fd092ca07a2573900aa6ec61489b6e3be7513ce7cbb0919bda233ae"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-http.json",
+      "bytes": 3727994,
+      "sha256": "e4494be3802d633a68c5e43ccce01823c4ba02348b5261cdcf1312f297793fad"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-load-B1.json",
+      "bytes": 61086,
+      "sha256": "f4a0223f6345d669d529f46be388847c81af604bab7b1373b49a915d2cfcae88"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-load-R.json",
+      "bytes": 61099,
+      "sha256": "4f0708c8f6aac534f69a542d21126ebcedc55106b6e6c6a5182de63f2a78c4ab"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-nginx.conf",
+      "bytes": 580,
+      "sha256": "bb33415c27a86dee572b805f58d113fab4171a218b78adcd7261ff8121b84c4c"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-process-memory.json",
+      "bytes": 110,
+      "sha256": "bf3a4139c0f035c1a4773c52ba7effe6d6b5838ad7b87c4ba5b6f3debe7e6404"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/adaptive-restarts.json",
+      "bytes": 850,
+      "sha256": "c76c1f11e4bd2902c81ddf6d1063e8d75a4c33292e4f30ce13a9960aa4d845aa"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api-missing-artifact.log",
+      "bytes": 5038,
+      "sha256": "d615a12fbc7bd1395575e009c0537a0cc3790dc5833722125ca8a3ba93b85131"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api-restart-0.log",
+      "bytes": 1859,
+      "sha256": "ff3fa34b39874d99a87f2b33e3156260897328271cfc57710125abbe6d2b992f"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api-restart-1.log",
+      "bytes": 1689,
+      "sha256": "81cee04074d9cf2e8e0c1c6de6a059ede66e791fa7100e4dc83b552d3e9b4799"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api-restart-2.log",
+      "bytes": 1689,
+      "sha256": "2a31611bdbe7c1a89dbe0d8bb952a034e90566d7b2bd287cd4b4a85272f3ca54"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api-restart-3.log",
+      "bytes": 1689,
+      "sha256": "4c53d6be42cd90fc922a2c6d3460488146e19404364c987abb4b968fb2a8fdd3"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api-wrong-checksum.log",
+      "bytes": 4695,
+      "sha256": "c33c5028c02be03b6a34879d4073f61df3ef7c1eed4dc6738fa4e8f47291f228"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/api.log",
+      "bytes": 2177556,
+      "sha256": "a6b7074931214b8ffefed9e75123777c2f95f02c889285b729c1175b438bad7f"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/checks.json",
+      "bytes": 6648109,
+      "sha256": "ac1de07bd8c0ea06fbda70d17bee5899cff95a5b9fb1b9efe0eddcd36f8c6c70"
+    },
+    {
+      "path": ".tools/oasis-smoke/a82952222e0243599448477ec5b72e08/report/experimental-feed.json",
+      "bytes": 364,
+      "sha256": "b1c1b9141464f8c0c74a5ce615ecbcbe1493ae8d9977371c21e987d7ae5761ea"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/run.json",
+      "bytes": 1291,
+      "sha256": "cc906fce0c907abb80860f102d6889d019f6eba52f410fb95b382981ee3b07e8"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/adaptive-http.json",
+      "bytes": 1109712,
+      "sha256": "7465a3351f4c4326448d0cfea3218ab4c8cfa78ae1263f615a803c13fdc48cd5"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/adaptive-process-memory.json",
+      "bytes": 109,
+      "sha256": "e6c1c3073bd13053e2fe1900cf43f598d7ab8f3e55541b1eccf5f0089d511151"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/adaptive-restarts.json",
+      "bytes": 849,
+      "sha256": "90c6da5e1c257518ce61843bfd3cd74167c78b8275255ccc8fb2762d9fc8b072"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api-missing-artifact.log",
+      "bytes": 5038,
+      "sha256": "0ce44a34881048cfbb9eeaa13611260a3fef337981615f7015d6fd82bb7b9065"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api-restart-0.log",
+      "bytes": 1859,
+      "sha256": "dc22fc962e36cb0f80f07f0a34cb434e24bc149b8ab7e4cadb734ac33719aede"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api-restart-1.log",
+      "bytes": 1689,
+      "sha256": "77e3b82e570cda3cd3dbc8d12906cbd51463c2e79db5fc43ccbbe1914b2afbf9"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api-restart-2.log",
+      "bytes": 1689,
+      "sha256": "2cbd237b430754b81ca3ce85816f87663115fce1757921d1fe8775124ed8bef8"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api-restart-3.log",
+      "bytes": 1689,
+      "sha256": "e696a1c8289f98b0ab1b4e3d5b7c9cd9e46d307c23578322c5fc87a5e421c63f"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api-wrong-checksum.log",
+      "bytes": 4695,
+      "sha256": "c33c5028c02be03b6a34879d4073f61df3ef7c1eed4dc6738fa4e8f47291f228"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/api.log",
+      "bytes": 18902,
+      "sha256": "deff607d41dda32c95418cc8385fb98e5cb14c377beee1b9d7c36acd2cdd633b"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/checks.json",
+      "bytes": 6641632,
+      "sha256": "700089a30b634502ea9a5b821d7611608199277bc53273fb9722918aa03c762e"
+    },
+    {
+      "path": ".tools/oasis-smoke/23c76fb1b6f8485899f9d99ee5a43912/report/experimental-feed.json",
+      "bytes": 357,
+      "sha256": "a48ce3299eb1d520fb93e4c0808011330b77add360034544c68963b687639727"
+    },
+    {
+      "path": ".tools/feed-experiment/adaptive-stale-http-20261108/provenance.json",
+      "bytes": 269,
+      "sha256": "6f215738b3f27d4bb2de7bfc5091807756ee80952bc0fd4e17b272a7ba28c5c1"
+    },
+    {
+      "path": ".tools/adaptive-http-evidence.ps1",
+      "bytes": 4823,
+      "sha256": "d7b8029ade26f0a7589db25ed4301bf2edb69df3fec3cf49c1bf6f65c9f6450e"
+    },
+    {
+      "path": ".tools/adaptive-http-machine.json",
+      "bytes": 1061,
+      "sha256": "dd4f89e9d78693421dc59cc9cdc85424259e8b1a97f076ebe3fd15b821baadde"
+    }
+  ],
+  "runs": [
+    {
+      "mode": "fresh",
+      "run": {
+        "revision": "950eb8780ff07beb92eddef2b6f8e812266115d9",
+        "apiAssemblySha256": "de1c33642fed75e9cb938d62d2d9e0585df3a097e132376042651ba0af197461",
+        "startedUtc": "2026-11-08T02:42:35.124272Z",
+        "passed": true,
+        "runDirectory": ".tools\\oasis-smoke\\a82952222e0243599448477ec5b72e08",
+        "toolTestsSkipped": true,
+        "runnerSourceSha256": {
+          "AdaptiveGatewayProbe.cs": "039996fe80e1e0e746774b0ae8777bfcd4ec588677511b3497c3cb305fe3b067",
+          "Program.cs": "b8f88f2624c7509e188fbcbffc25b5cbcfc9e07d9961a8c0cd95aa3fb91949f9",
+          "ExperimentalFeedChecks.cs": "b9609fd69261e850a13198623114103a8ffd713b403fb9ca7185f91d5227ea05",
+          "AdaptiveFeedChecks.cs": "0459aab5bc794248cb5b864ccb4e37c5cee1645e5e275ce7392bc4b5ea0d5a15"
+        },
+        "composeAttempted": true,
+        "composeProject": "favi-oasis-a82952222e0243599448477ec5b72e08",
+        "sourceRunDirectory": "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-main-20261111",
+        "finishedUtc": "2026-11-08T02:45:36.9554055Z",
+        "runnerAssemblySha256": "7427841beca4e147bc158c32d7059445a69c11b88195780c60ceef5cffcf247f",
+        "source": "existing snapshot; see original provenance for simulation mode",
+        "artifactSha256": "7120ed20ae9c8db81bf897411be349581bdc2d6e297f613f04a9986af0a43824"
+      },
+      "checks": 113848,
+      "lifecycleHttpRequests": 63,
+      "restarts": {
+        "count": 5,
+        "os": "Microsoft Windows 10.0.26200",
+        "cpuCount": 16,
+        "runtime": ".NET 10.0.10",
+        "artifactBytes": 11867251,
+        "restarts": [
+          {
+            "index": 0,
+            "processId": 36828,
+            "startToHealthMs": 3073.2132,
+            "peakWorkingSetBytes": 163737600
+          },
+          {
+            "index": 1,
+            "processId": 35888,
+            "startToHealthMs": 2557.3447,
+            "peakWorkingSetBytes": 164343808
+          },
+          {
+            "index": 2,
+            "processId": 19452,
+            "startToHealthMs": 2422.4788,
+            "peakWorkingSetBytes": 164663296
+          },
+          {
+            "index": 3,
+            "processId": 10284,
+            "startToHealthMs": 2429.8826,
+            "peakWorkingSetBytes": 163930112
+          },
+          {
+            "index": 4,
+            "processId": 24904,
+            "startToHealthMs": 2522.5731,
+            "peakWorkingSetBytes": 164724736
+          }
+        ]
+      },
+      "memory": {
+        "processId": 24904,
+        "peakWorkingSetBytes": 258326528,
+        "workingSetBytes": 241577984,
+        "privateMemoryBytes": 129224704
+      },
+      "direct": [
+        {
+          "method": "B1",
+          "p95Ms": 57.2082,
+          "valid": true,
+          "gatePassed": true,
+          "concurrency": 10,
+          "measured": 1000,
+          "warmup": 100
+        },
+        {
+          "method": "R",
+          "p95Ms": 57.4861,
+          "valid": true,
+          "gatePassed": true,
+          "concurrency": 10,
+          "measured": 1000,
+          "warmup": 100
+        }
+      ],
+      "gateway": [
+        {
+          "method": "B1",
+          "warmup": 100,
+          "burst": 30,
+          "ratePerMinute": 150,
+          "concurrency": 10,
+          "allResponseP95Ms": 1.6904,
+          "gatePassed": false,
+          "statusCounts": {
+            "429": 1000
+          },
+          "valid": false,
+          "measured": 1000
+        },
+        {
+          "method": "R",
+          "warmup": 100,
+          "burst": 30,
+          "ratePerMinute": 150,
+          "concurrency": 10,
+          "allResponseP95Ms": 1.4799,
+          "gatePassed": false,
+          "statusCounts": {
+            "429": 999,
+            "200": 1
+          },
+          "valid": false,
+          "measured": 1000
+        }
+      ]
+    },
+    {
+      "mode": "stale",
+      "run": {
+        "revision": "950eb8780ff07beb92eddef2b6f8e812266115d9",
+        "startedUtc": "2026-11-08T02:46:09.3642813Z",
+        "toolTestsSkipped": true,
+        "runDirectory": ".tools\\oasis-smoke\\23c76fb1b6f8485899f9d99ee5a43912",
+        "runnerAssemblySha256": "7427841beca4e147bc158c32d7059445a69c11b88195780c60ceef5cffcf247f",
+        "sourceRunDirectory": "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-main-20261111",
+        "source": "existing snapshot; see original provenance for simulation mode",
+        "apiAssemblySha256": "de1c33642fed75e9cb938d62d2d9e0585df3a097e132376042651ba0af197461",
+        "runnerSourceSha256": {
+          "ExperimentalFeedChecks.cs": "b9609fd69261e850a13198623114103a8ffd713b403fb9ca7185f91d5227ea05",
+          "Program.cs": "b8f88f2624c7509e188fbcbffc25b5cbcfc9e07d9961a8c0cd95aa3fb91949f9",
+          "AdaptiveGatewayProbe.cs": "039996fe80e1e0e746774b0ae8777bfcd4ec588677511b3497c3cb305fe3b067",
+          "AdaptiveFeedChecks.cs": "0459aab5bc794248cb5b864ccb4e37c5cee1645e5e275ce7392bc4b5ea0d5a15"
+        },
+        "composeAttempted": true,
+        "composeProject": "favi-oasis-23c76fb1b6f8485899f9d99ee5a43912",
+        "passed": true,
+        "artifactSha256": "97b0351334de9116b3b5f4de41c24d35d9434900d28697044786c8c675507f53",
+        "finishedUtc": "2026-11-08T02:49:02.8100078Z"
+      },
+      "checks": 113757,
+      "lifecycleHttpRequests": 17,
+      "restarts": {
+        "count": 5,
+        "os": "Microsoft Windows 10.0.26200",
+        "cpuCount": 16,
+        "runtime": ".NET 10.0.10",
+        "artifactBytes": 11867253,
+        "restarts": [
+          {
+            "index": 0,
+            "processId": 34724,
+            "startToHealthMs": 2913.3761,
+            "peakWorkingSetBytes": 163770368
+          },
+          {
+            "index": 1,
+            "processId": 37052,
+            "startToHealthMs": 2700.2299,
+            "peakWorkingSetBytes": 164564992
+          },
+          {
+            "index": 2,
+            "processId": 10388,
+            "startToHealthMs": 2429.9639,
+            "peakWorkingSetBytes": 164917248
+          },
+          {
+            "index": 3,
+            "processId": 37124,
+            "startToHealthMs": 2443.344,
+            "peakWorkingSetBytes": 164007936
+          },
+          {
+            "index": 4,
+            "processId": 37208,
+            "startToHealthMs": 2773.0827,
+            "peakWorkingSetBytes": 164175872
+          }
+        ]
+      },
+      "memory": {
+        "processId": 37208,
+        "peakWorkingSetBytes": 202518528,
+        "workingSetBytes": 202518528,
+        "privateMemoryBytes": 97480704
+      },
+      "direct": [],
+      "gateway": []
+    }
+  ],
+  "machine": {
+    "totalPhysicalMemoryBytes": 24925884416,
+    "physicalCores": 8,
+    "images": [
+      {
+        "repoDigests": [
+          "postgres@sha256:a8e042598834300dfaa17a54f695b87b7f25d3490433bbbe2ef3bffbb9747f24"
+        ],
+        "id": "sha256:a8e042598834300dfaa17a54f695b87b7f25d3490433bbbe2ef3bffbb9747f24",
+        "repoTags": [
+          "postgres:15-alpine"
+        ]
+      },
+      {
+        "repoDigests": [
+          "redis@sha256:57e4255cc971b1c8d6f8a6ca283ac01bc3ecdd914273ef6bfaede87aaecd6541"
+        ],
+        "id": "sha256:57e4255cc971b1c8d6f8a6ca283ac01bc3ecdd914273ef6bfaede87aaecd6541",
+        "repoTags": [
+          "redis:7-alpine"
+        ]
+      },
+      {
+        "repoDigests": [
+          "nginx@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11"
+        ],
+        "id": "sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11",
+        "repoTags": [
+          "nginx:alpine"
+        ]
+      }
+    ],
+    "logicalProcessors": 16,
+    "cpu": "AMD Ryzen 9 7940HS w/ Radeon 780M Graphics     ",
+    "dockerServer": "29.3.1"
+  },
+  "archive": {
+    "path": "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\dataset-archives\\adaptive-http-20261108.zip",
+    "bytes": 1328928,
+    "readbackPassed": true,
+    "sha256": "98559218e45e2a840a14e36b19668d6d3aa8aa820d8607797e3927395fd5ed41",
+    "members": 57
+  },
+  "limitations": [
+    "synthetic operational fixture; not offline replay",
+    "250 sampled artifact users, not full 5k serving",
+    "gateway is a rate-limited single-upstream lab proxy",
+    "original training/search cost and peak RAM remain pending",
+    "primary practical relevance gate remains FAIL"
+  ]
+}

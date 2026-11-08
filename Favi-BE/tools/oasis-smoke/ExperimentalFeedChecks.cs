@@ -39,6 +39,12 @@ internal static class ExperimentalFeedChecks
                 return;
             }
             var artifact = JsonDocument.Parse(await File.ReadAllTextAsync(artifactPath)).RootElement.Clone();
+            if (artifact.GetProperty("schemaVersion").GetInt32() == 2)
+            {
+                await AdaptiveFeedChecks.RunAsync(address, artifact, database, check, logs);
+                passed = true;
+                return;
+            }
             var likes = snapshot.GetProperty("likes").EnumerateArray().ToArray();
             var userRows = artifact.GetProperty("users").EnumerateArray().ToArray();
             var row = userRows.First(u => likes.Any(l => l.GetProperty("user_id").GetGuid()==u.GetProperty("userId").GetGuid()) &&
