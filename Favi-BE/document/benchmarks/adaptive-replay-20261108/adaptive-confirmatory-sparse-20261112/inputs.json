@@ -1,0 +1,12 @@
+{
+  "selection_sha256": "113c6ead7a6a7ac0c2966828aebf57ecf435aaff26d8524ecdfc9336df215737",
+  "ranking_manifest_sha256": "e8618524abf16f653d9e46ba88f786af8bd0f125ed71f2ad20bc4abf944d2ad1",
+  "events_sha256": "3df741e7c05bea49e0158abd14da84a692ffb87da29922b75bd962f4cfa2e791",
+  "sidecar_fingerprints": {
+    "primary": "c5ea80cb879cb93f692aed38e2bf27e514c7de4aa1a2a48f7cff88fab2982d46",
+    "informative": "2156255942490a09ac44bb9ad181a21256cabf5f9824cedc302666e5f2a67239",
+    "noisy": "b681f61d89b1a50a7d928455cf1daabafc843fb1fe265c3750380f93625d2541",
+    "independent": "77429e46c81c20f73dd2d9a6b4b4ab3e4cc79cdc746c5d3c8b8666c991d5152f",
+    "no-topics": "1ca8e8184f67277763139fde45fd701a972c386c7306920eca0986d94588c4bb"
+  }
+}

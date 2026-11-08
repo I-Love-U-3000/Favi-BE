@@ -1,3 +1,71 @@
+# Replay audited and archived — 08/11/2026
+
+Six fixed-selection replays completed PASS at07:01:16 Asia/Saigon. Resumed after
+stale replay-finished lease and no Python/.NET processes; no duplicate batch.
+Independent arithmetic audit PASS348result records (47/69/47 main,47/69/69 sparse):
+all per-user nDCG/Recall, common original users/candidates/targets, exact primary
+ranked IDs, both cohort partitions, overlap/transitions, frozen choices/optimizer
+hierarchy. No refit/retune or source/protocol/seed/gate changes during this audit.
+
+Tracked report/evidence: benchmarks/adaptive-replay-20261108/REPORT_VI.md,
+summary.json,audit.json,batch.json,archive.json and6dataset provenance folders.
+Main primary R−B1 +.00033478391982297295 remains practical gate FAIL. Noisy
+−.0010443922714881877; independent −.0014995804309405319; no-topics
+−.0014379349815056696, all3seeds negative in each latter mode. Threshold-only
+component +.00041616587559287904 mean but one seed negative; config component
+−.00008138195576990609. Sparse R=B1 every mode; informative pre-scarcity differs
+from primary. Synthetic replay only, no causal/significance/production claim.
+
+Archive .tools/dataset-archives/adaptive-replay-20261108.zip:494members,
+129060459bytes,SHA2561df294f3fa147c8d7a3537c494decda6c65088c83b449a41b2d52d8f47ac91df.
+All members read back PASS; includes retained failed preflight attempt. Raw remains
+ignored .tools; source e5c23f0 unchanged. Audit/report/archive commands use scripts
+of those names in .tools/benchmarks/adaptive-replay-20261108; do not rerun archive
+on existing outputs. Milestone title docs(research): audit adaptive robustness replay.
+Exact milestone commit hash will be recorded in lease after commit.
+
+NEXT CHAT: check Git/lease/processes then claim. Continue full cost and actual
+HTTP lifecycle/fallback/privacy/resource gates per frozen protocol. Read protocol,
+EXPERIMENTAL_RECOMMENDER_FEED.md and inspect existing implementation before edits.
+Current endpoint supports only EASE/PPR threshold1 and schema1 two-method snapshot;
+it does not serve joint R or LightGCN. Existing builder expects legacy benchmark
+shape, not adaptive selections; do not silently feed adaptive results into it.
+Need explicit bounded adaptive serving/export contract with frozen selections and
+source GUID mappings, live positive-count routing, conservative current filters,
+missing/stale/new-user/new-item behavior and tests; default disabled. Full cost
+must distinguish training/search/refit/export/load/peak RAM and direct/gateway
+HTTP. Keep <=1000users/16MiB/300candidates; no full5k serving claim. Lab10concurrent,
+100warmup+1000measured, >=5process restarts, warm p95<=100ms per protocol.
+No subagents, retune, merge/deploy or new scheduling/reset cycles. User will
+manually trigger on reset. Continue authorized milestones without routine review,
+new chat between milestones; numerical/.NET/Docker/Git commit require_escalated.
+Preserve root nul. Historical checkpoints below are superseded by this section.
+
+# Active fixed-selection replay batch — 08/11/2026
+
+Session40560 đang chạy, KHÔNG mở worker/batch khác. Parent Python23212,
+child launcher14348/actual9288 là snapshot dataset đầu; đọc lease/batch lấy
+PID mới. Lease cập nhật20giây/lần. Source commit e5c23f0. Batch tuần tự6datasets
+ở `.tools/benchmarks/adaptive-replay-20261108`, tất cả preflight6ZIP/all members,
+original manifests/tracked hashes/source inventories PASS trước model execution.
+Main và sparse20261111/20261112 đã PASS toàn replay; primary khớp mọi ranked ID,
+gồm3LightGCN optimizer seeds. Hiện main20261113 đang chạy. Chưa kết luận
+sidecar/ablation aggregate; các dataset còn lại theo thứ tự batch.
+
+Một preflight attempt lỗi trước fit vì script kiểm thêm tracked protocol.json
+không tồn tại. Giữ nguyên `.tools/benchmarks/adaptive-replay-20261108-preflight-failed-01`.
+Đã sửa batch chỉ so tracked files có tồn tại; original protocol vẫn được kiểm
+qua manifest và runner. Không thay model/data/selection hoặc rerun original ranking.
+Output mới cho attempt thành công; batch stop on failure, không chạy đè.
+
+`summarize_audit.py` chuẩn bị trong batch folder, CHỈ chạy sau6PASS. Kiểm toán
+từng per-user nDCG/Recall/common population/primary ranked IDs/both cohort partitions,
+metadata overlap/transitions/frozen choices/optimizer hierarchy. Cần review và
+kiểm toán summary, report main/sparse riêng, ZIP all-member readback, tracked
+evidence/docs rồi commit milestone và chat mới. Full cost/HTTP vẫn pending;
+existing endpoint chỉ EASE/PPR/threshold1, chưa chứng minh serving R/LightGCN.
+Không sửa source frozen đang chạy; không subagents/retune/merge/deploy.
+
 # Fixed-selection replay runner ready — 08/11/2026
 
 Milestone mới: tools/oasis-smoke/run_adaptive_replay.py +4meaningful tests;

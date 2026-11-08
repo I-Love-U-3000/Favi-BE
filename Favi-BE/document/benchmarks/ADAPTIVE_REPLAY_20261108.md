@@ -53,3 +53,36 @@ ba optimizer seeds/exact10epochs và shared refit cache, manifest tampering,
 output overwrite rejection. Gate/lock
 được mock trong fixture nhỏ; không gọi fixture đó là qualified 5k dataset gate.
 Đây synthetic metadata replay, không behavioral/causal uplift, SQL hoặc HTTP parity.
+
+## Execution batch hoàn tất, kiểm toán PASS
+
+Cả sáu replay PASS; dataset cuối sparse20261113 hoàn tất lúc07:01:16 ngày08/11
+Asia/Saigon. Worker cũ kết thúc; lượt tiếp nối nhận lease sau kiểm Git/process.
+Independent audit PASS348result records, kiểm từng user và đủ ba optimizer seeds
+khi LightGCN; primary ranked IDs khớp evidence gốc. Báo cáo và JSON đầy đủ tại
+`adaptive-replay-20261108/REPORT_VI.md`, `summary.json` và `audit.json`.
+
+Main R−B1 primary +.00033478391982297295; noisy −.0010443922714881877,
+independent −.0014995804309405319, no-topics −.0014379349815056696.
+Cả ba seeds đều âm trong ba mode sau. Threshold component R−R-no-routing
+mean +.00041616587559287904 nhưng một seed âm; joint practical gate vẫn FAIL.
+Sparse R=B1 ở mọi mode; informative sidecar pre-scarcity không phải primary.
+Không retune, thay seed, hạ gate hay fit lại để kiểm số học.
+
+Các đoạn sau mô tả quy trình batch đã thực hiện; trạng thái hiện tại lấy từ
+evidence hoàn tất ở trên, không từ checkpoint đang chạy cũ.
+
+Batch tuần tự sáu datasets ở solution `.tools/benchmarks/adaptive-replay-20261108`;
+source commit e5c23f0. `run_batch.py` kiểm source inventory và mọi dataset ZIP member,
+ranking manifest/tracked hashes trước fit; sau mỗi dataset kiểm lại nguồn/evidence.
+Lease `.tools/adaptive-worker.json` refresh20giây/lần, stop on failure, không overwrite.
+Attempt preflight lỗi trước fit do yêu cầu tracked protocol.json không tồn tại được
+giữ riêng trong `adaptive-replay-20261108-preflight-failed-01`; protocol gốc vẫn nằm
+trong manifest và được runner kiểm. Attempt mới chỉ sửa kiểm chứng đường dẫn.
+
+Sau sáu PASS mới chạy `summarize_audit.py`: kiểm số học từng user, primary ranked IDs,
+common population, hai cohort partitions, overlap/transitions và optimizer hierarchy.
+`report.py` dựng báo cáo từ audited summary, `archive.py` lưu cả attempt lỗi và đọc lại
+SHA256 từng ZIP member rồi copy evidence/report/scripts vào document/benchmarks.
+Không gọi trạng thái đang chạy là kết quả hoàn tất; xem ADAPTIVE_HANDOVER.md và
+batch.json/lease cho progress hiện tại. Primary practical gate gốc vẫn FAIL.
