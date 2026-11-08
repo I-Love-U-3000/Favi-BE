@@ -1,3 +1,33 @@
+# M5 thesis evidence synthesis — 08/11/2026
+
+Read benchmarks/adaptive-thesis-evidence-20261108/REPORT_VI.md and TABLES_VI.md.
+Vietnamese RQ/method/results/negative findings, claim→evidence, cost boundaries,
+reproducibility index and practical recommendation now unified. Tables generated
+from actual frozen JSON, not rounded report arithmetic. Main C0 topic/general
+fallback is below Popularity; C1/C2 above it in this simulator, not causal effect.
+No new ranking/replay/export/HTTP runs, method/source/selection/seed/gate changes.
+Primary practical FAIL, negative robustness, sparse equality, gateway429 FAIL,
+250sample, absent original search-only/training RAM and actual empty-R-row HTTP
+limitation preserved. No overall serving/resource PASS or novelty/significance.
+
+Verification command from solution:
+& document/benchmarks/adaptive-thesis-evidence-20261108/build-evidence.ps1 -Check
+Checks paired deltas,18method means,7cohort deltas, replay primary, retained
+negative robustness, cost arithmetic/missing measurements, hashes/table drift.
+Tables intentionally avoid implying cross-sectional cohorts are a learning curve.
+No full numerical/.NET/HTTP rerun is warranted for documentation synthesis.
+Milestone tested commit+PR stacked on codex/adaptive-cost-audit; exact commit/PR
+and final checks recorded in ignored lease after commit. No merge/deploy.
+
+Next useful bounded milestone: independent defense/readiness review of the thesis
+package and reproducibility pointers, including whether archived scripts restore
+their expected relative paths; documentation corrections only if concrete gaps
+are found, no new experiments to rescue negative results. Avoid tiny commits or
+fresh chats without useful scope. Window authorized until12:00Asia/Saigon today.
+Check Git/process/lease before claim. No subagents/automation/reset. Preserve root
+nul, Docker Desktop and unrelated build services. PowerShell login:false;
+numerics/.NET/Docker/commit require_escalated.
+
 # Historical cost audit completed — 08/11/2026
 
 Read benchmarks/adaptive-cost-audit-20261108/REPORT_VI.md and summary.json.
