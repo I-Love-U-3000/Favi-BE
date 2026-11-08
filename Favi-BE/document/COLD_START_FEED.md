@@ -17,7 +17,10 @@ positive đầu tiên, cả /feed và /feed-with-reposts trở về luồng warm
 Riêng endpoint thí nghiệm schema2 B1/R gọi overload threshold1/5 đã lưu trong
 artifact. UNION các PostId Like/Love và bài lưu để đếm distinct, tối đa đến ngưỡng;
 cùng bài vừa Like vừa lưu chỉ tính một. Dưới ngưỡng vẫn đọc topic hiện tại và kiểm
-viewer/visibility như trên. Adapter thí nghiệm loại positive trước phân trang.
+viewer/visibility như trên. Với threshold5, shared eligible query loại positive
+ngay trước pool topic20/general60 và hydrate graph, để bài đã tương tác không
+chiếm chỗ của bài mới ngoài giới hạn pool. Adapter thí nghiệm tiếp tục kiểm lại
+positive trước phân trang để xử lý thay đổi hiện trạng sau retrieval.
 Đây là định nghĩa positive vận hành rộng hơn likes-only trong offline; không
 đổi ngưỡng1 của feed production. Xem ADAPTIVE_SERVING_CONTRACT.md.
 

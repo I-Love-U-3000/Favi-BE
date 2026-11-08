@@ -54,6 +54,10 @@ internal sealed class ColdStartQueryReader(
 
         // Authoritative safety/visibility comes from Favi, not the future graph service.
         var eligible = EligiblePosts(userId);
+        // Adaptive cold users may already have 1..4 positives. Exclude them
+        // before bounded topic/general retrieval so they cannot consume slots.
+        // The production threshold1 path retains its existing zero-positive query.
+        if (positiveThreshold == 5) eligible = eligible.Where(p => !positives.Contains(p.Id));
 
         var engineIds = graphCandidates.Where(c => c.PostId != Guid.Empty && double.IsFinite(c.Score))
             .OrderByDescending(c => c.Score).ThenBy(c => c.PostId).Select(c => c.PostId).Distinct().Take(300).ToArray();

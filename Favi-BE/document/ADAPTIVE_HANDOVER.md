@@ -1,3 +1,24 @@
+# Adaptive cold-pool eligibility correction — 08/11/2026
+
+User renewed continuous action until quota; do not stop for routine milestone
+review. Quota not introspectable. Concrete serving bug reproduced: threshold5
+users with4distinct positives kept only56unseen posts from general top60 despite
+60unseen available. Added positive UNION exclusion to shared eligible query only
+when threshold5, before graph/topic/general bounded retrieval. Production threshold1
+query unchanged; final visibility/positive rechecks retained. No offline source,
+selection, artifact bytes or historical research/HTTP numbers changed.
+
+Before regression FAIL expected60actual56; after27focused ExperimentalFeed/ColdStart
+tests PASS. New PostgreSQL smoke fixture uses actual DI/reader/UNION before LIMIT,
+temporary catalog isolation in transaction, rollback; actual --upgrade
+--adaptive-pool-only PASS11checks, stack stopped in finally. No API/load/model rerun.
+Raw .tools/cold-pool-eligibility before/after TRX and *logs retained. Existing EF/
+NU1903 warnings. Read ADAPTIVE_SERVING_CONTRACT/COLD_START_FEED/smoke README.
+Normal hosted smoke runs new SQL regression before existing HTTP for both schema
+variants. Branch codex/adaptive-cold-pool-eligibility based on PR12/27b78fc.
+Publication/hosted outcomes in ignored lease after observation. No merge/deploy/
+subagents/reset/automation. Continue useful review after meaningful milestone.
+
 # Independent method/selection audit — 08/11/2026
 
 Reviewed protocol against runner/feed/evaluator/models/onboarding/analyzer/replay

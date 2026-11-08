@@ -152,6 +152,38 @@ public sealed class ColdStartReaderTests
     }
 
     [Fact]
+    public async Task AdaptiveColdPoolExcludesDistinctPositivesBeforeBoundedRetrieval()
+    {
+        using var provider = Provider();
+        var db = provider.GetRequiredService<AppDbContext>();
+        var viewer = new Profile { Id = Guid.NewGuid(), Username = "pool_viewer" };
+        var author = new Profile { Id = Guid.NewGuid(), Username = "pool_author" };
+        db.Profiles.AddRange(viewer, author);
+        var posts = Enumerable.Range(0, 64).Select(i =>
+        {
+            var post = Post(author, "food");
+            post.PostTags.Clear(); // Exercise the general top60 pool without topic-pool backfill.
+            post.CreatedAt = DateTime.UtcNow.AddMinutes(-i);
+            return post;
+        }).ToArray();
+        db.Posts.AddRange(posts);
+        db.Reactions.AddRange(
+            new Reaction { Id = Guid.NewGuid(), ProfileId = viewer.Id, PostId = posts[0].Id, Type = ReactionType.Like },
+            new Reaction { Id = Guid.NewGuid(), ProfileId = viewer.Id, PostId = posts[1].Id, Type = ReactionType.Love });
+        var collection = new Collection { Id = Guid.NewGuid(), ProfileId = viewer.Id, Title = "pool_saved" };
+        db.Collections.Add(collection);
+        foreach (var post in new[] { posts[0], posts[2], posts[3] })
+            db.PostCollections.Add(new PostCollection { PostId = post.Id, CollectionId = collection.Id, Collection = collection });
+        await db.SaveChangesAsync();
+        var reader = provider.GetRequiredService<IColdStartQueryReader>();
+        var ids = (await reader.GetRankedPostIdsAsync(viewer.Id, 5, default))!;
+        var positives = posts.Take(4).Select(p => p.Id).ToHashSet();
+        Assert.Equal(60, ids.Count(id => !positives.Contains(id)));
+        Assert.Equal(posts.Skip(4).Select(p => p.Id).ToHashSet(), ids.ToHashSet());
+        Assert.Null(await reader.GetRankedPostIdsAsync(viewer.Id, default));
+    }
+
+    [Fact]
     public async Task AdaptiveLiveReaderRoutesFiltersPagesAndRevalidatesFallback()
     {
         using var provider = Provider();

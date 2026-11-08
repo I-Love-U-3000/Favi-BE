@@ -56,6 +56,25 @@ Viewer status is checked before counting/retrieval. Experimental hydration still
 excludes current positives and unsafe posts before pagination. Current-positive
 filtering belongs to the experiment adapter; production retrieval is unchanged.
 
+Bounded adaptive cold-pool correction08/11/2026: threshold5 can remain cold
+with1..4 current positives. Its shared eligible query now excludes the same
+Like/Love UNION saves before graph hydration and per-topic20/general60 LIMITs.
+Previously those positives consumed bounded slots and were only removed by the
+final experiment hydration, which could unnecessarily shorten the eligible pool.
+Production threshold1 keeps its original query. Final current-positive and
+visibility rechecks remain necessary because live state may change after retrieval.
+No unbounded backfill, ranker changes or relaxation of visibility is introduced.
+
+Reproduction fixture:64public untagged posts,4distinct positives comprising
+Like/Love/save plus a duplicate Like+save. Before correction only56unseen posts
+survived in general top60; after correction all60unseen posts are retrieved.
+Focused27.NET tests PASS; actual PostgreSQL smoke11migration/pool checks PASS
+including UNION exclusion before LIMIT and unchanged threshold1 warm routing.
+The smoke fixture uses a transaction and rolls back its catalog isolation and
+inserted rows. Raw before/after TRX and logs: `.tools/cold-pool-eligibility*`.
+This is new regression evidence for serving retrieval, not a rerun or rewrite of
+frozen offline results, exported artifacts or historical HTTP/latency measurements.
+
 Expose B1/R explicitly without treating them as EASE aliases. Validate schema2
 and all bounds/metadata before serving. Count distinct currently positive post
 IDs across Like/Love and saves, so repeated signals on one post count once.
