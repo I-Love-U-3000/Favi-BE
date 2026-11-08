@@ -51,6 +51,7 @@ public sealed class ExperimentalFeedSnapshot
         var artifact = JsonSerializer.Deserialize<ExperimentArtifact>(bytes, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            RespectRequiredConstructorParameters = true,
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
             MaxDepth = 16
         }) ?? throw new InvalidDataException("Missing experimental artifact");

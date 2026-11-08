@@ -59,6 +59,18 @@ filtering belongs to the experiment adapter; production retrieval is unchanged.
 Expose B1/R explicitly without treating them as EASE aliases. Validate schema2
 and all bounds/metadata before serving. Count distinct currently positive post
 IDs across Like/Love and saves, so repeated signals on one post count once.
+
+Artifact JSON decoding enables `RespectRequiredConstructorParameters` locally
+on the snapshot serializer. Every nonoptional constructor field in the artifact,
+user, ranked-post and method records must be present, including `score`, `epoch`
+and nullable `optimizerSeed`. A nullable value permits explicit JSON null; it
+does not permit omission. This prevents missing score from silently becoming0
+and missing optimizer provenance from silently becoming null. Schema-specific
+optional fields (`methods`, `ease`, `ppr`, `ranks`) retain their constructor
+defaults; existing schema validation determines which are required/non-null for
+each schema. Missing required fields raise JsonException before startup completes;
+checksum verification still runs first. No global HTTP JSON options change.
+Explicit score0, solver epoch0 and solver optimizerSeed null remain valid.
 This operational positive definition is broader than offline likes-only and
 must be reported. Threshold comes from the frozen selected method, not query
 parameters. Below threshold use current topic/general cold reader; above it use
@@ -123,6 +135,18 @@ rate bucket, as real requests from the same client do; it is not reset between
 methods. No rate-limit bypass or post-hoc tuning is allowed to manufacture PASS.
 
 ## Verification
+
+Schema-presence correction08/11/2026: three focused removal fixtures recompute
+the checksum after deleting score/epoch/optimizerSeed, so the parser is actually
+exercised. Before correction score and optimizerSeed were accepted; epoch already
+failed later semantic validation. After correction all three fail at JSON decoding,
+while the complete zero/null fixture succeeds. Raw before/after/final TRX and
+logs are retained in `.tools/schema-integrity` and `.tools/schema-integrity-*.log`.
+The final focused suite now has26cases. This does not change frozen artifacts,
+scores, selections, schema versions, production enablement or research conclusions.
+The actual250user artifact11867251bytes also loads with B1threshold1/Rthreshold5;
+diagnostic load364.4894ms is a single probe, not a new latency benchmark. Probe
+log `.tools/schema-integrity-actual-artifact.log`; original artifact bytes unchanged.
 
 Loader/routing milestone:23 .NET tests PASS with filter
 `FullyQualifiedName~ExperimentalFeedTests|FullyQualifiedName~ColdStart`.
