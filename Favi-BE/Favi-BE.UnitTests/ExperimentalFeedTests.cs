@@ -58,8 +58,56 @@ public sealed class ExperimentalFeedTests
                 new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System)));
     }
 
+    [Fact]
+    public void AdaptiveSnapshotKeepsMethodsThresholdsAndUnknownHistorySeparate()
+    {
+        var user = Guid.NewGuid();
+        var post = new RankedExperimentPost(Guid.NewGuid(), 2);
+        var parameters = new Dictionary<string, JsonElement> { ["value"] = JsonSerializer.SerializeToElement(1000) };
+        var artifact = Artifact([new(user, Ranks: new() { ["B1"] = [post], ["R"] = [] })]) with
+        {
+            SchemaVersion = 2,
+            Methods = new() { ["B1"] = new("ease", 1, parameters, 0, null), ["R"] = new("ease", 5, parameters, 0, null) }
+        };
+        WithArtifact(artifact, options =>
+        {
+            var snapshot = new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System);
+            Assert.Equal(5, snapshot.GetThreshold("R"));
+            Assert.Equal(1, snapshot.GetThreshold("B1"));
+            Assert.Equal(new[] { post.PostId }, snapshot.Get(user, "B1"));
+            Assert.Empty(snapshot.Get(user, "R")!);
+            Assert.Null(snapshot.Get(user, "ease"));
+        });
+        foreach (var broken in new[]
+        {
+            artifact with { Methods = new() { ["B1"] = artifact.Methods["B1"] } },
+            artifact with { Methods = new() { ["B1"] = artifact.Methods["B1"] with { Threshold = 5 }, ["R"] = artifact.Methods["R"] } },
+            artifact with { Users = [new(user, Ranks: new() { ["B1"] = [post], ["R"] = [post, post] })] }
+        })
+            WithArtifact(broken, options => Assert.Throws<InvalidDataException>(() =>
+                new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System)));
+    }
+
     private static ExperimentArtifact Artifact(ExperimentUser[] users) => new(1, "test-version", DateTimeOffset.UtcNow,
         24, new string('a',64), new string('b',64), new string('c',64), users);
+
+    [Theory]
+    [InlineData("ppr", 0)]
+    [InlineData("lightgcn", 60)]
+    public void AdaptiveMetadataSupportsFrozenFamiliesAndRejectsInvalidEpoch(string family, int epoch)
+    {
+        var parameters = family == "ppr" ? new Dictionary<string, double> { ["value"] = 0.85 } :
+            new() { ["dimensions"] = 64, ["layers"] = 2, ["learning_rate"] = 0.01,
+                ["regularization"] = 0.0001, ["epochs"] = epoch, ["check_every"] = 10 };
+        var method = new ExperimentMethod(family, 1,
+            parameters.ToDictionary(p => p.Key, p => JsonSerializer.SerializeToElement(p.Value)), epoch,
+            family == "lightgcn" ? 20261103 : null);
+        var artifact = Artifact([]) with { SchemaVersion = 2, Methods = new() { ["B1"] = method, ["R"] = method with { Threshold = 5 } } };
+        WithArtifact(artifact, options => Assert.True(new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System).Enabled));
+        artifact.Methods["R"] = method with { Threshold = 5, Epoch = epoch + 1 };
+        WithArtifact(artifact, options => Assert.Throws<InvalidDataException>(() =>
+            new ExperimentalFeedSnapshot(Options.Create(options), TimeProvider.System)));
+    }
 
     private static void WithArtifact(ExperimentArtifact artifact, Action<ExperimentalFeedOptions> test)
     {

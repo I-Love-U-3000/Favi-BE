@@ -14,6 +14,13 @@ Cold user là user chưa có Like/Love trên post và chưa có post trong colle
 của mình. Comment, follow hoặc reaction khác chưa chuyển user sang warm. Sau
 positive đầu tiên, cả /feed và /feed-with-reposts trở về luồng warm hiện tại.
 
+Riêng endpoint thí nghiệm schema2 B1/R gọi overload threshold1/5 đã lưu trong
+artifact. UNION các PostId Like/Love và bài lưu để đếm distinct, tối đa đến ngưỡng;
+cùng bài vừa Like vừa lưu chỉ tính một. Dưới ngưỡng vẫn đọc topic hiện tại và kiểm
+viewer/visibility như trên. Adapter thí nghiệm loại positive trước phân trang.
+Đây là định nghĩa positive vận hành rộng hơn likes-only trong offline; không
+đổi ngưỡng1 của feed production. Xem ADAPTIVE_SERVING_CONTRACT.md.
+
 - Chưa chọn chủ đề hoặc chọn []: round-robin 10 chủ đề general.
 - Chọn 1–10 chủ đề: round-robin những chủ đề đó trước; khi thiếu mới bù catalog chung.
 - Dedup post nhiều tag, ưu tiên tối đa hai post/tác giả trong lượt đầu. Khi thiếu,

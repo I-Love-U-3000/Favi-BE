@@ -13,7 +13,7 @@ public sealed class ExperimentalFeedController(IMediator mediator) : ControllerB
 {
     [HttpGet("api/discovery/experiments/feed")]
     public async Task<IActionResult> Get(
-        [FromQuery, RegularExpression("^(ease|ppr)$")] string method = "ease",
+        [FromQuery, RegularExpression("^(ease|ppr|B1|R)$")] string method = "ease",
         [FromQuery, Range(1, 10000)] int page = 1,
         [FromQuery, Range(1, 100)] int pageSize = 10, CancellationToken ct = default)
     {

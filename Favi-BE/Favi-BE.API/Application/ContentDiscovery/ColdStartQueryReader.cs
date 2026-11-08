@@ -14,16 +14,21 @@ internal sealed class ColdStartQueryReader(
     AppDbContext db, IMediator mediator, IGraphCandidateSource graph, ILogger<ColdStartQueryReader> logger)
     : IColdStartQueryReader
 {
-    public async Task<IReadOnlyList<Guid>?> GetRankedPostIdsAsync(Guid userId, CancellationToken ct)
+    public Task<IReadOnlyList<Guid>?> GetRankedPostIdsAsync(Guid userId, CancellationToken ct)
+        => GetRankedPostIdsAsync(userId, 1, ct);
+
+    public async Task<IReadOnlyList<Guid>?> GetRankedPostIdsAsync(Guid userId, int positiveThreshold, CancellationToken ct)
     {
+        if (positiveThreshold is not (1 or 5)) throw new ArgumentOutOfRangeException(nameof(positiveThreshold));
         var now = DateTime.UtcNow;
         if (!await db.Profiles.AsNoTracking().AnyAsync(p => p.Id == userId &&
                 (!p.IsBanned || (p.BannedUntil != null && p.BannedUntil <= now)), ct)) return [];
 
-        var hasLikes = await db.Reactions.AsNoTracking().AnyAsync(r => r.ProfileId == userId &&
-            r.PostId != null && (r.Type == ReactionType.Like || r.Type == ReactionType.Love), ct);
-        var hasSaves = await db.PostCollections.AsNoTracking().AnyAsync(p => p.Collection.ProfileId == userId, ct);
-        if (hasLikes || hasSaves) return null;
+        var positives = db.Reactions.AsNoTracking().Where(r => r.ProfileId == userId &&
+            r.PostId != null && (r.Type == ReactionType.Like || r.Type == ReactionType.Love))
+            .Select(r => r.PostId!.Value)
+            .Union(db.PostCollections.AsNoTracking().Where(p => p.Collection.ProfileId == userId).Select(p => p.PostId));
+        if (await positives.Take(positiveThreshold).CountAsync(ct) >= positiveThreshold) return null;
 
         // Host bridges Auth query to ContentDiscovery; neither module references the other.
         var preferences = await mediator.Send(new GetProfileInterestsQuery(userId), ct);

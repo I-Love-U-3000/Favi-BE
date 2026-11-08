@@ -4,7 +4,8 @@
 
 Adaptive B1/R uses a separate schema2 exporter; see
 [adaptive serving contract](ADAPTIVE_SERVING_CONTRACT.md). The legacy endpoint
-below still accepts only schema1 EASE/PPR and must not be used to claim R serving.
+below accepts schema1 EASE/PPR and schema2 B1/R. Adaptive HTTP lifecycle and
+resource gates remain pending; historical EASE/PPR results do not prove R gates.
 
 Action 3 adds an authenticated opt-in experimental feed endpoint. It does not
 replace `/api/posts/feed` or `/api/posts/feed-with-reposts`, and defaults to
@@ -22,7 +23,7 @@ numeric scores and source IDs in the artifact provenance. No fabricated scores.
 
 ## Serving contract
 
-`GET /api/discovery/experiments/feed?method=ease|ppr&page=1&pageSize=10` requires
+`GET /api/discovery/experiments/feed?method=ease|ppr|B1|R&page=1&pageSize=10` requires
 the existing bearer access token. Disabled endpoint returns 404. Invalid methods
 or ranges return 400; no viewer ID is accepted from the client. Identity always
 comes from JWT. The feature is read-only; existing HTTP idempotency rules for
@@ -46,7 +47,10 @@ an interaction added after artifact creation must not be recommended again.
 Preserve saved order among remaining candidates. No raw external score is mixed
 with production heuristic scores. TotalCount describes the bounded eligible pool.
 
-Cold users use the existing topic/catalog cold-start feed. Warm users without a
+Production and schema1 use threshold1; schema2 B1/R use their frozen threshold1/5
+metadata. Count distinct current Like/Love or saved post IDs, broader than offline
+likes-only. Below threshold, use current topics/general retrieval; original
+production feed behavior stays unchanged. Warm users without a
 snapshot row, with a stale snapshot, or with an empty eligible model pool use the
 existing feed query as a fallback, then rehydrate/filter the bounded IDs through
 the same conservative public eligibility path. Do not silently relax privacy or
