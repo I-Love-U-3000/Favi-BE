@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "scope": "All per-user nDCG/Recall and cohort means, common users/candidates/targets, selected trial membership, direct hierarchical deltas/std, identical choices prediction bytes",
+  "checks": [
+    {
+      "scenario": "main",
+      "seed": 20261111,
+      "result_records": 11,
+      "target_users": 4921,
+      "delta": 0.00048101599650505165,
+      "identical_B1_R_prediction_files": false,
+      "status": "PASS"
+    },
+    {
+      "scenario": "main",
+      "seed": 20261112,
+      "result_records": 15,
+      "target_users": 4935,
+      "delta": -0.00038741935586277323,
+      "identical_B1_R_prediction_files": false,
+      "status": "PASS"
+    },
+    {
+      "scenario": "main",
+      "seed": 20261113,
+      "result_records": 11,
+      "target_users": 4919,
+      "delta": 0.0009107551188266404,
+      "identical_B1_R_prediction_files": false,
+      "status": "PASS"
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261111,
+      "result_records": 11,
+      "target_users": 4923,
+      "delta": 0.0,
+      "identical_B1_R_prediction_files": true,
+      "status": "PASS"
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261112,
+      "result_records": 15,
+      "target_users": 4931,
+      "delta": 0.0,
+      "identical_B1_R_prediction_files": true,
+      "status": "PASS"
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261113,
+      "result_records": 15,
+      "target_users": 4925,
+      "delta": 0.0,
+      "identical_B1_R_prediction_files": true,
+      "status": "PASS"
+    }
+  ],
+  "summary_sha256": "de13b34af274a6e8dcd9da89e6c528c76c28bd11b8d73706d25e132642544b93"
+}

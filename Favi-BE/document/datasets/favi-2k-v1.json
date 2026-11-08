@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "dataset_id": "favi-2k-v1",
+  "seed": 20261104,
+  "config": "tools/oasis-smoke/configs/favi-2k.json",
+  "bundle": ".tools/datasets/favi-2k-v1",
+  "archive": ".tools/dataset-archives/favi-2k-v1.zip",
+  "archive_receipt": ".tools/dataset-archives/favi-2k-v1.zip.json",
+  "archive_bytes": 23197502,
+  "counts": {
+    "users": 2000,
+    "posts": 1000,
+    "likes": 53607,
+    "follows": 10862,
+    "comments": 7751
+  },
+  "exposure_events": 191115,
+  "total_events": 264335,
+  "users_with_at_least_5_likes": 2000,
+  "ticks": 500,
+  "suggested_temporal_cutoffs": [
+    300,
+    400
+  ],
+  "events_sha256": "8b2a8f3e96a85eb0b99bf35de68dc855ea26136cc64e19e0c762a62737ff150b",
+  "sqlite_sha256": "0ee4ff4e3e45300dcd593122a14d5dabdd56033028d2319f7566ee15a72d4b0f",
+  "archive_sha256": "f6c5367b22e3ed2eb3b1a2c96915de9e58a8506bb6bf319b5585c9cd5c9068dc",
+  "elapsed_seconds": 404.938,
+  "status": "verified-ready",
+  "integration": {
+    "passed": null,
+    "note": "Native OASIS and adapter validation passed; full Favi application/API gate not run for this scale"
+  },
+  "popularity_readiness": {
+    "test_ndcg_at_10": 0.008335496811667635,
+    "report": ".tools/benchmarks/favi-2k-v1-popularity-readiness/report.json",
+    "validation_likes": 10537,
+    "test_users": 1971,
+    "train_likes": 32777,
+    "test_recall_at_10": 0.010909755578033848,
+    "test_likes": 10293,
+    "validation_users": 1984
+  },
+  "scope": "Synthetic graph/ranking workloads; template text and media URL metadata, not real images or human relevance labels",
+  "full_recommender_benchmark": {
+    "report": "document/THREE_SCALE_RECOMMENDER_BENCHMARK.md",
+    "machine_report": "document/benchmarks/three-scale-20261103.json",
+    "formula_run": ".tools/benchmarks/scales-20261103-2k-formula",
+    "expanded_run": ".tools/benchmarks/scales-20261103-2k-expanded",
+    "verified": true,
+    "protocol": "K=10; global tick cutoffs 300/400; validation-only tuning; LightGCN 3 training seeds"
+  }
+}

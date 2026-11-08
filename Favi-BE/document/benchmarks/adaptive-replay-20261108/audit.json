@@ -1,0 +1,49 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "scenario": "main",
+      "seed": 20261111,
+      "records": 47,
+      "users": 4921,
+      "status": "PASS"
+    },
+    {
+      "scenario": "main",
+      "seed": 20261112,
+      "records": 69,
+      "users": 4935,
+      "status": "PASS"
+    },
+    {
+      "scenario": "main",
+      "seed": 20261113,
+      "records": 47,
+      "users": 4919,
+      "status": "PASS"
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261111,
+      "records": 47,
+      "users": 4923,
+      "status": "PASS"
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261112,
+      "records": 69,
+      "users": 4931,
+      "status": "PASS"
+    },
+    {
+      "scenario": "sparse",
+      "seed": 20261113,
+      "records": 69,
+      "users": 4925,
+      "status": "PASS"
+    }
+  ],
+  "summary_sha256": "6f58ff0361f1d62a821630c0a81fc87aa5420c8c756093cb7ae7c9a06ef55bef",
+  "scope": "Every per-user nDCG/Recall; common original population/candidates/targets; exact primary ranked IDs; both cohort partitions; frozen choices and optimizer hierarchy"
+}

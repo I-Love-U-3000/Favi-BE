@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "dataset_id": "favi-5k-v1",
+  "seed": 20261101,
+  "config": "tools/oasis-smoke/configs/favi-5k.json",
+  "bundle": ".tools/datasets/favi-5k-v1",
+  "archive": ".tools/dataset-archives/favi-5k-v1.zip",
+  "archive_receipt": ".tools/dataset-archives/favi-5k-v1.zip.json",
+  "archive_bytes": 60285459,
+  "counts": {
+    "users": 5000,
+    "posts": 2000,
+    "likes": 137198,
+    "follows": 28835,
+    "comments": 20248
+  },
+  "exposure_events": 477247,
+  "total_events": 665528,
+  "users_with_at_least_5_likes": 5000,
+  "ticks": 500,
+  "suggested_temporal_cutoffs": [
+    300,
+    400
+  ],
+  "events_sha256": "a0a9c3cf579fced93425d2000469aa9a09b55ea3900ce0d87ffd331d93b6a0cc",
+  "sqlite_sha256": "bcd290cbceb8a3d92d2b919938fed83b7846ef36a5bb8e4c24a3643dd8303e2b",
+  "archive_sha256": "487297a71762a294d976f79988a7ff930d2a370dc9da5879b0cdb7a1596ca517",
+  "status": "verified-ready",
+  "integration": {
+    "passed": true,
+    "checks": 288118,
+    "report": ".tools/oasis-smoke/fe16ceabb38b4bffa0449c316e14bcbd/report/checks.json"
+  },
+  "popularity_readiness": {
+    "report": ".tools/benchmarks/favi-5k-v1-popularity-readiness/report.json",
+    "validation_users": 4959,
+    "test_users": 4943,
+    "train_likes": 83083,
+    "validation_likes": 27284,
+    "test_likes": 26831,
+    "test_recall_at_10": 0.004257800701135523,
+    "test_ndcg_at_10": 0.0036436383392964497
+  },
+  "scope": "Synthetic graph/ranking and Favi integration workloads; text templates and media URL metadata, not real images or human relevance labels",
+  "full_recommender_benchmark": {
+    "report": "document/THREE_SCALE_RECOMMENDER_BENCHMARK.md",
+    "machine_report": "document/benchmarks/three-scale-20261103.json",
+    "formula_run": ".tools/benchmarks/scales-20261103-5k-formula",
+    "expanded_run": ".tools/benchmarks/scales-20261103-5k-expanded",
+    "verified": true,
+    "protocol": "K=10; global tick cutoffs 300/400; validation-only tuning; LightGCN 3 training seeds"
+  }
+}

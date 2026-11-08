@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "seed": 20261110,
+  "users": 5000,
+  "initial_posts": 1500,
+  "max_posts": 2000,
+  "ticks": 500,
+  "feed_size": 5,
+  "exploration": 0.5,
+  "topics": [
+    "travel",
+    "food",
+    "sports",
+    "city",
+    "nature",
+    "technology",
+    "lifestyle",
+    "art",
+    "fitness",
+    "music"
+  ],
+  "activity": {
+    "reader": 0.16,
+    "contributor": 0.65,
+    "creator": 0.9
+  },
+  "quality": {
+    "min_likes": 1000,
+    "min_warm_users": 100,
+    "warm_min_likes": 5
+  }
+}

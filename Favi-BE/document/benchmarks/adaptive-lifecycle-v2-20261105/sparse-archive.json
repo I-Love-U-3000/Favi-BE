@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "archive": "adaptive-lifecycle-sparse-20261105-001.zip",
+  "sha256": "8b2716067b0c1168dbf8ad192b675c3e5e650940f5a0ad1c238b1e8abfebb398",
+  "bytes": 31139367,
+  "members": 32,
+  "dataset_directory": "adaptive-lifecycle-sparse-20261105-001",
+  "events_sha256": "ad51342d51a298ed61949bf103a921332b1533e9b7dbaf41c08fcbc448c0c162",
+  "quality": {
+    "events": 345289,
+    "posts": 2000,
+    "likes": 66175,
+    "follows": 10123,
+    "exposures": 256280,
+    "warm_users": 4138,
+    "quality_passed": true
+  },
+  "verification": "Every archived member read back and SHA256-compared with source manifest"
+}

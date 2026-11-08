@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "dataset": ".tools\\datasets\\adaptive-pilot-long-20261105-001",
+  "integrity": {
+    "verified_files": 27,
+    "events_sha256": "81b28911f31dfbb8ec699401bacb3858a0438ad51397703252536c0fa30c9e50",
+    "quality": {
+      "events": 81725,
+      "posts": 500,
+      "likes": 15089,
+      "follows": 2160,
+      "exposures": 60956,
+      "warm_users": 919,
+      "quality_passed": true
+    }
+  },
+  "minimum_target_users": 30,
+  "phases": {
+    "validation": {
+      "cutoff": 300,
+      "end": 400,
+      "not_arrived": 177,
+      "cohorts": {
+        "C0": {
+          "users": 7,
+          "with_target": 6,
+          "without_target": 1,
+          "targets": 24,
+          "excluded_targets": 0
+        },
+        "C1": {
+          "users": 7,
+          "with_target": 7,
+          "without_target": 0,
+          "targets": 20,
+          "excluded_targets": 0
+        },
+        "C2": {
+          "users": 7,
+          "with_target": 7,
+          "without_target": 0,
+          "targets": 33,
+          "excluded_targets": 1
+        },
+        "C3": {
+          "users": 0,
+          "with_target": 0,
+          "without_target": 0,
+          "targets": 0,
+          "excluded_targets": 0
+        },
+        "T1": {
+          "users": 33,
+          "with_target": 29,
+          "without_target": 4,
+          "targets": 81,
+          "excluded_targets": 1
+        },
+        "T2": {
+          "users": 111,
+          "with_target": 105,
+          "without_target": 6,
+          "targets": 330,
+          "excluded_targets": 1
+        },
+        "W1": {
+          "users": 587,
+          "with_target": 567,
+          "without_target": 20,
+          "targets": 1959,
+          "excluded_targets": 7
+        },
+        "W2": {
+          "users": 71,
+          "with_target": 71,
+          "without_target": 0,
+          "targets": 719,
+          "excluded_targets": 3
+        }
+      },
+      "gate_passed": false
+    },
+    "test": {
+      "cutoff": 400,
+      "end": 500,
+      "not_arrived": 93,
+      "cohorts": {
+        "C0": {
+          "users": 8,
+          "with_target": 8,
+          "without_target": 0,
+          "targets": 46,
+          "excluded_targets": 0
+        },
+        "C1": {
+          "users": 8,
+          "with_target": 8,
+          "without_target": 0,
+          "targets": 35,
+          "excluded_targets": 0
+        },
+        "C2": {
+          "users": 6,
+          "with_target": 6,
+          "without_target": 0,
+          "targets": 22,
+          "excluded_targets": 0
+        },
+        "C3": {
+          "users": 0,
+          "with_target": 0,
+          "without_target": 0,
+          "targets": 0,
+          "excluded_targets": 0
+        },
+        "T1": {
+          "users": 33,
+          "with_target": 30,
+          "without_target": 3,
+          "targets": 108,
+          "excluded_targets": 0
+        },
+        "T2": {
+          "users": 82,
+          "with_target": 79,
+          "without_target": 3,
+          "targets": 262,
+          "excluded_targets": 0
+        },
+        "W1": {
+          "users": 660,
+          "with_target": 631,
+          "without_target": 29,
+          "targets": 1941,
+          "excluded_targets": 0
+        },
+        "W2": {
+          "users": 110,
+          "with_target": 109,
+          "without_target": 1,
+          "targets": 895,
+          "excluded_targets": 0
+        }
+      },
+      "gate_passed": false
+    }
+  },
+  "gate_passed": false
+}

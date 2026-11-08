@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "checks": 524,
+  "warm_fixtures": 20,
+  "cold_fixtures": 25,
+  "sources": {
+    "Favi-BE.API\\Application\\ContentDiscovery\\ContentDiscoveryQueryReaderAdapter.cs": "d5388145c778f61fc428dfc1fca62d06c6c281131eb2cf633b442e3cf8b425b5",
+    "Favi-BE.Modules.ContentDiscovery\\Application\\ColdStart\\ColdStartRanker.cs": "289fc7d0647f375cbf4e37f1d151e0d10913f57b0eddea9f3fb95c403cc82e89",
+    "tools\\oasis-smoke\\run_ranker_parity.py": "c2c14127be7b56f6099aaffcb59423cb3fca4cfdb15d8d1e77be1bf40b997699",
+    "tools\\oasis-smoke\\favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65"
+  },
+  "scope": "Source-extracted warm scoring and linked cold ranker; excludes SQL retrieval, authorization, hydration, routing, reaction history construction and existing legacy benchmark input contract"
+}

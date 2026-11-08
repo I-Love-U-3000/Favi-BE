@@ -1,5 +1,14 @@
 # Copilot & Agent Operating Instructions
 
+## Persistent user preferences and research goal
+
+- Communicate in Vietnamese. Be straightforward: lead with concrete outcomes, explain naturally, and report evidence and limitations clearly.
+- The user values visible practical benefit, understandable decisions, a distinctive research direction, and conclusions that withstand debate. Avoid complexity added only to appear sophisticated.
+- Goal: develop Favi into a reproducible, defensible graduation-thesis study of recommendation from cold users with selected topics or general defaults through sparse history to warm personalization; compare the existing Favi formula, Popularity, EASE, PPR and LightGCN fairly, then verify practical serving and cost.
+- Continue authorized milestone work without stopping for routine review. The user revoked the earlier review-after-each-step preference on 04/11/2026. Report understandable outcomes; ask only for genuinely missing information or required authorization.
+- Model preference: Sol/Astra use Low for implementation/build and at most Medium for analysis/review. Other models must not exceed High. Do not claim the current chat's model or reasoning setting was changed without a supported control and verification.
+- Read this section when resuming project work. Durable project instructions preserve context across sessions; do not promise infallible permanent memory. Later user instructions take precedence.
+
 You must work with exceptional precision and system-level depth because GPT Codex and rigorous code review tools will inspect and validate your output.
 
 ---

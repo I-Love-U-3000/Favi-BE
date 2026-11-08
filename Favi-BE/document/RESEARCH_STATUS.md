@@ -1,5 +1,115 @@
 # Đề tài nghiên cứu Favi và tiến độ triển khai
 
+## Offline adapter/evaluator — 08/11/2026
+
+Pilot baseline main/sparse hoàn tất; candidates/targets và denominator cohort
+khớp data gate. [Report](benchmarks/ADAPTIVE_BASELINE_PILOT_20261108.md) giữ
+kết quả exploratory và giới hạn; [contract](ADAPTIVE_OFFLINE_CONTRACT.md) phân
+biệt rõ offline với production SQL/HTTP. Chưa chạy collaborative/router mới.
+
+## Baseline ranking parity — 07/11/2026
+
+524 C#/Python checks pass (20 warm/25 cold fixtures); 13 tests .NET ColdStart
+pass. Pure ranking parity, chưa bao gồm cold reader SQL pool hoặc HTTP mới.
+[Report](benchmarks/BASELINE_PARITY_20261107.md) và
+[handover](ADAPTIVE_HANDOVER.md) ghi phạm vi, source và bước tiếp theo.
+
+## Lifecycle-v2 — pilot data gate PASS, 05/11/2026
+
+Đã implement và chạy main + sparse-topic, mỗi bộ 5k users/2k posts/500 ticks.
+Tất cả tám nhóm bắt buộc có >=30 target users ở cả validation/test; không hạ
+ngưỡng hoặc chọn user theo future labels. 98 regression tests pass.
+[Báo cáo tiếng Việt](benchmarks/adaptive-lifecycle-v2-20261105/REPORT_VI.md)
+ghi số liệu, giới hạn và bước tiếp theo. Đây là data readiness, chưa có điểm
+adaptive, formula parity mới hoặc confirmatory freeze.
+
+## Cold expansion — 05/11/2026
+
+Đã chạy OASIS với cold waves; cold/general, một topic và nhiều topics đều đủ
+92–97 users có target mỗi phase. 97 tests pass, read-back 28 files pass.
+Gate tổng chưa đạt vì transition validation thiếu và C3 vắng. Xem
+[report cold waves](benchmarks/adaptive-cold-waves-20261105.md).
+
+## Adaptive onboarding — 05/11/2026
+
+Đã nối opt-in `--adaptive` vào generator và chạy OASIS thật: 1.000 users,
+30 ticks, 45 posts, 898 likes, generator audit pass; 95 regression tests pass.
+Lịch sử pilot có cold/transition nhưng thiếu W2 và W1 ít mẫu, chưa đạt gate
+cohort cho benchmark chính. Theo dõi [milestones](ADAPTIVE_MILESTONES.md).
+
+Đã thêm policy arrival/preference deterministic và validator độc lập, dùng đúng
+10 topics production. Bốn tests mới pass: catalog parity, deterministic/variation,
+timestamp visibility và dữ liệu hỏng. Chưa nối policy vào OASIS action loop;
+chưa sinh pilot có targets hoặc chạy benchmark adaptive. Chi tiết trong
+[data generation flow](DATA_GENERATION_FLOW.md).
+
+## Adaptive milestone — preflight 04/11/2026
+
+Đã commit nền benchmark/experimental feed và checkout `codex/adaptive-recommender-v1`.
+Đã replay benchmark fixture nhỏ và đóng gói/đọc lại 25 archive members thành công.
+[Preflight report](benchmarks/adaptive-preflight-20261104.md) ghi kết quả, checksum,
+related work ban đầu và khoảng cách 8 topics simulator/10 topics production.
+Protocol còn draft; chưa có kết quả adaptive. Người dùng cho phép tiếp tục không
+dừng chờ review từng bước; mục tiêu và cách làm việc được lưu trong AGENTS.md.
+
+## Kế hoạch tiếp theo — 04/11/2026
+
+Đã lập [execution plan gợi ý thích ứng cold → warm](ADAPTIVE_RECOMMENDER_EXECUTION_PLAN.md).
+Nền tảng hiện đủ để thiết kế nghiên cứu tiếp theo, chưa chứng minh hệ thích ứng
+vượt baseline hoặc phục vụ production ở quy mô lớn. Kế hoạch ưu tiên protocol,
+dataset có cold/transition thật tại cutoff, đối chiếu công thức hiện tại, rồi mới
+thử chính sách chuyển tiếp và kiểm chứng HTTP. Các bước trong kế hoạch chưa chạy;
+kết quả lịch sử bên dưới không phải kết quả của phương pháp thích ứng mới.
+
+## Bước 2 và 3 — cập nhật 04/11/2026
+
+MovieLens 100K đã chạy đủ Popularity/EASE/PPR/LightGCN, cùng model/search budget,
+global chronological split giữ timestamp ties và positive threshold >=4. Tập
+test có 290 users, gồm 97 warm/193 cold. Popularity dẫn nDCG toàn tập; PPR dẫn
+nDCG nhóm warm. Kết luận collaborative luôn thắng trên synthetic không chuyển
+nguyên sang dữ liệu độc lập; cần giữ cohort và cold fallback rõ ràng. Kết quả
+đầy đủ ở [EXTERNAL_RECOMMENDER_BENCHMARK.md](EXTERNAL_RECOMMENDER_BENCHMARK.md).
+
+Đã thêm endpoint feed thử nghiệm có JWT và mặc định tắt, dùng artifact EASE/PPR
+thật qua mapping GUID, lọc lại quyền/public/NSFW/ban/archive/delete và positive
+hiện tại. Ba gate PostgreSQL/HTTP đều pass và cleanup không lỗi: disabled 1544,
+fresh 1687, stale 1553 checks. Regression: 103 Python, 24 .NET unit, 67
+architecture/privacy tests. Chỉ là proof trên native fixture 100 users/31 posts,
+không phải large-scale serving hay online relevance. Báo cáo và raw-run index ở
+[EXPERIMENTAL_RECOMMENDER_FEED.md](EXPERIMENTAL_RECOMMENDER_FEED.md) và
+[actions23-20261104.json](benchmarks/actions23-20261104.json).
+
+Lượt đo bổ sung đã hoàn tất sau khi hệ thống duyệt phục hồi: 20 HTTP request warm
+cho mỗi phương pháp, mọi sample đều dùng model thật. Gate fresh mới đạt 1767 checks;
+ba mode hiện tại đạt 4864 checks, cleanup không lỗi. Kết quả và source backup đã
+được lưu local; chưa commit/push. Sleep chỉ được yêu cầu sau khi marker hoàn tất
+và checksum báo cáo/archive khớp; trạng thái OS được ghi riêng trong raw results.
+
+## OASIS engine thật — cập nhật 31/10/2026
+
+Sau review Terra High đã sửa harness isolation/cleanup, provenance thực thi,
+race port API và namespace snapshot. Bổ sung lockfile cùng regression tests.
+Retest đạt 12 adapter tests + 7 provenance tests + 48 checks tích hợp; Docker
+sentinel và listener API không bị lượt test khác chạm vào. Chưa commit/push/merge.
+Không thay đổi kết luận chất lượng mô hình/agent hoặc thuật toán recommendation;
+lượt này tiếp tục là OASIS ManualAction, không LLMAction. Xem báo cáo simulator.
+
+Đã chạy upstream OASIS 0.2.5/commit ba892e0 bằng ManualAction với ba agents,
+SQLite và trace do engine tạo; đưa qua adapter/PostgreSQL/API đạt 12 tests + 48
+checks. Chưa LLMAction hoặc kết quả đánh giá agent/recommender. Hai lỗi khai báo
+FK upstream đã được ghi nhận, logical references user/post hợp lệ. Chi tiết tại
+[OASIS_SIMULATOR_VERIFICATION.md](OASIS_SIMULATOR_VERIFICATION.md). Chưa merge/push.
+
+## Bổ sung kiểm chứng OASIS ngày 31/10/2026
+
+Adapter `b325c8e` đã chạy cùng main có cold-start (`ab875e9`) trên nhánh tích hợp
+riêng: 12 Python tests + 48 checks PostgreSQL/import/HTTP pass. Đã kiểm chứng SQL
+replay, rollback lỗi FK, mapping và dữ liệu đọc qua API/hai feed lọc NSFW. Source
+vẫn là fixture tổng hợp, chưa simulator OASIS/LLM thật; chưa push/merge OASIS.
+Các nhận định "chưa PostgreSQL import thật" ở báo cáo lịch sử phía dưới được cập
+nhật bởi [báo cáo tích hợp mới](OASIS_INTEGRATION_VERIFICATION.md). Không có thêm
+kết quả nghiên cứu thuật toán graph hoặc đánh giá agent từ lượt kiểm tra này.
+
 ## Trạng thái tích hợp cold-start local
 
 Cold-start được squash vào main local từ feature `7859ded`, tách biệt OASIS và
@@ -245,4 +355,144 @@ preload trước nhận request, có GET /nsfw/ready. Client .NET thật đã g�
 Ảnh mẫu COCO là ảnh thường nhưng violence score khoảng 0,234 nên bị review với
 ngưỡng safe 0,2: đây là bằng chứng còn cần calibration, không phải accuracy đã đạt.
 Hướng dẫn chạy lại nằm trong tools/cold-start-smoke/README.md và trên moderation
-branch tại tools/moderation-smoke/README.md. OASIS vẫn chưa chạy simulator thật.
+branch tại tools/moderation-smoke/README.md. Ghi nhận này thuộc ngày 25/10; OASIS
+đã chạy engine, LLMAction và cộng đồng hybrid thật trong các lượt ngày 31/10/2026.
+Xem [báo cáo simulator](OASIS_SIMULATOR_VERIFICATION.md) và
+[mô hình cộng đồng nhỏ](SMALL_SOCIAL_COMMUNITY.md) cho kết quả, giả định và giới hạn.
+
+## Cộng đồng hybrid nhỏ — 31/10/2026
+
+Đã thực thi 100 tài khoản/20 ticks với vai trò 90/9/1, homophily, memory riêng,
+bounded-confidence opinions và fatigue/trust giả lập. Bản cuối sinh 4 posts,
+65 likes, 218 follows (200 bootstrap), 4 comments từ 4 authors bằng 12 local LLM
+calls/3.171 tokens; code chọn hành động và valid IDs, LLM chỉ sinh văn bản.
+30 unit tests và 853 PostgreSQL/HTTP checks đạt. Đây là smoke research model,
+chưa calibration người thật, frontend, load test hoặc production deployment.
+
+## Agent tự quyết — 01/11/2026
+
+Thêm chế độ tự chọn identity/emotion/goal, trải nghiệm riêng, hành động và nghỉ;
+không role/topic/quota gán sẵn. Default local qwen3:4b, raw state/memory riêng,
+event membership chỉ do từng người tự chọn trong simulator. Bản cuối đã qua42
+unit tests và35 PostgreSQL/HTTP checks. Các lượt trước: 1.7B thiên về đăng bài,
+4B với format cũ thiên về chờ; không sửa dữ liệu để che kết quả này. Đây là quyền
+tự quyết kỹ thuật, chưa phải hành vi người thật đã được kiểm định.
+Xem [thiết kế, kết quả và audit](FREE_SOCIAL_AGENTS.md).
+
+Lượt10 người/4 vòng đã hoàn tất: 16 posts, 18 follows, 2 comments, 0 likes,
+4 wait; 50 local calls/58.679 tokens, không invalid decision. 42 unit tests và264
+PostgreSQL/HTTP checks đạt. Chất lượng chưa đạt tự nhiên: 6 duplicate post rows
+(sau lowercase+trim), 2 comments trùng nguyên văn từ cùng ID5 vào cùng post11.
+Giữ nguyên dữ liệu, không thêm hành vi để che hạn chế này.
+
+## OASIS native trên GPU — 01/11/2026
+
+Đã chạy10người/4vòng bằng LLMAction/CAMEL memory thật, TwHIN-BERT và Qwen3:8b
+hoàn toàn trên GPU cho generation. Sinh35bài gốc +6repost/quote,30comments từ cả
+10người,9likes,3follows,1group/7messages,2private reflections. 148local requests
+dùng880.581tokens (28requests là native memory summaries). 50unit tests và551
+PostgreSQL/import/HTTP checks đạt cho Favi subset10users/35posts/9likes/3follows/
+30comments. Groups/repost/quote chỉ giữ raw, chưa import đầy đủ vào Favi.
+
+Chất lượng chưa tự nhiên:10duplicate original post rows,12duplicate comment
+rows,18tool requests bị từ chối; native empty-feed và physical FK DDL bugs được
+ghi rõ. Nhiều tương tác hơn nhưng không phải single-variable A/B hoặc bằng chứng
+mô phỏng xã hội đã calibration. Chi tiết và toàn bộ evidence trong
+[OASIS_NATIVE_FULL_RUN.md](OASIS_NATIVE_FULL_RUN.md).
+
+## Flow dataset mặc định cho benchmark — 01/11/2026
+
+Chọn controlled hybrid ABM + corpus tổng hợp có seed + public OASIS actions;
+không LLM trong vòng lặp. JSON config version1, wrapper một lệnh, immutable output,
+manifest checker và ordered exposure/event history giúp chạy lại và dùng dataset
+cũ. Đây là workload graph, chưa benchmark relevance trên người thật/nội dung ảnh.
+
+Profile mặc định đã chạy1000users/80ticks trong259,406giây:374posts,3660likes,
+2511follows,644comments,12678activation exposures;605users có >=3distinct likes
+trong cả lượt. Gate đạt65unit tests và19982PostgreSQL/import/HTTP checks. Chưa
+train/evaluate Popularity/PPR/LightGCN hoặc chọn temporal cutoffs. Chi tiết config,
+setup, dữ liệu và cách dùng lại trong [DATA_GENERATION_FLOW.md](DATA_GENERATION_FLOW.md).
+
+## Popularity và audit công thức feed — bổ sung 01/11/2026
+
+Đã triển khai evaluator offline, split global ticks60/20/20, cùng candidate set,
+loại self/seen, khóa fit trước mỗi label window. Test448users: Popularity đạt
+Recall@10=0,022879/nDCG@10=0,011188; bản port công thức warm feed đạt0,028646/
+0,013791 với giả định1hour/tick. Riêng417warm users: Recall0,022182 vs0,025180.
+Khi bỏ decay, formula Recall còn0,016257; kết quả phụ thuộc thang giờ và synthetic
+policy. Không đổi production ranking; chưa bằng chứng tốt hơn có ý nghĩa thống kê.
+73unit tests đạt, repeated quality metrics giống nhau. Chưa PPR/LightGCN hoặc
+multi-seed evaluation. [Protocol, audit và kết quả](RECOMMENDER_BENCHMARK.md).
+
+## Dataset Favi dùng chung đã provision
+
+`favi-5k-v1` đã lưu cục bộ:5000users,2000posts,137198likes,28835follows,
+20248comments;665528events với477247exposures. Bundle có SQLite, event history,
+Favi SQL/snapshot và graph CSV; ZIP60.285.459bytes đã kiểm từng member và checksum.
+Gate đạt288118PostgreSQL/import/HTTP checks, test stack đã cleanup. Popularity
+chạy trực tiếp trên bundle đã lưu với4943test users; không phải regenerate.
+Hướng dẫn, inventory, đường dẫn và giới hạn tại
+[FAVI_BENCHMARK_DATASET.md](FAVI_BENCHMARK_DATASET.md).
+
+## Formula V2 đã tuning và benchmark
+
+Đã chạy12cấu hình validation trên favi-5k-v1, khóa lựa chọn trước test: trọng số
+social1.5, decay0, cap2bài/tác giả. Trên4943test users: Popularity Recall@10
+0,004258/nDCG0,003644; V1 đạt0,005224/0,004081; V2 đạt0,006863/0,005726.
+V2 hơn V1 khoảng31,4%Recall và40,3%nDCG, nhưng tác giả/top10 giảm9,87→5,66;
+catalog coverage tăng3,6%→9,8%.79unit tests và kiểm hash/selection/data đều đạt.
+Đây là offline heuristic benchmark trên một dataset tổng hợp, không đổi production
+và chưa chạy EASE/LightGCN. Chi tiết tại [FORMULA_V2_BENCHMARK.md](FORMULA_V2_BENCHMARK.md).
+
+## Benchmark mở rộng đã chạy
+
+Đã bổ sung EASE, Personalized PageRank chính xác trên graph user–post và CPU
+LightGCN/BPR, tuning trên validation rồi refit/test với cùng dataset/candidates.
+EASE Recall@10=0,021262/nDCG0,017025; PPR0,019536/0,015564; LightGCN trung bình
+3training seeds đạt0,019731/0,015873. Formula V1/V2 giữ làm reference riêng vì có
+thêm follows/comments.89unit tests đạt; checkpoint/data/artifact hashes đều kiểm.
+Không đổi production. Chi tiết cấu hình, training budget, chi phí và giới hạn tại
+[EXPANDED_RECOMMENDER_BENCHMARK.md](EXPANDED_RECOMMENDER_BENCHMARK.md).
+
+## Bổ sung hai quy mô dataset
+
+Đã lưu thêm favi-2k-v1: 2.000 users, 1.000 posts, 53.607 likes, 10.862 follows,
+7.751 comments; và favi-10k-v1: 10.000 users, 4.000 posts, 277.340 likes,
+58.957 follows, 40.891 comments. Cả hai chạy đủ 500 ticks, đạt kiểm tra native
+OASIS/event parity/adapter và có ZIP đã đọc lại toàn bộ file để kiểm SHA256.
+Popularity dùng lại dữ liệu đã lưu với lần lượt 1.971 và 9.903 test users;
+92 unit tests đạt. Bundle 5k cũ được kiểm lại và không đổi hash. Chưa chạy lại
+EASE/PPR/LightGCN/Formula hoặc gate PostgreSQL/HTTP trên hai bộ mới. Hai seed và
+quy mô cùng thay đổi, chưa thể quy chênh lệch kết quả riêng cho quy mô dữ liệu.
+Cấu hình, inventory và cách dùng tại [FAVI_DATASET_SCALES.md](FAVI_DATASET_SCALES.md).
+
+## Benchmark đầy đủ trên ba quy mô
+
+Đã chạy tuần tự Popularity, Formula V1/V2, EASE, PPR và LightGCN trên cả 2k, 5k,
+10k với cùng K=10 và cutoffs 300/400. Mỗi bộ tuning bằng validation riêng;
+LightGCN test đủ ba seed huấn luyện. Cả sáu manifest, selection hash, fingerprint
+tập đánh giá và hash SQLite/events đều được kiểm. Toàn bộ metric chất lượng của
+bộ 5k tái lập chính xác kết quả trước. nDCG test cao nhất trong nhóm likes-only:
+PPR ở 2k (0,03325451), EASE ở 5k (0,01702500) và 10k (0,00841507).
+Formula V2 tăng accuracy so với V1 cả ba bộ nhưng tập trung tác giả mạnh ở 2k/10k.
+Chưa có bằng chứng về người dùng thật hoặc ảnh hưởng riêng của quy mô, vì seed
+và kích thước cùng thay đổi. Không đổi production và không chạy gate HTTP ở
+lượt này. Bảng Recall/nDCG, độ lệch seed, chi phí, tham số và artifact tại
+[THREE_SCALE_RECOMMENDER_BENCHMARK.md](THREE_SCALE_RECOMMENDER_BENCHMARK.md).
+
+## Bước 1: kiểm tra nhiều dataset seed cùng quy mô 5k
+
+Đã hoàn tất ba seed mới 20261106/20261107/20261108, mỗi bộ 5.000 users,
+2.000 posts và đủ 500 ticks. Likes lần lượt 136.713/136.752/137.719. Tất cả
+đạt native/event/adapter validation và ZIP readback; benchmark cùng protocol và
+search budget, LightGCN đủ ba optimizer seed trên mỗi dataset. 98 tests pass.
+Đã kiểm raw manifest, model artifact, frozen selection, population và source hash.
+
+Trung bình nDCG test trên ba dataset mới: Popularity 0,00387281; EASE
+0,01610449; PPR 0,01647590; LightGCN (đã trung bình optimizer trong từng dataset)
+0,01623641. Collaborative baselines vượt Popularity cả ba bộ; nDCG cao nhất từng
+bộ lần lượt là EASE, LightGCN mean và PPR. Không có phương pháp collaborative
+thắng nhất quán. Bộ 5k cũ chỉ làm reference, không trộn vào primary mean.
+Đã lưu báo cáo, JSON, config và inventory; chưa commit/push. Dừng tại bước 1 để
+người dùng review; chưa thực hiện kiểm chứng dữ liệu độc lập hoặc tích hợp feed.
+Chi tiết: [MULTISEED_RECOMMENDER_BENCHMARK.md](MULTISEED_RECOMMENDER_BENCHMARK.md).

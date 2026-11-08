@@ -1,0 +1,247 @@
+{
+  "schema_version": 1,
+  "dataset": "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-main-20261112",
+  "integrity": {
+    "verified_files": 31,
+    "events_sha256": "4d7dedb709f28575c2d50cf52faf07624e5fcb6866b0b128363718e83e5a50a8",
+    "quality": {
+      "events": 348770,
+      "posts": 2000,
+      "likes": 67370,
+      "follows": 10486,
+      "exposures": 257844,
+      "warm_users": 4165,
+      "quality_passed": true
+    }
+  },
+  "scenario": "main",
+  "required_cohorts": [
+    "C0",
+    "C1",
+    "C2",
+    "T1",
+    "T2",
+    "W1",
+    "W2"
+  ],
+  "preference_summary": {
+    "informative": {
+      "declared_slots": 6662,
+      "overlap_with_initial_top_interests": 6662,
+      "overlap_rate": 1.0,
+      "scope": "ranking replay metadata; not behavioral effect"
+    },
+    "noisy": {
+      "declared_slots": 6662,
+      "overlap_with_initial_top_interests": 1665,
+      "overlap_rate": 0.24992494746322425,
+      "scope": "ranking replay metadata; not behavioral effect"
+    },
+    "independent": {
+      "declared_slots": 6662,
+      "overlap_with_initial_top_interests": 1607,
+      "overlap_rate": 0.24121885319723807,
+      "scope": "ranking replay metadata; not behavioral effect"
+    }
+  },
+  "minimum_target_users": 30,
+  "phases": {
+    "validation": {
+      "cutoff": 300,
+      "end": 400,
+      "not_arrived": 1750,
+      "cohorts": {
+        "C0": {
+          "users": 339,
+          "with_target": 336,
+          "without_target": 3,
+          "targets": 1605,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "C1": {
+          "users": 350,
+          "with_target": 344,
+          "without_target": 6,
+          "targets": 1705,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "C2": {
+          "users": 342,
+          "with_target": 340,
+          "without_target": 2,
+          "targets": 1742,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "C3": {
+          "users": 0,
+          "with_target": 0,
+          "without_target": 0,
+          "targets": 0,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "T1": {
+          "users": 300,
+          "with_target": 295,
+          "without_target": 5,
+          "targets": 1394,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "T2": {
+          "users": 346,
+          "with_target": 341,
+          "without_target": 5,
+          "targets": 1721,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "W1": {
+          "users": 1364,
+          "with_target": 1340,
+          "without_target": 24,
+          "targets": 6004,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "W2": {
+          "users": 209,
+          "with_target": 208,
+          "without_target": 1,
+          "targets": 2137,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        }
+      },
+      "cohort_status": {
+        "C0": "PASS",
+        "C1": "PASS",
+        "C2": "PASS",
+        "C3": "N/A",
+        "T1": "PASS",
+        "T2": "PASS",
+        "W1": "PASS",
+        "W2": "PASS"
+      },
+      "gate_passed": true
+    },
+    "test": {
+      "cutoff": 400,
+      "end": 500,
+      "not_arrived": 0,
+      "cohorts": {
+        "C0": {
+          "users": 343,
+          "with_target": 335,
+          "without_target": 8,
+          "targets": 1528,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "C1": {
+          "users": 332,
+          "with_target": 327,
+          "without_target": 5,
+          "targets": 1530,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "C2": {
+          "users": 339,
+          "with_target": 336,
+          "without_target": 3,
+          "targets": 1581,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "C3": {
+          "users": 0,
+          "with_target": 0,
+          "without_target": 0,
+          "targets": 0,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "T1": {
+          "users": 361,
+          "with_target": 359,
+          "without_target": 2,
+          "targets": 1703,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "T2": {
+          "users": 1033,
+          "with_target": 1018,
+          "without_target": 15,
+          "targets": 4648,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "W1": {
+          "users": 2069,
+          "with_target": 2041,
+          "without_target": 28,
+          "targets": 10230,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        },
+        "W2": {
+          "users": 523,
+          "with_target": 519,
+          "without_target": 4,
+          "targets": 3738,
+          "excluded_targets": 0,
+          "excluded_future_item": 0,
+          "excluded_own_item": 0,
+          "excluded_prior_positive": 0
+        }
+      },
+      "cohort_status": {
+        "C0": "PASS",
+        "C1": "PASS",
+        "C2": "PASS",
+        "C3": "N/A",
+        "T1": "PASS",
+        "T2": "PASS",
+        "W1": "PASS",
+        "W2": "PASS"
+      },
+      "gate_passed": true
+    }
+  },
+  "gate_passed": true
+}

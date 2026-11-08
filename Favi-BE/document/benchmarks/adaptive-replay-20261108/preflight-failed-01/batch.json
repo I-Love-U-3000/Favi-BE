@@ -1,0 +1,10 @@
+{
+  "status": "FAIL",
+  "started_utc": "2026-11-07T22:06:32.931678+00:00",
+  "git_commit": "e5c23f014ff19b8b8c783d5e5246eddfcdf9d745",
+  "preflight": [],
+  "datasets": [],
+  "source_archive_sha256": "9469ffa9f61d539718ff36dcb0ce4eb0586986bd877edabfd08d8705b6d5a671",
+  "error": "FileNotFoundError(2, 'No such file or directory')",
+  "updated_utc": "2026-11-07T22:06:33.124484+00:00"
+}

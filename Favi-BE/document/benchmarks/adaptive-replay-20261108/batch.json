@@ -1,0 +1,185 @@
+{
+  "status": "PASS",
+  "started_utc": "2026-11-07T22:06:50.068760+00:00",
+  "git_commit": "e5c23f014ff19b8b8c783d5e5246eddfcdf9d745",
+  "preflight": [
+    {
+      "dataset": "adaptive-confirmatory-main-20261111",
+      "status": "PASS",
+      "archive_sha256": "f64f37ca63068c21497ed03c47e43bf6477961a5103dd54768abf49f0dfa54b0",
+      "members": 32,
+      "ranking_manifest_sha256": "9490d607d18cc32c62ca0b937a3434ef5d3d9f4851080713478b9bcbdb2d4016"
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261111",
+      "status": "PASS",
+      "archive_sha256": "6a8c8e748fd95a32907715e06a034f021fc65530cbcd9dd306673bcf9847f0e3",
+      "members": 32,
+      "ranking_manifest_sha256": "4803c9c2b3c7caa09cdb382cde60b6fe3a33218d6a4b851f2e0d6f3b1a5c14f7"
+    },
+    {
+      "dataset": "adaptive-confirmatory-main-20261112",
+      "status": "PASS",
+      "archive_sha256": "4c7ec7d1c1eaa81a0a72c650f1ea5af4c5d3ae38f754a63f12bae5173ef832a3",
+      "members": 32,
+      "ranking_manifest_sha256": "d99a0eceaf52ed75464021b8c987ebc075ee0d8fa0dfdc394f52326b397b8ae7"
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261112",
+      "status": "PASS",
+      "archive_sha256": "5ad25b8980194129e36d6b0250ea98f8811fb3d5bf3ed97d3350f849bd409de0",
+      "members": 32,
+      "ranking_manifest_sha256": "e8618524abf16f653d9e46ba88f786af8bd0f125ed71f2ad20bc4abf944d2ad1"
+    },
+    {
+      "dataset": "adaptive-confirmatory-main-20261113",
+      "status": "PASS",
+      "archive_sha256": "e6cce51e3705f58db1e35a8d375dfa766a143b4440994bd57a5ba87a8bb25905",
+      "members": 32,
+      "ranking_manifest_sha256": "36d751ed23ccf19f605c6396b6b0168536742cf625dcfd2b0bf4d6bcd2271628"
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261113",
+      "status": "PASS",
+      "archive_sha256": "d9e6e387482c89296ba12b169ecf2bdb17f69a9b4868ff868008526f496be072",
+      "members": 32,
+      "ranking_manifest_sha256": "7de8ec9e7f559ec34df6a1d4698219786ca830a36050d74cc1e2d9cc2034302f"
+    }
+  ],
+  "datasets": [
+    {
+      "dataset": "adaptive-confirmatory-main-20261111",
+      "cli": [
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\oasis-env\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\tools\\oasis-smoke\\run_adaptive_replay.py",
+        "--dataset",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-main-20261111",
+        "--ranking",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-confirmatory-ranking-20261108\\adaptive-confirmatory-main-20261111",
+        "--output",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-replay-20261108\\adaptive-confirmatory-main-20261111"
+      ],
+      "status": "PASS",
+      "started_utc": "2026-11-07T22:06:54.617017+00:00",
+      "pid": 14348,
+      "elapsed_seconds": 1040.2455203999998,
+      "completed_utc": "2026-11-07T22:24:14.863104+00:00",
+      "manifest_sha256": "f70ba3cff4349423921766f7b0914874c11854482f704da844456e319b672d40",
+      "report_sha256": "295a93cecb8b79f828413168a336e88a389a45302d5b12d2f379dab6ce798fa2"
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261111",
+      "cli": [
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\oasis-env\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\tools\\oasis-smoke\\run_adaptive_replay.py",
+        "--dataset",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-sparse-20261111",
+        "--ranking",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-confirmatory-ranking-20261108\\adaptive-confirmatory-sparse-20261111",
+        "--output",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-replay-20261108\\adaptive-confirmatory-sparse-20261111"
+      ],
+      "status": "PASS",
+      "started_utc": "2026-11-07T22:24:14.865103+00:00",
+      "pid": 3292,
+      "elapsed_seconds": 980.2229057000077,
+      "completed_utc": "2026-11-07T22:40:35.088214+00:00",
+      "manifest_sha256": "5831cf958a66c127cccf158d93e2994ecc73d41c4962c866bd0785e3f064d68b",
+      "report_sha256": "086805c81887f24efdd51af243282ae082773800661c7cb3d43a87791f3505d1"
+    },
+    {
+      "dataset": "adaptive-confirmatory-main-20261112",
+      "cli": [
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\oasis-env\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\tools\\oasis-smoke\\run_adaptive_replay.py",
+        "--dataset",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-main-20261112",
+        "--ranking",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-confirmatory-ranking-20261108\\adaptive-confirmatory-main-20261112",
+        "--output",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-replay-20261108\\adaptive-confirmatory-main-20261112"
+      ],
+      "status": "PASS",
+      "started_utc": "2026-11-07T22:40:35.089216+00:00",
+      "pid": 33680,
+      "elapsed_seconds": 1460.3022844999941,
+      "completed_utc": "2026-11-07T23:04:55.392668+00:00",
+      "manifest_sha256": "a0eabd91c4f570d760c0ef2d5ce1c80fe083472d88f5a45283baf372280cf88b",
+      "report_sha256": "8a6556c990517c2d970abc01fd62d394b8551b03034573b97816f0053cc2435f"
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261112",
+      "cli": [
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\oasis-env\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\tools\\oasis-smoke\\run_adaptive_replay.py",
+        "--dataset",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-sparse-20261112",
+        "--ranking",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-confirmatory-ranking-20261108\\adaptive-confirmatory-sparse-20261112",
+        "--output",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-replay-20261108\\adaptive-confirmatory-sparse-20261112"
+      ],
+      "status": "PASS",
+      "started_utc": "2026-11-07T23:04:55.394676+00:00",
+      "pid": 10896,
+      "elapsed_seconds": 1260.2896564000112,
+      "completed_utc": "2026-11-07T23:25:55.685450+00:00",
+      "manifest_sha256": "3766644c93824e2241c04ff59d024924552870d816d53bea8265afe8288921f1",
+      "report_sha256": "b5d2f63373834788d8f72a47a9bfd0f89fe4ca81fc8033a25a4adf4de7ec173e"
+    },
+    {
+      "dataset": "adaptive-confirmatory-main-20261113",
+      "cli": [
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\oasis-env\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\tools\\oasis-smoke\\run_adaptive_replay.py",
+        "--dataset",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-main-20261113",
+        "--ranking",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-confirmatory-ranking-20261108\\adaptive-confirmatory-main-20261113",
+        "--output",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-replay-20261108\\adaptive-confirmatory-main-20261113"
+      ],
+      "status": "PASS",
+      "started_utc": "2026-11-07T23:25:55.687153+00:00",
+      "pid": 8996,
+      "elapsed_seconds": 920.1930474999972,
+      "completed_utc": "2026-11-07T23:41:15.880310+00:00",
+      "manifest_sha256": "314ddee663a3bab201b1b4c5d29e0adf16c0e098ec3aa9b4db9fa11f3a546cd5",
+      "report_sha256": "2177eda44fc7c227695d4836f8667d1832f15d731381f84a8c88c9ff57e61633"
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261113",
+      "cli": [
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\oasis-env\\Scripts\\python.exe",
+        "-X",
+        "utf8",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\tools\\oasis-smoke\\run_adaptive_replay.py",
+        "--dataset",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\datasets\\adaptive-confirmatory-sparse-20261113",
+        "--ranking",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-confirmatory-ranking-20261108\\adaptive-confirmatory-sparse-20261113",
+        "--output",
+        "C:\\Users\\tophu\\source\\repos\\Favi-BE\\Favi-BE\\.tools\\benchmarks\\adaptive-replay-20261108\\adaptive-confirmatory-sparse-20261113"
+      ],
+      "status": "PASS",
+      "started_utc": "2026-11-07T23:41:15.882308+00:00",
+      "pid": 23456,
+      "elapsed_seconds": 1200.257874300005,
+      "completed_utc": "2026-11-08T00:01:16.140641+00:00",
+      "manifest_sha256": "2f30803de8e3fcdbaebedb669114fe62ea10dc8cac305d3fe45cc77f58cbbcdb",
+      "report_sha256": "808c61700e9172c93ac39d02a8e42b391c1de22f675bd90c77aabb73e00a5d07"
+    }
+  ],
+  "source_archive_sha256": "9feb9d90ef4eb3e3d1d6bfe95ff1c66a692b6183b044385b6d685335a1757397",
+  "updated_utc": "2026-11-08T00:01:16.141642+00:00"
+}
