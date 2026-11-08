@@ -199,6 +199,10 @@ SELECT 1 from the host verifies readiness before database creation. No import
 operation is retried to hide a data failure.
 No push/merge/deploy is performed.
 Default source is a synthetic fixture; -Simulator uses upstream engine output.
+Fixture and ManualAction source/export/FK/count validation uses explicit exceptions,
+so PYTHONOPTIMIZE or python -O cannot remove these checks. See
+document/benchmarks/adaptive-validation-runtime-20261108/REPORT_VI.md for the
+demonstrated pre-fix source-mutation bypass and bounded regression coverage.
 Neither mode uses LLM-generated autonomous actions. This is an adapter
 integration test, not evaluation of graph recommendations, agents or accuracy.
 

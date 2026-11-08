@@ -1,3 +1,24 @@
+# Stop after teacher-report milestone — 08/11/2026
+
+Latest user instruction supersedes continuous work: finish one meaningful milestone
+with research results ready to report to teacher, then STOP. Do not open next chat,
+branch/milestone, schedule automation or resume automatically. Teacher-facing report:
+benchmarks/BAO_CAO_NGHIEN_CUU_GUI_GIANG_VIEN_20261108.md. It states synthetic scope,
+all9methods, practical gain FAIL, robustness negatives, serving/cost limits and
+questions for supervisor; progress report, not defense-ready certification.
+
+Current milestone runtime validation:42CLI checker/package controls PASS under
+optimization0/1/2, no dataset reuse bypass observed. Demonstrated fixture source
+mutation printed PASS at1/2 before fix; fixture/simulator validation now explicit
+raises. New1unittest/15subcases PASS, existing2integrity+9policy tests PASS at2.
+Actual ManualAction valid PASS42runtime files/130deps; source mutation atopt2
+rejects exact ValueError/no provenance. First fault harness import failed due
+to .tools sys.path shadowing datasets, not gate proof; corrected final control
+PASS with logs retained. No model/holdout/HTTP/SQL/Docker runs in this milestone.
+All frozen source/data/results unchanged. Report benchmarks/adaptive-validation-runtime-20261108.
+PR17 correction62aa739 hosted backend42453509874 SUCCESS; old finding remains
+in review timeline (do not claim rereview approved). Commit/PR/finalCI in lease.
+
 # Native projection compatibility correction — 08/11/2026
 
 PR17 hosted backend42453236283 SUCCESS at a69e137, but Codex review found native
