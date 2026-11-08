@@ -15,6 +15,12 @@ remains unchanged. No ranking method, selection, seed or relevance gate changes.
 
 ## Export and provenance
 
+Independent read-only mapping identity audit08/11/2026: all six confirmatory
+datasets PASS exact CSV/source-ID/GUID/snapshot namespace equality,30000user and
+12000post rows. No demonstrated identity defect; this does not execute SQL or
+prove authenticity. See benchmarks/ADAPTIVE_MAPPING_IDENTITY_20261108.md for
+negative controls, Windows logical-payload checksum semantics and reproduction.
+
 Manifest coverage correction08/11/2026: the current schema2 exporter requires
 manifest entries for protocol.json, source-inventory.json, selection.json,
 report.json and the exact B1/R prediction files consumed (including the fixed
