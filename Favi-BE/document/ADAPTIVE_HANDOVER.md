@@ -1,3 +1,33 @@
+# Post-M5 defense and evidence restoration — 08/11/2026
+
+Read benchmarks/adaptive-defense-readiness-20261108/REPORT_VI.md, summary.json
+and audit_readiness.py. Concrete documentation gaps fixed: ZIP root mappings,
+script-relative path dependencies/writes, evidence archive versus clean-machine
+self-contained distribution; milestone index no longer says M5 remains next.
+Independent restoration PASS10ZIPs/974members, nested source62+65files.
+Archived stdlib scripts recomputed ranking78records and replay348records over
+all six datasets; regenerated summaries equal archived and tracked M5 JSON.
+No model/generator/export/API/Docker run, frozen method/source/result changes.
+Primary practical FAIL, negative robustness, gateway429 FAIL,250sample and all
+historical cost/HTTP limitations remain. No overall defense/production PASS.
+
+Command from solution (fresh output only):
+.tools/oasis-env/Scripts/python.exe -B -X utf8 document/benchmarks/adaptive-defense-readiness-20261108/audit_readiness.py --output .tools/defense-readiness/restore-003
+Actual final output restore-002; restore-001 retained initial audit and negative
+tamper check. Reusing existing output rejected; altered scratch delta rejected
+by archived audit then exact bytes restored. M5 consistency PASS;39local links
+resolve. Python processes finished. Root nul and Docker Desktop/build services
+preserved. Numerics/.NET/Docker/commit require_escalated; PowerShell login:false.
+
+Milestone commit/PR recorded in ignored .tools/adaptive-worker.json after commit;
+stack base codex/adaptive-thesis-evidence (PR6). No merge/deploy. Authorized
+window until12:00Asia/Saigon today is an upper bound, not a reason to manufacture
+more milestones. This bounded review is complete; no further useful autonomous
+experiment or correction identified. Keep branch codex/adaptive-defense-readiness
+and do not open another chat/branch without substantive next scope. A new full
+profiling/user-study/clean-machine release is outside this review, not pending
+work silently started on the same holdout. No subagents/automation/reset.
+
 # M5 thesis evidence synthesis — 08/11/2026
 
 Read benchmarks/adaptive-thesis-evidence-20261108/REPORT_VI.md and TABLES_VI.md.

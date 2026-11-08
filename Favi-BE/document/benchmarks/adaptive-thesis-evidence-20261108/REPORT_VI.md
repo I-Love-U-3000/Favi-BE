@@ -149,6 +149,12 @@ hoặc toàn gateway proof. Mặc định experiment vẫn tắt; không merge/d
 
 ## Chỉ mục tái lập và thứ tự đọc
 
+[Rà soát tái lập sau M5](../adaptive-defense-readiness-20261108/REPORT_VI.md)
+ghi ánh xạ gốc ZIP, phụ thuộc đường dẫn của script và phép thử khôi phục raw
+predictions vào cây riêng. Không chạy batch/summarizer trực tiếp trên bằng chứng
+gốc; các script có thể ghi lại batch/summary/audit. Archive HTTP là gói evidence,
+chưa là bộ source/binary/dependency tự chứa để dựng toàn bộ stack trên máy sạch.
+
 1. Đọc protocol/config `tools/oasis-smoke/configs/recommenders/adaptive-v1.json`,
    contracts và [runner](../ADAPTIVE_RUNNER_20261108.md). Source inventories và
    lock130packages xác định phiên bản từng pha; không dùng HEAD mới thay nguồn

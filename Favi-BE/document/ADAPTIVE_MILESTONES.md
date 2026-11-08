@@ -1,5 +1,10 @@
 # Favi adaptive: đọc tiến độ và kết quả
 
+Rà soát sau M5 ngày08/11/2026: [khả năng bảo vệ và tái lập](benchmarks/adaptive-defense-readiness-20261108/REPORT_VI.md)
+kiểm khôi phục archive vào cây riêng và tính lại ranking/replay từ raw predictions.
+Chỉ mục phân biệt archive bằng chứng với bộ phát hành tự chứa; không tạo thí
+nghiệm mới hoặc đổi kết luận primary/gateway FAIL.
+
 M5 tổng hợp08/11/2026: [gói bằng chứng khóa luận tiếng Việt](benchmarks/adaptive-thesis-evidence-20261108/REPORT_VI.md)
 nối RQ/method/results/negative findings, claim→evidence, chi phí và chỉ mục tái lập.
 [Bảng sinh từ JSON](benchmarks/adaptive-thesis-evidence-20261108/TABLES_VI.md)
@@ -14,8 +19,8 @@ FAIL429. [Kiểm toán chi phí](benchmarks/adaptive-cost-audit-20261108/REPORT_
 xác nhận sáu lượt gốc12641.235283s,33unique refits199.635498s. Search-only time
 và peak RAM training gốc không được ghi; audit hoàn tất với khoảng trống đã nêu,
 không coi M4 toàn bộ PASS. Các ghi chú chưa chạy trong phần lịch sử bên dưới
-được thay thế bởi reports ranking/replay/HTTP/cost mới nhất. Tiếp theo M5: gói
-kết luận khóa luận, bảng claim→evidence và giới hạn, không retune cứu kết quả.
+được thay thế bởi reports ranking/replay/HTTP/cost mới nhất. M5 đã có gói
+kết luận khóa luận, bảng claim→evidence và giới hạn; không retune cứu kết quả.
 
 Kế hoạch điều hành hiện tại: [final revision 05/11/2026](ADAPTIVE_FINAL_REVISION.md).
 Thay cách vá từng cohort bằng ma trận scenario và gate tổng trước benchmark.

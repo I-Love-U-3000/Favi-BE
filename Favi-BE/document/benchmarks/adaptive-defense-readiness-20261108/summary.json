@@ -1,0 +1,83 @@
+{
+  "status": "PASS",
+  "scope": "Archive restoration and arithmetic only; no model/API run",
+  "archives": [
+    {
+      "name": "adaptive-confirmatory-ranking-20261108",
+      "sha256": "d9c113d50ad147db42b092f990b46a3879d2a65cca3f082fe0b5f467629aa102",
+      "members": 225,
+      "frozen_source_members": 62
+    },
+    {
+      "name": "adaptive-replay-20261108",
+      "sha256": "1df294f3fa147c8d7a3537c494decda6c65088c83b449a41b2d52d8f47ac91df",
+      "members": 494,
+      "frozen_source_members": 65
+    },
+    {
+      "name": "adaptive-serving-export-20261108",
+      "sha256": "dd4f6acb56fe2304382240f4b776f06be8a45bc3c5da434e1db4c3ea19daca20",
+      "members": 6,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-http-20261108",
+      "sha256": "98559218e45e2a840a14e36b19668d6d3aa8aa820d8607797e3927395fd5ed41",
+      "members": 57,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-confirmatory-main-20261111",
+      "sha256": "f64f37ca63068c21497ed03c47e43bf6477961a5103dd54768abf49f0dfa54b0",
+      "members": 32,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-confirmatory-main-20261112",
+      "sha256": "4c7ec7d1c1eaa81a0a72c650f1ea5af4c5d3ae38f754a63f12bae5173ef832a3",
+      "members": 32,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-confirmatory-main-20261113",
+      "sha256": "e6cce51e3705f58db1e35a8d375dfa766a143b4440994bd57a5ba87a8bb25905",
+      "members": 32,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-confirmatory-sparse-20261111",
+      "sha256": "6a8c8e748fd95a32907715e06a034f021fc65530cbcd9dd306673bcf9847f0e3",
+      "members": 32,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-confirmatory-sparse-20261112",
+      "sha256": "5ad25b8980194129e36d6b0250ea98f8811fb3d5bf3ed97d3350f849bd409de0",
+      "members": 32,
+      "frozen_source_members": null
+    },
+    {
+      "name": "adaptive-confirmatory-sparse-20261113",
+      "sha256": "d9e6e387482c89296ba12b169ecf2bdb17f69a9b4868ff868008526f496be072",
+      "members": 32,
+      "frozen_source_members": null
+    }
+  ],
+  "restored_audits": [
+    {
+      "name": "adaptive-confirmatory-ranking-20261108",
+      "datasets": 6,
+      "summary_semantic_equality": true,
+      "tracked_summary_sha256": "de13b34af274a6e8dcd9da89e6c528c76c28bd11b8d73706d25e132642544b93",
+      "status": "PASS"
+    },
+    {
+      "name": "adaptive-replay-20261108",
+      "datasets": 6,
+      "summary_semantic_equality": true,
+      "tracked_summary_sha256": "6f58ff0361f1d62a821630c0a81fc87aa5420c8c756093cb7ae7c9a06ef55bef",
+      "status": "PASS"
+    }
+  ],
+  "script_sha256": "49c122afb94e58b45ba49386f9a525dac6b82c00c3e45555817b1d683ed0fca8"
+}
