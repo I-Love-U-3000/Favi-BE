@@ -86,5 +86,46 @@ public sealed class ExportIntegrityTests : IDisposable
         Assert.Contains("duplicate", Assert.Throws<InvalidDataException>(() => ExportIntegrity.Read(root)).Message);
     }
 
+    private void ProjectionManifest()
+    {
+        File.Delete(Path.Combine(root, "manifest.json"));
+        File.WriteAllText(Path.Combine(root, "projection-manifest.json"), JsonSerializer.Serialize(new
+        {
+            mode = "explicit Favi subset of a preserved full OASIS world",
+            files = hashes.Where(pair => pair.Key is "snapshot.json" or "favi-seed.sql")
+                .ToDictionary(pair => pair.Key, pair => pair.Value)
+        }));
+    }
+
+    [Fact]
+    public void AcceptsNativeProjectionWithoutAdapterCsvs()
+    {
+        ProjectionManifest();
+        foreach (var name in ExportIntegrity.RequiredFiles.Where(name => name.EndsWith(".csv")))
+            File.Delete(Path.Combine(root, name));
+        Assert.Equal((Snapshot, "fixture\n"), ExportIntegrity.Read(root));
+    }
+
+    [Theory]
+    [InlineData("snapshot.json", false)]
+    [InlineData("snapshot.json", true)]
+    [InlineData("favi-seed.sql", false)]
+    [InlineData("favi-seed.sql", true)]
+    public void RejectsNativeChangedBytesOrMissingCoverage(string name, bool omit)
+    {
+        if (omit) hashes.Remove(name);
+        ProjectionManifest();
+        if (!omit) File.AppendAllText(Path.Combine(root, name), "changed");
+        Assert.Throws<InvalidDataException>(() => ExportIntegrity.Read(root));
+    }
+
+    [Fact]
+    public void RejectsAmbiguousFormatsRatherThanDowngradingAdapterCoverage()
+    {
+        ProjectionManifest();
+        Manifest();
+        Assert.Contains("Ambiguous", Assert.Throws<InvalidDataException>(() => ExportIntegrity.Read(root)).Message);
+    }
+
     public void Dispose() => Directory.Delete(root, true);
 }

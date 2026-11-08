@@ -16,6 +16,28 @@ hash theo adapter (UTF-8, universal newline normalization). C# dùng đúng payl
 `--verify-export-only` trước Compose, rồi importer kiểm lại trước sử dụng.
 Receipt hash source runner nay bao gồm ExportIntegrity.cs.
 
+## Sửa tương thích native projection sau review PR17
+
+Review phát hiện native_projection.export_projection xuất projection-manifest.json,
+không phải manifest adapter. CLI cũ trên native-full-10x4-20261101 thực tế thoát1
+vì thiếu manifest.json. Gate nay phân biệt hai định dạng: adapter vẫn yêu cầu
+sáu file/schema1/logical snapshot hash; native yêu cầu mode chính xác
+`explicit Favi subset of a preserved full OASIS world` và đủ hai entry duy nhất
+snapshot.json/favi-seed.sql, kiểm SHA256 raw bytes của cả hai. Producer native
+không cung cấp logical snapshot hash; không áp đặt hash tự suy diễn lên nó.
+Có cả hai manifest thì từ chối vì mơ hồ; manifest adapter hỏng không được fallback
+sang native. Hai đường dùng chung kiểm filename, duplicate và payload đã kiểm.
+Không tạo CSV giả hoặc sửa export lịch sử để tương thích.
+
+Sau sửa: 23 ExportIntegrityTests PASS (thêm native không CSV, sửa byte/bỏ entry
+cả hai file và manifest mơ hồ); OasisSmoke build PASS. CLI chỉ đọc PASS trên
+cả native-pilot-20261101 và native-full-10x4-20261101. Logs mới
+`.tools/native-integrity-tests.log`, `.tools/native-integrity-build.log`, TRX
+`.tools/native-integrity/native-integrity.trx`. Chưa chạy SQL/HTTP/Docker native
+trong lần sửa này. PR17 CI của commit a69e137 thành công; kết quả đó chưa kiểm
+commit sửa tương thích. Copilot không review được vì hết quota; Codex có finding
+native tương thích nêu trên, không được mô tả PR17 là không có findings.
+
 ## Bằng chứng
 
 - 17 ExportIntegrityTests PASS: LF và Windows CRLF hợp lệ; sửa byte từng file

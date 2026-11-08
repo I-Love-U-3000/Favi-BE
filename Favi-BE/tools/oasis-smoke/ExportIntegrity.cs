@@ -12,18 +12,26 @@ internal static class ExportIntegrity
 
     internal static (string Snapshot, string Sql) Read(string root)
     {
-        using var manifest = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(root, "manifest.json")));
+        var adapterPath = Path.Combine(root, "manifest.json");
+        var projectionPath = Path.Combine(root, "projection-manifest.json");
+        var projection = File.Exists(projectionPath);
+        if (projection && File.Exists(adapterPath))
+            throw new InvalidDataException("Ambiguous export manifest formats");
+        using var manifest = JsonDocument.Parse(File.ReadAllBytes(projection ? projectionPath : adapterPath));
         var value = manifest.RootElement;
-        if (value.GetProperty("schema_version").GetInt32() != 1)
+        if (projection && value.GetProperty("mode").GetString() != "explicit Favi subset of a preserved full OASIS world")
+            throw new InvalidDataException("Unsupported projection manifest mode");
+        if (!projection && value.GetProperty("schema_version").GetInt32() != 1)
             throw new InvalidDataException("Unsupported adapter manifest schema");
+        string[] required = projection ? ["snapshot.json", "favi-seed.sql"] : RequiredFiles;
         var files = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var entry in value.GetProperty("files").EnumerateObject())
         {
-            if (!RequiredFiles.Contains(entry.Name, StringComparer.Ordinal) || !files.TryAdd(entry.Name, entry.Value.GetString()!))
+            if (!required.Contains(entry.Name, StringComparer.Ordinal) || !files.TryAdd(entry.Name, entry.Value.GetString()!))
                 throw new InvalidDataException("Unexpected or duplicate export manifest entry: " + entry.Name);
         }
         var payloads = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-        foreach (var name in RequiredFiles)
+        foreach (var name in required)
         {
             if (!files.TryGetValue(name, out var expected))
                 throw new InvalidDataException("Missing export manifest entry: " + name);
@@ -36,7 +44,7 @@ internal static class ExportIntegrity
         var snapshot = utf8.GetString(payloads["snapshot.json"]);
         // Adapter hashes the logical payload before platform newline translation.
         var logical = snapshot.Replace("\r\n", "\n").Replace('\r', '\n');
-        if (!string.Equals(Convert.ToHexString(SHA256.HashData(utf8.GetBytes(logical))),
+        if (!projection && !string.Equals(Convert.ToHexString(SHA256.HashData(utf8.GetBytes(logical))),
             value.GetProperty("snapshot_sha256").GetString(), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("Logical snapshot checksum mismatch");
         return (snapshot, utf8.GetString(payloads["favi-seed.sql"]));

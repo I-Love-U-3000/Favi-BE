@@ -1,3 +1,16 @@
+# Native projection compatibility correction — 08/11/2026
+
+PR17 hosted backend42453236283 SUCCESS at a69e137, but Codex review found native
+projection rejected by adapter-only gate. Actual old CLI native-full export
+failed missing manifest.json. Gate now supports exact native mode/two raw hashes
+as well as unchanged adapter six-file schema/logicalhash contract; both manifest
+formats together rejected. 23focused tests/build PASS; actual native pilot/full
+read-only preflight PASS. No SQL/HTTP/Docker/model rerun or frozen evidence edits.
+Copilot quota exhausted; do not claim no review findings. See import integrity
+report. Runtime review remains pending: dataset checker/generator use explicit
+raises, smoke fixture/simulator asserts need end-to-end assessment, not inferred
+bypass. Current Git/publication state in ignored lease. No merge/deploy/subagents.
+
 # Copy/import checksum gate — 08/11/2026
 
 Confirmed ExistingRunDirectory copied exports without checksum enforcement;
