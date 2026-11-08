@@ -177,6 +177,25 @@ chạy model/HTTP. Logs kết quả ở output `results.txt`. Chuẩn hóa khôn
 file còn được lưu, tính đúng của raw experiment hoặc clean-machine full-stack
 reproducibility; vẫn cần audits và receipts riêng bên dưới.
 
+### CI cho evidence đã tracked
+
+Workflow `.github/workflows/adaptive-evidence.yml` tại repository root chạy
+hai jobs Windows/Linux bằng PowerShell7: kiểm bảng tracked bằng `-Check` trước,
+sau đó kiểm fixtures LF/CRLF/BOM và hai trường hợp sửa nội dung. Không tự sinh
+lại bảng để che drift. Trigger là pull request hoặc push vào main có thay đổi
+workflow, gói M5, hoặc một trong năm JSON inputs; có `workflow_dispatch` khi
+workflow có mặt trên default branch. Mỗi job timeout5phút; fail-fast tắt để
+giữ kết quả cả hai OS. Jobs chỉ cần quyền contents:read, không secrets, model,
+raw archives, Docker, database hay Python environment riêng.
+
+`results.txt` chứa các checks đã hoàn tất và được upload riêng theo OS, giữ7ngày;
+nếu script fail trước khi ghi file thì step failure/log là bằng chứng, artifact
+có thể chưa tồn tại. Workflow không bảo đảm mọi raw experiment tái lập hoặc
+mọi claim narrative đã được kiểm tự động. Nó không thay backend gate hiện có,
+không thay relevance/serving/resource gate và không tự sửa branch protection.
+Trạng thái hosted CI phải đọc ở Actions của đúng commit; có workflow trong Git
+không đồng nghĩa đã PASS. Lượt kiểm local dùng `.tools/evidence-ci-local-001`.
+
 [Rà soát tái lập sau M5](../adaptive-defense-readiness-20261108/REPORT_VI.md)
 ghi ánh xạ gốc ZIP, phụ thuộc đường dẫn của script và phép thử khôi phục raw
 predictions vào cây riêng. Không chạy batch/summarizer trực tiếp trên bằng chứng
