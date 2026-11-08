@@ -1,3 +1,39 @@
+# Historical cost audit completed — 08/11/2026
+
+Read benchmarks/adaptive-cost-audit-20261108/REPORT_VI.md and summary.json.
+No training/search/HTTP rerun. Stdlib audit verifies all six original manifests
+and member hashes, tracked report/selection/tuning, logs, export manifest/artifact.
+Original six elapsed total12641.235283s includes gate/search/refit/evaluation/
+diagnostics/I/O/polling<=20s and post-run hashes.33unique refits199.635498s;
+naive label sum367.938833s double-counts shared cache. Cache keyed family/params/
+optimizer seed, not threshold/label. Main12 has two distinct LightGCN configs.
+State bytes repeat shared CSR across models and exclude Python/training/native
+temporaries; neither sum/max is peak process RAM. Original search-only timing
+and training peak RAM not recorded and irrecoverable from timestamp-free logs.
+No cost-only replay: would be a new measurement, cannot restore historical gaps.
+Two focused audit tests PASS plus full historical readback audit PASS. Original
+runner/method/source/selection/gates unchanged. No need repeat numerical/HTTP
+tests. Export refit0.365270s/state32521008byte remains separate; API peak
+258326528byte is serving only. Primary practicalFAIL, negative robustness,
+gatewayFAIL429,250sample vs5k and missing multi-replica/TLS/SignalR remain.
+
+NEXT meaningful milestone M5: thesis evidence package in Vietnamese: unified
+RQ/method/results/negative findings, claim-to-source evidence map, quality by
+history/cohort and cost presentation, reproducibility index, honest limitations
+and practical recommendation. Read all current protocol/contracts/reports before
+writing. No new model runs, retune, source/seed/gate changes or rewrite old frozen
+outputs. Distinguish common-candidate offline, bounded cold retrieval, operational
+Like/Love UNION save vs offline likes-only, serving sample and primary failure.
+May add focused evidence consistency checks where useful; no fabricated training
+RAM/search-only times, cost-money or statistical/causal superiority claims.
+
+Git/lease exact commit+PR updated after commit; next branch codex/adaptive-thesis-evidence.
+No worker processes started beyond completed audit CLI; Docker Desktop/MSBuild
+and root nul preserved. Continue until12:00Asia/Saigon authorized window, no
+subagents/automation/reset/merge/deploy. Meaningful milestone tested commit+PR,
+checkout next branch and fresh chat. Numerics/.NET/Docker/commit require_escalated;
+PowerShell login:false. Check lease/Git/processes first in fresh chat.
+
 # Adaptive HTTP lifecycle and resource evidence — 08/11/2026
 
 Meaningful milestone completes schema2 operational HTTP checks and frozen lab

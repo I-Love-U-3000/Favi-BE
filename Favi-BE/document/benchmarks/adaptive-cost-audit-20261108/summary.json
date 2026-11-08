@@ -1,0 +1,1001 @@
+{
+  "status": "PASS",
+  "scope": "historical evidence audit; no model execution",
+  "original_source_commit": "e72dcd366b09a4346439ba81b5cf6cfd3fe3fdfc",
+  "runs": [
+    {
+      "dataset": "adaptive-confirmatory-main-20261111",
+      "elapsed_seconds": 2040.1772132999904,
+      "validation_records": 196,
+      "lightgcn_terminal_epochs": {
+        "0": 300,
+        "1": 130,
+        "2": 300,
+        "3": 120
+      },
+      "unique_refits": [
+        {
+          "family": "ease",
+          "parameters": {
+            "value": 1000.0
+          },
+          "optimizer_seed": null,
+          "seconds": 0.34892540000146255,
+          "model_state_bytes": 32521008,
+          "labels": [
+            "B1",
+            "R",
+            "ease"
+          ]
+        },
+        {
+          "family": "ppr",
+          "parameters": {
+            "value": 0.85
+          },
+          "optimizer_seed": null,
+          "seconds": 0.37535139999818057,
+          "model_state_bytes": 32521008,
+          "labels": [
+            "ppr"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 70,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 6.504986400002963,
+          "model_state_bytes": 2054448,
+          "labels": [
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 70,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 6.744664700003341,
+          "model_state_bytes": 2054448,
+          "labels": [
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 70,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 6.781010100006824,
+          "model_state_bytes": 2054448,
+          "labels": [
+            "lightgcn"
+          ]
+        }
+      ],
+      "unique_refit_seconds": 20.75493800001277,
+      "naive_label_refit_seconds": 21.452788800015696,
+      "refit_model_state_bytes_sum": 71205360,
+      "refit_model_state_bytes_max": 32521008,
+      "original_search_seconds": null,
+      "original_training_peak_rss_bytes": null
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261111",
+      "elapsed_seconds": 2060.1764788,
+      "validation_records": 206,
+      "lightgcn_terminal_epochs": {
+        "0": 300,
+        "1": 190,
+        "2": 300,
+        "3": 110
+      },
+      "unique_refits": [
+        {
+          "family": "ease",
+          "parameters": {
+            "value": 1000.0
+          },
+          "optimizer_seed": null,
+          "seconds": 0.35258999999496154,
+          "model_state_bytes": 32518604,
+          "labels": [
+            "B1",
+            "R",
+            "ease"
+          ]
+        },
+        {
+          "family": "ppr",
+          "parameters": {
+            "value": 0.5
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3556957999971928,
+          "model_state_bytes": 32518604,
+          "labels": [
+            "ppr"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 60,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 5.205582599999616,
+          "model_state_bytes": 2035660,
+          "labels": [
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 60,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 5.381241100010811,
+          "model_state_bytes": 2035660,
+          "labels": [
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 60,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 5.281392299992149,
+          "model_state_bytes": 2035660,
+          "labels": [
+            "lightgcn"
+          ]
+        }
+      ],
+      "unique_refit_seconds": 16.57650179999473,
+      "naive_label_refit_seconds": 17.281681799984653,
+      "refit_model_state_bytes_sum": 71144188,
+      "refit_model_state_bytes_max": 32518604,
+      "original_search_seconds": null,
+      "original_training_peak_rss_bytes": null
+    },
+    {
+      "dataset": "adaptive-confirmatory-main-20261112",
+      "elapsed_seconds": 2160.1979285999987,
+      "validation_records": 190,
+      "lightgcn_terminal_epochs": {
+        "0": 300,
+        "1": 110,
+        "2": 300,
+        "3": 110
+      },
+      "unique_refits": [
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.001,
+            "regularization": 0.0001,
+            "epochs": 290,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 26.764489900000626,
+          "model_state_bytes": 2057308,
+          "labels": [
+            "B1",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.001,
+            "regularization": 0.0001,
+            "epochs": 290,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 26.514518199997838,
+          "model_state_bytes": 2057308,
+          "labels": [
+            "B1",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.001,
+            "regularization": 0.0001,
+            "epochs": 290,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 26.65473139999085,
+          "model_state_bytes": 2057308,
+          "labels": [
+            "B1",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 60,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 5.426027499997872,
+          "model_state_bytes": 2057308,
+          "labels": [
+            "R"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 60,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 5.3824848999938695,
+          "model_state_bytes": 2057308,
+          "labels": [
+            "R"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 60,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 5.408303500007605,
+          "model_state_bytes": 2057308,
+          "labels": [
+            "R"
+          ]
+        },
+        {
+          "family": "ease",
+          "parameters": {
+            "value": 1000.0
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3539751000062097,
+          "model_state_bytes": 32524892,
+          "labels": [
+            "ease"
+          ]
+        },
+        {
+          "family": "ppr",
+          "parameters": {
+            "value": 0.85
+          },
+          "optimizer_seed": null,
+          "seconds": 0.36229079999611713,
+          "model_state_bytes": 32524892,
+          "labels": [
+            "ppr"
+          ]
+        }
+      ],
+      "unique_refit_seconds": 96.86682129999099,
+      "naive_label_refit_seconds": 176.8005607999803,
+      "refit_model_state_bytes_sum": 77393632,
+      "refit_model_state_bytes_max": 32524892,
+      "original_search_seconds": null,
+      "original_training_peak_rss_bytes": null
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261112",
+      "elapsed_seconds": 2280.3272027000057,
+      "validation_records": 184,
+      "lightgcn_terminal_epochs": {
+        "0": 300,
+        "1": 140,
+        "2": 240,
+        "3": 110
+      },
+      "unique_refits": [
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 50,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 4.856041599996388,
+          "model_state_bytes": 2044120,
+          "labels": [
+            "B1",
+            "R",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 50,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 4.7868981000065105,
+          "model_state_bytes": 2044120,
+          "labels": [
+            "B1",
+            "R",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 50,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 4.861767599999439,
+          "model_state_bytes": 2044120,
+          "labels": [
+            "B1",
+            "R",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "ease",
+          "parameters": {
+            "value": 1000.0
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3596392999897944,
+          "model_state_bytes": 32517848,
+          "labels": [
+            "ease"
+          ]
+        },
+        {
+          "family": "ppr",
+          "parameters": {
+            "value": 0.95
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3668373000109568,
+          "model_state_bytes": 32517848,
+          "labels": [
+            "ppr"
+          ]
+        }
+      ],
+      "unique_refit_seconds": 15.231183900003089,
+      "naive_label_refit_seconds": 44.24059850000776,
+      "refit_model_state_bytes_sum": 71168056,
+      "refit_model_state_bytes_max": 32517848,
+      "original_search_seconds": null,
+      "original_training_peak_rss_bytes": null
+    },
+    {
+      "dataset": "adaptive-confirmatory-main-20261113",
+      "elapsed_seconds": 2060.175017600006,
+      "validation_records": 192,
+      "lightgcn_terminal_epochs": {
+        "0": 300,
+        "1": 120,
+        "2": 290,
+        "3": 120
+      },
+      "unique_refits": [
+        {
+          "family": "ease",
+          "parameters": {
+            "value": 1000.0
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3554175000026589,
+          "model_state_bytes": 32520572,
+          "labels": [
+            "B1",
+            "R",
+            "ease"
+          ]
+        },
+        {
+          "family": "ppr",
+          "parameters": {
+            "value": 0.85
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3621052999951644,
+          "model_state_bytes": 32520572,
+          "labels": [
+            "ppr"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 70,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 6.689891100002569,
+          "model_state_bytes": 2049916,
+          "labels": [
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 70,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 6.672242100001313,
+          "model_state_bytes": 2049916,
+          "labels": [
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 70,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 6.762923300004331,
+          "model_state_bytes": 2049916,
+          "labels": [
+            "lightgcn"
+          ]
+        }
+      ],
+      "unique_refit_seconds": 20.842579300006037,
+      "naive_label_refit_seconds": 21.553414300011354,
+      "refit_model_state_bytes_sum": 71190892,
+      "refit_model_state_bytes_max": 32520572,
+      "original_search_seconds": null,
+      "original_training_peak_rss_bytes": null
+    },
+    {
+      "dataset": "adaptive-confirmatory-sparse-20261113",
+      "elapsed_seconds": 2040.1814422000025,
+      "validation_records": 200,
+      "lightgcn_terminal_epochs": {
+        "0": 300,
+        "1": 140,
+        "2": 230,
+        "3": 200
+      },
+      "unique_refits": [
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 100,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261103,
+          "seconds": 9.758819900001981,
+          "model_state_bytes": 2043684,
+          "labels": [
+            "B1",
+            "R",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 100,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261104,
+          "seconds": 9.4315523999976,
+          "model_state_bytes": 2043684,
+          "labels": [
+            "B1",
+            "R",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "lightgcn",
+          "parameters": {
+            "dimensions": 64,
+            "layers": 2,
+            "learning_rate": 0.01,
+            "regularization": 0.0001,
+            "epochs": 100,
+            "check_every": 10
+          },
+          "optimizer_seed": 20261105,
+          "seconds": 9.432784899996477,
+          "model_state_bytes": 2043684,
+          "labels": [
+            "B1",
+            "R",
+            "lightgcn"
+          ]
+        },
+        {
+          "family": "ease",
+          "parameters": {
+            "value": 1000.0
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3637406000052579,
+          "model_state_bytes": 32515620,
+          "labels": [
+            "ease"
+          ]
+        },
+        {
+          "family": "ppr",
+          "parameters": {
+            "value": 0.85
+          },
+          "optimizer_seed": null,
+          "seconds": 0.3765762000111863,
+          "model_state_bytes": 32515620,
+          "labels": [
+            "ppr"
+          ]
+        }
+      ],
+      "unique_refit_seconds": 29.363474000012502,
+      "naive_label_refit_seconds": 86.60978840000462,
+      "refit_model_state_bytes_sum": 71162292,
+      "refit_model_state_bytes_max": 32515620,
+      "original_search_seconds": null,
+      "original_training_peak_rss_bytes": null
+    }
+  ],
+  "total_elapsed_seconds": 12641.235283200003,
+  "total_unique_refit_seconds": 199.63549830002012,
+  "export": {
+    "artifact_bytes": 11867251,
+    "users": 250,
+    "refits": [
+      {
+        "family": "ease",
+        "parameters": {
+          "value": 1000.0
+        },
+        "optimizer_seed": null,
+        "seconds": 0.36527000000933185,
+        "model_state_bytes": 32521008
+      }
+    ],
+    "export_and_replay_seconds": 1.1322633000090718,
+    "total_seconds": 12.12586659999215
+  },
+  "serving": {
+    "restarts": {
+      "count": 5,
+      "os": "Microsoft Windows 10.0.26200",
+      "cpuCount": 16,
+      "runtime": ".NET 10.0.10",
+      "artifactBytes": 11867251,
+      "restarts": [
+        {
+          "index": 0,
+          "processId": 36828,
+          "startToHealthMs": 3073.2132,
+          "peakWorkingSetBytes": 163737600
+        },
+        {
+          "index": 1,
+          "processId": 35888,
+          "startToHealthMs": 2557.3447,
+          "peakWorkingSetBytes": 164343808
+        },
+        {
+          "index": 2,
+          "processId": 19452,
+          "startToHealthMs": 2422.4788,
+          "peakWorkingSetBytes": 164663296
+        },
+        {
+          "index": 3,
+          "processId": 10284,
+          "startToHealthMs": 2429.8826,
+          "peakWorkingSetBytes": 163930112
+        },
+        {
+          "index": 4,
+          "processId": 24904,
+          "startToHealthMs": 2522.5731,
+          "peakWorkingSetBytes": 164724736
+        }
+      ]
+    },
+    "memory": {
+      "processId": 24904,
+      "peakWorkingSetBytes": 258326528,
+      "workingSetBytes": 241577984,
+      "privateMemoryBytes": 129224704
+    },
+    "direct": [
+      {
+        "method": "B1",
+        "p95Ms": 57.2082,
+        "valid": true,
+        "gatePassed": true,
+        "concurrency": 10,
+        "measured": 1000,
+        "warmup": 100
+      },
+      {
+        "method": "R",
+        "p95Ms": 57.4861,
+        "valid": true,
+        "gatePassed": true,
+        "concurrency": 10,
+        "measured": 1000,
+        "warmup": 100
+      }
+    ],
+    "gateway": [
+      {
+        "method": "B1",
+        "warmup": 100,
+        "burst": 30,
+        "ratePerMinute": 150,
+        "concurrency": 10,
+        "allResponseP95Ms": 1.6904,
+        "gatePassed": false,
+        "statusCounts": {
+          "429": 1000
+        },
+        "valid": false,
+        "measured": 1000
+      },
+      {
+        "method": "R",
+        "warmup": 100,
+        "burst": 30,
+        "ratePerMinute": 150,
+        "concurrency": 10,
+        "allResponseP95Ms": 1.4799,
+        "gatePassed": false,
+        "statusCounts": {
+          "429": 999,
+          "200": 1
+        },
+        "valid": false,
+        "measured": 1000
+      }
+    ]
+  },
+  "missing": {
+    "original_search_seconds": null,
+    "original_validation_fit_only_seconds": null,
+    "original_training_peak_rss_bytes": null,
+    "artifact_load_distribution_ms": null,
+    "energy_kwh": null,
+    "monetary_cost": null
+  },
+  "limitations": [
+    "Elapsed includes gate, validation, refit, evaluation, diagnostics, I/O, up to20s polling and post-run hash checks",
+    "Refit timings exclude InteractionData construction and feed/evaluation work",
+    "Model-state byte sums repeat shared InteractionData CSR storage across distinct models; not physical cache allocation or peak resident memory",
+    "No subtraction of refit from elapsed can isolate search or training",
+    "A new cost-only replay cannot recover historical phase times or peak RAM",
+    "Primary practical relevance FAIL; gateway load FAIL; artifact250users not full5k"
+  ],
+  "source_sha256": {
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/batch.json": "3773685ebada816d0137d62e3c6bcf3ea384e4d1ce2dbd8328835bd09fd0c7eb",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/manifest.json": "9490d607d18cc32c62ca0b937a3434ef5d3d9f4851080713478b9bcbdb2d4016",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/adaptive-protocol-v1.md": "58050b17920be65bbe5be8e20c80d351819b847cdee37e3917a7b293bf2eeea8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/adaptive_feed.py": "c07001cc33624acc01ffe6433c51c999f2ed465c88e3a2b155469dcebdd652dc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/adaptive_onboarding.py": "7292a77e19328624bc0e59ea2769c19f9a1b5272387214e277183d855a9b0a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/analyze_adaptive_cohorts.py": "b5b2fa70c084fd3bcddbd03d8212d46e6d8ce70ecb35d7fca24f3ca499d26a4a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/benchmark_recommenders.py": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/check_dataset.py": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/collaborative_models.py": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/community_policy.py": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/config.original.json": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/dataset_policy.py": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/protocol.json": "27113b2270e668d7a39b095933e16ff7643eb07b710ab7ce53f75b560c46c412",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/report.json": "e187a40774c9a523de88ec06038bda50209605cdcb0d2b35d8a9794384557622",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/requirements-oasis.lock.txt": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/run_adaptive_benchmark.py": "7a4b5148b5fec8f32592cc3be946ef5844f7460b91736b2d66e0464d42ed5677",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/selection.json": "4e7682477e8174388dd7e084b4fa833862bbcf6e3738a054fbbb0a872718f1bc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/source-inventory.json": "3311e786c4de1ff8eb5840a5e78b4fcffc372aae8d5b6e2e68088bf5ab7709be",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/source_provenance.py": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-B1-users.jsonl": "ef05a308fe2627ff6c7d22c0e7896b73beb57b576478cc033fcf575cc5eff9f1",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-ease-users.jsonl": "ef05a308fe2627ff6c7d22c0e7896b73beb57b576478cc033fcf575cc5eff9f1",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-formula-users.jsonl": "df541991445a3a579f05344d9d83fe8a7d881e55b67c3d8241543a09ebe33e8d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-formula-v2-users.jsonl": "d385829ca58a6c7b18aac9daf7ea0fd92512052d72d1865ed2931f75cc8d333a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-lightgcn-20261103-users.jsonl": "b960b4a0a3761fc202a0ce7d36bd56055539e1268f0ecfd71cec8674b291d305",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-lightgcn-20261104-users.jsonl": "e1f58715d4710a11bb8ec08921ed3d9628d3f3cb65e6593f0b0e238308954159",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-lightgcn-20261105-users.jsonl": "bc1665b928cf1471ccc3134054480bcf647d9d61896421847fbef72a948d4cb6",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-popularity-users.jsonl": "6c36377563281d720bbb5af410657a762200b16b27dbaf49dd8024f66f11374e",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-ppr-users.jsonl": "630b3bf8418465491c0f5a9389cd9fac2e25a167e8e3e3af982e2640a9b16873",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-R-users.jsonl": "501fe7ac43d7e3dc60e5dd07b5e98bb2f59851766c23b51cdd4e809ea741d2fd",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test-topic-only-users.jsonl": "42ceb9b89460111fd555c5fd9c78762c24c51de1944ef9d60ca223fff8e5cf7e",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test_adaptive_benchmark.py": "67c087a1d96fb0fbd5dbe37f2fcc132385c34a7d1fe78ec2a41fcacb6934caf7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/test_adaptive_feed.py": "831018f0a78e635c6bffda74d0502931cc3a3d0b021e1c2d41ebacd7f67b9920",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111/tuning.json": "9957b7b7ebdfd6861906832cb449a6fa627c060a5adffdfd3ab9b8255a9b9285",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261111.log": "e013a97b3b228acf0da15dce38cd8658eaa6a93676afea8e4ac16031cef3725b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/manifest.json": "4803c9c2b3c7caa09cdb382cde60b6fe3a33218d6a4b851f2e0d6f3b1a5c14f7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/adaptive-protocol-v1.md": "58050b17920be65bbe5be8e20c80d351819b847cdee37e3917a7b293bf2eeea8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/adaptive_feed.py": "c07001cc33624acc01ffe6433c51c999f2ed465c88e3a2b155469dcebdd652dc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/adaptive_onboarding.py": "7292a77e19328624bc0e59ea2769c19f9a1b5272387214e277183d855a9b0a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/analyze_adaptive_cohorts.py": "b5b2fa70c084fd3bcddbd03d8212d46e6d8ce70ecb35d7fca24f3ca499d26a4a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/benchmark_recommenders.py": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/check_dataset.py": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/collaborative_models.py": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/community_policy.py": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/config.original.json": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/dataset_policy.py": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/protocol.json": "27113b2270e668d7a39b095933e16ff7643eb07b710ab7ce53f75b560c46c412",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/report.json": "231ccec24863e42b3f2ae5a60f4d7e14ea1abd7b079402af97c40f42c8832f94",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/requirements-oasis.lock.txt": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/run_adaptive_benchmark.py": "7a4b5148b5fec8f32592cc3be946ef5844f7460b91736b2d66e0464d42ed5677",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/selection.json": "45b575ee91d89e6f981cb103e2ac171bee60c6fd0607570f4f19e39ecb91d418",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/source-inventory.json": "3311e786c4de1ff8eb5840a5e78b4fcffc372aae8d5b6e2e68088bf5ab7709be",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/source_provenance.py": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-B1-users.jsonl": "a3e060ff0423b434b5a8a2a999fb5c1e3b55b929a144d4aa8bde89d29445ea64",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-ease-users.jsonl": "a3e060ff0423b434b5a8a2a999fb5c1e3b55b929a144d4aa8bde89d29445ea64",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-formula-users.jsonl": "bb773d18c66a2ee5b835e548a91bdcde92b641e8c6d0d840e31541bcc4a8d5f8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-formula-v2-users.jsonl": "4b455e8a67774d704f11674757745454f5a5612b9479b199ae7dcc3bb846ce79",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-lightgcn-20261103-users.jsonl": "028f590673b66e2d98502378c85d26f6f4c13bdc9d606c97e7dfda4738407ce3",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-lightgcn-20261104-users.jsonl": "36e2e34926f221188da89a98b6312acadc8b900933505510859bafcaa5d10756",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-lightgcn-20261105-users.jsonl": "445f5f5a97e9063538ae27403eca8d322034f95d066ecd0fdf903614ff76f555",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-popularity-users.jsonl": "4c43e95179871d1a45c46c10fe41d16a47a506ff173a2693cfd5a43e62bd7f62",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-ppr-users.jsonl": "144e0c304f0f6221dee879d3a93188650ceb9608f4f3821ac06c83a460aa5554",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-R-users.jsonl": "a3e060ff0423b434b5a8a2a999fb5c1e3b55b929a144d4aa8bde89d29445ea64",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test-topic-only-users.jsonl": "173c2bbc72e984e9ec4d5d5743c83b1fc8accc23e7a452d8dc3972e80353f91b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test_adaptive_benchmark.py": "67c087a1d96fb0fbd5dbe37f2fcc132385c34a7d1fe78ec2a41fcacb6934caf7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/test_adaptive_feed.py": "831018f0a78e635c6bffda74d0502931cc3a3d0b021e1c2d41ebacd7f67b9920",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111/tuning.json": "2cc6e5d54d3942383a3ec87284f62b543fdc50ab10a9047602bc5b51aa51542b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261111.log": "6f04c4d396056102504effefe03ba6f8ff32e27e8aead53ba06ec9f684797af5",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/manifest.json": "d99a0eceaf52ed75464021b8c987ebc075ee0d8fa0dfdc394f52326b397b8ae7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/adaptive-protocol-v1.md": "58050b17920be65bbe5be8e20c80d351819b847cdee37e3917a7b293bf2eeea8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/adaptive_feed.py": "c07001cc33624acc01ffe6433c51c999f2ed465c88e3a2b155469dcebdd652dc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/adaptive_onboarding.py": "7292a77e19328624bc0e59ea2769c19f9a1b5272387214e277183d855a9b0a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/analyze_adaptive_cohorts.py": "b5b2fa70c084fd3bcddbd03d8212d46e6d8ce70ecb35d7fca24f3ca499d26a4a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/benchmark_recommenders.py": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/check_dataset.py": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/collaborative_models.py": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/community_policy.py": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/config.original.json": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/dataset_policy.py": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/protocol.json": "27113b2270e668d7a39b095933e16ff7643eb07b710ab7ce53f75b560c46c412",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/report.json": "4e629ac9847ad0290716892593a6fa95454acd256035da2ecf606f7b0fcdff0b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/requirements-oasis.lock.txt": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/run_adaptive_benchmark.py": "7a4b5148b5fec8f32592cc3be946ef5844f7460b91736b2d66e0464d42ed5677",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/selection.json": "0fad86c577fe8896d868c1a1f56ad85dd6fb3c0f80712baa90d5655adee17e35",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/source-inventory.json": "3311e786c4de1ff8eb5840a5e78b4fcffc372aae8d5b6e2e68088bf5ab7709be",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/source_provenance.py": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-B1-20261103-users.jsonl": "f071b55574b3f1b5cc5017e8880681e9dc67a8af410eef53e033a6cfad205074",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-B1-20261104-users.jsonl": "15c52fad168fa60892cdca1539b007fb30046c4cba686ae2d4e2186578b7c58c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-B1-20261105-users.jsonl": "adf95485cfa24caa8fc047ea247e73444c22af3595b9a2a8ce17abbd286d8777",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-ease-users.jsonl": "017fa2109bca7a380c7fead4f9edb357de697a59389f1130bc7e093174f0cb9a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-formula-users.jsonl": "58815d3f8806ff1f1079fd17f1c56cecd01616bfef8f93e3f93b8baa9fd53383",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-formula-v2-users.jsonl": "01f9d4fdc91432a9fb1628fdc35e9ba62c9a46068794702aa46a30d4d76a4fee",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-lightgcn-20261103-users.jsonl": "f071b55574b3f1b5cc5017e8880681e9dc67a8af410eef53e033a6cfad205074",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-lightgcn-20261104-users.jsonl": "15c52fad168fa60892cdca1539b007fb30046c4cba686ae2d4e2186578b7c58c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-lightgcn-20261105-users.jsonl": "adf95485cfa24caa8fc047ea247e73444c22af3595b9a2a8ce17abbd286d8777",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-popularity-users.jsonl": "e3f7abbc17d949ac66b9fc2aaf27fdb0b7b13e017994dfa38a8c9b4843482d4b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-ppr-users.jsonl": "625c29efed18ca358a5af0b9648c3cfc4fab92d95d6dda0ff9c029ce238781cc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-R-20261103-users.jsonl": "c2668304539275a0c9da785504f3af18472ea0cb3be0845df682c75e48c2f089",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-R-20261104-users.jsonl": "518eb6fa185eeb15649663e094c7155882d22725d3b1523d90753f4174b104b7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-R-20261105-users.jsonl": "03397bfd4af9cc94d9599683247c3567befc7b2187eafc9e714adfb5557c5c89",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test-topic-only-users.jsonl": "2fd07e5367fe2f134c4a5b760657f950419fce090b3c5146a076167073910209",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test_adaptive_benchmark.py": "67c087a1d96fb0fbd5dbe37f2fcc132385c34a7d1fe78ec2a41fcacb6934caf7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/test_adaptive_feed.py": "831018f0a78e635c6bffda74d0502931cc3a3d0b021e1c2d41ebacd7f67b9920",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112/tuning.json": "882ff3dbc7b11aae9916275fc80cf211b423518370891064af3cf32ef07795cd",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261112.log": "2f371fec2a9dcd27ff7ca7b0866665bfea376fbe86774dd2efb40cc64a1e9cba",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/manifest.json": "e8618524abf16f653d9e46ba88f786af8bd0f125ed71f2ad20bc4abf944d2ad1",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/adaptive-protocol-v1.md": "58050b17920be65bbe5be8e20c80d351819b847cdee37e3917a7b293bf2eeea8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/adaptive_feed.py": "c07001cc33624acc01ffe6433c51c999f2ed465c88e3a2b155469dcebdd652dc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/adaptive_onboarding.py": "7292a77e19328624bc0e59ea2769c19f9a1b5272387214e277183d855a9b0a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/analyze_adaptive_cohorts.py": "b5b2fa70c084fd3bcddbd03d8212d46e6d8ce70ecb35d7fca24f3ca499d26a4a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/benchmark_recommenders.py": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/check_dataset.py": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/collaborative_models.py": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/community_policy.py": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/config.original.json": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/dataset_policy.py": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/protocol.json": "27113b2270e668d7a39b095933e16ff7643eb07b710ab7ce53f75b560c46c412",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/report.json": "57e8ae369b7a629d618bac97828e349ffb689bd966c741e19f512afc341d3a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/requirements-oasis.lock.txt": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/run_adaptive_benchmark.py": "7a4b5148b5fec8f32592cc3be946ef5844f7460b91736b2d66e0464d42ed5677",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/selection.json": "113c6ead7a6a7ac0c2966828aebf57ecf435aaff26d8524ecdfc9336df215737",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/source-inventory.json": "3311e786c4de1ff8eb5840a5e78b4fcffc372aae8d5b6e2e68088bf5ab7709be",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/source_provenance.py": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-B1-20261103-users.jsonl": "436eded19bd319ce88a0ffb47f497e7dfd0af21470513cae3ff3388fac3dc146",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-B1-20261104-users.jsonl": "0e881f5f053693fdd5ff6fc0fff8c19ff60e85242e7ffc89aa98801bf050e704",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-B1-20261105-users.jsonl": "b33614180efae43656b5be504d6e4e3970dc5bc9e4b592778c23742775e543b7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-ease-users.jsonl": "65c0820f7274bf6c6024e74dd3d4590ab29cfb52c04af07e3da7a3be49f2596a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-formula-users.jsonl": "c51ec176ca03989bfa376ac4eeb1773f32bda29377f3090948f7f2f13b680138",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-formula-v2-users.jsonl": "1529b252877c5aa8646918c4c81b9ea1fbce2c36a4f4f0c736eeaac868ce7c86",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-lightgcn-20261103-users.jsonl": "436eded19bd319ce88a0ffb47f497e7dfd0af21470513cae3ff3388fac3dc146",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-lightgcn-20261104-users.jsonl": "0e881f5f053693fdd5ff6fc0fff8c19ff60e85242e7ffc89aa98801bf050e704",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-lightgcn-20261105-users.jsonl": "b33614180efae43656b5be504d6e4e3970dc5bc9e4b592778c23742775e543b7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-popularity-users.jsonl": "d49d7ed046783d899528e03923f3b8ceaaf35578e09ebd99d2e0755f9615120c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-ppr-users.jsonl": "03cf323927cc70301508f2057a7df56f03573591b038e6ab4c6e99eb284809d3",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-R-20261103-users.jsonl": "436eded19bd319ce88a0ffb47f497e7dfd0af21470513cae3ff3388fac3dc146",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-R-20261104-users.jsonl": "0e881f5f053693fdd5ff6fc0fff8c19ff60e85242e7ffc89aa98801bf050e704",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-R-20261105-users.jsonl": "b33614180efae43656b5be504d6e4e3970dc5bc9e4b592778c23742775e543b7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test-topic-only-users.jsonl": "442876a34bc772084c31ba69f30fb8f4f7c98fb0149f1d2b344722fbb7552be9",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test_adaptive_benchmark.py": "67c087a1d96fb0fbd5dbe37f2fcc132385c34a7d1fe78ec2a41fcacb6934caf7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/test_adaptive_feed.py": "831018f0a78e635c6bffda74d0502931cc3a3d0b021e1c2d41ebacd7f67b9920",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112/tuning.json": "11b003997e8e248dace4d81b163760469ea0299bb65db5725a594602950ceb50",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261112.log": "f967309b67dc2e5b2458d10e22ef53a9b9efeb8f0b962c5b8e8c412fbcd429ab",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/manifest.json": "36d751ed23ccf19f605c6396b6b0168536742cf625dcfd2b0bf4d6bcd2271628",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/adaptive-protocol-v1.md": "58050b17920be65bbe5be8e20c80d351819b847cdee37e3917a7b293bf2eeea8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/adaptive_feed.py": "c07001cc33624acc01ffe6433c51c999f2ed465c88e3a2b155469dcebdd652dc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/adaptive_onboarding.py": "7292a77e19328624bc0e59ea2769c19f9a1b5272387214e277183d855a9b0a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/analyze_adaptive_cohorts.py": "b5b2fa70c084fd3bcddbd03d8212d46e6d8ce70ecb35d7fca24f3ca499d26a4a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/benchmark_recommenders.py": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/check_dataset.py": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/collaborative_models.py": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/community_policy.py": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/config.original.json": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/dataset_policy.py": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/protocol.json": "27113b2270e668d7a39b095933e16ff7643eb07b710ab7ce53f75b560c46c412",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/report.json": "732339752a14028ddf6ce3a7633d61129c1fc63d81b99f91d7b88db0eb5c2813",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/requirements-oasis.lock.txt": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/run_adaptive_benchmark.py": "7a4b5148b5fec8f32592cc3be946ef5844f7460b91736b2d66e0464d42ed5677",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/selection.json": "e8896641c7d6e811c0b887c4c5b001fc23c8097dd77b9b90965aa4875e323704",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/source-inventory.json": "3311e786c4de1ff8eb5840a5e78b4fcffc372aae8d5b6e2e68088bf5ab7709be",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/source_provenance.py": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-B1-users.jsonl": "2b62011efbf6bc90fc26002d775d878b7fcb4cbb9d3c58c148d053ca0462894f",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-ease-users.jsonl": "2b62011efbf6bc90fc26002d775d878b7fcb4cbb9d3c58c148d053ca0462894f",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-formula-users.jsonl": "585c26df7bd6936f6ce59dec0d19c47f8c5d5d106afce5c22bac6ca4196d8b97",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-formula-v2-users.jsonl": "abe191be3c0779557204bcf572d4a4eee2ac3f9b561b26f4e8601177459192a8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-lightgcn-20261103-users.jsonl": "20fcce7adf6a0b7a5ee721508f799dac1d4c41435bf7ad1ce08931458f30c735",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-lightgcn-20261104-users.jsonl": "8823d5e4b0e49ecd0381dcbc4306067a0371567ef9edbe675b1998439a9e78b7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-lightgcn-20261105-users.jsonl": "a4eade65cecc18cbc0184c0d446208958919179e9cf826372b8a27268f569208",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-popularity-users.jsonl": "dc54a43407426151430684bf2c8f09aa2c30777fb2f627e7f3ceaaf5be56ac20",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-ppr-users.jsonl": "94c83feeef01c3b7b2370ce7b35aa5791fc0da0f7382321e0f3b7edc26600da2",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-R-users.jsonl": "f695763faafc28ce11427ecf5ed4702849c7754029b56e5f36c0c281a0b0da81",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test-topic-only-users.jsonl": "41aa9627a07576e53284724f33da338fa6a407ca82d916670f272d2f0c224624",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test_adaptive_benchmark.py": "67c087a1d96fb0fbd5dbe37f2fcc132385c34a7d1fe78ec2a41fcacb6934caf7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/test_adaptive_feed.py": "831018f0a78e635c6bffda74d0502931cc3a3d0b021e1c2d41ebacd7f67b9920",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113/tuning.json": "d6a54996da356719e7d8b433bdf03957e53505390d2b8f2652a7400bfcd6ad4d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-main-20261113.log": "af6af45eba6e8f854b69f2cfaa04c29c8b45dd8ad71d2174537108441049f0fa",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/manifest.json": "7de8ec9e7f559ec34df6a1d4698219786ca830a36050d74cc1e2d9cc2034302f",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/adaptive-protocol-v1.md": "58050b17920be65bbe5be8e20c80d351819b847cdee37e3917a7b293bf2eeea8",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/adaptive_feed.py": "c07001cc33624acc01ffe6433c51c999f2ed465c88e3a2b155469dcebdd652dc",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/adaptive_onboarding.py": "7292a77e19328624bc0e59ea2769c19f9a1b5272387214e277183d855a9b0a5d",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/analyze_adaptive_cohorts.py": "b5b2fa70c084fd3bcddbd03d8212d46e6d8ce70ecb35d7fca24f3ca499d26a4a",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/benchmark_recommenders.py": "1dbd160112dc807211ef1f10a96a24bea45e7db781831dd47563f7922a74212c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/check_dataset.py": "22b8dfafbd50f99e2bb731723fe55194cb2f43b58622d41efa4db76f1952121b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/collaborative_models.py": "a648f2dd78abdd3c9c436f4e9aafa34c35a15c1d15a8d4458a25e2dfbc4637ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/community_policy.py": "6c8d7dbc1823fbe144acf4e11ab9c8ab86cb9ea92a45df8c0c5388beae2942a4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/config.original.json": "4a417a1c2f2adb6e75159306464774d22b987c58d6715a946d6a7ccc5ad3be46",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/dataset_policy.py": "076d98859cc21f22c670485126910b6c0920f9c2d4f3b9619355e804e28c9363",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/favi_rankers.py": "d53d14f536dc498d58199a43b74bf24e46c3f1bca43511e4a5dd371f98a56d65",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/protocol.json": "27113b2270e668d7a39b095933e16ff7643eb07b710ab7ce53f75b560c46c412",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/report.json": "040f1fd024a7b461ff4ea7f8f745f2dd2804ac42e512fa40c3b758720bbe2da0",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/requirements-oasis.lock.txt": "cfe732b4d2ea2c80326305ea74d183b9c6627bb4a6928a8d1acc6478bb50d783",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/run_adaptive_benchmark.py": "7a4b5148b5fec8f32592cc3be946ef5844f7460b91736b2d66e0464d42ed5677",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/selection.json": "d46b176bf5f7c491071bdc749c4bb75b7da7a5e323256e47153e282fa4749acb",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/source-inventory.json": "3311e786c4de1ff8eb5840a5e78b4fcffc372aae8d5b6e2e68088bf5ab7709be",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/source_provenance.py": "6098f19cbb5a29070e125776a46dd806786c5bdf434fa91470edb796f44c927b",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-B1-20261103-users.jsonl": "8007847d7556efe0493ceb0d49494565394acf10a7d0c1770b01c8d8e56a7f5e",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-B1-20261104-users.jsonl": "8a7fbc5ecec6f1adcda50f034ad277d44b03cdbe4f4df4b56a9b0d8f627ca602",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-B1-20261105-users.jsonl": "f2cda2f059e674899e9bb34d8254793b52b8f2e294ac89633e07868799614077",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-ease-users.jsonl": "92e18c42c2f89e61b3212e4fbe2c2b4a69ddaff838e139e73b04de23be00af86",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-formula-users.jsonl": "3b12e40482eedcf0c38ab7608ce6646182792245e954b31c56d4a7f188de07ad",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-formula-v2-users.jsonl": "ecd68c9aaa4e3fada23c31b2344f239189bc0cdcc7b16cc40c69b4d392322271",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-lightgcn-20261103-users.jsonl": "8007847d7556efe0493ceb0d49494565394acf10a7d0c1770b01c8d8e56a7f5e",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-lightgcn-20261104-users.jsonl": "8a7fbc5ecec6f1adcda50f034ad277d44b03cdbe4f4df4b56a9b0d8f627ca602",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-lightgcn-20261105-users.jsonl": "f2cda2f059e674899e9bb34d8254793b52b8f2e294ac89633e07868799614077",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-popularity-users.jsonl": "bfb1f168736ba8723ffb51a1fd068984ed086a29870a6f14f16b701403df00cb",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-ppr-users.jsonl": "129f39ca6c72e8bc5776f95b20f9554b1df928bfac613d5f5b83280a2645838e",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-R-20261103-users.jsonl": "8007847d7556efe0493ceb0d49494565394acf10a7d0c1770b01c8d8e56a7f5e",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-R-20261104-users.jsonl": "8a7fbc5ecec6f1adcda50f034ad277d44b03cdbe4f4df4b56a9b0d8f627ca602",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-R-20261105-users.jsonl": "f2cda2f059e674899e9bb34d8254793b52b8f2e294ac89633e07868799614077",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test-topic-only-users.jsonl": "9f6514b307cbb0d11099d9635d75e378255d06a445ac0fe85f469480cc1ca6f4",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test_adaptive_benchmark.py": "67c087a1d96fb0fbd5dbe37f2fcc132385c34a7d1fe78ec2a41fcacb6934caf7",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/test_adaptive_feed.py": "831018f0a78e635c6bffda74d0502931cc3a3d0b021e1c2d41ebacd7f67b9920",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113/tuning.json": "31fc3d1e4b6da277f530fe5236b3f68e4f0725ea06039861a5106510ab35884c",
+    ".tools/benchmarks/adaptive-confirmatory-ranking-20261108/adaptive-confirmatory-sparse-20261113.log": "f6ec5cc2016fd207490e3e31445df6027f30e604e6cbd4107c93ae763a1cfac3",
+    ".tools/feed-experiment/adaptive-export-20261108-main11-250/artifact.json": "7120ed20ae9c8db81bf897411be349581bdc2d6e297f613f04a9986af0a43824",
+    ".tools/feed-experiment/adaptive-export-20261108-main11-250/build_adaptive_artifact.py": "6b0c0a068872389b45bd8e2a762434ca5e8dbde8e2f08fce5cd91c6175ed2dc9",
+    ".tools/feed-experiment/adaptive-export-20261108-main11-250/inputs.json": "d2a9d0585fe01a79fb1450b319d5b6bea0dea4025615fe24b259174da9382427",
+    ".tools/feed-experiment/adaptive-export-20261108-main11-250/provenance.json": "5c09ab1f1e3401e6b636ae00f8d15f3ac743da459c0b21541193fa1227af3b56",
+    ".tools/feed-experiment/adaptive-export-20261108-main11-250/manifest.json": "410d5ec5707cf275aa51366d5f47d1c34f499ae38345ede782c82054aeead8e3",
+    "document/benchmarks/adaptive-http-20261108/summary.json": "d40306ea9fcc21af0761ad7449ee1c5fa1a5f09af404f4d2f05fcf0d7eb322ad"
+  }
+}
