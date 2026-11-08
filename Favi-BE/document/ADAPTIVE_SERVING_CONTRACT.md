@@ -15,6 +15,23 @@ remains unchanged. No ranking method, selection, seed or relevance gate changes.
 
 ## Export and provenance
 
+Manifest coverage correction08/11/2026: the current schema2 exporter requires
+manifest entries for protocol.json, source-inventory.json, selection.json,
+report.json and the exact B1/R prediction files consumed (including the fixed
+optimizer-seed suffix for LightGCN). It then verifies every listed checksum.
+A manifest with an omitted consumed file, including an empty manifest, fails
+before output creation/refit. Coverage and manifest identity are rechecked after
+export. Previously the shared manifest reader verified only listed entries;
+omitting an entry bypassed its checksum check. Six omission regressions reached
+refit before correction. Complete EASE/PPR/LightGCN orchestration remains valid;
+21 omission/empty-manifest controls now reject. This is integrity relative to
+the supplied manifest, not an authenticity signature against coordinated edits.
+Historical runner/replay sources, manifests, archives, artifacts and research
+results are unchanged. This correction does not resolve every provenance concern:
+the mapping helper imported from build_feed_artifact.py is outside the original
+ranking source inventory; the readiness report already states the export ZIP is
+not a self-contained clean-machine release.
+
 Require original ranking manifest readback, frozen protocol/source inventory,
 dependency lock, dataset qualification, selection/report digest, prefix and
 onboarding hashes. Refit only saved B1/R parameters on events before cutoff400;

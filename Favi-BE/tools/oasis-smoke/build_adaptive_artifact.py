@@ -21,6 +21,14 @@ from run_adaptive_replay import read, verify_manifest
 from source_provenance import verify_dependency_lock
 
 
+def verify_export_inputs(ranking, required):
+    """Require coverage of every consumed ranking file, then verify its bytes."""
+    manifest = read(ranking / 'manifest.json')
+    if not isinstance(manifest, dict) or not set(required) <= manifest.keys():
+        raise ValueError('Incomplete ranking manifest coverage')
+    return verify_manifest(ranking)
+
+
 def export_rows(data, onboarding, models, users, posts, max_users):
     """Save warm ranks even below threshold: live routing belongs to HTTP."""
     if not 1 <= max_users <= 1000:
@@ -54,7 +62,8 @@ def build(dataset, ranking, output, max_users=1000, optimizer_seed=20261103):
     if not 1 <= max_users <= 1000:
         raise ValueError('Require 1..1000 serving users')
     started = time.perf_counter()
-    manifest_hash = verify_manifest(ranking)
+    required = {'protocol.json', 'source-inventory.json', 'selection.json', 'report.json'}
+    manifest_hash = verify_export_inputs(ranking, required)
     config = read(ranking / 'protocol.json')
     if config != read(Path(__file__).with_name('configs') / 'recommenders' / 'adaptive-v1.json'):
         raise ValueError('Frozen protocol mismatch')
@@ -86,6 +95,11 @@ def build(dataset, ranking, output, max_users=1000, optimizer_seed=20261103):
     choices = {label: selection['choices'][label] for label in ('B1', 'R')}
     if choices['B1']['threshold'] != 1 or any(c['threshold'] not in (1, 5) for c in choices.values()):
         raise ValueError('Unsupported routing selection')
+    for label, choice in choices.items():
+        suffix = '-' + str(optimizer_seed) if choice['family'] == 'lightgcn' else ''
+        required.add(f'test-{label}{suffix}-users.jsonl')
+    if verify_export_inputs(ranking, required) != manifest_hash:
+        raise ValueError('Input evidence changed during preflight')
     data, models, cache, fits = InteractionData(prefix, cutoff), {}, {}, []
     output.mkdir(parents=True)
     # Preserve failure evidence after preflight; no overwrite on retry.
@@ -126,7 +140,7 @@ def build(dataset, ranking, output, max_users=1000, optimizer_seed=20261103):
     if len(encoded) > 16 * 1024 * 1024:
         raise ValueError('Artifact exceeds 16 MiB; use a smaller explicit sample')
     (output / 'artifact.json').write_bytes(encoded)
-    if sha(ranking / 'selection.json') != selection_hash or verify_manifest(ranking) != manifest_hash:
+    if sha(ranking / 'selection.json') != selection_hash or verify_export_inputs(ranking, required) != manifest_hash:
         raise ValueError('Input evidence changed during export')
     save(output / 'provenance.json', dict(schema_version=2, artifact_sha256=sha(output / 'artifact.json'),
          artifact_bytes=len(encoded), users=len(rows), sample_rule='ascending arrived source IDs',
