@@ -1,3 +1,33 @@
+# Schema2 loader and live routing ready — 08/11/2026
+
+Meaningful milestone groups loader/controller/B1-R routing and tests.23 .NET
+tests PASS (ExperimentalFeedTests or ColdStart filter), actual250user schema2
+artifact11867251bytes loaded through actual snapshot, B1=1/R=5; one diagnostic
+load355.0113ms is not a benchmark distribution. Schema1/default disabled and
+production threshold1 preserved. Read ADAPTIVE_SERVING_CONTRACT.md verification
+for fixtures/initial failures/known dependency warnings and raw probe/log paths.
+Current positives use distinct Like/Love UNION saved post IDs. Below threshold
+current topic/general cold reader, above threshold saved ranks; current viewer
+eligibility/positives are rechecked before pagination. Missing schema method has
+no alias, uses existing fallback. Empty learned history remains empty.
+
+User correction08/11: do not commit/open chats for small actions. Group meaningful
+milestones, each tested commit+PR, then checkout next branch and fresh chat. No
+auto merge. Research branch gets a base PR; loader uses stacked PR into research.
+Exact hashes/PR links/next branch will be recorded in lease after commit.
+
+NEXT meaningful milestone: actual isolated adaptive HTTP lifecycle/privacy/
+fallback/topic-version/idempotency and frozen lab gates, then full cost evidence.
+Read existing tools/oasis-smoke/ExperimentalFeedChecks.cs and verify.ps1; legacy
+smoke assumes schema1 so extend deliberately rather than label old gates R PASS.
+EF InMemory tests do NOT verify PostgreSQL UNION translation or middleware.
+Need actual GUID mapping/import alignment. No rerun training, frozen methods,
+source/seed/gates, retune or primary practical FAIL change.10concurrent,
+100warmup+1000measured,>=5restarts,warm p95<=100ms,direct/gateway separate.
+Full original search/training/refit/export/load/peak RAM still pending.250sample
+is not full5k. No subagents/automation/reset/merge/deploy; preserve root nul.
+Numerics/.NET/Docker/commit require_escalated. Continue until12:00Asia/Saigon.
+
 # Bounded adaptive exporter ready — 08/11/2026
 
 Milestone build_adaptive_artifact.py/schema2 finished; read ADAPTIVE_SERVING_CONTRACT.md

@@ -13,9 +13,9 @@ public sealed class ExperimentalFeedQueryReader(AppDbContext db, IColdStartQuery
     public async Task<ExperimentalFeedResult?> GetAsync(Guid userId, string method, int page, int pageSize, CancellationToken ct)
     {
         if (!snapshot.Enabled) return null;
-        if (method is not ("ease" or "ppr") || page is < 1 or > 10000 || pageSize is < 1 or > 100)
+        if (method is not ("ease" or "ppr" or "B1" or "R") || page is < 1 or > 10000 || pageSize is < 1 or > 100)
             throw new ArgumentOutOfRangeException(nameof(page), "Invalid experiment method/pagination");
-        var coldIds = await cold.GetRankedPostIdsAsync(userId, ct);
+        var coldIds = await cold.GetRankedPostIdsAsync(userId, snapshot.GetThreshold(method), ct);
         string source;
         IReadOnlyList<PostReadModel> eligible;
         if (coldIds is not null)
